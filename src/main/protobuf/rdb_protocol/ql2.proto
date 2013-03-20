@@ -23,9 +23,10 @@
 message VersionDummy { // We need to wrap it like this for some
                        // non-conforming protobuf libraries
     enum Version {
-        V0_1 = 0x3f61ba36;
-    };
-};
+        V0_1 = 1063369270;
+
+    }
+}
 
 // You send one of:
 // * A [START] query with a [Term] to evaluate and a unique-per-connection token.
@@ -38,7 +39,7 @@ message Query {
         CONTINUE = 2; // Continue a query that returned [SUCCESS_PARTIAL]
                       // (see [Response]).
         STOP     = 3; // Stop a query partway through executing.
-    };
+    }
     optional QueryType type = 1;
     // A [Term] is how we represent the operations we want a query to perform.
     optional Term query = 2; // only present when [type] = [START]
@@ -48,20 +49,20 @@ message Query {
     message AssocPair {
         optional string key = 1;
         optional Term val = 2;
-    };
+    }
     repeated AssocPair global_optargs = 6;
-};
+}
 
 // A backtrace frame (see `backtrace` in Response below)
 message Frame {
     enum FrameType {
         POS = 1; // Error occured in a positional argument.
         OPT = 2; // Error occured in an optional argument.
-    };
+    }
     optional FrameType type = 1;
     optional int64 pos = 2; // The index of the positional argument.
     optional string opt = 3; // The name of the optional argument.
-};
+}
 message Backtrace {
     repeated Frame frames = 1;
 }
@@ -89,7 +90,7 @@ message Response {
                             // if you add together two values from a table, but
                             // they turn out at runtime to be booleans rather
                             // than numbers.
-    };
+    }
     optional ResponseType type = 1;
     optional int64 token = 2; // Indicates what [Query] this response corresponds to.
 
@@ -108,7 +109,7 @@ message Response {
     // [Term] message below.)
 
     optional Backtrace backtrace = 4; // Contains n [Frame]s when you get back an error.
-};
+}
 
 // A [Datum] is a chunk of data that can be serialized to disk or returned to
 // the user in a Response.  Currently we only support JSON types, but we may
@@ -121,7 +122,7 @@ message Datum {
         R_STR    = 4;
         R_ARRAY  = 5;
         R_OBJECT = 6;
-    };
+    }
     optional DatumType type = 1;
     optional bool r_bool = 2;
     optional double r_num = 3;
@@ -131,11 +132,11 @@ message Datum {
     message AssocPair {
         optional string key = 1;
         optional Datum val = 2;
-    };
+    }
     repeated AssocPair r_object = 6;
 
     extensions 10000 to 20000;
-};
+}
 
 // A [Term] is either a piece of data (see **Datum** above), or an operator and
 // its operands.  If you have a [Datum], it's stored in the member [datum].  If
@@ -356,7 +357,7 @@ message Term {
         //                       datum = Datum {
         //                         type = R_ARRAY;
         //                         r_array = [Datum { type = R_NUM; r_num = 1; }];
-        //                       };
+        //                       }
         //                     },
         //                     Term {
         //                       type = ADD;
@@ -364,12 +365,12 @@ message Term {
         //                                 type = VAR;
         //                                 args = [Term {
         //                                           type = DATUM;
-        //                                           datum = Datum { type = R_NUM; r_num = 1};
+        //                                           datum = Datum { type = R_NUM; r_num = 1}
         //                                         }];
         //                               },
         //                               Term {
         //                                 type = DATUM;
-        //                                 datum = Datum { type = R_NUM; r_num = 2; };
+        //                                 datum = Datum { type = R_NUM; r_num = 2; }
         //                               }];
         //                     }];
         //           }];
@@ -377,7 +378,7 @@ message Term {
 
         ASC = 73;
         DESC = 74;
-    };
+    }
     optional TermType type = 1;
 
     // This is only used when type is DATUM.
@@ -387,13 +388,13 @@ message Term {
     message AssocPair {
         optional string key = 1;
         optional Term val = 2;
-    };
+    }
     repeated AssocPair optargs = 4; // Holds the optional arguments of the query.
     // (Note that the order of the optional arguments doesn't matter; think of a
     // Hash.)
 
     extensions 10000 to 20000;
-};
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //                                  EXAMPLE                                   //
@@ -408,23 +409,23 @@ message Term {
 //               type = TABLE;
 //               args = [Term {
 //                         type = R_DATUM;
-//                         r_datum = Datum { type = R_STR; r_str = "tbl"; };
+//                         r_datum = Datum { type = R_STR; r_str = "tbl"; }
 //                       }];
 //               optargs = [["use_outdated",
 //                           Term {
 //                             type = R_DATUM;
-//                             r_datum = Datum { type = R_BOOL; r_bool = true; };
+//                             r_datum = Datum { type = R_BOOL; r_bool = true; }
 //                           }]];
 //             },
 //             Term {
 //               type = R_ARRAY;
 //               args = [Term {
 //                         type = R_DATUM;
-//                         r_datum = Datum { type = R_OBJECT; r_object = [["id", 0]]; };
+//                         r_datum = Datum { type = R_OBJECT; r_object = [["id", 0]]; }
 //                       },
 //                       Term {
 //                         type = R_DATUM;
-//                         r_datum = Datum { type = R_OBJECT; r_object = [["id", 1]]; };
+//                         r_datum = Datum { type = R_OBJECT; r_object = [["id", 1]]; }
 //                       }];
 //             }]
 //   }
