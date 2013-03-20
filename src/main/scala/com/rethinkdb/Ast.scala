@@ -1,6 +1,7 @@
 package com.rethinkdb
 
 import ql2.Ql2._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Created by IntelliJ IDEA.
@@ -8,7 +9,7 @@ import ql2.Ql2._
  * Date: 3/19/13
  * Time: 12:06 PM 
  */
-abstract class BaseQuery(args: Seq[AnyRef], options: Option[Map[String, AnyRef]]) {
+trait BaseQuery {
 
 
   val term: Term.TermType
@@ -28,8 +29,34 @@ class T(args: Seq[AnyRef], inspect: String = "") extends Iterator[AnyRef] {
 }
 
 
-class Var(args: Seq[AnyRef], options: Option[Map[String, AnyRef]]) extends BaseQuery(args, options) {
+sealed trait ExprWrap;
+
+
+case class DataNum(data:AnyRef)
+
+case class Var(name: String) {
   val term = Term.TermType.VAR
 }
 
+class JavaScript extends BaseQuery {
+  val term = Term.TermType.JAVASCRIPT
+}
+
+
+
+case class Eq extends BaseQuery {
+  val term = Term.TermType.EQ
+}
+
+class Ne extends BaseQuery {
+  val term = Term.TermType.NE
+}
+
+class Lt extends BaseQuery {
+  val term = Term.TermType.LT
+}
+
+class Le extends BaseQuery {
+  val term = Term.TermType.LE
+}
 
