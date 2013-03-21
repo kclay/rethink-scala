@@ -8,9 +8,9 @@ package com.rethinkdb.utils
  * Time: 8:29 PM 
  */
 
-import com.rethinkdb.Ast
+import com.rethinkdb.Ast._
 import ql2.{Ql2 => p}
-import com.rethinkdb.Ast.{StringDatum, NumberDatum, BooleanDatum}
+
 
 trait Writer {
   def <<(value: String): Int = write(value)
@@ -21,18 +21,20 @@ trait Writer {
 class StringBufferTermWriter extends Writer {
   private val builder = StringBuilder.newBuilder
 
-  def write(value: String) {
+  def write(value: String):Int= {
     builder + value
     value.length
 
   }
 }
 
-class Tree(term: Ast.Term) {
+class Tree(term: Term) {
 
   val line = "\n"
+  val open="Term {"+line
+  val close = "}"
 
-  sealed abstract class Leaf
+  /*sealed abstract class Leaf
 
   case object Line extends Leaf
 
@@ -47,6 +49,7 @@ class Tree(term: Ast.Term) {
   case class DatumType(value: p.Datum.DatumType) extends Leaf
 
   case class Args(args: Seq[Ast.Term]) extends Leaf
+  */
 
   case class Indent(amount: Int) {
     def +(add: Int) = copy(amount + add)
@@ -62,6 +65,8 @@ class Tree(term: Ast.Term) {
   private val defaultIndent = Indent(0)
 
   implicit def indent2String(indent: Indent) = " " * indent.amount
+  /*
+
 
   implicit def args2Args(args: Seq[Ast.Term]) = Args(args)
 
@@ -69,24 +74,48 @@ class Tree(term: Ast.Term) {
 
   implicit def term2Term(term: Ast.Term) = Term(term)
 
-  implicit def datum2Datum(value: p.Datum) = Datum(value)
+  implicit def datum2Datum(value:Ast.Datum) = Datum(value)
 
   implicit def datumType2DatumType(value: p.Datum.DatumType) = DatumType(value)
+  */
 
 
   def >>(writer: Writer) {
     write(term)(writer)
   }
 
-  def writeType
 
-  private def write(leaf: Leaf, indent: Indent = defaultIndent, applyIndent: Boolean = true)(implicit writer: Writer) {
-    writer << indent
 
-    leaf match {
+  private def write(token: Token, indent: Indent = defaultIndent, applyIndent: Boolean = true)(implicit writer: Writer) {
+    if(applyIndent) writer << indent
+    if(token.isInstanceOf[TermBlock]) writer<<"Term {"+line
+    token match{
+
+      case a:Seq[_]=>{
+        val offset = writer << "args = ["
+        for ((term, index) <- a.asInstanceOf[Seq[Term]].zipWithIndex) write(term, indent + offset, index != 0)
+      }
+      case t:TokenType=>  {
+        writer << s"type = ${t.name};" + line
+      }
+      case d:Datum=>{
+
+        write(d.termType,indent+2)
+        writer << indent + "r_datnum = Datnum { "
+        writer << (d match {
+          case b: BooleanDatum => s"r_bool = ${b.value};"
+          case n: NumberDatum => s"r_num = ${n.value};"
+          case s: StringDatum => "r_str = \""+s.value+"\";"
+          case no:NoneDatum =>""
+
+        })
+        writer<<" };"+line
+
+    }
+    /*token match {
       case t: Term => {
 
-        val offset = writer << "Term {" + line
+        val offset = writer << s"$name {" + line
         write(t.value.termType, indent + 2)
         write(t.value.args, indent + 2)
         writer << Indent(offset) + "}"
@@ -94,7 +123,7 @@ class Tree(term: Ast.Term) {
       }
 
       case du: Datum => {
-        write(du.value.termType, indent + 2)
+
         writer << indent + "r_datnum = Datnum { "
         writer << s"type = ${du.value.termType.name()}; "
         du.value match {
@@ -104,7 +133,7 @@ class Tree(term: Ast.Term) {
         }
         writer << "  };" + line
       }
-      case dt: DatumType => {
+      case dt:DatumType => {
         writer << s"type = ${dt.value.name()};" + line
 
       }
@@ -114,7 +143,8 @@ class Tree(term: Ast.Term) {
       case args: Args => {
         val offset = writer << "args = ["
         for ((term, index) <- args.args.zipWithIndex) write(term, indent + offset, index != 0)
-      }
+      }  */
+      case _=>
     }
   }
 }
