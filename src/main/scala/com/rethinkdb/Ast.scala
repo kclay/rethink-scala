@@ -1,12 +1,12 @@
 package com.rethinkdb
 
-import ql2.Ql2._
+import ql2.{Ql2 => p, Ql2}
 import scala.concurrent.ExecutionContext.Implicits.global
-import ql2.Ql2.Term;
-import ql2.Ql2.Query.AssocPair
+
 import com.sun.org.apache.xpath.internal.operations.Lt
 import scala._
-import java.awt.Container
+import utils.Printable
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,8 +18,9 @@ import java.awt.Container
 
 object Ast {
 
+
   trait Composable {
-    def compose(args: Seq[TermBase], optargs: Map[String, TermBase]) = {
+    def compose(args: Seq[Term], optargs: Map[String, Term]) = {
       ""
     }
   }
@@ -40,95 +41,102 @@ object Ast {
 
   object Expr {
 
-    def apply(term: TermBase) = term
+    def apply(term: Term) = term
 
-    def apply(a: Any): TermBase = a match {
-      case t: TermBase => t
+    def apply(a: Any): Term = a match {
+      case t: Term => t
       case s: Seq[Any] => MakeArray(s)
       //case m: Map[String, Any] => MakeObj(m)
       // case f: PartialFunction =>
-      case a: Any => DataNum(a)
+      //case a: Any => DatNum(a)
     }
   }
 
-  abstract class TermBase(args: Seq[Any] = Seq.empty[Any], optargs: Map[String, Any] = Map.empty[String, Any]) {
-    private var _args: Seq[TermBase] = for (a <- args) yield Expr(a)
-    private var _optargs: Map[String, TermBase] = optargs.filter(_._2 != None) map {
+  trait Term {
+    lazy val args = Seq.empty[Term]
+
+    protected def buildArgs(args: Any*) = for (a <- args) yield Expr(a)
+
+    lazy val optargs = Map.empty[String, Term]
+
+
+    protected def buildOptArgs(optargs: Map[String, Any]) = optargs.filter(_._2 != None) map {
       case (key: String, value: Any) => (key, Expr(value))
     }
-    def termType: Term.TermType
+
+    def termType: p.Term.TermType
 
     def run() = {
 
       None
     }
 
-    implicit def termBaseToTerm(base: TermBase): Term = {
+    implicit def termBaseToTerm(base: Term): p.Term = {
 
-      base.compile(Term.newBuilder().build())
+      base.compile(p.Term.newBuilder().build())
 
 
     }
 
-    implicit def optargToAssocPair(i: (String, DataNum)): AssocPair = {
+    implicit def optargToAssocPair(i: (String, Term)): p.Term.AssocPair = {
 
-      AssocPair.newBuilder().setKey(i._1).setVal(i._2).build()
+      p.Term.AssocPair.newBuilder().setKey(i._1).setVal(i._2).build()
     }
 
-    def compile(term: Term): Term = {
+    def compile(term: p.Term): p.Term = {
       val builder = term.toBuilder.setType(termType)
-      for (a <- _args) builder.addArgs(a)
+      // for (a <- args) builder.addArgs(a)
       //for (o <- optargs) builder.addOptargs(o)
       builder.build()
 
 
     }
 
-    def ==(other: DataNum) = Eq(this, other)
+    def ==(other: Term) = Eq(this, other)
 
-    def !=(other: DataNum) = Ne(this, other)
+    def !=(other: Term) = Ne(this, other)
 
-    def <(other: DataNum) = Lt(this, other)
+    def <(other: Term) = Lt(this, other)
 
-    def <=(other: DataNum) = Le(this, other)
+    def <=(other: Term) = Le(this, other)
 
-    def >(other: DataNum) = Gt(this, other)
+    def >(other: Term) = Gt(this, other)
 
-    def >=(other: DataNum) = Ge(this, other)
+    def >=(other: Term) = Ge(this, other)
 
-    def ~(other: DataNum) = Not(this)
+    def ~(other: Term) = Not(this)
 
-    def +(other: DataNum) = Add(this, other)
+    def +(other: Term) = Add(this, other)
 
-    def >+(other: DataNum) = Add(other, this)
+    def >+(other: Term) = Add(other, this)
 
-    def -(other: DataNum) = Sub(this, other)
+    def -(other: Term) = Sub(this, other)
 
-    def >-(other: DataNum) = Sub(other, this)
+    def >-(other: Term) = Sub(other, this)
 
-    def *(other: DataNum) = Mul(this, other)
+    def *(other: Term) = Mul(this, other)
 
-    def >*(other: DataNum) = Mul(other, this)
+    def >*(other: Term) = Mul(other, this)
 
-    def /(other: DataNum) = Div(this, other)
+    def /(other: Term) = Div(this, other)
 
-    def >/(other: DataNum) = Div(other, this)
+    def >/(other: Term) = Div(other, this)
 
-    def %(other: DataNum) = Mod(this, other)
+    def %(other: Term) = Mod(this, other)
 
-    def >%(other: DataNum) = Mod(other, this)
+    def >%(other: Term) = Mod(other, this)
 
-    def &(other: DataNum) = All(this, other)
+    def &(other: Term) = All(this, other)
 
-    def &&(other: DataNum) = All(other, this)
+    def &&(other: Term) = All(other, this)
 
-    def &>(other: DataNum) = this && other
+    def &>(other: Term) = this && other
 
     // or
-    def |(other: DataNum) = RAny(this, other)
+    def |(other: Term) = RAny(this, other)
 
     // right or
-    def >|(other: DataNum) = RAny(other, this)
+    def >|(other: Term) = RAny(other, this)
 
     def contains(attr: Seq[Any]) = Contains(this, attr)
 
@@ -141,157 +149,196 @@ object Ast {
 
   sealed trait MethodTerm extends Composable
 
-  sealed trait ExprWrap;
+  sealed trait ExprWrap
 
+  sealed trait Datum extends Term with ExprWrap with Composable {
 
-  case class DataNum(data: Any) extends TermBase with ExprWrap with Composable {
-
-
-    override def compile(term: Term): Term = {
+    override def compile(term: p.Term): p.Term = {
       val builder = term.toBuilder
-
-      val datumBuilder = builder.getDatumBuilder
-
-      data match {
-        case None =>
-        case b: Boolean => datumBuilder.setType(Datum.DatumType.R_BOOL).setRBool(b)
-        case i@(Int | Float | Long) => datumBuilder.setType(Datum.DatumType.R_NUM).setRNum(i match {
-          case a: Int => a.toDouble
-          case b: Float => b.toDouble
-
-          case c: Long => c.toDouble
-        })
-        case s: String => datumBuilder.setType(Datum.DatumType.R_STR).setRStr(s)
-        case _ => throw new RuntimeException("Cannot build a query")
-
-      }
+      build(builder.getDatumBuilder)
 
       builder.build()
     }
 
-    def termType = Term.TermType.DATUM
+    def termType = p.Term.TermType.DATUM
 
-    override def compose(args: Seq[TermBase], optargs: Map[String, TermBase]) = data.toString
+    def build(builder: p.Datum.Builder): p.Datum.Builder
+  }
+
+  case class StringDatum(value: String) extends Datum {
+    protected def build(builder: p.Datum.Builder): p.Datum.Builder = {
+      builder.setType(p.Datum.DatumType.R_STR).setRStr(value)
+    }
+  }
+
+  class NoneDatum extends Datum {
+
+
+    def build(builder: p.Datum.Builder): p.Datum.Builder = {
+      builder
+    }
+  }
+
+  case class BooleanDatum(value: Boolean) extends Datum {
+
+
+    def build(builder: p.Datum.Builder) {
+      builder.setType(p.Datum.DatumType.R_BOOL).setRBool(value)
+    }
+  }
+
+  case class NumberDatum(value: Double) extends Datum {
+    def build(builder: p.Datum.Builder) = {
+
+      builder.setType(p.Datum.DatumType.R_NUM).setRNum(value)
+    }
+  }
+
+  case class StringDatum(value: String) extends Datum {
+    def build(builder: p.Datum.Builder) = {
+
+      builder.setType(p.Datum.DatumType.R_STR).setRStr(value)
+    }
   }
 
 
-  case class MakeArray(args: Seq[Any]) extends TermBase(args) with Composable {
-    def termType = Term.TermType.MAKE_ARRAY
+  case class MakeArray(array: Array[Any]) extends Term with Composable {
+    lazy val args = buildArgs(for (a <- array) yield a)
+
+    def termType = p.Term.TermType.MAKE_ARRAY
 
 
     // do
-    // def ?(func: PartialFunction): TermBase = ???
-    override def compose(args: Seq[TermBase], optargs: Map[String, TermBase]) = super.compose(args, optargs)
+    // def ?(func: PartialFunction): Term = ???
+    override def compose(args: Seq[Term], optargs: Map[String, Term]) = super.compose(args, optargs)
   }
 
-  case class MakeObj(data: Map[String, Any]) extends TermBase(Seq.empty[Any], data) {
-    def termType = Term.TermType.MAKE_OBJ
-  }
+  case class MakeObj(data: Map[String, Any]) extends Term {
+    lazy val optargs = buildOptArgs(data)
 
-
-  case class Var(name: String) extends TermBase(Seq(name)) {
-    def termType = Term.TermType.VAR
-  }
-
-  case class JavaScript(code: String) extends TermBase(Seq(code)) {
-    def termType = Term.TermType.JAVASCRIPT
-  }
-
-  case class UserError(error: String) extends TermBase(Seq(error)) {
-    def termType = Term.TermType.ERROR
-  }
-
-  class ImplicitVar extends TermBase with Composable {
-    def termType = Term.TermType.IMPLICIT_VAR
+    def termType = p.Term.TermType.MAKE_OBJ
   }
 
 
-  abstract class BiOperationTerm(left: TermBase, right: TermBase) extends TermBase(Seq(left, right)) with BiOpTerm
+  case class Var(name: String) extends Term {
+    lazy val args = buildArgs(name)
 
-  case class Eq(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.EQ
+    def termType = p.Term.TermType.VAR
   }
 
-  case class Ne(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.NE
+  case class JavaScript(code: String) extends Term(Seq(code)) {
+    def termType = p.Term.TermType.JAVASCRIPT
   }
 
-  case class Lt(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.LT
+  case class UserError(error: String) extends Term(Seq(error)) {
+    def termType = p.Term.TermType.ERROR
   }
 
-  case class Le(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.LE
-  }
-
-  case class Gt(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.GT
+  class ImplicitVar extends Term with Composable {
+    def termType = p.Term.TermType.IMPLICIT_VAR
   }
 
 
-  case class Ge(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.GE
+  abstract class BiOperationTerm(left: Term, right: Term) extends Term with BiOpTerm {
+    lazy val args = buildArgs(left, right)
   }
 
-  case class Not(prev: TermBase) extends TermBase(Seq(prev)) with Composable {
-    def termType = Term.TermType.NOT
+  case class Eq(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.EQ
   }
 
-  case class Add(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.ADD
+  case class Ne(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.NE
   }
 
-  case class Sub(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.SUB
+  case class Lt(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.LT
   }
 
-  case class Mul(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.MUL
+  case class Le(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.LE
   }
 
-  case class Div(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.DIV
-  }
-
-  case class Mod(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.MOD
-  }
-
-  case class Append(array: Array[Any], other: DataNum) extends TermBase(Seq(array, other)) {
-    def termType = Term.TermType.APPEND
-  }
-
-  case class Slice(target: TermBase, left: Int, right: Int) extends TermBase(Seq(target, left, right)) {
-    def termType = Term.TermType.SLICE
-  }
-
-  case class Skip(target: TermBase, amount: Int) extends TermBase(Seq(target, amount)) with MethodTerm {
-    def termType = Term.TermType.SKIP
+  case class Gt(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.GT
   }
 
 
-  case class Contains(target: TermBase, attributes: Seq[Any]) extends TermBase(Seq(target, attributes)) {
-    def termType = Term.TermType.CONTAINS
+  case class Ge(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.GE
+  }
+
+  case class Not(prev: Term) extends Term with Composable {
+    lazy val args = buildArgs(prev)
+
+    def termType = p.Term.TermType.NOT
+  }
+
+  case class Add(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.ADD
+  }
+
+  case class Sub(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.SUB
+  }
+
+  case class Mul(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.MUL
+  }
+
+  case class Div(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.DIV
+  }
+
+  case class Mod(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.MOD
+  }
+
+  case class Append(array: Array[Any], other: Term) extends Term {
+    lazy val args = buildArgs(array, other)
+
+    def termType = p.Term.TermType.APPEND
+  }
+
+  case class Slice(target: Term, left: Int, right: Int) extends Term {
+    lazy val args = buildArgs(target, left, right)
+
+    def termType = p.Term.TermType.SLICE
+  }
+
+  case class Skip(target: Term, amount: Int) extends Term with MethodTerm {
+    lazy val args = buildArgs(target, amount)
+
+    def termType = p.Term.TermType.SKIP
   }
 
 
-  case class All(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.ALL
+  case class Contains(target: Term, attributes: Seq[Any]) extends Term {
+    lazy val args = buildArgs(target, attributes)
+
+    def termType = p.Term.TermType.CONTAINS
   }
 
-  case class RAny(left: TermBase, right: TermBase) extends BiOperationTerm(left, right) {
-    def termType = Term.TermType.ANY
+
+  case class All(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.ALL
+  }
+
+  case class RAny(left: Term, right: Term) extends BiOperationTerm(left, right) {
+    def termType = p.Term.TermType.ANY
   }
 
 
-  case class DB(name: String) extends TermBase(Seq(name)) {
-    def termType = Term.TermType.DB
+  case class DB(name: String) extends Term {
+    lazy val args = buildArgs(name)
 
-    def table_create(name: String, primaryKey: String , dataCenter: String , cacheSize: Int ) {
+    def termType = p.Term.TermType.DB
+
+    def table_create(name: String, primaryKey: Option[String], dataCenter: Option[String], cacheSize: Option[Int]) {
       TableCreate(name, primaryKey, dataCenter, cacheSize)
     }
 
-    def ^^(name: String, primaryKey: String, dataCenter: String , cacheSize: Int) = this table_create(name, primaryKey, dataCenter, cacheSize)
+    def ^^(name: String, primaryKey: Option[String], dataCenter: Option[String], cacheSize: Option[Int]) = this table_create(name, primaryKey, dataCenter, cacheSize)
 
 
     def table_drop(name: String) = TableDrop(name)
@@ -306,31 +353,42 @@ object Ast {
   }
 
 
-  case class Insert(records: Seq[Map[String, Any]], upsert: Boolean=false) extends TermBase(records, Map("upsert" -> upsert)) {
-    def termType = Term.TermType.INSERT
+  case class Insert(records: Seq[Map[String, Any]], upsert: Option[Boolean] = None) extends Term {
+    lazy val args = buildArgs(records)
+    lazy val optargs = buildOptArgs(Map("upsert" -> upsert))
+
+    def termType = p.Term.TermType.INSERT
   }
 
-  case class Get(key: String) extends TermBase(Seq(key)) {
-    def termType = Term.TermType.GET
+  case class Get(key: String) extends Term {
+    lazy val args = buildArgs(key)
+
+    def termType = p.Term.TermType.GET
   }
 
-  case class TableCreate(name: String, primaryKey: String, dataCenter: String, cacheSize: Int)
-    extends TermBase(
-      Seq.empty[Any],
-      Map("name" -> name, "primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize)) {
-    def termType = Term.TermType.TABLE_CREATE
+  case class TableCreate(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) extends Term {
+
+    lazy val args = buildArgs(name)
+    lazy val optargs = buildOptArgs(Map("name" -> name, "primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize))
+
+    def termType = p.Term.TermType.TABLE_CREATE
   }
 
-  case class TableDrop(name: String) extends TermBase(Seq(name)) with MethodTerm {
-    def termType = Term.TermType.TABLE_DROP
+  case class TableDrop(name: String) extends Term with MethodTerm {
+    lazy val args = buildArgs(name)
+
+    def termType = p.Term.TermType.TABLE_DROP
   }
 
-  case class TableList(db: DB) extends TermBase(Seq(db)) with MethodTerm {
-    def termType = Term.TermType.TABLE_LIST
+  case class TableList(db: DB) extends Term(Seq(db)) with MethodTerm {
+    def termType = p.Term.TermType.TABLE_LIST
   }
 
-  case class Table(name: String, useOutDated: Boolean = false) extends TermBase(Seq(name), Map("use_outdated" -> useOutDated)) with MethodTerm {
-    def termType = Term.TermType.TABLE
+  case class Table(name: String, useOutDated: Option[Boolean] = None) extends Term with MethodTerm {
+    lazy val args = buildArgs(name)
+    lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
+
+    def termType = p.Term.TermType.TABLE
 
     def insert(records: Seq[Map[String, Any]], upsert: Boolean = false) = Insert(records, upsert)
 

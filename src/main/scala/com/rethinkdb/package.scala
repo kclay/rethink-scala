@@ -1,5 +1,7 @@
 package com
 
+import rethinkdb.Ast.{BooleanDatum, NumberDatum}
+
 /**
  * Created by IntelliJ IDEA.
  * User: Keyston
@@ -8,16 +10,21 @@ package com
  */
 package object rethinkdb {
 
-  import com.rethinkdb.Ast.DataNum
 
-  implicit def boolToDataNum(b: Boolean): DataNum = DataNum(b)
+  implicit def boolToDataNum(b: Boolean) = BooleanDatum(b)
 
-  implicit def intToDataNum(i: Int) = DataNum(i)
+  implicit def intToDatNum(i: Int) = NumberDatum(i)
 
-  implicit def longToDataNum(l: Long) = DataNum(l)
+  implicit def longToDatNum(l: Long) = NumberDatum(l)
 
-  implicit def floatToDataNum(f: Float) = DataNum(f)
+  implicit def floatToDatNum(f: Float) = NumberDatum(f)
 
-  implicit def stringToDataNum(s: String) = DataNum(s)
+  implicit def bool2Option(value: Boolean) = Some(value)
+
+  implicit def string2Option(value: String) = Some(value)
+
+  implicit def int2Option(value: Int) = Some(value)
+
+  //implicit def stringToDatNum(s: String) = Datum(s)
 
 }
