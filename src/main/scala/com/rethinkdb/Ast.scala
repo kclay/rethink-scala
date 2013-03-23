@@ -270,6 +270,7 @@ object Ast {
     override def optArgsBuilder(key:String,value:Any):AssocPairToken =  DatumAssocPairToken(key,value)
 
     def termType:TokenType = p.Term.TermType.DATUM
+    def datumType:TokenType
 
     def build(builder: p.Datum.Builder): p.Datum.Builder
   }
@@ -293,7 +294,7 @@ object Ast {
   }
   class NoneDatum extends Datum {
 
-    override def termType:TokenType = p.Datum.DatumType.R_NULL
+    def datumType:TokenType = p.Datum.DatumType.R_NULL
     def build(builder: p.Datum.Builder) ={
       builder
     }
@@ -301,14 +302,14 @@ object Ast {
 
   case class BooleanDatum(value: Boolean) extends Datum {
 
-    override def termType:TokenType = p.Datum.DatumType.R_BOOL
+    def datumType:TokenType = p.Datum.DatumType.R_BOOL
     def build(builder: p.Datum.Builder) ={
       builder.setType(p.Datum.DatumType.R_BOOL).setRBool(value)
     }
   }
 
   case class NumberDatum(value: Double) extends Datum {
-    override def termType:TokenType = p.Datum.DatumType.R_NUM
+    def datumType:TokenType = p.Datum.DatumType.R_NUM
     def build(builder: p.Datum.Builder) = {
 
       builder.setType(p.Datum.DatumType.R_NUM).setRNum(value)
@@ -325,9 +326,11 @@ object Ast {
   //case class ArrayDatum(value:Seq[Any]) extends
 
 
+
   case class MakeArray(array: Seq[Any]) extends Term with Composable {
     override lazy val args = buildArgs(array: _*)
 
+   // def datumTermType:TokenType=p.Datum
     def termType:TokenType = p.Term.TermType.MAKE_ARRAY
 
 
@@ -460,7 +463,7 @@ object Ast {
     def termType:TokenType = p.Term.TermType.DB
 
     def table_create(name: String, primaryKey: Option[String]=None, dataCenter: Option[String]=None, cacheSize: Option[Int]=None)= {
-      TableCreate(this,name, primaryKey, dataCenter, cacheSize)
+      TableCreate(name, primaryKey, dataCenter, cacheSize,Some(this))
     }
 
     def ^^(name: String, primaryKey: Option[String], dataCenter: Option[String], cacheSize: Option[Int]) = this table_create(name, primaryKey, dataCenter, cacheSize)
@@ -470,7 +473,7 @@ object Ast {
 
     def ^-(name: String) = this table_drop (name)
 
-    def table(name: String, useOutDated: Boolean = false) = Table(this,name, Some(useOutDated))
+    def table(name: String, useOutDated: Boolean = false) = Table(name, Some(useOutDated),Some(this))
 
     def ^(name: String, useOutDated: Boolean = false) = this table(name, useOutDated)
 
@@ -492,7 +495,7 @@ object Ast {
     def termType:TokenType = p.Term.TermType.GET
   }
 
-  case class TableCreate(db:DB,name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) extends Term {
+  case class TableCreate(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None,db:Option[DB]=None) extends Term {
 
     override lazy val args = buildArgs(db,name)
     override lazy val optargs = buildOptArgs(Map("name" -> name, "primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize))
@@ -511,7 +514,7 @@ object Ast {
     def termType:TokenType = p.Term.TermType.TABLE_LIST
   }
 
-  case class Table(db:DB,name: String, useOutDated: Option[Boolean] = None) extends Term with MethodTerm {
+  case class Table(name: String, useOutDated: Option[Boolean] = None,db:Option[DB]=None) extends Term with MethodTerm {
     override lazy val args = buildArgs(name)
     override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
 

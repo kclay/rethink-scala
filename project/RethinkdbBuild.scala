@@ -25,7 +25,8 @@ object RethinkdbBuild extends Build {
       //addProtocCompatibility,
       libraryDependencies ++= Seq(
         "org.scalatest" %% "scalatest" % "1.9.1" % "test",
-        "com.google.protobuf" % "protobuf-java" % "2.5.0"
+        "com.google.protobuf" % "protobuf-java" % "2.5.0",
+        "io.netty" % "netty"%"3.6.3.Final"
         // "net.sandrogrzicic" %% "scalabuff-runtime" % scalaBuffVersion
       )
     )

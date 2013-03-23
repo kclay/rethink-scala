@@ -67,7 +67,7 @@ case class Tree(term: Term) {
     def ++() = this + 1
     def +++()=this + 2
 
-    def +>(extra:Int)=copy(amount + 2 + extra)
+    //def +>(extra:Int)=copy(amount + 2 + extra)
 
 
     def -(remove: Int) = copy(amount - remove)
@@ -114,31 +114,45 @@ case class Tree(term: Term) {
 
       }
       case a:MakeArray=>{
-        write(a.termType,indent)
-        write(a.args,indent)
+        write(a.termType,indent+++)
+        writer << line
+        write(a.args,indent+++)
+      }
+      case m:MakeObj=>{
+        write(m.termType,indent+++)
+        writer<<line
+        write(m.optargs,indent+++)
       }
       case o:OptArgs=>{
-        var offset = writer <<indent+"optargs = ["
-        for((p,index)<-o.optargs.zipWithIndex) write(p, indent +++, index != 0)
+        if(o.optargs.nonEmpty){
+          val offset = writer <<"optargs = ["
+          for((p,index)<-o.optargs.zipWithIndex) write(p, indent, index != 0)
+        }
 
 
 
         writer<<"];"+line
       }
       case a:Args=>{
-        val offset = writer << "args = ["
-        for ((term, index) <- a.args.zipWithIndex) write(term, indent + offset, index != 0)
-        writer<<indent+offset+"];"+line
+        if(a.args.nonEmpty){
+          val offset = writer << "args = ["
+          for ((term, index) <- a.args.zipWithIndex) {
+            if(index !=0) writer<<","+line
+            write(term, indent + offset, index != 0)
+          }
+          writer<<"];"+line
+        }
       }
       case t:TokenType=>  {
         writer << s"type = ${t.name};"
       }
       case d:Datum=>{
 
-        writer<< "type = R_DATUM;"+line
+        write(d.termType,indent+++)
+        writer<< line
 
         writer << (indent+++) + "r_datnum = Datnum { "
-        write(d.termType,indent+++)
+        write(d.datumType)
         writer << (d match {
           case b: BooleanDatum => s" r_bool = ${b.value};"
           case n: NumberDatum => s" r_num = ${n.value};"
@@ -153,7 +167,7 @@ case class Tree(term: Term) {
         write(t.termType, indent +++)
         writer <<   line
         write(t.args, indent +++)
-        write(t.optargs,indent )
+        write(t.optargs,indent +++)
 
 
         writer << indent+offset + "}"
@@ -190,7 +204,7 @@ case class Tree(term: Term) {
         val offset = writer << "args = ["
         for ((term, index) <- args.args.zipWithIndex) write(term, indent + offset, index != 0)
       }  */
-      case _=> writer <<"_blank_"
+      case _=>
     }
     if(isTermBlock) writer<<(indent+++)+"}"
   }
