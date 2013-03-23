@@ -11,6 +11,7 @@ package com.rethinkdb.utils
 import com.rethinkdb.Ast._
 import ql2.{Ql2 => p}
 import com.rethinkdb.Tokens._
+import com.rethinkdb.Conversions._
 
 
 trait Writer {

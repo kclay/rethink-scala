@@ -11,6 +11,35 @@ import ql2.{Ql2 => p}
  * Time: 12:06 PM 
  */
 
+object Conversions{
+  import Tokens._
+  import Ast.{Term,DB}
+
+  implicit def termType2TokenType(termType:p.Term.TermType):TermTokenType = TermTokenType(termType)
+  implicit def termTokenType2TermType(token:TermTokenType):p.Term.TermType = token.termType
+
+  implicit def datumType2TokenType(datumType:p.Datum.DatumType):DatumTokenType = DatumTokenType(datumType)
+  implicit def datumTokenType2DatumType(token:DatumTokenType):p.Datum.DatumType = token.datumType
+
+  implicit def args2Token(args:Iterable[Token]):Args = Args(args)
+
+  implicit def optArgs2Token(optargs:Iterable[AssocPairToken]) = OptArgs(optargs)
+  implicit def termBaseToTerm(base: Term): p.Term = {
+      val builder = p.Term.newBuilder()
+      base.compile(builder)
+      builder.build()
+
+
+    }
+
+    implicit def optargToAssocPair(i: (String, Term)): p.Term.AssocPair = {
+
+      p.Term.AssocPair.newBuilder().setKey(i._1).setVal(i._2).build()
+    }
+    implicit def dbToQueryAssocPair(db:DB):p.Query.AssocPair={
+      p.Query.AssocPair.newBuilder().setKey("db").setVal(db).build
+    }
+}
 object Tokens{
 
   sealed trait Token
@@ -62,7 +91,11 @@ object Tokens{
 
     private lazy val builder=new Builder{
 
-      val get = p.Term.AssocPair.newBuilder.setKey(key).setVal(token.compile().asInstanceOf[p.Term]).build
+      val get = {
+        val term=p.Term.newBuilder
+        token.compile(term)
+        p.Term.AssocPair.newBuilder.setKey(key).setVal(term.build).build
+      }
     }
     def unwrap:p.Term.AssocPair = pair.asInstanceOf[p.Term.AssocPair]
     def pair:T = builder.get.asInstanceOf[T]
@@ -74,8 +107,10 @@ object Tokens{
     type T = p.Datum.AssocPair
 
     private lazy val builder=new Builder{
+      val term=p.Term.newBuilder
+      token.compile(term)
 
-      val get = p.Datum.AssocPair.newBuilder.setKey(key).setVal(token.compile().asInstanceOf[p.Datum]).build
+      val get = p.Datum.AssocPair.newBuilder.setKey(key).setVal(p.Datum.newBuilder.build).build
     }
     def unwrap:p.Datum.AssocPair = pair.asInstanceOf[p.Datum.AssocPair]
     def pair:T = builder.get.asInstanceOf[T]
@@ -87,21 +122,14 @@ object Tokens{
   // implicit def tokenTypeToTermType(tokenType:Either[p.Term.TermType,p.Datum.DatumType]):p.Term.TermType =tokenType.left
 
 
-  implicit def termType2TokenType(termType:p.Term.TermType):TermTokenType = TermTokenType(termType)
-  implicit def termTokenType2TermType(token:TermTokenType):p.Term.TermType = token.termType
 
-  implicit def datumType2TokenType(datumType:p.Datum.DatumType):DatumTokenType = DatumTokenType(datumType)
-  implicit def datumTokenType2DatumType(token:DatumTokenType):p.Datum.DatumType = token.datumType
-
-  implicit def args2Token(args:Iterable[Token]):Args = Args(args)
-
-  implicit def optArgs2Token(optargs:Iterable[AssocPairToken]) = OptArgs(optargs)
 }
 
 object Ast {
 
 
   import com.rethinkdb.Tokens._
+  import com.rethinkdb.Conversions._
 
   trait Composable {
     def compose(args: Seq[Term], optargs: Map[String, Term]) = {
@@ -171,30 +199,21 @@ object Ast {
 
     def termType: TokenType
 
+
     def run() = {
 
       None
     }
 
-    implicit def termBaseToTerm(base: Term): p.Term = {
 
-      base.compile(Some(p.Term.newBuilder().build()))
-
-
-    }
-
-    implicit def optargToAssocPair(i: (String, Term)): p.Term.AssocPair = {
-
-      p.Term.AssocPair.newBuilder().setKey(i._1).setVal(i._2).build()
-    }
 
     type TermType = p.Term.TermType
-    def compile(term: Option[p.Term]=None): p.Term = {
-      val builder = term.map(_.toBuilder).getOrElse(p.Term.newBuilder())
-        .setType(termType.value.asInstanceOf[TermType])
+    def compile(builder:p.Term.Builder)= {
+
+     builder.setType(termType.value.asInstanceOf[TermType])
      for (a <- args) builder.addArgs(a)
-    // for (o <- optargs) builder.addOptargs(o)
-      builder.build()
+      //for (o <- optargs) builder.addOptargs(o)
+     // builder.build()
 
 
 
@@ -261,18 +280,18 @@ object Ast {
 
   sealed trait Datum extends Term with ExprWrap with Composable {
 
-    override def compile(term:Option[p.Term]=None ): p.Term = {
-      val builder = term.get.toBuilder
+    override def compile(builder:p.Term.Builder) = {
+
       build(builder.getDatumBuilder)
 
-      builder.build()
+
     }
     override def optArgsBuilder(key:String,value:Any):AssocPairToken =  DatumAssocPairToken(key,value)
 
     def termType:TokenType = p.Term.TermType.DATUM
     def datumType:TokenType
 
-    def build(builder: p.Datum.Builder): p.Datum.Builder
+    def build(builder: p.Datum.Builder)
   }
   object Datum{
 
@@ -294,22 +313,22 @@ object Ast {
   }
   class NoneDatum extends Datum {
 
-    def datumType:TokenType = p.Datum.DatumType.R_NULL
+    def datumType:DatumTokenType = p.Datum.DatumType.R_NULL
     def build(builder: p.Datum.Builder) ={
-      builder
+
     }
   }
 
   case class BooleanDatum(value: Boolean) extends Datum {
 
-    def datumType:TokenType = p.Datum.DatumType.R_BOOL
+    def datumType:DatumTokenType = p.Datum.DatumType.R_BOOL
     def build(builder: p.Datum.Builder) ={
       builder.setType(p.Datum.DatumType.R_BOOL).setRBool(value)
     }
   }
 
   case class NumberDatum(value: Double) extends Datum {
-    def datumType:TokenType = p.Datum.DatumType.R_NUM
+    def datumType:DatumTokenType = p.Datum.DatumType.R_NUM
     def build(builder: p.Datum.Builder) = {
 
       builder.setType(p.Datum.DatumType.R_NUM).setRNum(value)
