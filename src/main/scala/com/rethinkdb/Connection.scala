@@ -19,24 +19,36 @@ import java.net.InetSocketAddress
  * Time: 12:25 PM 
  */
 
-case class Connection(host:String="localhost",port:Int=28015,db:Either[String,DB]=Left("test")) {
+object Connection{
+
+  lazy val defaultConnection = Connection
+
+
+}
+class Connection(host:String="localhost",port:Int=28015) {
 
   import com.rethinkdb.Conversions._
+
+  private var db:DB=DB("test")
+ /*
   private var _db:DB = db match{
     case Left(name:String)=>DB(name)
     case Right(b:DB)=>b
   }
+  */
   private val token:AtomicLong = new AtomicLong()
 
   lazy val socket = Socket(host,port)
-  def _query(term:Term)={
+
+
+  def ?(term:Term)={
 
     val query = p.Query.newBuilder()
     query.setType(p.Query.QueryType.START).setToken(token.incrementAndGet())
 
     // TODO : Support global args but for now just set the `db`
 
-    query.addGlobalOptargs(_db)
+    query.addGlobalOptargs(db)
 
 
     term.compile(query.getQueryBuilder)

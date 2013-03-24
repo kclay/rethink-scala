@@ -191,7 +191,7 @@ object Ast {
     lazy val optargs = Iterable.empty[AssocPairToken]
 
 
-    protected def buildOptArgs(optargs: Map[String, Any]):Iterable[AssocPairToken] = optargs.filter(_._2 != None) collect {
+    protected def buildOptArgs(optargs: Map[String, Any]):Iterable[AssocPairToken] = optargs.filter(_._2 ==None) collect {
       case (key: String, value: Any) =>  optArgsBuilder (key,value)
     }
     def optArgsBuilder(key:String,value:Any):AssocPairToken =  TermAssocPairToken(key,value)
@@ -200,6 +200,9 @@ object Ast {
     def termType: TokenType
 
 
+    def !(connection:Connection)={
+      connection ? this
+    }
     def run() = {
 
       None
@@ -516,7 +519,7 @@ object Ast {
 
   case class TableCreate(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None,db:Option[DB]=None) extends Term {
 
-    override lazy val args = buildArgs(db,name)
+    override lazy val args = buildArgs(name)
     override lazy val optargs = buildOptArgs(Map("name" -> name, "primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize))
 
     def termType:TokenType = p.Term.TermType.TABLE_CREATE
@@ -529,7 +532,7 @@ object Ast {
   }
 
   case class TableList(db: DB) extends Term with MethodTerm {
-    override lazy val args=buildArgs(db)
+    //override lazy val args=buildArgs(db)
     def termType:TokenType = p.Term.TermType.TABLE_LIST
   }
 
