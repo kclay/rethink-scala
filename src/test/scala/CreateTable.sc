@@ -9,11 +9,16 @@ import scala.concurrent._
 
 import com.rethinkdb.Ast._
 import com.rethinkdb.Connection
-val db=DB("foo")
-val connection=new Connection()
-val future = TableCreate("bar") ! connection
+import ql2.{Ql2 => p}
 
+val db = DB("foo")
+val connection = new Connection("172.16.2.45")
+/*
+val builder= p.Term.newBuilder()
+create.compile(builder)
+builder.build()  */
+val future = db.table_create("bar") ! connection
 
-val response = blocking(future)
-response
+blocking(future)
+
 

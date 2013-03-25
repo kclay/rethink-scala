@@ -1,8 +1,8 @@
 package com.rethinkdb
 
-import com.rethinkdb.Ast.{Term, DB}
+import com.rethinkdb.Ast.{WithDB, Term, DB}
 import netty.Socket
-import ql2.{Ql2=>p}
+import ql2.{Ql2 => p}
 
 import concurrent.Future
 import java.util.concurrent.atomic.AtomicLong
@@ -19,36 +19,39 @@ import java.net.InetSocketAddress
  * Time: 12:25 PM 
  */
 
-object Connection{
+object Connection {
 
   lazy val defaultConnection = Connection
 
 
 }
-class Connection(host:String="localhost",port:Int=28015) {
+
+class Connection(host: String = "localhost", port: Int = 28015) {
 
   import com.rethinkdb.Conversions._
 
-  private var db:DB=DB("test")
- /*
-  private var _db:DB = db match{
-    case Left(name:String)=>DB(name)
-    case Right(b:DB)=>b
-  }
-  */
-  private val token:AtomicLong = new AtomicLong()
+  private var db: DB = DB("test")
+  /*
+   private var _db:DB = db match{
+     case Left(name:String)=>DB(name)
+     case Right(b:DB)=>b
+   }
+   */
+  private val token: AtomicLong = new AtomicLong()
 
-  lazy val socket = Socket(host,port)
+  lazy val socket = Socket(host, port)
 
 
-  def ?(term:Term)={
+  def ?(term: Term) = {
 
     val query = p.Query.newBuilder()
     query.setType(p.Query.QueryType.START).setToken(token.incrementAndGet())
 
     // TODO : Support global args but for now just set the `db`
+    if (term.isInstanceOf[WithDB]) {
+      term.asInstanceOf[WithDB].scopedDB.map(query.addGlobalOptargs(_))
+    }
 
-    query.addGlobalOptargs(db)
 
 
     term.compile(query.getQueryBuilder)
