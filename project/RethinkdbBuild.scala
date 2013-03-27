@@ -23,12 +23,15 @@ object RethinkdbBuild extends Build {
 
       // it's not possible to generate both java and scala sources due to a "bug" in ScalaBuff.
       //addProtocCompatibility,
-      libraryDependencies ++= Seq(
+      libraryDependencies <++=(scalaVersion)(sv=> Seq(
         "org.scalatest" %% "scalatest" % "1.9.1" % "test",
         "com.google.protobuf" % "protobuf-java" % "2.5.0",
-        "io.netty" % "netty"%"3.6.3.Final"
+        "io.netty" % "netty"%"3.6.3.Final",
+        "org.scala-lang" % "scala-reflect" % sv
         // "net.sandrogrzicic" %% "scalabuff-runtime" % scalaBuffVersion
-      )
+      ))
     )
-  ) //.configs(ScalaBuff)
+  )//.configs(ScalaBuff)
+
+  lazy val connectionPool =uri("git://github.com/jamesgolick/scala-connection-pool.git")
 }

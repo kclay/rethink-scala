@@ -523,13 +523,13 @@ object Ast {
   }
 
   case class Pluck(target: Term, attributes: Seq[String]) extends MethodTerm {
-    override lazy val args = buildArgs(target, attributes: _*)
+    override lazy val args = buildArgs(target, attributes)
 
     def termType: TokenType = p.Term.TermType.PLUCK
   }
 
   case class Without(target: Term, attributes: Seq[String]) extends MethodTerm {
-    override lazy val args = buildArgs(target, attributes: _*)
+    override lazy val args = buildArgs(target, attributes)
 
     def termType: TokenType = p.Term.TermType.WITHOUT
   }
@@ -540,11 +540,6 @@ object Ast {
     def termType: TokenType = p.Term.TermType.MERGE
   }
 
-  case class Merge(other: Term) extends MethodTerm {
-    override lazy val args = buildArgs(other)
-
-    def termType: TokenType = p.Term.TermType.MERGE
-  }
 
 
   case class Between(start: Int, end: Int) extends MethodTerm {

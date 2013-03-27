@@ -6,15 +6,24 @@ import org.jboss.netty.bootstrap.ClientBootstrap
 import java.net.InetSocketAddress
 
 import org.jboss.netty.channel._
-import org.jboss.netty.handler.codec.protobuf.{ProtobufEncoder, ProtobufVarint32LengthFieldPrepender, ProtobufDecoder, ProtobufVarint32FrameDecoder}
-import ql2.Ql2.{Term, Datum, Query, Response}
+import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder                                 ,
+import ql2.Ql2.{ Query, Response,VersionDummy}
+import com.rethinkdb.Ast.Term
+import ql2.Ql2.Response.ResponseType._
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
-import java.lang.Object
-import com.google.protobuf.{ExtensionRegistry, MessageLite}
+import com.google.protobuf.MessageLite
 import org.jboss.netty.buffer.ChannelBuffers._
-import org.jboss.netty.channel.ChannelHandler.Sharable
-import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers, HeapChannelBufferFactory}
+import org.jboss.netty.buffer.{ChannelBuffer, HeapChannelBufferFactory}
 import java.nio.ByteOrder
+import com.rethinkdb.utils.{ConnectionFactory, SimpleConnectionPool}
+import concurrent._
+import org.jboss.netty.channel.Channels.pipeline
+
+import com.rethinkdb.Ast.Expr
+
+import com.rethinkdb.response.RethinkError
+import org.jboss.netty.channel.Channel
+import com.rethinkdb.netty.RethinkDBDecoder
 
 
 /**
@@ -24,21 +33,34 @@ import java.nio.ByteOrder
  * Time: 2:53 PM 
  */
 
-import org.jboss.netty.channel.Channels.pipeline
-import ql2.Ql2.VersionDummy
-import concurrent.{Promise, promise}
 
-case class Cursor(channel: Channel, query: Query, term: Term, completed: Boolean) {
+
+case class Cursor[T](channel: Channel, query: Query, term: Term,var chunks:Seq[T], completed: Boolean) {
 
 }
 
 class RethinkDBHandler extends SimpleChannelUpstreamHandler {
+  import com.rethinkdb.conversions.Java.toError
 
-  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext): Promise[AnyRef] = ctx.getAttachment.asInstanceOf[Promise[AnyRef]]
+  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext): Option[QueryToken] = Option(ctx.getAttachment.asInstanceOf[QueryToken])
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
+    ctx.map{
+     token =>{
+       val response = e.getMessage.asInstanceOf[Response]
 
-    ctx success (e.getMessage)
+       response.getType match{
+         case  r @(RUNTIME_ERROR |COMPILE_ERROR | CLIENT_ERROR)=>toError(response, token term)
+         case  s@(SUCCESS_PARTIAL| SUCCESS_SEQUENCE)=>Cursor(ctx.getChannel,token query,token term,for(d <- response.getResponseList) yield d,s == SUCCESS_SEQUENCE)
+
+
+       }
+
+       token success (e.getMessage)
+
+     }
+
+    }
 
   }
 
@@ -70,8 +92,7 @@ private class RethinkDBEncoder extends OneToOneEncoder {
         val size = q.getSerializedSize
         val b = buffer(ByteOrder.LITTLE_ENDIAN, size + 4)
         b.writeInt(size)
-        val s = q.toByteString
-        val bs = s.size()
+
         b.writeBytes(q.toByteArray)
         b
       }
@@ -81,6 +102,7 @@ private class RethinkDBEncoder extends OneToOneEncoder {
 }
 
 private class PipelineFactory extends ChannelPipelineFactory {
+  // stateless
   val defaultHandler = new RethinkDBHandler()
 
   def getPipeline: ChannelPipeline = {
@@ -96,35 +118,83 @@ private class PipelineFactory extends ChannelPipelineFactory {
   }
 }
 
-case class Socket(host: String, port: Int) {
 
-  lazy val channel = {
+private case class QueryToken(query:Query,term:Term,promise:Promise[AnyRef]){
+
+    def success(value:AnyRef)=promise success(value)
+    def failure(t:Throwable)= promise failure(t)
+}
+
+trait Socket[T]{
+  import ExecutionContext.Implicits.global
+  val host:String
+  val port:Int
+  val maxConnections:Int
+  lazy val bootstrap = {
     val factory =
       new NioClientSocketChannelFactory(
         Executors.newCachedThreadPool(),
         Executors.newCachedThreadPool())
 
-    val bootstrap = new ClientBootstrap(factory)
-    bootstrap.setPipelineFactory(new PipelineFactory())
-    bootstrap.setOption("tcpNoDelay", true)
-    bootstrap.setOption("keepAlive", true)
-    bootstrap.setOption("bufferFactory", new
+    val b = new ClientBootstrap(factory)
+    b.setPipelineFactory(new PipelineFactory())
+    b.setOption("tcpNoDelay", true)
+    b.setOption("keepAlive", true)
+    b.setOption("bufferFactory", new
         HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN));
-    val c = bootstrap.connect(new InetSocketAddress(host, port)).await().getChannel
-    c.write(VersionDummy.Version.V0_1).await()
-    c
+    b
+
 
   }
+  protected val channel=new SimpleConnectionPool(new ConnectionFactory[Channel] {
+    def create():Channel = {
+      val c = bootstrap.connect(new InetSocketAddress(host, port)).await().getChannel
+      c.write(VersionDummy.Version.V0_1).await()
+      c
+    }
 
-  def write(query: Query) = {
-    val channelFuture = channel.write(query)
-    // RethinkDBHandler.
+
+
+    def validate(connection: Channel): Boolean = {
+      connection.isOpen
+    }
+
+    def destroy(connection: Channel) {
+      connection.close()
+    }
+  }, max = maxConnections)
+
+  def write(query: Query,term:Term):T
+  protected def _write(query:Query,term:Term):Future[AnyRef] ={
     val p = promise[AnyRef]
     val f = p.future
+    // add this to a future
+    future{
+      channel(){
+        c =>
+          c.write(query)
+          val channelFuture = c.write(query)
+          // RethinkDBHandler.
 
-    channelFuture.getChannel.setAttachment(p)
+
+          channelFuture.getChannel.setAttachment(QueryToken(query,term,p))
+      }
+
+    }
     f
   }
-}
 
+
+
+}
+case class BlockingSocket(host:String,port:Int,maxConnections:Int = 5) extends Socket[AnyRef]{
+  def write(query: Query): AnyRef = {
+    blocking(_write(query))
+  }
+}
+case class AsyncSocket(host:String,port:Int,maxConnections:Int = 5) extends Socket[Future[AnyRef]]{
+    def write(query:Query)={
+        _write(query)
+    }
+}
 
