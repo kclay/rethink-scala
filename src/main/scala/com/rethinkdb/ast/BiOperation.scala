@@ -69,6 +69,7 @@ case class All(left: Term, right: Term) extends BiOperationTerm(left, right) {
   def termType: TokenType = p.Term.TermType.ALL
 }
 
+
 case class RAny(left: Term, right: Term) extends BiOperationTerm(left, right) {
   def termType: TokenType = p.Term.TermType.ANY
 }

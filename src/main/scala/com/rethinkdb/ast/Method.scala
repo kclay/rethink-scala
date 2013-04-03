@@ -45,19 +45,19 @@ case class GetAttr(target: Term, name: String) extends Term {
 }
 
 
-case class Contains(target: Term, attribute: String) extends Term {
+case class Contains(target: Term, attribute:Iterable[String]) extends Term {
   override lazy val args = buildArgs(target, attribute)
 
   def termType: TokenType = p.Term.TermType.CONTAINS
 }
 
-case class Pluck(target: Term, attributes: Seq[String]) extends MethodTerm {
+case class Pluck(target: Term, attributes: Iterable[String]) extends MethodTerm {
   override lazy val args = buildArgs(target, attributes)
 
   def termType: TokenType = p.Term.TermType.PLUCK
 }
 
-case class Without(target: Term, attributes: Seq[String]) extends MethodTerm {
+case class Without(target: Term, attributes: Iterable[String]) extends MethodTerm {
   override lazy val args = buildArgs(target, attributes)
 
   def termType: TokenType = p.Term.TermType.WITHOUT
@@ -75,9 +75,4 @@ case class Between(start: Int, end: Int) extends MethodTerm {
   override lazy val args = buildArgs(start, end)
 
   def termType: TokenType = p.Term.TermType.BETWEEN
-}
-case class Get(from: Term, attribute: String) extends Term {
-  override lazy val args = buildArgs(from, attribute)
-
-  def termType: TokenType = p.Term.TermType.GET
 }

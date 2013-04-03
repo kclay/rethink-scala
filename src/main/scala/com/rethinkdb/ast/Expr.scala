@@ -25,14 +25,14 @@ object Expr {
 
   def apply(value: Seq[Any]): Term = MakeArray(value)
 
-  def apply(value: Map[String, Any]): Term = MakeObj(value)
+  def apply(value: Map[String, Option[Any]]): Term = MakeObj(value)
 
   def apply(a: Any): Term = {
     val b = a
     a match {
       case t: Term => t
       case s: Seq[_] => MakeArray(s)
-      case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Any]])
+      case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
       case a: Any => Datum(a)
 
 

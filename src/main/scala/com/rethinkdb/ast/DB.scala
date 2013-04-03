@@ -22,18 +22,21 @@ case class DB(name: String) extends Term {
 
   def termType: TokenType = p.Term.TermType.DB
 
-  def table_create(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) = {
+
+
+
+  def newTable(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) = {
     TableCreate(this, name, primaryKey, dataCenter, cacheSize)
   }
 
-  def ^^(name: String, primaryKey: Option[String], dataCenter: Option[String], cacheSize: Option[Int]) = this table_create(name, primaryKey, dataCenter, cacheSize)
+  def ^^(name: String, primaryKey: Option[String], dataCenter: Option[String], cacheSize: Option[Int]) = this newTable(name, primaryKey, dataCenter, cacheSize)
 
 
-  def table_drop(name: String) = TableDrop(name)
+  def dropTable(name: String) = TableDrop(name)
 
-  def ^-(name: String) = this table_drop (name)
+  def ^-(name: String) = this dropTable (name)
 
-  def table(name: String, useOutDated: Boolean = false) = Table(name, Some(useOutDated), Some(this))
+  def table(name: String, useOutDated: Boolean = false) = Table(this,name, Some(useOutDated))
 
   def ^(name: String, useOutDated: Boolean = false) = this table(name, useOutDated)
 
@@ -43,9 +46,9 @@ case class DB(name: String) extends Term {
 // TODO FunCall
 
 
-case class Table(name: String, useOutDated: Option[Boolean] = None, db: Option[DB] = None) extends Term with MethodTerm with WithDB {
-  val scopedDB = db
-  override lazy val args = buildArgs(name)
+case class Table(db:DB,name: String, useOutDated: Option[Boolean] = None) extends Term with MethodTerm with WithDB {
+  val scopedDB = Some(db)
+  override lazy val args = buildArgs(db,name)
   override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
 
   def termType: TokenType = p.Term.TermType.TABLE
@@ -76,7 +79,7 @@ class DBList extends TopLevelTerm {
 case class TableCreate(db: DB, name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) extends Term {
   val scopedDB = Some(db)
   override lazy val args = buildArgs(db, name)
-  override lazy val optargs = buildOptArgs(Map("name" -> name, "primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize))
+  override lazy val optargs = buildOptArgs(Map( "primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize))
 
   def termType: TokenType = p.Term.TermType.TABLE_CREATE
 }
@@ -99,3 +102,10 @@ case class Insert(table: Table, records: Seq[Map[String, Any]], upsert: Option[B
 
   def termType: TokenType = p.Term.TermType.INSERT
 }
+
+/*
+case class SIndexCreate(table:Table,field:String) extends Term with MethodTerm {
+  //override lazy val args=buildArgs(db)
+  def termType: TokenType = p.Term.TermType
+}
+*/

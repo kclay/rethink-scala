@@ -1,6 +1,6 @@
 package com
 
-import rethinkdb.ast.{BooleanDatum, NumberDatum}
+import rethinkdb.ast.{Table, DB, BooleanDatum, NumberDatum}
 
 /**
  * Created by IntelliJ IDEA.
@@ -9,6 +9,7 @@ import rethinkdb.ast.{BooleanDatum, NumberDatum}
  * Time: 7:32 PM 
  */
 package object rethinkdb {
+
 
 
   implicit def boolToDataNum(b: Boolean) = BooleanDatum(b)
@@ -24,6 +25,14 @@ package object rethinkdb {
   implicit def string2Option(value: String) = Some(value)
 
   implicit def int2Option(value: Int) = Some(value)
+
+  implicit def string2DB(name:String):DB = DB(name)
+
+
+
+
+
+
 
   //implicit def stringToDatNum(s: String) = Datum(s)
 

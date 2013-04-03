@@ -1,5 +1,9 @@
 package com.rethinkdb.ast
 
+import com.rethinkdb.Term
+import ql2.{Ql2=>p}
+import com.rethinkdb.conversions.Tokens._
+
 /**
  * Created with IntelliJ IDEA.
  * User: keyston
@@ -7,6 +11,12 @@ package com.rethinkdb.ast
  * Time: 7:41 PM
  * To change this template use File | Settings | File Templates.
  */
+
+case class Get(from: Term, attribute: String) extends Term {
+  override lazy val args = buildArgs(from, attribute)
+
+  def termType: TokenType = p.Term.TermType.GET
+}
 class Functional {
 
 

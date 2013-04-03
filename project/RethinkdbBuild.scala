@@ -27,6 +27,7 @@ object RethinkdbBuild extends Build {
         "org.scalatest" %% "scalatest" % "1.9.1" % "test",
         "com.google.protobuf" % "protobuf-java" % "2.5.0",
         "io.netty" % "netty"%"3.6.3.Final",
+        "commons-pool"%"commons-pool" %"1.6",
         "org.scala-lang" % "scala-reflect" % sv
         // "net.sandrogrzicic" %% "scalabuff-runtime" % scalaBuffVersion
       ))

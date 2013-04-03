@@ -2,6 +2,7 @@ package com.rethinkdb
 
 import ql2.{Ql2=>p}
 import com.rethinkdb.ast._
+import com.rethinkdb.conversions.Tokens._
 
 
 trait Composable {
@@ -18,6 +19,12 @@ trait MethodTerm extends Term with Composable
 
 trait ExprWrap
 
+trait Produce[T]{
+  def produced:T
+}
+
+trait ProducesBoolean extends Produce[Boolean]
+
 
 
 trait Term extends TermBlock {
@@ -32,8 +39,8 @@ trait Term extends TermBlock {
   lazy val optargs = Iterable.empty[AssocPairToken]
 
 
-  protected def buildOptArgs(optargs: Map[String, Any]): Iterable[AssocPairToken] = optargs.filter(_._2 == None) collect {
-    case (key: String, value: Any) => optArgsBuilder(key, value)
+  protected def buildOptArgs(optargs: Map[String, Option[Any]]): Iterable[AssocPairToken] = optargs.filter(_._2.isDefined) collect {
+    case (key: String, value: Option[Any]) => optArgsBuilder(key, value.get)
   }
 
   def optArgsBuilder(key: String, value: Any): AssocPairToken = TermAssocPairToken(key, value)
@@ -54,29 +61,35 @@ trait Term extends TermBlock {
 
   type TermType = p.Term.TermType
 
+  def toTerm={
+    val builder = p.Term.newBuilder()
+    compile(builder)
+    builder.build()
+  }
+
   def compile(builder: p.Term.Builder):Unit = {
 
     builder.setType(termType.value.asInstanceOf[TermType])
-    //for (a <- args) builder.addArgs(a)
-    //for (o <- optargs) builder.addOptargs(o)
+    for (a <- args) builder.addArgs(a)
+    for (o <- optargs) builder.addOptargs(o)
     // builder.build()
 
 
   }
 
-  def ==(other: Term) = Eq(this, other)
+  def ==(other: Datum) = Eq(this, other)
 
-  def !=(other: Term) = Ne(this, other)
+  def !=(other: Datum) = Ne(this, other)
 
-  def <(other: Term) = Lt(this, other)
+  def <(other: Datum) = Lt(this, other)
 
-  def <=(other: Term) = Le(this, other)
+  def <=(other: Datum) = Le(this, other)
 
-  def >(other: Term) = Gt(this, other)
+  def >(other: Datum) = Gt(this, other)
 
-  def >=(other: Term) = Ge(this, other)
+  def >=(other: Datum) = Ge(this, other)
 
-  def ~(other: Term) = Not(this)
+  def ~(other: Datum) = Not(this)
 
   def +(other: Term) = Add(this, other)
 
@@ -110,6 +123,7 @@ trait Term extends TermBlock {
   // right or
   def >|(other: Term) = RAny(other, this)
 
-  def contains(attribute: String) = Contains(this, attribute)
+  def contains(attribute: String*) = Contains(this, attribute )
+  //slize http://stackoverflow.com/questions/3932582/slice-notation-in-scala
 
 }

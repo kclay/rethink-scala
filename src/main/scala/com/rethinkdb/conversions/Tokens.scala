@@ -1,10 +1,13 @@
 package com.rethinkdb.conversions
 
-import com.rethinkdb.ast.{DatumTokenType, TermTokenType,TokenType,Args,Token,AssocPairToken,OptArgs,DB}
+import com.rethinkdb.ast._
 import com.rethinkdb.Term
 import ql2.{Ql2=>p}
-
-
+import com.rethinkdb.ast.DatumTokenType
+import com.rethinkdb.ast.DB
+import com.rethinkdb.ast.Args
+import com.rethinkdb.ast.OptArgs
+import com.rethinkdb.ast.TermTokenType
 
 
 object Tokens  {
@@ -33,7 +36,14 @@ object Tokens  {
     builder.build()
 
 
+
+
     }
+
+  implicit  def termAssocPairToken2AssocPair(apt:AssocPairToken):p.Term.AssocPair={
+    apt.pair.asInstanceOf[p.Term.AssocPair]
+  }
+
 
     implicit def optargToAssocPair(i: (String, Term)): p.Term.AssocPair = {
 
