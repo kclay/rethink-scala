@@ -1,6 +1,10 @@
 package com
 
-import rethinkdb.ast.{Table, DB, BooleanDatum, NumberDatum}
+import rethinkdb.ast._
+import rethinkdb.ast.BooleanDatum
+import rethinkdb.ast.DB
+import rethinkdb.ast.NumberDatum
+import scala.Some
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,19 +16,20 @@ package object rethinkdb {
 
 
 
-  implicit def boolToDataNum(b: Boolean) = BooleanDatum(b)
+  implicit def boolToDataNum(b: Boolean):Datum = BooleanDatum(b)
 
-  implicit def intToDatNum(i: Int) = NumberDatum(i)
+  implicit def intToDatNum(i: Int):Datum = NumberDatum(i)
 
-  implicit def longToDatNum(l: Long) = NumberDatum(l)
+  implicit def longToDatNum(l: Long):Datum = NumberDatum(l)
 
-  implicit def floatToDatNum(f: Float) = NumberDatum(f)
+  implicit def floatToDatNum(f: Float):Datum = NumberDatum(f)
+  implicit  def string2DatNum(s:String):Datum = StringDatum(s)
 
-  implicit def bool2Option(value: Boolean) = Some(value)
+  implicit def bool2Option(value: Boolean):Option[Boolean] = Some(value)
 
-  implicit def string2Option(value: String) = Some(value)
+  implicit def string2Option(value: String):Option[String] = Some(value)
 
-  implicit def int2Option(value: Int) = Some(value)
+  implicit def int2Option(value: Int):Option[Int] = Some(value)
 
   implicit def string2DB(name:String):DB = DB(name)
 

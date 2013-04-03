@@ -77,6 +77,10 @@ trait Term extends TermBlock {
 
   }
 
+
+
+
+  implicit def term2DataNum(t:Term):Datum= t.asInstanceOf[Datum]
   def ==(other: Datum) = Eq(this, other)
 
   def !=(other: Datum) = Ne(this, other)
@@ -91,38 +95,37 @@ trait Term extends TermBlock {
 
   def ~(other: Datum) = Not(this)
 
-  def +(other: Term) = Add(this, other)
+  def +(other: Datum) = Add(this, other)
 
-  def >+(other: Term) = Add(other, this)
+  def >+(other: Datum) = Add(other, this)
 
-  def -(other: Term) = Sub(this, other)
+  def -(other: Datum) = Sub(this, other)
 
-  def >-(other: Term) = Sub(other, this)
+  def >-(other: Datum) = Sub(other, this)
 
-  def *(other: Term) = Mul(this, other)
+  def *(other: Datum) = Mul(this, other)
 
-  def >*(other: Term) = Mul(other, this)
+  def >*(other: Datum) = Mul(other, this)
 
-  def /(other: Term) = Div(this, other)
+  def /(other: Datum) = Div(this, other)
 
-  def >/(other: Term) = Div(other, this)
+  def >/(other: Datum) = Div(other, this)
 
-  def %(other: Term) = Mod(this, other)
+  def %(other: Datum) = Mod(this, other)
 
-  def >%(other: Term) = Mod(other, this)
+  def >%(other: Datum) = Mod(other, this)
 
-  def &(other: Term) = All(this, other)
+  def &(other: Datum) = All(this, other)
 
-  def &&(other: Term) = All(other, this)
+  def &&(other: Datum) = All(other, this)
 
-  def &>(other: Term) = this && other
+  def &>(other: Datum) = this && other
 
   // or
-  def |(other: Term) = RAny(this, other)
+  def |(other: Datum) = RAny(this, other)
 
   // right or
-  def >|(other: Term) = RAny(other, this)
-
+  def >|(other: Datum) = RAny(other, this)
   def contains(attribute: String*) = Contains(this, attribute )
   //slize http://stackoverflow.com/questions/3932582/slice-notation-in-scala
 

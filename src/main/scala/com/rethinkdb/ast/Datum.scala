@@ -21,6 +21,7 @@ sealed trait Datum extends Term with ExprWrap with Composable {
   def datumType: TokenType
 
   def build(builder: p.Datum.Builder)
+
 }
 
 object Datum {

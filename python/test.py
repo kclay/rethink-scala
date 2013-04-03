@@ -4,7 +4,8 @@ import rethinkdb as r
 from rethinkdb import ql2_pb2 as p
 
 def print_table():
-    ast = r.db("foo").table("hello",True)
+    ast = r.expr("hello")
+    ast+=" world"
    # c = r.connect(host="172.16.2.45",db="foo")
     #ast.run(c)
     term = p.Term()

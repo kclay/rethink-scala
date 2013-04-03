@@ -1,6 +1,7 @@
 package com.rethinkdb.ast
 
 import com.rethinkdb.Term
+import scala.{specialized => spec}
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,6 +27,12 @@ object Expr {
   def apply(value: Seq[Any]): Term = MakeArray(value)
 
   def apply(value: Map[String, Option[Any]]): Term = MakeObj(value)
+
+  /*
+  def apply(value:Int):Datum=Datum(value)
+  def apply(value:String):Datum=Datum(value)
+  def apply(value:Float):Datum=Datum(value)
+  def apply(value:Double):Datum=Datum(value) */
 
   def apply(a: Any): Term = {
     val b = a
