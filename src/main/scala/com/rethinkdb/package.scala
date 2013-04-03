@@ -1,6 +1,6 @@
 package com
 
-import rethinkdb.Ast.{BooleanDatum, NumberDatum}
+import rethinkdb.ast.{BooleanDatum, NumberDatum}
 
 /**
  * Created by IntelliJ IDEA.

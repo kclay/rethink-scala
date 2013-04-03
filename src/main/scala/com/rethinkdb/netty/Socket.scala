@@ -6,9 +6,9 @@ import org.jboss.netty.bootstrap.ClientBootstrap
 import java.net.InetSocketAddress
 
 import org.jboss.netty.channel._
-import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder                                 ,
+import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder
 import ql2.Ql2.{ Query, Response,VersionDummy}
-import com.rethinkdb.Ast.Term
+
 import ql2.Ql2.Response.ResponseType._
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import com.google.protobuf.MessageLite
@@ -18,12 +18,15 @@ import java.nio.ByteOrder
 import com.rethinkdb.utils.{ConnectionFactory, SimpleConnectionPool}
 import concurrent._
 import org.jboss.netty.channel.Channels.pipeline
+import com.rethinkdb.Term
+import com.rethinkdb.conversions.Tokens._
+import com.rethinkdb.conversions.Java._
 
-import com.rethinkdb.Ast.Expr
 
-import com.rethinkdb.response.RethinkError
+
+
 import org.jboss.netty.channel.Channel
-import com.rethinkdb.netty.RethinkDBDecoder
+
 
 
 /**
@@ -33,6 +36,12 @@ import com.rethinkdb.netty.RethinkDBDecoder
  * Time: 2:53 PM 
  */
 
+
+case class QueryToken(query:Query,term:Term,promise:Promise[AnyRef]){
+
+  def success(value:AnyRef)=promise success(value)
+  def failure(t:Throwable)= promise failure(t)
+}
 
 
 case class Cursor[T](channel: Channel, query: Query, term: Term,var chunks:Seq[T], completed: Boolean) {
@@ -49,9 +58,10 @@ class RethinkDBHandler extends SimpleChannelUpstreamHandler {
      token =>{
        val response = e.getMessage.asInstanceOf[Response]
 
+        //for(d <- response.getResponseList) yield d
        response.getType match{
          case  r @(RUNTIME_ERROR |COMPILE_ERROR | CLIENT_ERROR)=>toError(response, token term)
-         case  s@(SUCCESS_PARTIAL| SUCCESS_SEQUENCE)=>Cursor(ctx.getChannel,token query,token term,for(d <- response.getResponseList) yield d,s == SUCCESS_SEQUENCE)
+         case  s@(SUCCESS_PARTIAL| SUCCESS_SEQUENCE)=>Cursor(ctx.getChannel,token query,token term,Seq.empty[AnyRef],s == SUCCESS_SEQUENCE)
 
 
        }
@@ -65,7 +75,8 @@ class RethinkDBHandler extends SimpleChannelUpstreamHandler {
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-    ctx failure (e.getCause)
+
+    ctx.map(_.failure(e.getCause))
   }
 }
 
@@ -119,11 +130,6 @@ private class PipelineFactory extends ChannelPipelineFactory {
 }
 
 
-private case class QueryToken(query:Query,term:Term,promise:Promise[AnyRef]){
-
-    def success(value:AnyRef)=promise success(value)
-    def failure(t:Throwable)= promise failure(t)
-}
 
 trait Socket[T]{
   import ExecutionContext.Implicits.global
@@ -188,13 +194,13 @@ trait Socket[T]{
 
 }
 case class BlockingSocket(host:String,port:Int,maxConnections:Int = 5) extends Socket[AnyRef]{
-  def write(query: Query): AnyRef = {
-    blocking(_write(query))
+  def write(query: Query,term:Term): AnyRef = {
+    blocking(_write(query,term))
   }
 }
 case class AsyncSocket(host:String,port:Int,maxConnections:Int = 5) extends Socket[Future[AnyRef]]{
-    def write(query:Query)={
-        _write(query)
+    def write(query:Query,term:Term)={
+        _write(query,term)
     }
 }
 

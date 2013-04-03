@@ -1,17 +1,13 @@
 package com.rethinkdb
 
-import com.rethinkdb.Ast.{WithDB, Term, DB}
+import ast.{WithDB, DB}
 
-import netty.{AsyncSocket, Socket}
+
 import ql2.{Ql2 => p}
 
-import concurrent.Future
 import java.util.concurrent.atomic.AtomicLong
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
-import java.util.concurrent.Executors
-import org.jboss.netty.bootstrap.ClientBootstrap
-import java.net.InetSocketAddress
-import utils.{SimpleConnectionPool, ConnectionFactory}
+import com.rethinkdb.conversions.Tokens._
+import com.rethinkdb.netty.AsyncSocket
 
 
 /**
@@ -30,7 +26,7 @@ object Connection {
 
 class Connection(host: String = "localhost", port: Int = 28015,maxConnections:Int=5) {
 
-  import com.rethinkdb.Conversions._
+
 
   private var db: DB = DB("test")
   /*
@@ -42,7 +38,7 @@ class Connection(host: String = "localhost", port: Int = 28015,maxConnections:In
   private val token: AtomicLong = new AtomicLong()
 
 
-  lazy val  socket = AsyncSocket(host, port,maxConnections);
+  lazy val  socket = AsyncSocket(host, port,maxConnections)
 
 
   def ?(term: Term) = {
@@ -60,7 +56,7 @@ class Connection(host: String = "localhost", port: Int = 28015,maxConnections:In
     term.compile(query.getQueryBuilder)
 
 
-    socket.write(query.build())
+    socket.write(query.build(),term)
     //_db.compile(pair.setKey("db").getValBuilder)
 
   }

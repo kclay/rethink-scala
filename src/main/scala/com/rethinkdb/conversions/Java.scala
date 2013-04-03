@@ -1,8 +1,8 @@
 package com.rethinkdb.conversions
 
-import ql2.{Ql2=>p}
-import com.rethinkdb.response.{RethinkClientError, RethinkCompileError, RethinkRuntimeError, RethinkError}
-import com.rethinkdb.Ast.Term
+import ql2.{Ql2 => p}
+import com.rethinkdb.{RethinkClientError, RethinkCompileError, RethinkRuntimeError, RethinkError,Frame,PositionFrame,OptionalFrame}
+import com.rethinkdb.Term
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,8 +13,9 @@ import com.rethinkdb.Ast.Term
  */
 object Java {
   import collection.JavaConverters._
-  import com.rethinkdb.response.{Frame,PositionFrame,OptionalFrame}
+
   import p.Response.ResponseType._
+  import java.util.{List=>JList}
   implicit def backtrace2Frames(backtrace:Option[p.Backtrace]):Iterable[Frame]={
     backtrace.map{
       b=> b.getFramesList.asScala.toList.map{
@@ -31,10 +32,11 @@ object Java {
     if(d.getType==p.Datum.DatumType.R_STR) d.getRStr else ""
   }
 
+  //implicit def datnumCollection2Iterable(d:JList[p.Datum]):Iterable[]
+
 
   def toError(response:p.Response,term:Term):RethinkError={
-    import reflect.runtime.universe._
-    import reflect.runtime.currentMirror
+
     val message:String = response.getResponse(0)
     val frames:Iterable[Frame] =Some(response.getBacktrace)
 

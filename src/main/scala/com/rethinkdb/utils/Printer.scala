@@ -8,10 +8,10 @@ package com.rethinkdb.utils
  * Time: 8:29 PM 
  */
 
-import com.rethinkdb.Ast._
 import ql2.{Ql2 => p}
-import com.rethinkdb.Tokens._
-import com.rethinkdb.Conversions._
+import com.rethinkdb.Term
+import com.rethinkdb.ast._
+import com.rethinkdb.conversions.Tokens._
 
 
 trait Writer {
