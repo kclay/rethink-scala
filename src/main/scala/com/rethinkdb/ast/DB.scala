@@ -1,8 +1,8 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.{TopLevelTerm, MethodTerm, Term}
-import ql2.{Ql2=>p}
-import com.rethinkdb.conversions.Tokens._
+import com.rethinkdb.{TermMessage, TopLevelTerm, MethodTerm}
+
+import ql2.Term.TermType
 
 
 /**
@@ -17,12 +17,10 @@ trait WithDB {
   val scopedDB: Option[DB]
 }
 
-case class DB(name: String) extends Term {
+case class DB(name: String) extends TermMessage {
   override lazy val args = buildArgs(name)
 
-  def termType: TokenType = p.Term.TermType.DB
-
-
+  def termType = TermType.DB
 
 
   def newTable(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) = {
@@ -36,7 +34,7 @@ case class DB(name: String) extends Term {
 
   def ^-(name: String) = this dropTable (name)
 
-  def table(name: String, useOutDated: Boolean = false) = Table(this,name, Some(useOutDated))
+  def table(name: String, useOutDated: Boolean = false) = Table(this, name, Some(useOutDated))
 
   def ^(name: String, useOutDated: Boolean = false) = this table(name, useOutDated)
 
@@ -46,12 +44,12 @@ case class DB(name: String) extends Term {
 // TODO FunCall
 
 
-case class Table(db:DB,name: String, useOutDated: Option[Boolean] = None) extends Term with MethodTerm with WithDB {
+case class Table(db: DB, name: String, useOutDated: Option[Boolean] = None) extends TermMessage with MethodTerm with WithDB {
   val scopedDB = Some(db)
-  override lazy val args = buildArgs(db,name)
+  override lazy val args = buildArgs(db, name)
   override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
 
-  def termType: TokenType = p.Term.TermType.TABLE
+  def termType = TermType.TABLE
 
   def insert(records: Seq[Map[String, Any]], upsert: Boolean = false) = Insert(this, records, Some(upsert))
 
@@ -63,49 +61,49 @@ case class Table(db:DB,name: String, useOutDated: Option[Boolean] = None) extend
 case class DBCreate(name: String) extends TopLevelTerm {
   override lazy val args = buildArgs(name)
 
-  def termType: TokenType = p.Term.TermType.DB_CREATE
+  def termType = TermType.DB_CREATE
 }
 
 case class DBDrop(name: String) extends TopLevelTerm {
   override lazy val args = buildArgs(name)
 
-  def termType: TokenType = p.Term.TermType.DB_DROP
+  def termType = TermType.DB_DROP
 }
 
 class DBList extends TopLevelTerm {
-  def termType: TokenType = p.Term.TermType.DB_LIST
+  def termType = TermType.DB_LIST
 }
 
-case class TableCreate(db: DB, name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) extends Term {
+case class TableCreate(db: DB, name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) extends TermMessage {
   val scopedDB = Some(db)
   override lazy val args = buildArgs(db, name)
-  override lazy val optargs = buildOptArgs(Map( "primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize))
+  override lazy val optargs = buildOptArgs(Map("primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize))
 
-  def termType: TokenType = p.Term.TermType.TABLE_CREATE
+  def termType = TermType.TABLE_CREATE
 }
 
-case class TableDrop(name: String) extends Term with MethodTerm {
+case class TableDrop(name: String) extends TermMessage with MethodTerm {
   override lazy val args = buildArgs(name)
 
-  def termType: TokenType = p.Term.TermType.TABLE_DROP
+  def termType = TermType.TABLE_DROP
 }
 
-case class TableList(db: DB) extends Term with MethodTerm {
+case class TableList(db: DB) extends TermMessage with MethodTerm {
   //override lazy val args=buildArgs(db)
-  def termType: TokenType = p.Term.TermType.TABLE_LIST
+  def termType = TermType.TABLE_LIST
 }
 
-case class Insert(table: Table, records: Seq[Map[String, Any]], upsert: Option[Boolean] = None) extends Term {
+case class Insert(table: Table, records: Seq[Map[String, Any]], upsert: Option[Boolean] = None) extends TermMessage {
 
   override lazy val args = buildArgs(table, records)
   override lazy val optargs = buildOptArgs(Map("upsert" -> upsert))
 
-  def termType: TokenType = p.Term.TermType.INSERT
+  def termType = TermType.INSERT
 }
 
 /*
-case class SIndexCreate(table:Table,field:String) extends Term with MethodTerm {
+case class SIndexCreate(table:Table,field:String) extends TermMessage with MethodTerm {
   //override lazy val args=buildArgs(db)
-  def termType: TokenType = p.Term.TermType
+  def termType = p.TermMessage.TermType
 }
 */

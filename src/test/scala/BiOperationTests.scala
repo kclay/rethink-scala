@@ -5,7 +5,7 @@ import ast._
 
 class BiOperationTests extends FunSuite{
 
-  test("Term.add"){
+  test("TermNode.add"){
 
     val addNum = Expr(1)+2
 

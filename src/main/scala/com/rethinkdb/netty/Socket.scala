@@ -7,9 +7,8 @@ import java.net.InetSocketAddress
 
 import org.jboss.netty.channel._
 import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder
-import ql2.Ql2.{ Query, Response,VersionDummy}
+import ql2.{Query, Response, VersionDummy}
 
-import ql2.Ql2.Response.ResponseType._
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import com.google.protobuf.MessageLite
 import org.jboss.netty.buffer.ChannelBuffers._
@@ -18,15 +17,10 @@ import java.nio.ByteOrder
 import com.rethinkdb.utils.{ConnectionFactory, SimpleConnectionPool}
 import concurrent._
 import org.jboss.netty.channel.Channels.pipeline
-import com.rethinkdb.Term
-import com.rethinkdb.conversions.Tokens._
-import com.rethinkdb.conversions.Java._
-
-
+import com.rethinkdb.RTerm
 
 
 import org.jboss.netty.channel.Channel
-
 
 
 /**
@@ -37,38 +31,41 @@ import org.jboss.netty.channel.Channel
  */
 
 
-case class QueryToken(query:Query,term:Term,promise:Promise[AnyRef]){
+case class QueryToken(query: Query, term: RTerm, promise: Promise[AnyRef]) {
 
-  def success(value:AnyRef)=promise success(value)
-  def failure(t:Throwable)= promise failure(t)
+  def success(value: AnyRef) = promise success (value)
+
+  def failure(t: Throwable) = promise failure (t)
 }
 
 
-case class Cursor[T](channel: Channel, query: Query, term: Term,var chunks:Seq[T], completed: Boolean) {
+case class Cursor[T](channel: Channel, query: Query, term: RTerm, var chunks: Seq[T], completed: Boolean) {
 
 }
 
 class RethinkDBHandler extends SimpleChannelUpstreamHandler {
-  import com.rethinkdb.conversions.Java.toError
+
 
   implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext): Option[QueryToken] = Option(ctx.getAttachment.asInstanceOf[QueryToken])
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-    ctx.map{
-     token =>{
-       val response = e.getMessage.asInstanceOf[Response]
+    ctx.map {
+      token => {
+        val response = e.getMessage.asInstanceOf[Response]
 
         //for(d <- response.getResponseList) yield d
-       response.getType match{
-         case  r @(RUNTIME_ERROR |COMPILE_ERROR | CLIENT_ERROR)=>toError(response, token term)
-         case  s@(SUCCESS_PARTIAL| SUCCESS_SEQUENCE)=>Cursor(ctx.getChannel,token query,token term,Seq.empty[AnyRef],s == SUCCESS_SEQUENCE)
+
+        /*response.`type`.map()
+        response.match{
+          case  r @(RUNTIME_ERROR |COMPILE_ERROR | CLIENT_ERROR)=>toError(response, token term)
+          case  s@(SUCCESS_PARTIAL| SUCCESS_SEQUENCE)=>Cursor(ctx.getChannel,token query,token term,Seq.empty[AnyRef],s == SUCCESS_SEQUENCE)
 
 
-       }
+        } */
 
-       token success (e.getMessage)
+        token success (e.getMessage)
 
-     }
+      }
 
     }
 
@@ -94,7 +91,7 @@ private class RethinkDBEncoder extends OneToOneEncoder {
   def encode(ctx: ChannelHandlerContext, channel: Channel, msg: Any): AnyRef = {
 
     msg match {
-      case v: VersionDummy.Version => {
+      case v: VersionDummy.Version.EnumVal => {
         val b = buffer(ByteOrder.LITTLE_ENDIAN, 4)
         b.writeInt(v.getNumber)
         b
@@ -130,12 +127,13 @@ private class PipelineFactory extends ChannelPipelineFactory {
 }
 
 
+trait Socket[T] {
 
-trait Socket[T]{
   import ExecutionContext.Implicits.global
-  val host:String
-  val port:Int
-  val maxConnections:Int
+
+  val host: String
+  val port: Int
+  val maxConnections: Int
   lazy val bootstrap = {
     val factory =
       new NioClientSocketChannelFactory(
@@ -152,13 +150,12 @@ trait Socket[T]{
 
 
   }
-  protected val channel=new SimpleConnectionPool(new ConnectionFactory[Channel] {
-    def create():Channel = {
+  protected val channel = new SimpleConnectionPool(new ConnectionFactory[Channel] {
+    def create(): Channel = {
       val c = bootstrap.connect(new InetSocketAddress(host, port)).await().getChannel
       c.write(VersionDummy.Version.V0_1).await()
       c
     }
-
 
 
     def validate(connection: Channel): Boolean = {
@@ -170,20 +167,21 @@ trait Socket[T]{
     }
   }, max = maxConnections)
 
-  def write(query: Query,term:Term):T
-  protected def _write(query:Query,term:Term):Future[AnyRef] ={
+  def write(query: Query, term: RTerm): T
+
+  protected def _write(query: Query, term: RTerm): Future[AnyRef] = {
     val p = promise[AnyRef]
     val f = p.future
     // add this to a future
-    future{
-      channel(){
+    future {
+      channel() {
         c =>
           c.write(query)
           val channelFuture = c.write(query)
           // RethinkDBHandler.
 
 
-          channelFuture.getChannel.setAttachment(QueryToken(query,term,p))
+          channelFuture.getChannel.setAttachment(QueryToken(query, term, p))
       }
 
     }
@@ -191,16 +189,17 @@ trait Socket[T]{
   }
 
 
-
 }
-case class BlockingSocket(host:String,port:Int,maxConnections:Int = 5) extends Socket[AnyRef]{
-  def write(query: Query,term:Term): AnyRef = {
-    blocking(_write(query,term))
+
+case class BlockingSocket(host: String, port: Int, maxConnections: Int = 5) extends Socket[AnyRef] {
+  def write(query: Query, term: RTerm): AnyRef = {
+    blocking(_write(query, term))
   }
 }
-case class AsyncSocket(host:String,port:Int,maxConnections:Int = 5) extends Socket[Future[AnyRef]]{
-    def write(query:Query,term:Term)={
-        _write(query,term)
-    }
+
+case class AsyncSocket(host: String, port: Int, maxConnections: Int = 5) extends Socket[Future[AnyRef]] {
+  def write(query: Query, term: RTerm) = {
+    _write(query, term)
+  }
 }
 

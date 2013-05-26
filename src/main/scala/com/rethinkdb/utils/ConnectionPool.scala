@@ -1,4 +1,5 @@
 package com.rethinkdb.utils
+
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
@@ -14,7 +15,9 @@ import java.util.concurrent.TimeUnit
 //https://github.com/jamesgolick/scala-connection-pool/
 trait ConnectionFactory[Connection] {
   def create(): Connection
+
   def validate(connection: Connection): Boolean
+
   def destroy(connection: Connection): Unit
 }
 
@@ -24,13 +27,16 @@ trait ConnectionPool[Connection] {
 
 trait LowLevelConnectionPool[Connection] {
   def borrow(): Connection
+
   def giveBack(conn: Connection): Unit
+
   def invalidate(conn: Connection): Unit
 }
 
 class TimeoutError(message: String) extends Error(message)
+
 class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
-                                 max:     Int = 20,
+                                 max: Int = 20,
                                  timeout: Int = 500000)
   extends ConnectionPool[Conn] with LowLevelConnectionPool[Conn] {
 
@@ -54,7 +60,7 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   def borrow(): Conn = {
     pool.poll match {
       case conn: Conn => return conn
-      case null       => createOrBlock
+      case null => createOrBlock
     }
   }
 
@@ -70,14 +76,14 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   private def createOrBlock: Conn = {
     size.get match {
       case e: Int if e == max => block
-      case _                  => create
+      case _ => create
     }
   }
 
   private def create: Conn = {
     size.incrementAndGet match {
       case e: Int if e > max => size.decrementAndGet; borrow()
-      case e: Int            => connectionFactory.create
+      case e: Int => connectionFactory.create
     }
   }
 

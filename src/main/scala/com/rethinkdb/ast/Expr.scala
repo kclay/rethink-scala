@@ -1,6 +1,6 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.Term
+import com.rethinkdb.RTerm
 import scala.{specialized => spec}
 
 /**
@@ -22,11 +22,11 @@ object Expr {
 
   val DefMap=new Def[Map[String,Any]]
   val DefSeq=new Def[Seq[Any]]    */
-  def apply(term: Term): Term = term
+  def apply(term: RTerm): RTerm = term
 
-  def apply(value: Seq[Any]): Term = MakeArray(value)
+  def apply(value: Seq[Any]): RTerm = MakeArray(value)
 
-  def apply(value: Map[String, Option[Any]]): Term = MakeObj(value)
+  def apply(value: Map[String, Option[Any]]): RTerm = MakeObj(value)
 
   /*
   def apply(value:Int):Datum=Datum(value)
@@ -34,10 +34,10 @@ object Expr {
   def apply(value:Float):Datum=Datum(value)
   def apply(value:Double):Datum=Datum(value) */
 
-  def apply(a: Any): Term = {
+  def apply(a: Any): RTerm = {
     val b = a
     a match {
-      case t: Term => t
+      case t: RTerm => t
       case s: Seq[_] => MakeArray(s)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
       case a: Any => Datum(a)

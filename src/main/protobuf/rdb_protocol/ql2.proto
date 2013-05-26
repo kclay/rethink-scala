@@ -17,7 +17,7 @@
 //   batches of <1000, and you need to send a [CONTINUE] query with the same
 //   token to get more results from the original query.
 ////////////////////////////////////////////////////////////////////////////////
-
+ package ql2;
 // This enum contains the magic numbers for your version.  See **THE HIGH-LEVEL
 // VIEW** for what to do with it.
 message VersionDummy { // We need to wrap it like this for some
@@ -393,7 +393,7 @@ message Term {
     // (Note that the order of the optional arguments doesn't matter; think of a
     // Hash.)
 
-    extensions 10000 to 20000;
+    //extensions 10000 to 20000;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

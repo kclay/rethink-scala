@@ -3,11 +3,11 @@ package com.rethinkdb
 import ast.{WithDB, DB}
 
 
-import ql2.{Ql2 => p}
+import ql2.{Query}
 
 import java.util.concurrent.atomic.AtomicLong
-import com.rethinkdb.conversions.Tokens._
 import com.rethinkdb.netty.AsyncSocket
+import com.rethinkdb.ConvertTo._
 
 
 /**
@@ -24,8 +24,7 @@ object Connection {
 
 }
 
-class Connection(host: String = "localhost", port: Int = 28015,maxConnections:Int=5) {
-
+class Connection(host: String = "localhost", port: Int = 28015, maxConnections: Int = 5) {
 
 
   private var db: DB = DB("test")
@@ -38,25 +37,26 @@ class Connection(host: String = "localhost", port: Int = 28015,maxConnections:In
   private val token: AtomicLong = new AtomicLong()
 
 
-  lazy val  socket = AsyncSocket(host, port,maxConnections)
+  lazy val socket = AsyncSocket(host, port, maxConnections)
 
 
-  def ?(term: Term) = {
-
-    val query = p.Query.newBuilder()
-    query.setType(p.Query.QueryType.START).setToken(token.incrementAndGet())
-
-    // TODO : Support global args but for now just set the `db`
-    if (term.isInstanceOf[WithDB]) {
-      term.asInstanceOf[WithDB].scopedDB.map(query.addGlobalOptargs(_))
-    }
+  def ?(term: RTerm) = {
 
 
+    val query = Some(
+      Query().setType(Query.QueryType.START)
+        .setQuery(term.toInternalTerm).setToken(token.incrementAndGet())
 
-    term.compile(query.getQueryBuilder)
+    ).map(q => {
+      term match {
+       // case d: WithDB => d.scopedDB.map(q.addAllGlobalOptargs(Query.AssocPair(Some("db"),Some(_.))))
+        case _ => q
+      }
+
+    }).get
 
 
-    socket.write(query.build(),term)
+    socket.write(query, term)
     //_db.compile(pair.setKey("db").getValBuilder)
 
   }

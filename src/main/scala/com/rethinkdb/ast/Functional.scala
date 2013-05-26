@@ -1,8 +1,8 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.Term
-import ql2.{Ql2=>p}
-import com.rethinkdb.conversions.Tokens._
+import com.rethinkdb.{RTerm, TermMessage}
+import ql2.{Ql2 => p}
+import ql2.Term.TermType
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,11 +12,12 @@ import com.rethinkdb.conversions.Tokens._
  * To change this template use File | Settings | File Templates.
  */
 
-case class Get(from: Term, attribute: String) extends Term {
+case class Get(from: RTerm, attribute: String) extends TermMessage {
   override lazy val args = buildArgs(from, attribute)
 
-  def termType: TokenType = p.Term.TermType.GET
+  def termType = TermType.GET
 }
+
 class Functional {
 
 
@@ -42,9 +43,6 @@ class Functional {
   // TODO : Delete
   // TODO : Replace
   // TODO : Insert
-
-
-
 
 
 }

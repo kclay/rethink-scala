@@ -1,28 +1,18 @@
 package com.rethinkdb.ast
 
-import ql2.{Ql2=>p}
 
-import com.rethinkdb.{ExprWrap, Composable, Term}
-import com.rethinkdb.conversions.Tokens._
+import com.rethinkdb.{DatumAssocPair, DatumMessage, ExprWrap, Composable,AssocPair}
+import ql2.Datum.DatumType
 
-sealed trait Datum extends Term with ExprWrap with Composable {
-
-  override def compile(builder: p.Term.Builder) = {
-    builder.setType(p.Term.TermType.DATUM)
-    build(builder.getDatumBuilder)
+sealed trait Datum extends DatumMessage with ExprWrap with Composable {
 
 
-  }
+  override def optArgsBuilder(key: String, value: Any): AssocPair = DatumAssocPair(key, value)
 
-  override def optArgsBuilder(key: String, value: Any): AssocPairToken = DatumAssocPairToken(key, value)
-
-  def termType: TokenType = p.Term.TermType.DATUM
-
-  def datumType: TokenType
-
-  def build(builder: p.Datum.Builder)
 
 }
+
+
 
 object Datum {
 
@@ -45,36 +35,29 @@ object NoneDatum {
 
 class NoneDatum extends Datum {
 
-  def datumType: DatumTokenType = p.Datum.DatumType.R_NULL
+  def datumType = DatumType.R_NULL
 
-  def build(builder: p.Datum.Builder) = {
-
-  }
+  def build(d: ql2.Datum) = d
 }
 
 case class BooleanDatum(value: Boolean) extends Datum {
 
-  def datumType: DatumTokenType = p.Datum.DatumType.R_BOOL
+  def datumType = DatumType.R_BOOL
 
-  def build(builder: p.Datum.Builder) = {
-    builder.setType(p.Datum.DatumType.R_BOOL).setRBool(value)
-  }
+  def build(d: ql2.Datum) = d.setRBool(value)
+
 }
 
 case class NumberDatum(value: Double) extends Datum {
-  def datumType: DatumTokenType = p.Datum.DatumType.R_NUM
+  def datumType = DatumType.R_NUM
 
-  def build(builder: p.Datum.Builder) = {
+  def build(d: ql2.Datum) = d.setRNum(value)
 
-    builder.setType(p.Datum.DatumType.R_NUM).setRNum(value)
-  }
 }
 
 case class StringDatum(value: String) extends Datum {
-  def datumType: DatumTokenType = p.Datum.DatumType.R_STR
+  def datumType = DatumType.R_STR
 
-  def build(builder: p.Datum.Builder) = {
+  def build(d: ql2.Datum) = d.setRStr(value)
 
-    builder.setType(p.Datum.DatumType.R_STR).setRStr(value)
-  }
 }
