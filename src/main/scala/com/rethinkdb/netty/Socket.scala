@@ -17,7 +17,7 @@ import java.nio.ByteOrder
 import com.rethinkdb.utils.{ConnectionFactory, SimpleConnectionPool}
 import concurrent._
 import org.jboss.netty.channel.Channels.pipeline
-import com.rethinkdb.RTerm
+import com.rethinkdb.Term
 
 
 import org.jboss.netty.channel.Channel
@@ -31,7 +31,7 @@ import org.jboss.netty.channel.Channel
  */
 
 
-case class QueryToken(query: Query, term: RTerm, promise: Promise[AnyRef]) {
+case class QueryToken(query: Query, term: Term, promise: Promise[AnyRef]) {
 
   def success(value: AnyRef) = promise success (value)
 
@@ -39,7 +39,7 @@ case class QueryToken(query: Query, term: RTerm, promise: Promise[AnyRef]) {
 }
 
 
-case class Cursor[T](channel: Channel, query: Query, term: RTerm, var chunks: Seq[T], completed: Boolean) {
+case class Cursor[T](channel: Channel, query: Query, term: Term, var chunks: Seq[T], completed: Boolean) {
 
 }
 
@@ -167,9 +167,9 @@ trait Socket[T] {
     }
   }, max = maxConnections)
 
-  def write(query: Query, term: RTerm): T
+  def write(query: Query, term: Term): T
 
-  protected def _write(query: Query, term: RTerm): Future[AnyRef] = {
+  protected def _write(query: Query, term: Term): Future[AnyRef] = {
     val p = promise[AnyRef]
     val f = p.future
     // add this to a future
@@ -192,13 +192,13 @@ trait Socket[T] {
 }
 
 case class BlockingSocket(host: String, port: Int, maxConnections: Int = 5) extends Socket[AnyRef] {
-  def write(query: Query, term: RTerm): AnyRef = {
+  def write(query: Query, term: Term): AnyRef = {
     blocking(_write(query, term))
   }
 }
 
 case class AsyncSocket(host: String, port: Int, maxConnections: Int = 5) extends Socket[Future[AnyRef]] {
-  def write(query: Query, term: RTerm) = {
+  def write(query: Query, term: Term) = {
     _write(query, term)
   }
 }

@@ -8,7 +8,7 @@ import ql2.Datum.DatumType
 
 
 trait Composable {
-  def compose(args: Seq[RTerm], optargs: Map[String, RTerm]) = {
+  def compose(args: Seq[Term], optargs: Map[String, Term]) = {
     ""
   }
 }
@@ -26,11 +26,11 @@ trait AssocPair {
 }
 
 
-trait BiOpTerm extends RTerm with Composable
+trait BiOpTerm extends Term with Composable
 
-trait TopLevelTerm extends RTerm with Composable
+trait TopLevelTerm extends Term with Composable
 
-trait MethodTerm extends RTerm with Composable
+trait MethodTerm extends Term with Composable
 
 trait ExprWrap
 
@@ -53,13 +53,13 @@ trait Message[T] {
 }
 
 
-trait TermMessage extends Message[ql2.Term] with RTerm {
+trait TermMessage extends Message[ql2.Term] with Term {
 
 
   def toMessage: ql2.Term = toInternalTerm
 }
 
-trait DatumMessage extends Message[ql2.Datum] with RTerm {
+trait DatumMessage extends Message[ql2.Datum] with Term {
   def termType = TermType.DATUM
 
   def datumType: DatumType.EnumVal
@@ -87,17 +87,17 @@ case class DatumAssocPair(key: String, value: Any) extends AssocPair {
 
 }
 
-trait RTerm extends WithInternalTerm {
+trait Term extends WithInternalTerm {
 
 
   def toInternalTerm = ql2
     .Term(Some(termType))
-    .addAllArgs(args.map(_.toMessage.asInstanceOf[ql2.Term]))
+    .addAllArgs(args.map(_.toInternalTerm))
     .addAllOptargs(optargs.map(_.pair.asInstanceOf[ql2.Term.AssocPair]))
 
-  lazy val args = Seq.empty[RTerm]
+  lazy val args = Seq.empty[Term]
 
-  protected def buildArgs(args: Any*) = for (a <- args) yield Expr(a)
+  protected def buildArgs(args: Any*):Seq[Term] = for (a <- args) yield Expr(a)
 
   lazy val optargs = Iterable.empty[AssocPair]
 
@@ -110,53 +110,55 @@ trait RTerm extends WithInternalTerm {
 
   def termType: ql2.Term.TermType.EnumVal
 
-  implicit def term2DataNum(t: RTerm): Datum = t.asInstanceOf[Datum]
+ // implicit def term2DataNum(t: Term): Datum = t.asInstanceOf[Datum]
 
-  def ==(other: Datum) = Eq(this, other)
+  def ==(other: Term) = Eq(this, other)
 
-  def !=(other: Datum) = Ne(this, other)
+  def !=(other: Term) = Ne(this, other)
 
-  def <(other: Datum) = Lt(this, other)
+  def <(other: Term) = Lt(this, other)
 
-  def <=(other: Datum) = Le(this, other)
+  def <=(other: Term) = Le(this, other)
 
-  def >(other: Datum) = Gt(this, other)
+  def >(other: Term) = Gt(this, other)
 
-  def >=(other: Datum) = Ge(this, other)
+  def >=(other: Term) = Ge(this, other)
 
-  def ~(other: Datum) = Not(this)
+  def ~(other: Term) = Not(this)
 
-  def +(other: Datum) = Add(this, other)
+  def +(other:Term)=Add(this,other)
 
-  def >+(other: Datum) = Add(other, this)
+  def +=(other: StringDatum) = Add(this, other)
 
-  def -(other: Datum) = Sub(this, other)
+  def >+(other: Term) = Add(other, this)
 
-  def >-(other: Datum) = Sub(other, this)
+  def -(other: Term) = Sub(this, other)
 
-  def *(other: Datum) = Mul(this, other)
+  def >-(other: Term) = Sub(other, this)
 
-  def >*(other: Datum) = Mul(other, this)
+  def *(other: Term) = Mul(this, other)
 
-  def /(other: Datum) = Div(this, other)
+  def >*(other: Term) = Mul(other, this)
 
-  def >/(other: Datum) = Div(other, this)
+  def /(other: Term) = Div(this, other)
 
-  def %(other: Datum) = Mod(this, other)
+  def >/(other: Term) = Div(other, this)
 
-  def >%(other: Datum) = Mod(other, this)
+  def %(other: Term) = Mod(this, other)
 
-  def &(other: Datum) = All(this, other)
+  def >%(other: Term) = Mod(other, this)
 
-  def &&(other: Datum) = All(other, this)
+  def &(other: Term) = All(this, other)
 
-  def &>(other: Datum) = this && other
+  def &&(other: Term) = All(other, this)
+
+  def &>(other: Term) = this && other
 
   // or
-  def |(other: Datum) = RAny(this, other)
+  def |(other: Term) = RAny(this, other)
 
   // right or
-  def >|(other: Datum) = RAny(other, this)
+  def >|(other: Term) = RAny(other, this)
 
   def contains(attribute: String*) = Contains(this, attribute)
 

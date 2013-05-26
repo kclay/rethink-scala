@@ -3,10 +3,10 @@ import org.scalatest.FunSuite
 import com.rethinkdb._
 import com.rethinkdb.ast._
 import ql2.{Ql2=>p}
-import p.Term.TermType
+
 class DBTest extends FunSuite{
 
-
+  /*
   test("create db instance"){
    val db = DB("foo")
 
@@ -36,5 +36,5 @@ class DBTest extends FunSuite{
     assert(term.getOptargs(0).getKey=="use_outdated")
     assert(term.getOptargs(0).getVal.getDatum.getRBool == true)
    // asser(term.getArgsCount)
-  }
+  } */
 }

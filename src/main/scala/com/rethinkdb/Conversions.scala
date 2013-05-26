@@ -49,7 +49,7 @@ object ConvertFrom {
   //implicit def datnumCollection2Iterable(d:JList[p.Datum]):Iterable[]
 
 
-  def toError(response: Response, term: RTerm): RethinkError = {
+  def toError(response: Response, term: Term): RethinkError = {
 
     val message: String = response.`response`(0)
     val frames: Iterable[Frame] = response.`backtrace`

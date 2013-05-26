@@ -1,6 +1,6 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.{RTerm, TermMessage}
+import com.rethinkdb.{Term, TermMessage}
 import ql2.{Ql2 => p}
 import ql2.Term.TermType
 
@@ -12,7 +12,7 @@ import ql2.Term.TermType
  * To change this template use File | Settings | File Templates.
  */
 
-case class Get(from: RTerm, attribute: String) extends TermMessage {
+case class Get(from: Term, attribute: String) extends TermMessage {
   override lazy val args = buildArgs(from, attribute)
 
   def termType = TermType.GET

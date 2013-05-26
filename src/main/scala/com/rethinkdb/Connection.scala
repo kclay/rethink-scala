@@ -40,7 +40,7 @@ class Connection(host: String = "localhost", port: Int = 28015, maxConnections: 
   lazy val socket = AsyncSocket(host, port, maxConnections)
 
 
-  def ?(term: RTerm) = {
+  def ?(term: Term) = {
 
 
     val query = Some(

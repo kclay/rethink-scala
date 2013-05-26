@@ -9,22 +9,24 @@ class BiOperationTests extends FunSuite{
 
     val addNum = Expr(1)+2
 
-    var term = addNum.toTerm
+    var term = addNum.toInternalTerm
+
 
     assert(addNum.isInstanceOf[Add])
-    assert(term.getArgsCount ==2)
-    assert(term.getArgs(0).getDatum.getRNum == 1)
-    assert(term.getArgs(1).getDatum.getRNum==2)
+    assert(term.`args`.size == 2)
+    assert(term.`args`(0).`datum`.get.`rNum`== Some(1.0))
+    assert(term.`args`(1).`datum`.get.`rNum`== Some(2.0))
 
 
+    StringBuilder
 
-    val addStr = Expr("hello") +" world"
+    val addStr = Expr("hello")+="world"
 
-    term = addStr.toTerm
+    term = addStr.toInternalTerm
 
-    assert(term.getArgsCount == 2)
-    assert(term.getArgs(0).getDatum.getRStr=="hello")
-    assert(term.getArgs(1).getDatum.getRStr==" world")
+    assert(term.`args`.size ==2)
+    assert(term.`args`(0).`datum`.get.`rStr`== Some("hello"))
+    assert(term.`args`(1).`datum`.get.`rStr`==Some("world"))
 
   }
 }

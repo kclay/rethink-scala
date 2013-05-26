@@ -1,6 +1,6 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.{RTerm, TermMessage, MethodTerm}
+import com.rethinkdb.{Term, TermMessage, MethodTerm}
 
 import ql2.Term.TermType
 
@@ -13,57 +13,57 @@ import ql2.Term.TermType
  * To change this template use File | Settings | File Templates.
  */
 
-case class Append(array: Array[Any], other: RTerm) extends MethodTerm {
+case class Append(array: Array[Any], other: Term) extends MethodTerm {
   override lazy val args = buildArgs(array, other)
 
   def termType = TermType.APPEND
 }
 
-case class Slice(target: RTerm, left: Int, right: Int) extends TermMessage {
+case class Slice(target: Term, left: Int, right: Int) extends TermMessage {
   override lazy val args = buildArgs(target, left, right)
 
   def termType = TermType.SLICE
 }
 
-case class Skip(target: RTerm, amount: Int) extends TermMessage with MethodTerm {
+case class Skip(target: Term, amount: Int) extends TermMessage with MethodTerm {
   override lazy val args = buildArgs(target, amount)
 
   def termType = TermType.SKIP
 }
 
 
-case class Limit(target: RTerm, amount: Int) extends TermMessage with MethodTerm {
+case class Limit(target: Term, amount: Int) extends TermMessage with MethodTerm {
   override lazy val args = buildArgs(target, amount)
 
   def termType = TermType.LIMIT
 }
 
-case class GetAttr(target: RTerm, name: String) extends TermMessage {
+case class GetAttr(target: Term, name: String) extends TermMessage {
   override lazy val args = buildArgs(target, name)
 
   def termType = TermType.GETATTR
 }
 
 
-case class Contains(target: RTerm, attribute: Iterable[String]) extends TermMessage {
+case class Contains(target: Term, attribute: Iterable[String]) extends TermMessage {
   override lazy val args = buildArgs(target, attribute)
 
   def termType = TermType.CONTAINS
 }
 
-case class Pluck(target: RTerm, attributes: Iterable[String]) extends MethodTerm {
+case class Pluck(target: Term, attributes: Iterable[String]) extends MethodTerm {
   override lazy val args = buildArgs(target, attributes)
 
   def termType = TermType.PLUCK
 }
 
-case class Without(target: RTerm, attributes: Iterable[String]) extends MethodTerm {
+case class Without(target: Term, attributes: Iterable[String]) extends MethodTerm {
   override lazy val args = buildArgs(target, attributes)
 
   def termType = TermType.WITHOUT
 }
 
-case class Merge(other: RTerm) extends MethodTerm {
+case class Merge(other: Term) extends MethodTerm {
   override lazy val args = buildArgs(other)
 
   def termType = TermType.MERGE
