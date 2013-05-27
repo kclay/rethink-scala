@@ -7,6 +7,7 @@ import ql2.Term.TermType
 import ql2.Datum.DatumType
 
 
+
 trait Composable {
   def compose(args: Seq[Term], optargs: Map[String, Term]) = {
     ""
@@ -91,8 +92,9 @@ trait Term extends WithInternalTerm {
 
 
 
-  def !(connection:Connection) = connection.execute( this)
-  def run(connection:Connection)= connection.execute(this)
+  def apply(implicit connection:Connection):Query=Query(this,connection)
+  def !(connection:Connection) = apply(connection)
+  def run(connection:Connection)=apply(connection)
   def toInternalTerm = ql2
     .Term(Some(termType))
     .addAllArgs(args.map(_.toInternalTerm))
@@ -107,6 +109,9 @@ trait Term extends WithInternalTerm {
 
   def optArgsBuilder(key: String, value: Any): AssocPair = TermAssocPair(key, value)
 
+  protected def buildOptArgs2(optargs: Map[String, Any]): Iterable[AssocPair] = optargs.collect{
+    case (key:String,value:Any)=> optArgsBuilder(key,value)
+  }
   protected def buildOptArgs(optargs: Map[String, Option[Any]]): Iterable[AssocPair] = optargs.filter(_._2.isDefined) collect {
     case (key: String, value: Option[Any]) => optArgsBuilder(key, value.get)
   }

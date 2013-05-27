@@ -189,8 +189,6 @@ trait Socket[T] {
       val c = bootstrap.connect(new InetSocketAddress(host, port)).await().getChannel
       c.write(VersionDummy.Version.V0_1).await()
       c
-
-
     }
 
 
@@ -213,13 +211,9 @@ trait Socket[T] {
       channel() {
         c =>
 
-          val channelFuture = c.write(query)
-          // RethinkDBHandler.
+          c.setAttachment(QueryToken(query, term, p))
+          c.write(query).await()
 
-
-
-
-          channelFuture.getChannel.setAttachment(QueryToken(query, term, p))
       }
 
     }
@@ -236,7 +230,7 @@ case class BlockingSocket(host: String, port: Int, maxConnections: Int = 5) exte
 }
 
 case class AsyncSocket(host: String, port: Int, maxConnections: Int = 5) extends Socket[Future[Any]] {
-  def write(query: Query, term: Term):Any = {
+  def write(query: Query, term: Term):Future[Any] = {
     _write(query, term)
   }
 }

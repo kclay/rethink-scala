@@ -17,8 +17,10 @@ case class MakeArray(array: Seq[Any]) extends Term with Composable {
   override def compose(args: Seq[Term], optargs: Map[String, Term]) = super.compose(args, optargs)
 }
 
-case class MakeObj(data: Map[String, Option[Any]]) extends Term {
-  override lazy val optargs = buildOptArgs(data)
+case class MakeObj(data: Map[String, Any]) extends Term {
+  override lazy val optargs = buildOptArgs2(data)
+
+
 
   def termType = TermType.MAKE_OBJ
 }

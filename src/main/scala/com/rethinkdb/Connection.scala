@@ -25,14 +25,6 @@ object Connection {
 }
 
 class Connection(host: String = "localhost", port: Int = 28015, maxConnections: Int = 5) {
-  import com.rethinkdb.utils.Helpers.toQuery
-  def execute(term: Term)={
-
-
-
-    socket.write(toQuery(term,token.getAndIncrement), term)
-
-  }
 
 
   private var db: DB = DB("test")
@@ -42,10 +34,10 @@ class Connection(host: String = "localhost", port: Int = 28015, maxConnections: 
      case Right(b:DB)=>b
    }
    */
-  private val token: AtomicInteger = new AtomicInteger()
+  private[rethinkdb] val token: AtomicInteger = new AtomicInteger()
 
 
-  lazy val socket = AsyncSocket(host, port, maxConnections)
+  private [rethinkdb] lazy val socket = AsyncSocket(host, port, maxConnections)
 
 
 
