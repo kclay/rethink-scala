@@ -1,11 +1,23 @@
+import com.rethinkdb.ast.DB
+import com.rethinkdb.ast.DB
+import com.rethinkdb.utils.Helpers._
 import org.scalatest.FunSuite
 
 import com.rethinkdb._
 import com.rethinkdb.ast._
 import ql2.{Ql2=>p}
+import scala.concurrent._
 
 class DBTest extends FunSuite{
 
+
+  test("create db instance"){
+
+    val db = DB("test")
+    //val connection = new Connection("172.16.2.45")
+    val query = toQuery(db.newTable("bar") ,1)
+    println(query)
+  }
   /*
   test("create db instance"){
    val db = DB("foo")

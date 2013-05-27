@@ -20,6 +20,8 @@ trait WithDB {
 case class DB(name: String) extends TermMessage {
   override lazy val args = buildArgs(name)
 
+  def toDatum=StringDatum(name)
+
   def termType = TermType.DB
 
 
@@ -74,7 +76,7 @@ class DBList extends TopLevelTerm {
   def termType = TermType.DB_LIST
 }
 
-case class TableCreate(db: DB, name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) extends TermMessage {
+case class TableCreate(db: DB, name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) extends TermMessage with WithDB {
   val scopedDB = Some(db)
   override lazy val args = buildArgs(db, name)
   override lazy val optargs = buildOptArgs(Map("primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize))

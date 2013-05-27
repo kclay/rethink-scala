@@ -55,9 +55,9 @@ object ConvertFrom {
     val frames: Iterable[Frame] = response.`backtrace`
 
     response.`type` match {
-      case RUNTIME_ERROR => RethinkRuntimeError(message, term, frames)
-      case COMPILE_ERROR => RethinkCompileError(message, term, frames)
-      case CLIENT_ERROR => RethinkClientError(message, term, frames)
+      case Some(RUNTIME_ERROR) => RethinkRuntimeError(message, term, frames)
+      case Some(COMPILE_ERROR) => RethinkCompileError(message, term, frames)
+      case Some(CLIENT_ERROR) => RethinkClientError(message, term, frames)
     }
   }
 

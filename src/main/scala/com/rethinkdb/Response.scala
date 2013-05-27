@@ -18,6 +18,7 @@ case class Frame(frameType: Option[FrameType], pos: Option[Long], opt: Option[St
 
 }
 
+
 abstract class RethinkError(message: String) extends Exception(message) {
 
   val term: Term

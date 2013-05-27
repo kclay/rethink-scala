@@ -5,7 +5,7 @@ import ast.{WithDB, DB}
 
 import ql2.{Query}
 
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 import com.rethinkdb.netty.AsyncSocket
 import com.rethinkdb.ConvertTo._
 
@@ -25,6 +25,14 @@ object Connection {
 }
 
 class Connection(host: String = "localhost", port: Int = 28015, maxConnections: Int = 5) {
+  import com.rethinkdb.utils.Helpers.toQuery
+  def execute(term: Term)={
+
+
+
+    socket.write(toQuery(term,token.getAndIncrement), term)
+
+  }
 
 
   private var db: DB = DB("test")
@@ -34,30 +42,11 @@ class Connection(host: String = "localhost", port: Int = 28015, maxConnections: 
      case Right(b:DB)=>b
    }
    */
-  private val token: AtomicLong = new AtomicLong()
+  private val token: AtomicInteger = new AtomicInteger()
 
 
   lazy val socket = AsyncSocket(host, port, maxConnections)
 
 
-  def ?(term: Term) = {
 
-
-    val query = Some(
-      Query().setType(Query.QueryType.START)
-        .setQuery(term.toInternalTerm).setToken(token.incrementAndGet())
-
-    ).map(q => {
-      term match {
-       // case d: WithDB => d.scopedDB.map(q.addAllGlobalOptargs(Query.AssocPair(Some("db"),Some(_.))))
-        case _ => q
-      }
-
-    }).get
-
-
-    socket.write(query, term)
-    //_db.compile(pair.setKey("db").getValBuilder)
-
-  }
 }

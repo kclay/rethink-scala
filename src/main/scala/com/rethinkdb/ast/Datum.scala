@@ -15,6 +15,20 @@ sealed trait Datum extends DatumMessage with ExprWrap with Composable {
 
 
 object Datum {
+  def unapply(datum: ql2.Datum): Any={
+    datum.`type` match {
+      case DatumType.R_NULL=> None
+      case DatumType.R_BOOL=>datum.`rBool`.get
+      case DatumType.R_NUM=> datum.`rNum`.map(n=> if(n %1 == 0) n.toInt else n) .get
+      case DatumType.R_STR => datum.`rStr`.get
+      case DatumType.R_ARRAY=>datum.`rArray`.map(Datum.unapply(_))
+      case DatumType.R_OBJECT=> datum.`rObject` map{
+        p=>(p.`key`.get,Datum.unapply(p.`val`.get))
+      } toMap
+    }
+
+  }
+
 
   def apply(a: Any): Datum = a match {
 

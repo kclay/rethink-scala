@@ -90,6 +90,9 @@ case class DatumAssocPair(key: String, value: Any) extends AssocPair {
 trait Term extends WithInternalTerm {
 
 
+
+  def !(connection:Connection) = connection.execute( this)
+  def run(connection:Connection)= connection.execute(this)
   def toInternalTerm = ql2
     .Term(Some(termType))
     .addAllArgs(args.map(_.toInternalTerm))

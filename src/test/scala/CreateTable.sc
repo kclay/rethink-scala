@@ -5,20 +5,72 @@
  * Time: 4:16 PM 
  */
 
+import com.rethinkdb.ast.DB
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import com.rethinkdb.utils.Helpers.toQuery
 import scala.concurrent._
-
-import com.rethinkdb.Ast._
 import com.rethinkdb.Connection
-import ql2.{Ql2 => p}
-
-val db = DB("foo")
+val db = DB("test")
 val connection = new Connection("172.16.2.45")
-/*
-val builder= p.Term.newBuilder()
-create.compile(builder)
-builder.build()  */
-val future = db.table_create("bar") ! connection
+val query = toQuery(db.newTable("bar") ,1)
 
+
+//println(query)
+val future = db.newTable("bar") ! connection
 blocking(future)
-
 

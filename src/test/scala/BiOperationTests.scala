@@ -18,9 +18,7 @@ class BiOperationTests extends FunSuite{
     assert(term.`args`(1).`datum`.get.`rNum`== Some(2.0))
 
 
-    StringBuilder
-
-    val addStr = Expr("hello")+="world"
+     val addStr = Expr("hello")+="world"
 
     term = addStr.toInternalTerm
 
