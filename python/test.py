@@ -9,7 +9,7 @@ from rethinkdb import ql2_pb2 as p, expr
 def print_table():
     #ast = r.db("test").table_create("bar")
 
-    ast=r.expr(dict(foo="bar",bar=1,you=[1,2,3]))
+    ast=r.table("marvel").map(lambda hero: hero['combatPower'] + hero['compassionPower'] * 2)
     term = p.Term()
     ast.build(term)
     print term

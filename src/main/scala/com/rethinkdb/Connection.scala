@@ -3,7 +3,7 @@ package com.rethinkdb
 import ast.{WithDB, DB}
 
 
-import ql2.{Query}
+
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 import com.rethinkdb.netty.AsyncSocket

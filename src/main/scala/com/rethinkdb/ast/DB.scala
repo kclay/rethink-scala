@@ -20,7 +20,7 @@ trait WithDB {
 case class DB(name: String) extends TermMessage {
   override lazy val args = buildArgs(name)
 
-  def toDatum=StringDatum(name)
+  def toDatum = StringDatum(name)
 
   def termType = TermType.DB
 
@@ -36,7 +36,7 @@ case class DB(name: String) extends TermMessage {
 
   def ^-(name: String) = this dropTable (name)
 
-  def table(name: String, useOutDated: Boolean = false) = Table(this, name, Some(useOutDated))
+  def table(name: String, useOutDated: Boolean = false) = Table(name, Some(useOutDated), Some(this))
 
   def ^(name: String, useOutDated: Boolean = false) = this table(name, useOutDated)
 
@@ -46,9 +46,9 @@ case class DB(name: String) extends TermMessage {
 // TODO FunCall
 
 
-case class Table(db: DB, name: String, useOutDated: Option[Boolean] = None) extends TermMessage with MethodTerm with WithDB {
-  val scopedDB = Some(db)
-  override lazy val args = buildArgs(db, name)
+case class Table(name: String, useOutDated: Option[Boolean] = None, scopedDB: Option[DB] = None) extends TermMessage with MethodTerm with WithDB {
+
+  override lazy val args = buildArgs(name)
   override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
 
   def termType = TermType.TABLE

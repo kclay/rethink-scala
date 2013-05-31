@@ -21,7 +21,7 @@ class ExprTests extends FunSuite {
   test("map conversion"){
     val map = Seq(("foo", "bar"), ("bar", 1), ("you", Seq(1, 2, 3))).toMap
 
-    val objTerm = Expr(map).toInternalTerm
+    val objTerm = Expr(map).ast
 
     val optargs = objTerm.`optargs`
 

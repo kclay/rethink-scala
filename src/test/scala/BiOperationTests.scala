@@ -9,7 +9,7 @@ class BiOperationTests extends FunSuite{
 
     val addNum = Expr(1)+2
 
-    var term = addNum.toInternalTerm
+    var term = addNum.ast
 
 
     assert(addNum.isInstanceOf[Add])
@@ -20,7 +20,7 @@ class BiOperationTests extends FunSuite{
 
      val addStr = Expr("hello")+="world"
 
-    term = addStr.toInternalTerm
+    term = addStr.ast
 
     assert(term.`args`.size ==2)
     assert(term.`args`(0).`datum`.get.`rStr`== Some("hello"))

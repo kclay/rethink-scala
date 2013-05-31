@@ -1,7 +1,8 @@
 package com.rethinkdb.ast
 
+
 import com.rethinkdb.Term
-import scala.{specialized => spec}
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,14 +28,16 @@ object Expr {
   def apply(value: Seq[Any]): MakeArray = MakeArray(value)
 
   def apply(value: Map[String, Any]): MakeObj = MakeObj(value)
-  def apply(value:String):StringDatum = StringDatum(value)
+
+  def apply(value: String): StringDatum = StringDatum(value)
+
   def apply(b: Boolean): BooleanDatum = BooleanDatum(b)
 
-   def apply(i: Int): NumberDatum = NumberDatum(i)
+  def apply(i: Int): NumberDatum = NumberDatum(i)
 
   def apply(l: Long): NumberDatum = NumberDatum(l)
 
-   def apply(f: Float): NumberDatum= NumberDatum(f)
+  def apply(f: Float): NumberDatum = NumberDatum(f)
 
   /*
   def apply(value:Int):Datum=Datum(value)

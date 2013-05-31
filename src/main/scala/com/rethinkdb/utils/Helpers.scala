@@ -1,8 +1,8 @@
 package com.rethinkdb.utils
 
-import com.rethinkdb.Term
 import ql2.Query
-import com.rethinkdb.ast.WithDB
+import com.rethinkdb.ast.{ WithDB}
+import com.rethinkdb.Term
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,12 +16,12 @@ object Helpers {
   def toQuery(term: Term,token:Int)={
     val query = Some(
       Query().setType(Query.QueryType.START)
-        .setQuery(term.toInternalTerm).setToken(token)
+        .setQuery(term.ast).setToken(token)
 
     ).map(q => {
       term match {
         case d: WithDB => {
-          d.scopedDB.map(db=>q.addAllGlobalOptargs(Query.AssocPair(Some("db"),Some(db.toDatum.toInternalTerm)))).get
+          d.scopedDB.map(db=>q.addAllGlobalOptargs(Query.AssocPair(Some("db"),Some(db.toDatum.ast)))).get
 
         }
         case _ => q

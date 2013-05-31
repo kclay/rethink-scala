@@ -17,13 +17,13 @@ import java.nio.ByteOrder
 import com.rethinkdb.utils.{ConnectionFactory, SimpleConnectionPool}
 import concurrent._
 import org.jboss.netty.channel.Channels.pipeline
-import com.rethinkdb.{RethinkError, Term}
+import com.rethinkdb.{Term, RethinkError}
 import com.rethinkdb.ConvertFrom._
 
 
 import org.jboss.netty.channel.Channel
 import ql2.Response.ResponseType
-import com.rethinkdb.ast.Datum
+import com.rethinkdb.ast.{Datum}
 import org.jboss.netty.handler.codec.frame.{CorruptedFrameException, FrameDecoder}
 import scala.collection.mutable.ArrayBuffer
 

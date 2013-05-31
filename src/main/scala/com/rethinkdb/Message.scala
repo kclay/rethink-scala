@@ -5,7 +5,7 @@ import com.rethinkdb.ast._
 
 import ql2.Term.TermType
 import ql2.Datum.DatumType
-
+import javax.sql.rowset.Predicate
 
 
 trait Composable {
@@ -42,8 +42,8 @@ trait Produce[T] {
 trait ProducesBoolean extends Produce[Boolean]
 
 
-trait WithInternalTerm {
-  def toInternalTerm: ql2.Term
+trait WithAst {
+  def ast: ql2.Term
 }
 
 trait Message[T] {
@@ -57,7 +57,7 @@ trait Message[T] {
 trait TermMessage extends Message[ql2.Term] with Term {
 
 
-  def toMessage: ql2.Term = toInternalTerm
+  def toMessage: ql2.Term = ast
 }
 
 trait DatumMessage extends Message[ql2.Datum] with Term {
@@ -68,7 +68,7 @@ trait DatumMessage extends Message[ql2.Datum] with Term {
   def build(d: ql2.Datum): ql2.Datum
 
 
-  override def toInternalTerm: ql2.Term = super.toInternalTerm.setDatum(toMessage)
+  override def ast: ql2.Term = super.ast.setDatum(toMessage)
 
   def toMessage: ql2.Datum = build(ql2.Datum(Some(datumType)))
 }
@@ -76,7 +76,7 @@ trait DatumMessage extends Message[ql2.Datum] with Term {
 case class TermAssocPair(key: String, value: Any) extends AssocPair {
   type T = ql2.Term.AssocPair
 
-  def pair = ql2.Term.AssocPair(Some(key), Some(token.toInternalTerm))
+  def pair = ql2.Term.AssocPair(Some(key), Some(token.ast))
 }
 
 case class DatumAssocPair(key: String, value: Any) extends AssocPair {
@@ -88,16 +88,16 @@ case class DatumAssocPair(key: String, value: Any) extends AssocPair {
 
 }
 
-trait Term extends WithInternalTerm {
+trait Term extends WithAst {
 
 
 
   def apply(implicit connection:Connection):Query=Query(this,connection)
   def !(connection:Connection) = apply(connection)
   def run(connection:Connection)=apply(connection)
-  def toInternalTerm = ql2
+  def ast = ql2
     .Term(Some(termType))
-    .addAllArgs(args.map(_.toInternalTerm))
+    .addAllArgs(args.map(_.ast))
     .addAllOptargs(optargs.map(_.pair.asInstanceOf[ql2.Term.AssocPair]))
 
   lazy val args = Seq.empty[Term]
@@ -120,55 +120,9 @@ trait Term extends WithInternalTerm {
 
  // implicit def term2DataNum(t: Term): Datum = t.asInstanceOf[Datum]
 
-  def ==(other: Term) = Eq(this, other)
 
-  def !=(other: Term) = Ne(this, other)
 
-  def <(other: Term) = Lt(this, other)
-
-  def <=(other: Term) = Le(this, other)
-
-  def >(other: Term) = Gt(this, other)
-
-  def >=(other: Term) = Ge(this, other)
-
-  def ~(other: Term) = Not(this)
-
-  def +(other:Term)=Add(this,other)
-
-  def +=(other: StringDatum) = Add(this, other)
-
-  def >+(other: Term) = Add(other, this)
-
-  def -(other: Term) = Sub(this, other)
-
-  def >-(other: Term) = Sub(other, this)
-
-  def *(other: Term) = Mul(this, other)
-
-  def >*(other: Term) = Mul(other, this)
-
-  def /(other: Term) = Div(this, other)
-
-  def >/(other: Term) = Div(other, this)
-
-  def %(other: Term) = Mod(this, other)
-
-  def >%(other: Term) = Mod(other, this)
-
-  def &(other: Term) = All(this, other)
-
-  def &&(other: Term) = All(other, this)
-
-  def &>(other: Term) = this && other
-
-  // or
-  def |(other: Term) = RAny(this, other)
-
-  // right or
-  def >|(other: Term) = RAny(other, this)
-
-  def contains(attribute: String*) = Contains(this, attribute)
+ // def filter(f:Predicate)
 
   // setType(termType).addAllArgs(args.map(_.toTerm)).addAllOptargs(optargs.map(_.pair))
 }

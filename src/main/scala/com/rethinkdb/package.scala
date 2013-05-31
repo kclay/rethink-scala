@@ -1,10 +1,9 @@
 package com
 
-import com.rethinkdb.ast._
-import com.rethinkdb.ast.StringDatum
-import com.rethinkdb.ast.NumberDatum
+
+
 import scala.Some
-import com.rethinkdb.ast.BooleanDatum
+
 
 
 /**
@@ -14,7 +13,7 @@ import com.rethinkdb.ast.BooleanDatum
  * Time: 7:32 PM 
  */
 package object rethinkdb {
-
+  import com.rethinkdb.ast.{DB, StringDatum, NumberDatum, BooleanDatum}
 
 
   implicit def boolToDataNum(b: Boolean): Term= BooleanDatum(b)
@@ -48,7 +47,7 @@ package object rethinkdb {
 
   implicit def termAssocPair2Ql2TermAssocPair(p:ql2.Term.AssocPair) = Ql2TermAssocPair(p)
 
-  implicit def term2Q12Term(t:ql2.Term):Ql2Term = Ql2Term(t)
+  implicit def term2Q12Term(t:ql2.Term) = Ql2Term(t)
 
   implicit def optTerm2Ql2Term(t:Option[ql2.Term]) = Ql2Term(t.get)
 
