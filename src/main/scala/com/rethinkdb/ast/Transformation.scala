@@ -1,6 +1,6 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.Term
+import com.rethinkdb.{TermMessage, Term}
 import ql2.Term.TermType.EnumVal
 import ql2.Term.TermType
 
@@ -15,10 +15,8 @@ import ql2.Term.TermType
 
 case class PRange(start: Int = 0, end: Int = -1)
 
-trait WithTransformations {
+trait WithTransformation {
   self: ProduceSequence with Term =>
-
-
 
 
   def map(func: Predicate1) = RMap(this, func)
@@ -29,18 +27,18 @@ trait WithTransformations {
 
   def skip(amount: Int) = Skip(this, amount)
 
-  def slice(start:Int=0,end:Int= -1)=Slice(this,start,end)
+  def slice(start: Int = 0, end: Int = -1) = Slice(this, start, end)
 
   def apply(prange: PRange) = Slice(this, prange.start, prange.end)
 
-  def union(sequences:ProduceSequence*)=Union(this,sequences)
-
+  def union(sequences: ProduceSequence*) = Union(this, sequences)
 
 
 }
 
-sealed trait TransformSequence extends WithTransformations with ProduceSequence with Term
-abstract class Transformation extends TransformSequence{
+sealed trait TransformSequence extends WithTransformation with ProduceSequence with Term
+
+abstract class Transformation extends TransformSequence {
   val target: Term
   val func: Predicate
 
@@ -48,10 +46,6 @@ abstract class Transformation extends TransformSequence{
 
 
 }
-
-
-
-
 
 case class RMap(target: ProduceSequence, func: Predicate1) extends TransformSequence {
 
@@ -81,17 +75,30 @@ case class Desc(attr: String) extends Ordering {
   def termType: EnumVal = TermType.DESC
 }
 
-case class OrderBy(target: ProduceSequence, keys: Seq[Ordering]) extends TransformSequence{
+case class OrderBy(target: ProduceSequence, keys: Seq[Ordering]) extends TransformSequence {
   def termType: EnumVal = TermType.ORDERBY
 }
 
 
-case class Skip(target: ProduceSequence, index: Int) extends Term {
+case class Skip(target: ProduceSequence, index: Int) extends TransformSequence {
   def termType: EnumVal = TermType.SKIP
 }
-case class Union(target:ProduceSequence,others:Seq[ProduceSequence]) extends  TransformSequence{
 
-  override lazy val args: Seq[Term] = buildArgs((others.+:(target)):_*)
+case class Union(target: ProduceSequence, others: Seq[ProduceSequence]) extends TransformSequence {
+
+  override lazy val args: Seq[Term] = buildArgs((others.+:(target)): _*)
 
   def termType: EnumVal = TermType.UNION
+}
+
+
+case class Slice(target: Term, left: Int, right: Int) extends TransformSequence {
+  override lazy val args = buildArgs(target, left, right)
+
+  def termType = TermType.SLICE
+}
+case class Limit(target: Term, amount: Int) extends TransformSequence {
+  override lazy val args = buildArgs(target, amount)
+
+  def termType = TermType.LIMIT
 }

@@ -1,6 +1,6 @@
 package com.rethinkdb
 
-import com.rethinkdb.ast.Table
+import com.rethinkdb.ast.{ImplicitVar, Table}
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,5 +10,9 @@ import com.rethinkdb.ast.Table
  * To change this template use File | Settings | File Templates.
  */
 object r{
+
+  private lazy val _row=new ImplicitVar
+
+  def row(name:String) = _row \ name
   def table(name:String,useOutDated:Option[Boolean]=None) = Table(name,useOutDated)
 }

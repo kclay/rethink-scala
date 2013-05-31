@@ -35,7 +35,7 @@ object Datum {
   def apply(a: Any): Datum = a match {
 
     case Some(v) => Datum(v)
-    case None=> NoneDatum()
+    case None => NoneDatum()
     case s: String => StringDatum(s)
     case i: Int => NumberDatum(i)
     case f: Float => NumberDatum(f)
@@ -65,14 +65,14 @@ case class BooleanDatum(value: Boolean) extends Datum {
 
 }
 
-case class NumberDatum(value: Double) extends Datum {
+case class NumberDatum(value: Double) extends Datum with ProduceLiteral{
   def datumType = DatumType.R_NUM
 
   def build(d: ql2.Datum) = d.setRNum(value)
 
 }
 
-case class StringDatum(value: String) extends Datum {
+case class StringDatum(value: String) extends Datum with ProduceLiteral{
   def datumType = DatumType.R_STR
 
   def build(d: ql2.Datum) = d.setRStr(value)

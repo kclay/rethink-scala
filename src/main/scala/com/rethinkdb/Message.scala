@@ -35,11 +35,7 @@ trait MethodTerm extends Term with Composable
 
 trait ExprWrap
 
-trait Produce[T] {
-  def produced: T
-}
 
-trait ProducesBoolean extends Produce[Boolean]
 
 
 trait WithAst {
@@ -118,7 +114,10 @@ trait Term extends WithAst {
 
   def termType: ql2.Term.TermType.EnumVal
 
- // implicit def term2DataNum(t: Term): Datum = t.asInstanceOf[Datum]
+
+
+
+  // implicit def term2DataNum(t: Term): Datum = t.asInstanceOf[Datum]
 
 
 
