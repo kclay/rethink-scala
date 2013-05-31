@@ -52,9 +52,7 @@ object Core {
   val row = new ImplicitVar()
 }
 
- trait ProducesSequence{
-  self:Term=>
-}
+
 
 
 trait Operations {

@@ -35,6 +35,7 @@ object Datum {
   def apply(a: Any): Datum = a match {
 
     case Some(v) => Datum(v)
+    case None=> NoneDatum()
     case s: String => StringDatum(s)
     case i: Int => NumberDatum(i)
     case f: Float => NumberDatum(f)

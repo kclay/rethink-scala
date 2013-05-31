@@ -15,8 +15,8 @@ import ql2.Term.TermType
 
 case class PRange(start: Int = 0, end: Int = -1)
 
-trait WithTransformations extends ProducesSequence{
-  self: Term =>
+trait WithTransformations {
+  self: ProduceSequence with Term =>
 
 
 
@@ -33,29 +33,27 @@ trait WithTransformations extends ProducesSequence{
 
   def apply(prange: PRange) = Slice(this, prange.start, prange.end)
 
-  def union(sequences:ProducesSequence*)=Union(this,sequences)
+  def union(sequences:ProduceSequence*)=Union(this,sequences)
 
 
 
 }
 
-
-abstract class Transformation extends Term  with WithTransformations{
+sealed trait TransformSequence extends WithTransformations with ProduceSequence with Term
+abstract class Transformation extends TransformSequence{
   val target: Term
   val func: Predicate
 
-  override lazy val args = buildArgs(target, func.apply())
+  override lazy val args = buildArgs(target, func())
 
 
 }
 
 
-sealed trait TransformSequence extends WithTransformations with Term{
-
-}
 
 
-case class RMap(target: ProducesSequence, func: Predicate1) extends TransformSequence {
+
+case class RMap(target: ProduceSequence, func: Predicate1) extends TransformSequence {
 
   def termType: EnumVal = TermType.MAP
 
@@ -63,7 +61,7 @@ case class RMap(target: ProducesSequence, func: Predicate1) extends TransformSeq
 
 }
 
-case class ConcatMap(target: ProducesSequence, func: Predicate1) extends TransformSequence {
+case class ConcatMap(target: ProduceSequence, func: Predicate1) extends TransformSequence {
 
   def termType: EnumVal = TermType.CONCATMAP
 
@@ -83,15 +81,15 @@ case class Desc(attr: String) extends Ordering {
   def termType: EnumVal = TermType.DESC
 }
 
-case class OrderBy(target: ProducesSequence, keys: Seq[Ordering]) extends TransformSequence{
+case class OrderBy(target: ProduceSequence, keys: Seq[Ordering]) extends TransformSequence{
   def termType: EnumVal = TermType.ORDERBY
 }
 
 
-case class Skip(target: ProducesSequence, index: Int) extends Term {
+case class Skip(target: ProduceSequence, index: Int) extends Term {
   def termType: EnumVal = TermType.SKIP
 }
-case class Union(target:ProducesSequence,others:Seq[ProducesSequence]) extends  TransformSequence{
+case class Union(target:ProduceSequence,others:Seq[ProduceSequence]) extends  TransformSequence{
 
   override lazy val args: Seq[Term] = buildArgs((others.+:(target)):_*)
 
