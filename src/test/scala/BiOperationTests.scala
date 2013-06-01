@@ -7,7 +7,7 @@ class BiOperationTests extends FunSuite{
 
   test("TermNode.add"){
 
-    val addNum = Expr(1)+2
+    val addNum = Expr(1) + 2
 
     var term = addNum.ast
 

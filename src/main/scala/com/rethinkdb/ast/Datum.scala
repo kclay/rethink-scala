@@ -57,7 +57,8 @@ class NoneDatum extends Datum {
   def build(d: ql2.Datum) = d
 }
 
-case class BooleanDatum(value: Boolean) extends Datum {
+case class BooleanDatum(value: Boolean) extends Datum
+                                                with ProduceBinary with WithBinary {
 
   def datumType = DatumType.R_BOOL
 
@@ -65,14 +66,18 @@ case class BooleanDatum(value: Boolean) extends Datum {
 
 }
 
-case class NumberDatum(value: Double) extends Datum with ProduceLiteral{
+case class NumberDatum(value: Double) extends Datum
+                                              with ProduceNumeric
+                                              with ProduceBinary
+                                              with WithNumeric
+                                              with WithAddition with WithBinary {
   def datumType = DatumType.R_NUM
 
   def build(d: ql2.Datum) = d.setRNum(value)
 
 }
 
-case class StringDatum(value: String) extends Datum with ProduceLiteral{
+case class StringDatum(value: String) extends Datum with ProduceString with WithAddition {
   def datumType = DatumType.R_STR
 
   def build(d: ql2.Datum) = d.setRStr(value)

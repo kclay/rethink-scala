@@ -1,55 +1,73 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.{ProducesBoolean, Term, TermMessage, MethodTerm}
+import com.rethinkdb.{Term, MethodTerm}
 
 import ql2.Term.TermType
 
 
 /**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 4/2/13
- * Time: 7:36 PM
- * To change this template use File | Settings | File Templates.
+ * Append a value to an array.
+ * @param target
+ * @param value
  */
-
-case class Append(target:WithJson,value:Any) extends ProduceJson {
-  override lazy val args = buildArgs(target,value)
+case class Append(target: WithDocument, value: Any) extends ProduceDocument {
+  override lazy val args = buildArgs(target, value)
 
   def termType = TermType.APPEND
 }
 
-
-
-
-
-case class GetAttr(target: Term, name: String) extends ProduceAny {
+/**
+ * Get a single attribute from an object.
+ * @param target
+ * @param name
+ */
+case class GetAttr(target: ProduceDocument, name: String) extends ProduceAny {
   override lazy val args = buildArgs(target, name)
 
   def termType = TermType.GETATTR
 }
 
 
-case class Contains(target: Term, attribute: Iterable[String]) extends ProduceCondition{
+/**
+ * Test if an object has the given attribute.
+ * @param target
+ * @param attribute
+ */
+case class Contains(target: ProduceDocument, attribute: String) extends ProduceBinary {
   override lazy val args = buildArgs(target, attribute)
 
   def termType = TermType.CONTAINS
 }
 
-case class Pluck(target: Term, attributes: Iterable[String]) extends MethodTerm {
+/**
+ * Plucks out one or more attributes from either an object or a sequence of objects (projection).
+ * @param target
+ * @param attributes
+ */
+case class Pluck(target:ProduceSequence, attributes: Iterable[String]) extends ProduceSequence {
   override lazy val args = buildArgs(target, attributes)
 
   def termType = TermType.PLUCK
 }
 
-case class Without(target: Term, attributes: Iterable[String]) extends MethodTerm {
+/**
+ * The opposite of pluck; takes an object or a sequence of objects, and removes all attributes except for the ones specified.
+ * @param target
+ * @param attributes
+ */
+case class Without(target:ProduceSequence, attributes: Iterable[String]) extends ProduceSequence {
   override lazy val args = buildArgs(target, attributes)
 
   def termType = TermType.WITHOUT
 }
 
-case class Merge(target:Term,other: Term) extends ProduceSequence {
-  override lazy val args = buildArgs(target,other)
+/**
+ * Merge two objects together to construct a new object with properties from both. Gives preference to attributes from other when there is a conflict.
+ * @param target
+ * @param other
+ */
+case class Merge(target: ProduceDocument, other: ProduceDocument) extends ProduceDocument {
+  override lazy val args = buildArgs(target, other)
 
   def termType = TermType.MERGE
 }

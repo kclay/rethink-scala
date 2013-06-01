@@ -1,6 +1,6 @@
 package com.rethinkdb
 
-import com.rethinkdb.ast.{Desc, PRange, Asc}
+import com.rethinkdb.ast.{Desc, SliceRange, Asc}
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,7 +24,7 @@ object Implicits {
   implicit def string2Ordering(name: String) = Asc(name)
 
   implicit def intWithTildyArrow(i: Int) = new {
-    def ~>(j: Int) = PRange(i, j)
+    def ~>(j: Int) = SliceRange(i, j)
   }
 
 

@@ -4,87 +4,206 @@ import com.rethinkdb.Term
 
 sealed trait Produce extends Term
 
+sealed trait Feature
+
+trait Addable extends Feature
+
+
+trait Comparable extends Feature
+
+
 trait ProduceSequence extends Produce with WithTransformation
 
-trait ProduceLiteral extends Produce with WithLiteral
+trait ProduceComparable extends Produce
 
-trait ProduceCondition extends Produce
+trait ProduceBinary extends Produce
 
-trait ProduceAny extends ProduceSequence with ProduceCondition with ProduceLiteral with ProduceJson
+trait ProduceLiteral extends ProduceComparable with Addable with Comparable
 
-trait ProduceJson extends Produce
+trait ProduceDocument extends ProduceSequence
+
+trait ProduceNumeric extends Produce with ProduceLiteral
+
+trait ProduceString extends Produce with ProduceLiteral
 
 
-trait WithJson {
-  self: Term =>
+trait ProduceAny extends ProduceSequence with ProduceBinary with ProduceString with ProduceNumeric with ProduceDocument
 
+
+sealed trait LogicSignature {
+
+  import scala.reflect.runtime.universe._
+
+  type AcceptType = Term
+
+  lazy val acceptTypeOf = typeOf[AcceptType]
+
+  def accepts[T: TypeTag](value: T) = typeOf[T] match {
+    case t if t =:= acceptTypeOf => true
+    case _ => false
+  }
+
+
+}
+
+trait TermSignature[T] extends LogicSignature {
+  override type AcceptType = Term with T
+}
+
+
+trait WithTable extends TermSignature[Table]{
+  self:Table=>
+
+  def <<(other: Table, func: Predicate2) = innerJoin(other, func)
+
+  def innerJoin(other: Table, func: Predicate2) = InnerJoin(this, other, func)
+
+  def outerJoin(other: Table, func: Predicate2) = OuterJoin(this, other, func)
+
+  def >>(other: Table, func: Predicate2) = outerJoin(other, func)
+
+  def >>=(attr: String, other: Table, index: Option[String] = None) = eqJoin(attr, other, index)
+
+  def eqJoin(attr: String, other: Table, index: Option[String] = None) = EqJoin(this, other, attr, index)
+
+
+}
+trait WithSequence extends LogicSignature{
+  self:ProduceSequence =>
+  def pluck(attrs:String*) = Pluck(this,attrs)
+  def without(attrs:String*)=Without(this,attrs)
+
+  def map(func: Predicate1) = RMap(this, func)
+
+  def concatMap(func: Predicate1) = ConcatMap(this, func)
+
+  def order(keys: Ordering*) = OrderBy(this, keys)
+
+  def skip(amount: Int) = Skip(this, amount)
+
+  def slice(start: Int = 0, end: Int = -1) = Slice(this, start, end)
+
+  def apply(prange: SliceRange) = Slice(this, prange.start, prange.end)
+
+  def union(sequences: ProduceSequence*) = Union(this, sequences))
+
+
+}
+trait WithDocument extends TermSignature[ProduceDocument] {
+  self: ProduceDocument =>
 
   def attr(name: String) = GetAttr(this, name)
 
   def \(name: String) = attr(name)
-  def append(value:Any)=Append(this,value)
-  def :+(value:Any)=append(value)
-}
 
-trait WithCondition {
-  self: Term =>
-  def ==(other: Term) = Eq(this, other)
+  def append(value: Any) = Append(this, value)
 
-  def !=(other: Term) = Ne(this, other)
+  def :+(value: Any) = append(value)
+  def merge(other:AcceptType) = Merge(this,other)
+  def +(other:AcceptType) = merge(other)
+  def contains(attr:String) = Contains(this,attr)
 
-  def <(other: Term) = Lt(this, other)
 
-  def <=(other: Term) = Le(this, other)
-
-  def >(other: Term) = Gt(this, other)
-
-  def >=(other: Term) = Ge(this, other)
-
-  def ~(other: Term) = Not(this)
-
-  def contains(attribute: String*) = Contains(this, attribute)
 
 }
 
-trait WithLiteral {
+
+
+trait WithComparable extends TermSignature[Comparable] {
+  self: Term with Comparable =>
+
+  def ==(other: AcceptType) = eq(other)
+
+  def eq(other: AcceptType) = Eq(this, other)
+
+  def !=(other: AcceptType) = ne(other)
+
+  def ne(other: AcceptType) = Ne(this, other)
+
+  def <(other: AcceptType) = lt(other)
+
+  def lt(other: AcceptType) = Lt(this, other)
+
+  def <=(other: AcceptType) = le(other)
+
+  def le(other: AcceptType) = Le(this, other)
+
+  def >(other: AcceptType) = gt(other)
+
+  def gt(other: AcceptType) = Gt(this, other)
+
+  def >=(other: AcceptType) = ge(other)
+
+  def ge(other: AcceptType) = Ge(this, other)
+
+
+  //def contains(attribute: String*) = Contains(this, attribute)
+
+}
+
+trait WithUnary extends LogicSignature {
   self: Term =>
+  def ~(other: AcceptType) = Not(this)
+
+}
 
 
-  def +(other: Term) = Add(this, other)
+trait WithAddition extends TermSignature[Addable] {
+  self: ProduceLiteral =>
 
-  def +=(other: StringDatum) = Add(this, other)
+  def +(other: AcceptType) = add(other)
 
-  def >+(other: Term) = Add(other, this)
+  def add(other: AcceptType) = Add(this, other)
 
-  def -(other: Term) = Sub(this, other)
+  def +=(other: AcceptType) = Add(this, other)
 
-  def >-(other: Term) = Sub(other, this)
+  def >+(other: AcceptType) = Add(other, this)
 
-  def *(other: Term) = Mul(this, other)
+}
 
-  def >*(other: Term) = Mul(other, this)
 
-  def /(other: Term) = Div(this, other)
 
-  def >/(other: Term) = Div(other, this)
+trait WithNumeric extends TermSignature[ProduceNumeric] {
+  self: ProduceNumeric =>
 
-  def %(other: Term) = Mod(this, other)
 
-  def >%(other: Term) = Mod(other, this)
+  def -(other: AcceptType) = Sub(this, other)
 
-  def &(other: Term) = All(this, other)
+  def >-(other: AcceptType) = Sub(other, this)
 
-  def &&(other: Term) = All(other, this)
+  def *(other: AcceptType) = Mul(this, other)
 
-  def &>(other: Term) = this && other
+  def >*(other: AcceptType) = Mul(other, this)
+
+  def /(other: AcceptType) = Div(this, other)
+
+  def >/(other: AcceptType) = Div(other, this)
+
+  def %(other: AcceptType) = Mod(this, other)
+
+  def >%(other: AcceptType) = Mod(other, this)
+}
+
+trait WithBinary extends TermSignature[ProduceBinary] {
+  self: ProduceBinary =>
+
+  def &(other: AcceptType) = All(this, other)
+
+  def &&(other: AcceptType) = All(other, this)
+
+  def &>(other: AcceptType) = this && other
 
   // or
-  def |(other: Term) = RAny(this, other)
+  def |(other: AcceptType) = RAny(this, other)
 
   // right or
-  def >|(other: Term) = RAny(other, this)
+  def >|(other: AcceptType) = RAny(other, this)
 
 
   // def row(name: String) = Core.row \ name
 
+}
+
+trait WithAny extends WithBinary with WithNumeric with WithAddition with WithUnary with WithComparable with WithDocument {
+  self: ProduceAny =>
 }

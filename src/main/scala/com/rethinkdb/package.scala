@@ -16,13 +16,15 @@ package object rethinkdb {
   import com.rethinkdb.ast.{DB, StringDatum, NumberDatum, BooleanDatum}
 
 
-  implicit def boolToDataNum(b: Boolean): Term= BooleanDatum(b)
 
-  implicit def intToDatNum(i: Int): Term = NumberDatum(i)
 
-  implicit def longToDatNum(l: Long): Term = NumberDatum(l)
+  implicit def boolToDataNum(b: Boolean): BooleanDatum= BooleanDatum(b)
 
-  implicit def floatToDatNum(f: Float): Term= NumberDatum(f)
+  implicit def intToDatNum(i: Int): NumberDatum = NumberDatum(i)
+
+  implicit def longToDatNum(l: Long): NumberDatum = NumberDatum(l)
+
+  implicit def floatToDatNum(f: Float): NumberDatum= NumberDatum(f)
 
   implicit def string2DatNum(s: String): StringDatum = StringDatum(s)
 
