@@ -27,11 +27,7 @@ trait AssocPair {
 }
 
 
-trait BiOpTerm extends Term with Composable
 
-trait TopLevelTerm extends Term with Composable
-
-trait MethodTerm extends Term with Composable
 
 trait ExprWrap
 

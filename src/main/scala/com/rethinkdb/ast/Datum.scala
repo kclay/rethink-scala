@@ -4,7 +4,7 @@ package com.rethinkdb.ast
 import com.rethinkdb.{DatumAssocPair, DatumMessage, ExprWrap, Composable, AssocPair}
 import ql2.Datum.DatumType
 
-sealed trait Datum extends DatumMessage with ExprWrap with Composable {
+sealed trait Datum extends  DatumMessage with ExprWrap with Composable {
 
 
   override def optArgsBuilder(key: String, value: Any): AssocPair = DatumAssocPair(key, value)
@@ -55,10 +55,15 @@ class NoneDatum extends Datum {
   def datumType = DatumType.R_NULL
 
   def build(d: ql2.Datum) = d
+
+  def defaultValue = None
 }
 
 case class BooleanDatum(value: Boolean) extends Datum
                                                 with ProduceBinary with WithBinary {
+
+
+
 
   def datumType = DatumType.R_BOOL
 
@@ -66,11 +71,17 @@ case class BooleanDatum(value: Boolean) extends Datum
 
 }
 
+// TODO : Allow NumberDatum to response to Binary methods
+
 case class NumberDatum(value: Double) extends Datum
+
+                                             // with ProduceBinary
                                               with ProduceNumeric
-                                              with ProduceBinary
                                               with WithNumeric
-                                              with WithAddition with WithBinary {
+                                              with WithAddition
+                                              /*with WithBinary*/ {
+
+
   def datumType = DatumType.R_NUM
 
   def build(d: ql2.Datum) = d.setRNum(value)
@@ -78,6 +89,7 @@ case class NumberDatum(value: Double) extends Datum
 }
 
 case class StringDatum(value: String) extends Datum with ProduceString with WithAddition {
+
   def datumType = DatumType.R_STR
 
   def build(d: ql2.Datum) = d.setRStr(value)

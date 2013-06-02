@@ -1,6 +1,6 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.{Term, MethodTerm}
+import com.rethinkdb.Term
 
 import ql2.Term.TermType
 
@@ -10,7 +10,7 @@ import ql2.Term.TermType
  * @param target
  * @param value
  */
-case class Append(target: WithDocument, value: Any) extends ProduceDocument {
+case class Append(target: WithDocument, value: Any) extends ProduceDocument  {
   override lazy val args = buildArgs(target, value)
 
   def termType = TermType.APPEND
@@ -21,7 +21,7 @@ case class Append(target: WithDocument, value: Any) extends ProduceDocument {
  * @param target
  * @param name
  */
-case class GetAttr(target: ProduceDocument, name: String) extends ProduceAny {
+case class GetAttr(target: ProduceDocument, name: String) extends ProduceAny  with WithAny{
   override lazy val args = buildArgs(target, name)
 
   def termType = TermType.GETATTR
@@ -33,7 +33,7 @@ case class GetAttr(target: ProduceDocument, name: String) extends ProduceAny {
  * @param target
  * @param attribute
  */
-case class Contains(target: ProduceDocument, attribute: String) extends ProduceBinary {
+case class Contains(target: ProduceDocument, attribute: String) extends ProduceBinary  {
   override lazy val args = buildArgs(target, attribute)
 
   def termType = TermType.CONTAINS
@@ -44,7 +44,7 @@ case class Contains(target: ProduceDocument, attribute: String) extends ProduceB
  * @param target
  * @param attributes
  */
-case class Pluck(target:ProduceSequence, attributes: Iterable[String]) extends ProduceSequence {
+case class Pluck(target:Sequence, attributes: Iterable[String]) extends ProduceSequence {
   override lazy val args = buildArgs(target, attributes)
 
   def termType = TermType.PLUCK
@@ -55,7 +55,7 @@ case class Pluck(target:ProduceSequence, attributes: Iterable[String]) extends P
  * @param target
  * @param attributes
  */
-case class Without(target:ProduceSequence, attributes: Iterable[String]) extends ProduceSequence {
+case class Without(target:Sequence, attributes: Iterable[String]) extends ProduceSequence {
   override lazy val args = buildArgs(target, attributes)
 
   def termType = TermType.WITHOUT
@@ -66,7 +66,7 @@ case class Without(target:ProduceSequence, attributes: Iterable[String]) extends
  * @param target
  * @param other
  */
-case class Merge(target: ProduceDocument, other: ProduceDocument) extends ProduceDocument {
+case class Merge(target: ProduceDocument, other: Document) extends ProduceDocument{
   override lazy val args = buildArgs(target, other)
 
   def termType = TermType.MERGE

@@ -72,15 +72,15 @@ object ConvertFrom {
 }
 
 object ConvertTo {
-  implicit def boolToDataNum(b: Boolean): Datum = BooleanDatum(b)
+  implicit def boolToDataNum(b: Boolean): BooleanDatum = BooleanDatum(b)
 
-  implicit def intToDatNum(i: Int): Datum = NumberDatum(i)
+  implicit def intToDatNum(i: Int): NumberDatum = NumberDatum(i)
 
-  implicit def longToDatNum(l: Long): Datum = NumberDatum(l)
+  implicit def longToDatNum(l: Long):NumberDatum = NumberDatum(l)
 
-  implicit def floatToDatNum(f: Float): Datum = NumberDatum(f)
+  implicit def floatToDatNum(f: Float): NumberDatum = NumberDatum(f)
 
-  implicit def string2DatNum(s: String): Datum = StringDatum(s)
+  implicit def string2DatNum(s: String): StringDatum = StringDatum(s)
 
   implicit def bool2Option(value: Boolean): Option[Boolean] = Some(value)
 

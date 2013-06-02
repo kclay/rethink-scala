@@ -3,7 +3,7 @@ package com.rethinkdb.ast
 import com.rethinkdb.{Term, Composable}
 import ql2.Term.TermType
 
-abstract class BiOperationTerm(left: Any, right: Any) extends ProduceBinary with ProduceComparable {
+abstract class BiOperationTerm(left: Any, right: Any) extends ProduceLiteral with ProduceBinary with ProduceComparable {
   override lazy val args = buildArgs(left, right)
 }
 
@@ -40,32 +40,32 @@ case class Not(prev: Term) extends Term with Composable {
 
 }
 
-case class Sub(left: ProduceNumeric, right: ProduceNumeric) extends BiOperationTerm(left, right) {
+case class Sub(left: ProduceNumeric, right: Numeric) extends BiOperationTerm(left, right)  with ProductMath{
   def termType = TermType.SUB
 }
 
-case class Mul(left: ProduceNumeric, right: ProduceNumeric) extends BiOperationTerm(left, right) {
+case class Mul(left: ProduceNumeric, right: Numeric) extends BiOperationTerm(left, right) with ProductMath {
   def termType = TermType.MUL
 }
 
-case class Div(left: ProduceNumeric, right: ProduceNumeric) extends BiOperationTerm(left, right) {
+case class Div(left: ProduceNumeric, right: Numeric) extends BiOperationTerm(left, right)  with ProductMath{
   def termType = TermType.DIV
 }
 
-case class Mod(left: ProduceNumeric, right: ProduceNumeric) extends BiOperationTerm(left, right) {
+case class Mod(left: ProduceNumeric, right: Numeric) extends BiOperationTerm(left, right) with ProductMath {
   def termType = TermType.MOD
 }
 
-case class All(left: ProduceBinary, right: ProduceBinary) extends BiOperationTerm(left, right) {
+case class All(left: Binary, right: Binary) extends BiOperationTerm(left, right) {
   def termType = TermType.ALL
 }
 
 
-case class RAny(left: ProduceBinary, right: ProduceBinary) extends BiOperationTerm(left, right) {
+case class RAny(left: Binary, right: Binary) extends BiOperationTerm(left, right) {
   def termType = TermType.ANY
 }
 
-case class Add(left: Addable, right: Addable) extends BiOperationTerm(left, right) {
+case class Add(left: Addable, right: Addable) extends BiOperationTerm(left, right) with ProductMath{
   def termType = TermType.ADD
 }
 

@@ -25,7 +25,7 @@ case class MakeObj(data: Map[String, Any]) extends Term {
 }
 
 
-case class Var(id: Int) extends Term {
+case class Var(id: Int) extends Term with ProduceAny with  WithAny{
   override lazy val args = buildArgs(id)
 
   def termType = TermType.VAR
@@ -43,7 +43,8 @@ case class UserError(error: String) extends Term {
   def termType = TermType.ERROR
 }
 
-class ImplicitVar extends Term with WithLiteral {
+class ImplicitVar extends Term with ProduceAny with WithAny {
+
   def termType = TermType.IMPLICIT_VAR
 }
 
@@ -51,6 +52,9 @@ class ImplicitVar extends Term with WithLiteral {
 object Core {
   val row = new ImplicitVar()
 }
+
+
+
 
 
 

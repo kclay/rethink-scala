@@ -8,7 +8,7 @@ case class SliceRange(start: Int = 0, end: Int = -1)
 
 
 abstract class Transformation extends ProduceSequence with WithSequence {
-  val target: ProduceSequence
+  val target: Sequence
   val func: Predicate
 
   override lazy val args = buildArgs(target, func())
@@ -21,7 +21,7 @@ abstract class Transformation extends ProduceSequence with WithSequence {
  * @param target
  * @param func
  */
-case class RMap(target: ProduceSequence, func: Predicate1) extends Transformation {
+case class RMap(target: Sequence, func: Predicate1) extends Transformation {
 
   def termType: EnumVal = TermType.MAP
 
@@ -34,11 +34,11 @@ case class RMap(target: ProduceSequence, func: Predicate1) extends Transformatio
  * @param target
  * @param func
  */
-case class ConcatMap(target: ProduceSequence, func: Predicate1) extends Transformation {
+case class ConcatMap(target: Sequence, func: Predicate1) extends Transformation {
 
   def termType: EnumVal = TermType.CONCATMAP
 
-  def toMap = Map(target, func)
+  def toMap = RMap(target, func)
 }
 
 abstract class Ordering extends Term {
@@ -60,7 +60,7 @@ case class Desc(attr: String) extends Ordering {
  * @param target
  * @param keys
  */
-case class OrderBy(target: ProduceSequence, keys: Seq[Ordering]) extends ProduceSequence with WithSequence {
+case class OrderBy(target: Sequence, keys: Seq[Ordering]) extends ProduceSequence with WithSequence {
   def termType: EnumVal = TermType.ORDERBY
 }
 
@@ -69,7 +69,7 @@ case class OrderBy(target: ProduceSequence, keys: Seq[Ordering]) extends Produce
  * @param target
  * @param index
  */
-case class Skip(target: ProduceSequence, index: Int) extends ProduceSequence with WithSequence {
+case class Skip(target: Sequence, index: Int) extends ProduceSequence with WithSequence {
   def termType: EnumVal = TermType.SKIP
 }
 
@@ -78,7 +78,7 @@ case class Skip(target: ProduceSequence, index: Int) extends ProduceSequence wit
  * @param target
  * @param others
  */
-case class Union(target: ProduceSequence, others: ProduceSequence) extends ProduceSequence with WithSequence {
+case class Union(target: Sequence, others: Sequence) extends ProduceSequence with WithSequence {
 
   override lazy val args: Seq[Term] = buildArgs(target, others)
 
@@ -91,7 +91,7 @@ case class Union(target: ProduceSequence, others: ProduceSequence) extends Produ
  * @param left
  * @param right
  */
-case class Slice(target: ProduceSequence, left: Int, right: Int) extends ProduceSequence with WithSequence {
+case class Slice(target: Sequence, left: Int, right: Int) extends ProduceSequence with WithSequence {
   override lazy val args = buildArgs(target, left, right)
 
   def termType = TermType.SLICE
@@ -102,7 +102,7 @@ case class Slice(target: ProduceSequence, left: Int, right: Int) extends Produce
  * @param target
  * @param amount
  */
-case class Limit(target: ProduceSequence, amount: Int) extends ProduceSequence with WithSequence {
+case class Limit(target: Sequence, amount: Int) extends ProduceSequence with WithSequence {
   override lazy val args = buildArgs(target, amount)
 
   def termType = TermType.LIMIT
