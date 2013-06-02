@@ -18,15 +18,16 @@ object Datum {
   import ql2.Datum.DatumType.{R_NULL, R_BOOL, R_NUM, R_STR, R_ARRAY, R_OBJECT}
 
   def unapply(datum: ql2.Datum): Any = {
-    datum.`type`.get match {
-      case R_NULL => None
-      case R_BOOL => datum.`rBool`.get
-      case R_NUM => datum.`rNum`.map(n => if (n % 1 == 0) n.toInt else n).get
-      case R_STR => datum.`rStr`.get
-      case R_ARRAY => datum.`rArray`.map(Datum.unapply(_))
-      case R_OBJECT => datum.`rObject` map {
+    datum.`type` match {
+      case Some(R_NULL) => None
+      case Some(R_BOOL) => datum.`rBool`.get
+      case Some(R_NUM) => datum.`rNum`.map(n => if (n % 1 == 0) n.toInt else n).get
+      case Some(R_STR) => datum.`rStr`.get
+      case Some(R_ARRAY) => datum.`rArray`.map(Datum.unapply(_))
+      case Some(R_OBJECT) => datum.`rObject` map {
         p => (p.`key`.get, Datum.unapply(p.`val`.get))
       } toMap
+      case _=>None
     }
 
   }

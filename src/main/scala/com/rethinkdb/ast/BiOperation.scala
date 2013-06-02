@@ -3,7 +3,7 @@ package com.rethinkdb.ast
 import com.rethinkdb.{Term, Composable}
 import ql2.Term.TermType
 
-abstract class BiOperationTerm(left: Any, right: Any) extends ProduceLiteral with ProduceBinary with ProduceComparable {
+abstract class BiOperationTerm(left: Any, right: Any) extends ProduceNumeric with ProduceComparable {
   override lazy val args = buildArgs(left, right)
 }
 
@@ -40,19 +40,19 @@ case class Not(prev: Term) extends Term with Composable {
 
 }
 
-case class Sub(left: ProduceNumeric, right: Numeric) extends BiOperationTerm(left, right)  with ProductMath{
+case class Sub(left: Numeric, right: Numeric) extends BiOperationTerm(left, right)  with ProductMath{
   def termType = TermType.SUB
 }
 
-case class Mul(left: ProduceNumeric, right: Numeric) extends BiOperationTerm(left, right) with ProductMath {
+case class Mul(left: Numeric, right: Numeric) extends BiOperationTerm(left, right) with ProductMath {
   def termType = TermType.MUL
 }
 
-case class Div(left: ProduceNumeric, right: Numeric) extends BiOperationTerm(left, right)  with ProductMath{
+case class Div(left: Numeric, right: Numeric) extends BiOperationTerm(left, right)  with ProductMath{
   def termType = TermType.DIV
 }
 
-case class Mod(left: ProduceNumeric, right: Numeric) extends BiOperationTerm(left, right) with ProductMath {
+case class Mod(left: Numeric, right: Numeric) extends BiOperationTerm(left, right) with ProductMath {
   def termType = TermType.MOD
 }
 
@@ -65,7 +65,7 @@ case class RAny(left: Binary, right: Binary) extends BiOperationTerm(left, right
   def termType = TermType.ANY
 }
 
-case class Add(left: Addable, right: Addable) extends BiOperationTerm(left, right) with ProductMath{
+case class Add(left: Addition, right: Addition) extends BiOperationTerm(left, right) with ProductMath{
   def termType = TermType.ADD
 }
 

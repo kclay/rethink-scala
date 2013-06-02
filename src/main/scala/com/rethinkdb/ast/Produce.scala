@@ -3,30 +3,30 @@ package com.rethinkdb.ast
 import com.rethinkdb.Term
 
 trait CanProduce[T <: CanProduce[T]] {
-  self: T =>
-  type ResultType >: self.type <: T
+
+ // type ResultType ><: T
 
 }
 
 trait Produce extends Term {
-
+  type ResultType
 
   import scala.reflect.runtime.universe._
 
-  def withResult[A: TypeTag](result: A): Result =
+  def withResult[A: TypeTag](result: A): ResultType =
     if (withMapProduce) extract[A, Map[String, Any]](result, defaultValue)(fromMap _)
-    else result.asInstanceOf[Result]
+    else wrap(result)
 
   val withMapProduce = false
 
-  def wrap(value: Any): Result = AnyResult(value)
+  def wrap(value: Any): ResultType
 
 
-  def defaultValue: Result = AnyResult(None)
+  def defaultValue: ResultType
 
   protected def fromMap(m: Map[String, Any]): Any = defaultValue
 
-  protected def extract[A: TypeTag, T: TypeTag](result: A, defaultValue: Result)(f: T => Any): Result = {
+  protected def extract[A: TypeTag, T: TypeTag](result: A, defaultValue: ResultType)(f: T => Any): ResultType = {
     typeOf[A] match {
       case t if t =:= typeOf[T] => wrap(f(result.asInstanceOf[T]))
       case _ => defaultValue
@@ -36,24 +36,31 @@ trait Produce extends Term {
 
 }
 
-sealed trait Feature
+sealed trait Typed
 
 
-trait Addable extends Feature
+trait Addition extends Typed
 
-trait Comparable extends Feature
+trait Comparable extends Typed
 
-trait Sequence extends Feature
+trait Sequence extends Typed
 
-trait Document extends Feature
+trait Document extends Typed
 
-trait Binary extends Feature
+trait Binary extends Typed
 
-trait Numeric extends Feature with Addable
+trait RString extends Typed with Addition
 
-trait Math extends Numeric with Addable
 
-trait RAnyRef extends Numeric with Binary with Document with Sequence with Comparable with Addable
+trait Numeric extends Typed with Addition
+
+trait Literal extends Numeric with RString
+
+
+
+trait Math extends Numeric with Addition
+
+trait RAnyRef extends Numeric with Binary with Document with Sequence with Comparable with Addition
 
 
 trait Result {
@@ -75,7 +82,7 @@ case class StringResult(value: String) extends Result {
   def unwrap = value
 }
 
-case class IterableResult[R](value: Iterable[R]) extends Result {
+case class IterableResult(value: Iterable[Any]) extends Result {
   def unwrap = value
 }
 
@@ -87,38 +94,41 @@ case class AnyResult(value: Any) extends Result {
   def unwrap = value
 }
 
-trait ProduceSequence extends Produce with Sequence {
+trait ProduceSequence extends Produce  with Sequence {
+  type ResultType = IterableResult
 
-
-  override def defaultValue: Result = IterableResult[Any](Iterable.empty[Any])
+  def wrap(value:Any) = IterableResult(value.asInstanceOf[Iterable[Any]])
+  def defaultValue = IterableResult(Iterable.empty[Any])
 }
 
 trait ProduceComparable
 
 trait ProduceBinary extends Produce with Binary {
 
+  type ResultType = BooleanResult
 
-  override def wrap(value: Any): Result = BooleanResult(value.asInstanceOf[Boolean])
+  def wrap(value: Any) = BooleanResult(value.asInstanceOf[Boolean])
 
-  override def defaultValue: Result = BooleanResult(false)
+  def defaultValue = BooleanResult(false)
 }
 
-trait ProduceLiteral extends ProduceComparable with Addable with Comparable
+trait ProduceLiteral extends ProduceComparable with Addition with Comparable
 
-trait ProduceDocument extends Produce {
+trait ProduceDocument extends Produce  {
 
+  type ResultType = DocumentResult
 
-  override def wrap(value: Any): Result = DocumentResult(value.asInstanceOf[Document])
+  def wrap(value: Any)= DocumentResult(value.asInstanceOf[Document])
 
-  override def defaultValue: Result = DocumentResult(new Document {})
+  def defaultValue = DocumentResult(new Document {})
 
 }
 
-trait ProduceNumeric extends Produce with ProduceLiteral with Numeric {
+trait ProduceNumeric extends Produce  with ProduceLiteral with Numeric with Literal with Binary {
 
   type ResultType = NumericResult
 
-  override def wrap(value: Any): Result = {
+  def wrap(value: Any)= {
 
     val d = value match {
       case d: Double => d
@@ -128,27 +138,29 @@ trait ProduceNumeric extends Produce with ProduceLiteral with Numeric {
     NumericResult(d)
   }
 
-  override def defaultValue: Result = NumericResult(0)
+   def defaultValue= NumericResult(0)
 
 }
 
-trait ProductMath extends Product  with ProduceNumeric with WithAddition with WithNumeric
+trait ProductMath  extends ProduceNumeric with  WithAddition with WithNumeric
 
-trait ProduceString extends Produce with ProduceLiteral {
+trait ProduceString extends Produce with ProduceLiteral  with Literal {
 
+  type ResultType = StringResult
 
-  override def wrap(value: Any): Result = StringResult(value.toString)
+  def wrap(value: Any)= StringResult(value.toString)
 
-  override def defaultValue: Result = StringResult("")
+  def defaultValue= StringResult("")
 }
 
 
-trait ProduceAny extends Sequence with ProduceBinary with ProduceString with ProduceNumeric with ProduceDocument {
+trait ProduceAny extends Produce with Sequence with Binary with Literal with Document   {
 
+  type ResultType = AnyResult
 
-  override def wrap(value: Any): Result = AnyResult(value)
+  def wrap(value: Any)= AnyResult(value)
 
-  override def defaultValue: Result = AnyResult(None)
+  def defaultValue= AnyResult(None)
 }
 
 
@@ -199,7 +211,7 @@ trait WithSequence extends LogicSignature {
 }
 
 trait WithDocument extends LogicSignature {
-  self: ProduceDocument =>
+  self: Document =>
 
   def attr(name: String) = GetAttr(this, name)
 
@@ -261,13 +273,13 @@ trait WithUnary extends LogicSignature {
 
 
 trait WithAddition extends LogicSignature {
-  self: ProduceLiteral =>
+  self: Literal =>
 
-  def +(other: Addable) = add(other)
+  def +(other: Addition) = add(other)
 
-  def add(other: Addable) = Add(this, other)
+  def add(other: Addition) = Add(this, other)
 
-  def +=(other: Addable) = Add(this, other)
+  def +=(other: Addition) = Add(this, other)
 
   //def >+(other: AcceptType) = Add(other, this)
 
@@ -275,7 +287,7 @@ trait WithAddition extends LogicSignature {
 
 
 trait WithNumeric extends LogicSignature {
-  self: ProduceNumeric =>
+  self: Numeric =>
 
 
   def -(other: Numeric) = Sub(this, other)
@@ -298,7 +310,7 @@ trait WithNumeric extends LogicSignature {
 }
 
 trait WithBinary extends LogicSignature {
-  self: ProduceBinary with Binary =>
+  self:  Binary =>
 
 
   def &(other: Binary) = All(this, other)

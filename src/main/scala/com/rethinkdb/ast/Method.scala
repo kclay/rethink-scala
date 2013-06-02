@@ -21,7 +21,7 @@ case class Append(target: WithDocument, value: Any) extends ProduceDocument  {
  * @param target
  * @param name
  */
-case class GetAttr(target: ProduceDocument, name: String) extends ProduceAny  with WithAny{
+case class GetAttr(target: Document, name: String) extends ProduceAny  with WithAny{
   override lazy val args = buildArgs(target, name)
 
   def termType = TermType.GETATTR
@@ -33,7 +33,7 @@ case class GetAttr(target: ProduceDocument, name: String) extends ProduceAny  wi
  * @param target
  * @param attribute
  */
-case class Contains(target: ProduceDocument, attribute: String) extends ProduceBinary  {
+case class Contains(target: Document, attribute: String) extends ProduceBinary  {
   override lazy val args = buildArgs(target, attribute)
 
   def termType = TermType.CONTAINS
@@ -66,14 +66,14 @@ case class Without(target:Sequence, attributes: Iterable[String]) extends Produc
  * @param target
  * @param other
  */
-case class Merge(target: ProduceDocument, other: Document) extends ProduceDocument{
+case class Merge(target: Document, other: Document) extends ProduceDocument{
   override lazy val args = buildArgs(target, other)
 
   def termType = TermType.MERGE
 }
 
 
-case class Between(start: Int, end: Int) extends ProduceSequence {
+case class Between(target:Sequence,start: Int, end: Int) extends ProduceSequence {
   override lazy val args = buildArgs(start, end)
 
   def termType = TermType.BETWEEN
