@@ -40,7 +40,7 @@ case class DB(name: String) {
 
 case class Table(name: String, useOutDated: Option[Boolean] = None, scopedDB: Option[DB] = None) extends TermMessage
                                                                                                          with ProduceSequence
-                                                                                                         with WithSequence
+
                                                                                                          with WithDB {
 
   override lazy val args = buildArgs(name)
@@ -56,7 +56,7 @@ case class Table(name: String, useOutDated: Option[Boolean] = None, scopedDB: Op
 }
 
 
-trait WithBinaryExtraction {
+trait WithConversion {
   self: ProduceBinary =>
 
   val resultField: String
@@ -66,7 +66,7 @@ trait WithBinaryExtraction {
 
 }
 
-case class DBCreate(name: String) extends TermMessage with ProduceBinary with WithBinaryExtraction {
+case class DBCreate(name: String) extends TermMessage with ProduceBinary with WithConversion {
   override lazy val args = buildArgs(name)
   val resultField = "created"
 
@@ -74,7 +74,7 @@ case class DBCreate(name: String) extends TermMessage with ProduceBinary with Wi
   def termType = TermType.DB_CREATE
 }
 
-case class DBDrop(name: String) extends TermMessage with ProduceBinary with WithBinaryExtraction {
+case class DBDrop(name: String) extends TermMessage with ProduceBinary with WithConversion {
   override lazy val args = buildArgs(name)
   val resultField = "dropped"
 
@@ -88,7 +88,7 @@ class DBList extends TermMessage with ProduceSequence {
 
 case class TableCreate(db: DB, name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None)
   extends TermMessage with ProduceBinary
-          with WithDB with WithBinaryExtraction {
+          with WithDB with WithConversion {
   val resultField = "created"
 
   val scopedDB = Some(db)
@@ -100,7 +100,7 @@ case class TableCreate(db: DB, name: String, primaryKey: Option[String] = None, 
 
 }
 
-case class TableDrop(name: String) extends TermMessage with ProduceBinary with WithBinaryExtraction {
+case class TableDrop(name: String) extends TermMessage with ProduceBinary with WithConversion {
   val resultField = "dropped"
   override lazy val args = buildArgs(name)
 

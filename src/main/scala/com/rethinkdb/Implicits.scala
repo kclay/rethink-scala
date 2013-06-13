@@ -1,6 +1,10 @@
 package com.rethinkdb
 
-import com.rethinkdb.ast.{Desc, SliceRange, Asc}
+import com.rethinkdb.ast._
+import com.rethinkdb.ast.Desc
+import com.rethinkdb.ast.SliceRange
+import com.rethinkdb.ast.Asc
+import com.rethinkdb.ast.Var
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,6 +30,8 @@ object Implicits {
   implicit def intWithTildyArrow(i: Int) = new {
     def ~>(j: Int) = SliceRange(i, j)
   }
+  implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
+  implicit def toPredicate2(f: (Var,Var) => Typed) = new Predicate2(f)
 
 
 }

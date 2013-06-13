@@ -6,15 +6,8 @@ import ql2.Term.TermType
 import java.util.concurrent.atomic.AtomicInteger
 import ql2.Term.TermType.EnumVal
 
-/**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 4/2/13
- * Time: 7:41 PM
- * To change this template use File | Settings | File Templates.
- */
 
-case class Get(from: Term, attribute: String) extends TermMessage {
+case class Get(from: Term, attribute: String) extends TermMessage with ProduceDocument {
   override lazy val args = buildArgs(from, attribute)
 
   def termType = TermType.GET
@@ -28,39 +21,18 @@ object Predicate {
 }
 
 
-trait WithFilter {
 
-  def filter(fields: Map[String, Any])
-
-  def filter(term: Term)
-
-  def filter(f: Predicate1)
-}
-
-object Functional {
-  implicit def toPredicate1(f: (Var) => Term) = new Predicate1(f)
-
-}
-
-trait Functional {
-
-  def lambda(f: (Var) => Term) = new Predicate1(f)
-
-  def filter(attrs: Map[String, Any])
-
-
-}
 
 abstract class Predicate extends {
 
   val amount: Int
 
 
-  protected def _invoke(v: Var*): Term
+  protected def _invoke(v: Seq[Var]): Typed
 
-  private[rethinkdb] def invoke: Seq[Term] = {
+  private[rethinkdb] def invoke: Seq[Typed] = {
     val (ids, vars) = take(amount)
-    val product = _invoke(vars: _*)
+    val product = _invoke(vars)
     Seq(MakeArray(ids), product)
   }
 
@@ -88,31 +60,63 @@ case class FuncCall(f: Predicate, target: Term) extends Term {
 }
 
 
-case class Predicate1(f: (Var) => Term) extends Predicate {
+case class Predicate1(f: (Var) => Typed) extends Predicate {
 
 
-  protected def _invoke(vars: Var*) = f(vars(0))
+  protected def _invoke(vars: Seq[Var]) = f(vars(0))
 
 
   val amount: Int = 1
 }
 
-case class Predicate2(f: (Var, Var) => Term) extends Predicate {
+case class Predicate2(f: (Var, Var) => Typed) extends Predicate {
 
-  protected def _invoke(v: Var*) = f(v(0), v(1))
-
-
-  val amount: Int = 2
-}
-
-case class Predicate3(f: (Var, Var, Var) => Term) extends Predicate {
-
-  protected def _invoke(v: Var*) = f(v(0), v(1), v(2))
+  protected def _invoke(v: Seq[Var]) = f(v(0), v(1))
 
 
   val amount: Int = 2
 }
 
+
+
+
+abstract class Transformation extends ProduceSequence  {
+  val target: Functional
+  val func: Predicate
+
+  override lazy val args = buildArgs(target, func())
+
+
+}
+
+/**
+ * Transform each element of the sequence by applying the given mapping function.
+ * @param target
+ * @param func
+ */
+case class RMap(target: Functional, func: Predicate1) extends Transformation {
+
+  def termType: EnumVal = TermType.MAP
+
+  def toConcat = ConcatMap(target, func)
+
+}
+
+/**
+ * Flattens a sequence of arrays returned by the mappingFunction into a single sequence.
+ * @param target
+ * @param func
+ */
+case class ConcatMap(target: Functional, func: Predicate1) extends Transformation {
+
+  def termType: EnumVal = TermType.CONCATMAP
+
+  def toMap = RMap(target, func)
+}
+
+case class Filter(target:Typed,func:Predicate) extends ProduceAny{
+  def termType: EnumVal = TermType.FILTER
+}
 //class Functional {
 
 

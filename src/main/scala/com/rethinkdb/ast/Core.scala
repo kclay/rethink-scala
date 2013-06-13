@@ -1,23 +1,20 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.{Term, Composable}
+import com.rethinkdb.Term
 
 import ql2.Term.TermType
 
 
-case class MakeArray(array: Seq[Any]) extends Term with Composable {
+case class MakeArray(array: Seq[Any]) extends Term with ArrayTyped{
   override lazy val args = buildArgs(array: _*)
 
   // def datumTermType:TermType.EnumVal=ql2.Datum
   def termType = TermType.MAKE_ARRAY
 
 
-  // do
-  // def ?(func: PartialFunction): Term = ???
-  override def compose(args: Seq[Term], optargs: Map[String, Term]) = super.compose(args, optargs)
 }
 
-case class MakeObj(data: Map[String, Any]) extends Term {
+case class MakeObj(data: Map[String, Any]) extends Term with MapTyped{
   override lazy val optargs = buildOptArgs2(data)
 
 
@@ -25,7 +22,7 @@ case class MakeObj(data: Map[String, Any]) extends Term {
 }
 
 
-case class Var(id: Int) extends Term with ProduceAny with  WithAny{
+case class Var(id: Int) extends Term with ProduceAny {
   override lazy val args = buildArgs(id)
 
   def termType = TermType.VAR
@@ -43,7 +40,7 @@ case class UserError(error: String) extends Term {
   def termType = TermType.ERROR
 }
 
-class ImplicitVar extends Term with ProduceAny with WithAny {
+class ImplicitVar extends Term with ProduceAny {
 
   def termType = TermType.IMPLICIT_VAR
 }

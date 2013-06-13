@@ -2,7 +2,7 @@ import org.scalatest.FunSuite
 
 import com.rethinkdb._
 import ast._
-import com.rethinkdb.ast.Functional._
+import com.rethinkdb.Implicits._
 
 class TransformationTests extends FunSuite{
 

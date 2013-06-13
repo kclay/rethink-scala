@@ -10,7 +10,7 @@ import ql2.Term.TermType
  * @param target
  * @param value
  */
-case class Append(target: WithDocument, value: Any) extends ProduceDocument  {
+case class Append(target: Document, value: Any) extends ProduceDocument  {
   override lazy val args = buildArgs(target, value)
 
   def termType = TermType.APPEND
@@ -21,7 +21,7 @@ case class Append(target: WithDocument, value: Any) extends ProduceDocument  {
  * @param target
  * @param name
  */
-case class GetAttr(target: Document, name: String) extends ProduceAny  with WithAny{
+case class GetAttr(target: Document, name: String) extends ProduceAny{
   override lazy val args = buildArgs(target, name)
 
   def termType = TermType.GETATTR
@@ -44,7 +44,7 @@ case class Contains(target: Document, attribute: String) extends ProduceBinary  
  * @param target
  * @param attributes
  */
-case class Pluck(target:Sequence, attributes: Iterable[String]) extends ProduceSequence {
+case class Pluck(target:Document, attributes: Iterable[String]) extends ProduceSequence {
   override lazy val args = buildArgs(target, attributes)
 
   def termType = TermType.PLUCK
@@ -55,7 +55,7 @@ case class Pluck(target:Sequence, attributes: Iterable[String]) extends ProduceS
  * @param target
  * @param attributes
  */
-case class Without(target:Sequence, attributes: Iterable[String]) extends ProduceSequence {
+case class Without(target:Document, attributes: Iterable[String]) extends ProduceSequence {
   override lazy val args = buildArgs(target, attributes)
 
   def termType = TermType.WITHOUT
@@ -78,3 +78,4 @@ case class Between(target:Sequence,start: Int, end: Int) extends ProduceSequence
 
   def termType = TermType.BETWEEN
 }
+//case class Difference(target:Document)

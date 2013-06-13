@@ -1,10 +1,10 @@
 package com.rethinkdb.ast
 
 
-import com.rethinkdb.{DatumAssocPair, DatumMessage, ExprWrap, Composable, AssocPair}
+import com.rethinkdb.{DatumAssocPair, DatumMessage, AssocPair}
 import ql2.Datum.DatumType
 
-sealed trait Datum extends  DatumMessage with ExprWrap with Composable {
+sealed trait Datum extends DatumMessage {
 
 
   override def optArgsBuilder(key: String, value: Any): AssocPair = DatumAssocPair(key, value)
@@ -27,7 +27,7 @@ object Datum {
       case Some(R_OBJECT) => datum.`rObject` map {
         p => (p.`key`.get, Datum.unapply(p.`val`.get))
       } toMap
-      case _=>None
+      case _ => None
     }
 
   }
@@ -60,10 +60,7 @@ class NoneDatum extends Datum {
   def defaultValue = None
 }
 
-case class BooleanDatum(value: Boolean) extends Datum
-                                                with ProduceBinary with WithBinary {
-
-
+case class BooleanDatum(value: Boolean) extends Datum with ProduceBinary {
 
 
   def datumType = DatumType.R_BOOL
@@ -72,15 +69,8 @@ case class BooleanDatum(value: Boolean) extends Datum
 
 }
 
-// TODO : Allow NumberDatum to response to Binary methods
 
-case class NumberDatum(value: Double) extends Datum
-
-                                             // with ProduceBinary
-                                              with ProduceNumeric
-                                              with WithNumeric
-                                              with WithAddition
-                                              /*with WithBinary*/ {
+case class NumberDatum(value: Double) extends Datum with ProduceNumeric {
 
 
   def datumType = DatumType.R_NUM
@@ -89,7 +79,7 @@ case class NumberDatum(value: Double) extends Datum
 
 }
 
-case class StringDatum(value: String) extends Datum with ProduceString with WithAddition {
+case class StringDatum(value: String) extends Datum with ProduceString {
 
   def datumType = DatumType.R_STR
 
