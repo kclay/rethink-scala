@@ -1,25 +1,20 @@
 package com.rethinkdb
 
 
-import com.rethinkdb.utils.Helpers._
+import com.rethinkdb.ast.Produce
+import scala.concurrent.Future
 
 
-/**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 5/27/13
- * Time: 9:52 AM
- * To change this template use File | Settings | File Templates.
- */
-case class Query(term:Term,connection:Connection) {
+case class Query(term:Produce,connection:Connection) {
 
+   type ResultType =term.ResultType
 
    lazy val ast:ql2.Term = term.ast
 
-   def execute()={
-     val s = connection.socket
+   def execute:Future[ResultType]={
+
      val token = connection.token.getAndIncrement
-     s.write(toQuery(term,token),term)
+     connection.write[ResultType](term)
 
    }
 }
