@@ -5,7 +5,7 @@ import ql2.Term.TermType
 
 abstract class BiOperationTerm(left: Any, right: Any)  extends Produce{
 
-  override lazy val args = buildArgs(left, right)
+  //override lazy val args = buildArgs(left, right)
 }
 
 case class Eq(left: Comparable, right: Comparable) extends BiOperationTerm(left, right) with ProduceBinary {
@@ -45,7 +45,7 @@ case class Sub(left: Numeric, right: Numeric) extends BiOperationTerm(left, righ
   def termType = TermType.SUB
 }
 
-case class Mul(left: Numeric, right: Numeric) extends BiOperationTerm(left, right) with ProduceNumeric {
+case class Mul(left: Multiply, right: Numeric) extends BiOperationTerm(left, right) with ProduceNumeric {
   def termType = TermType.MUL
 }
 
@@ -57,7 +57,7 @@ case class Mod(left: Numeric, right: Numeric) extends BiOperationTerm(left, righ
   def termType = TermType.MOD
 }
 
-case class And(left: Binary, right: Binary) extends BiOperationTerm(left, right) with ProduceBinary{
+case class All(left: Binary, right: Binary) extends BiOperationTerm(left, right) with ProduceBinary{
   def termType = TermType.ALL
 }
 

@@ -77,6 +77,11 @@ case class Predicate2(f: (Var, Var) => Typed) extends Predicate {
   val amount: Int = 2
 }
 
+trait  BooleanPredicate extends Predicate
+case class BooleanPredicate1(override val f:(Var) => Binary) extends Predicate1(f) with BooleanPredicate
+
+case class BooleanPredicate2(override val f:(Var, Var) => Binary) extends Predicate2(f) with BooleanPredicate
+
 
 
 

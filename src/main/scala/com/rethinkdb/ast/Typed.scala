@@ -1,12 +1,26 @@
 package com.rethinkdb.ast
 
 import com.rethinkdb.Term
+import scala.util.matching.Regex
 
 
 trait Produce extends Term{
   type ResultType
 
   import scala.reflect.runtime.universe._
+
+
+  protected val  extractArgs = true
+  private def fields(a: AnyRef) ={
+
+    var f = a.getClass.getDeclaredFields
+    f.toSeq.filterNot(_.isSynthetic).take(numConstructorParams(a)).map{field =>
+      field.setAccessible(true)
+      field
+    }
+  }
+  private def numConstructorParams(a: AnyRef) = a.getClass.getConstructors()(0).getParameterTypes.size
+  override lazy val args = if(extractArgs) buildArgs(fields(this).map(_.get(this)): _*) else Seq.empty[Term]
 
   def withResult[A: TypeTag](result: A): ResultType =
     if (withMapProduce) extract[A, Map[String, Any]](result, defaultValue)(fromMap _)
@@ -31,7 +45,10 @@ trait Produce extends Term{
 
 }
 
-sealed trait Typed
+sealed trait Typed{
+  implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
+  implicit def toBooleanPredicate1(f: (Var) => Binary) = new BooleanPredicate1(f)
+}
 
 trait Addition extends Typed{
   def +(other: Addition) = add(other)
@@ -41,11 +58,12 @@ trait Addition extends Typed{
   def +=(other: Addition) = Add(this, other)
 }
 trait Literal extends Comparable with Addition{
-  def ~(other: Term) = Not(this)
+  def ~(other: Term) = not(other)
+  def not(other:Term) =Not(this)
 }
 
 trait MapTyped extends Typed
-trait ArrayTyped extends Sequence
+
 
 
 trait Comparable extends Typed{
@@ -77,8 +95,38 @@ trait Comparable extends Typed{
 
 }
 
-trait Sequence extends Functional{
+trait Multiply{
 
+  def *(other: Numeric) = mul(other)
+  def mul(other:Numeric) = Mul(this, other)
+}
+
+trait Appendable extends Typed{
+  def append(value:Typed)=Append(this,value)
+  def :+(value:Typed)=append(value)
+}
+
+trait Countable extends Typed{
+
+  def size = count
+  def count=Count(this)
+  def count(filter:BooleanPredicate) = Count(this,Some(filter))
+  def count(value:Binary)=Count(this,Some((x:Var)=>value))
+}
+trait Sequence extends Addition with Multiply with Functional with Appendable{
+
+
+
+  def indexesOf(value:Datum) = IndexesOf(this,Left(value))
+  def indexesOf(value:Binary)=indexesOf((x:Var)=>value)
+
+  def isEmpty=IsEmpty(this)
+
+  def sample(amount:Int) = Sample(this,amount)
+  def indexesOf(predicate:BooleanPredicate1)=IndexesOf(this,Right(predicate))
+  def prepend(value:Typed) = Prepend(this,value)
+  def +:(value:Typed) = prepend(value)
+  def apply(index:Int) = Nth(this,index)
 
   def skip(amount: Int) = Skip(this, amount)
 
@@ -94,7 +142,7 @@ trait Functional extends Typed{
 
   def concatMap(func: Predicate1) = ConcatMap(this, func)
 }
-trait Document extends Functional{
+trait Document extends Functional with Appendable{
 
   def pluck(attrs: String*) = Pluck(this, attrs)
 
@@ -108,54 +156,67 @@ trait Document extends Functional{
 
   def \(name: String) = attr(name)
 
-  def append(value: Any) = Append(this, value)
 
-  def :+(value: Any) = append(value)
 
   def merge(other: Document) = Merge(this, other)
 
   def +(other: Document) = merge(other)
 
   def contains(attr: String) = Contains(this, attr)
+  def ?(attr:String) =contains(attr)
 }
 
 trait Binary extends Typed {
 
-  def &(other: Binary) = And(this, other)
+  def &(other: Binary) = and(other)
+  def and(other:Binary) = All(this, other)
 
-  def &&(other: Binary) = And(other, this)
 
-  def &>(other: Binary) = this && other
+  def rand(other:Binary) = All(other,this)
+
+  def &>(other: Binary) = rand(other)
 
   // or
-  def |(other: Binary) = Or(this, other)
+  def |(other: Binary) = or(other)
+  def or(other:Binary) = Or(this,other)
 
   // right or
-  def >|(other: Binary) = Or(other, this)
+  def >|(other: Binary) = ror(other)
+  def ror(other:Binary) = Or(other, this)
 }
 
-trait Character extends Literal
+trait Strings extends Literal{
+
+  def === (regexp:Regex) = find(regexp.toString())
+  def ===(regexp:String) =find(regexp)
+  def find(regex:String)=Match(this,regex)
+}
 
 
-trait Numeric extends Literal with Binary{
+trait Numeric extends Literal with Multiply with Binary{
 
-  def -(other: Numeric) = Sub(this, other)
+  def -(other: Numeric) = sub(other)
+  def sub(other:Numeric) = Sub(this, other)
 
   //def >-(other: Numeric) = Sub(other, this)
 
-  def *(other: Numeric) = Mul(this, other)
+
 
   //def >*(other: Numeric) = Mul(other, this)
 
-  def /(other: Numeric) = Div(this, other)
+  def /(other: Numeric) =div(other)
+  def div(other:Numeric) = Div(this, other)
+
+
 
   // def >/(other: Numeric) = Div(other, this)
 
-  def %(other: Numeric) = Mod(this, other)
+  def %(other: Numeric) = mod(other)
+  def mod(other:Numeric) =Mod(this, other)
 }
 
 trait Filterable extends Typed{
-  implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
+
   def filter(value:Binary):Func = filter((x:Var)=> value)
   def filter(value:Map[String,Any]):Func = filter((x:Var)=>Expr(value))
   def filter(f:Predicate):Func = Func(f)
@@ -164,7 +225,7 @@ trait Filterable extends Typed{
 
 
 
-trait Ref extends Numeric with Binary with Document with Sequence with Comparable with Literal with Character
+trait Ref extends Numeric with Binary with Document with Sequence with Comparable with Literal with Strings
 
 
 
@@ -209,6 +270,8 @@ trait ProduceSequence extends Produce  with Sequence {
   def defaultValue = IterableResult(Iterable.empty[Any])
 }
 
+trait ProduceSet extends ProduceSequence
+
 
 
 trait ProduceBinary extends Produce with Binary {
@@ -252,7 +315,7 @@ trait ProduceNumeric extends Produce  with  Numeric   {
 
 
 
-trait ProduceString extends Produce with Character {
+trait ProduceString extends Produce with Strings {
 
   type ResultType = StringResult
 
@@ -262,7 +325,7 @@ trait ProduceString extends Produce with Character {
 }
 
 
-trait ProduceAny extends Produce with Numeric with Sequence with Binary  with Document   {
+trait ProduceAny extends Produce with Ref   {
 
   type ResultType = AnyResult
 

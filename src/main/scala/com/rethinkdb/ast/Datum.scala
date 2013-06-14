@@ -1,8 +1,9 @@
 package com.rethinkdb.ast
 
 
-import com.rethinkdb.{DatumAssocPair, DatumMessage, AssocPair}
+import com.rethinkdb.{DatumAssocPair, DatumMessage, AssocPair,Term}
 import ql2.Datum.DatumType
+
 
 sealed trait Datum extends DatumMessage {
 
@@ -42,6 +43,7 @@ object Datum {
     case f: Float => NumberDatum(f)
     case l: Long => NumberDatum(l)
     case b: Boolean => BooleanDatum(b)
+    case d:Double =>NumberDatum(d)
 
   }
 }
@@ -62,7 +64,7 @@ class NoneDatum extends Datum {
 
 case class BooleanDatum(value: Boolean) extends Datum with ProduceBinary {
 
-
+  override val extractArgs = false
   def datumType = DatumType.R_BOOL
 
   def build(d: ql2.Datum) = d.setRBool(value)
@@ -73,6 +75,7 @@ case class BooleanDatum(value: Boolean) extends Datum with ProduceBinary {
 case class NumberDatum(value: Double) extends Datum with ProduceNumeric {
 
 
+  override val extractArgs = false
   def datumType = DatumType.R_NUM
 
   def build(d: ql2.Datum) = d.setRNum(value)
@@ -81,6 +84,7 @@ case class NumberDatum(value: Double) extends Datum with ProduceNumeric {
 
 case class StringDatum(value: String) extends Datum with ProduceString {
 
+  override val extractArgs = false
   def datumType = DatumType.R_STR
 
   def build(d: ql2.Datum) = d.setRStr(value)
