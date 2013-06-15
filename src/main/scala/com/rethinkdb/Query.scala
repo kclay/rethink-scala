@@ -4,6 +4,7 @@ package com.rethinkdb
 import com.rethinkdb.ast.Produce
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
+import scala.util.{Success, Failure}
 
 
 abstract class Query[R]{
@@ -42,7 +43,7 @@ abstract class Query[R]{
       None
   }
 
-  def toResult[R]:Option[R]
+  def toResult[R]:Either[RethinkError,Option[R]]
 
 }
 
@@ -52,15 +53,18 @@ case class BlockingQuery[R](term:Term,connection:Connection) extends Query[R]{
     override lazy val  ast: ql2.Term = term.ast
 
   def toResult[R] = toResult(Duration.Inf)
-  def toResult[R](atMost:Duration):Option[R] =  {
+  def toResult[R](atMost:Duration):Either[RethinkError,Option[R]] =  {
 
-    val result = Await.result(connection.write[R](term),atMost)
-
-    val r = result match {
-      case Some(a)=> Some(a.asInstanceOf[R])
-      case _=>None
+    val f = connection.write[R](term)
+    Await.ready(f,atMost)
+    val r = f.value match{
+      case Some(Failure(e:RethinkError))=>Left(e)
+      case Some(Success(r:Option[R]))=>Right(r)
+      case Some(Failure(e:Exception))=>Left(RethinkRuntimeError(e.getMessage,term))
+      case _=>Left(RethinkRuntimeError("Opps",term))
     }
-    r
+     r
+
   }
 
 

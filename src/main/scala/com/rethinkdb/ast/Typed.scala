@@ -1,9 +1,54 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.{BlockingQuery, Connection, Term}
+import com.rethinkdb._
 import scala.util.matching.Regex
 import scala.reflect.ClassTag
-import com.rethinkdb.Query
+import com.rethinkdb.ast.IndexesOf
+import com.rethinkdb.ast.Mod
+import com.rethinkdb.ast.Prepend
+import com.rethinkdb.ast.Match
+import com.rethinkdb.ast.OrderBy
+import com.rethinkdb.ast.Mul
+import com.rethinkdb.ast.Predicate2
+import scala.Some
+import com.rethinkdb.ast.OuterJoin
+import com.rethinkdb.ast.EqJoin
+import com.rethinkdb.ast.All
+import com.rethinkdb.ast.TypeOf
+import com.rethinkdb.ast.Pluck
+import com.rethinkdb.ast.Contains
+import com.rethinkdb.ast.Sub
+import com.rethinkdb.ast.Ge
+import com.rethinkdb.ast.BooleanPredicate1
+import com.rethinkdb.ast.Eq
+import com.rethinkdb.ast.InnerJoin
+import com.rethinkdb.ast.GetAttr
+import com.rethinkdb.ast.Count
+import com.rethinkdb.ast.Gt
+import com.rethinkdb.ast.Or
+import com.rethinkdb.ast.SliceRange
+import com.rethinkdb.ast.Le
+import com.rethinkdb.ast.IsEmpty
+import com.rethinkdb.ast.Var
+import com.rethinkdb.ast.Not
+import com.rethinkdb.ast.Without
+import com.rethinkdb.ast.ConcatMap
+import com.rethinkdb.ast.RMap
+import com.rethinkdb.ast.Append
+import com.rethinkdb.ast.Lt
+import com.rethinkdb.ast.Sample
+import com.rethinkdb.ast.Div
+import com.rethinkdb.ast.Union
+import com.rethinkdb.ast.Add
+import com.rethinkdb.ast.Table
+import com.rethinkdb.ast.Predicate1
+import com.rethinkdb.BlockingQuery
+import com.rethinkdb.ast.Nth
+import com.rethinkdb.ast.Skip
+import com.rethinkdb.ast.Slice
+import com.rethinkdb.ast.Func
+import com.rethinkdb.ast.Merge
+import com.rethinkdb.ast.Ne
 
 
 trait Produce[ResultType] extends Term{
@@ -18,7 +63,7 @@ trait Produce[ResultType] extends Term{
   def toQuery[R](implicit c:Connection):Query[R] =new BlockingQuery[R](this,c)
 
   //http://stackoverflow.com/a/3461734
-  def run(implicit c:Connection):Option[ResultType] = toQuery.toResult
+  def run(implicit c:Connection):Either[RethinkError,Option[ResultType]] = toQuery.toResult
 
   def run[R](implicit c:Connection,s:DummyImplicit) = toQuery.toResult
 
