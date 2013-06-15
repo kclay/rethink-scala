@@ -1,17 +1,23 @@
 package com.rethinkdb.ast
 
-import com.rethinkdb.Term
+import com.rethinkdb.{BlockingQuery, Connection, Term}
 import scala.util.matching.Regex
 import scala.reflect.ClassTag
+import com.rethinkdb.Query
 
 
-trait Produce extends Term{
+trait Produce[ResultType] extends Term{
 
 
 
-  type ResultType
+
   import scala.reflect.runtime.universe._
 
+
+
+  def toQuery(implicit c:Connection):Query[ResultType] =new BlockingQuery[ResultType](this,c)
+
+  def run(implicit c:Connection):Option[ResultType] = toQuery.toResult
 
 
   def withResult(result:Any): Option[ResultType] =
@@ -20,7 +26,7 @@ trait Produce extends Term{
 
   val withMapProduce = false
 
-  def wrap[T<:ResultType](value: Any): ResultType
+  def wrap[T<:ResultType](value: Any): ResultType=value.asInstanceOf[ResultType]
 
 
   def defaultValue:ResultType
@@ -302,11 +308,13 @@ case class AnyResult(value: Any) extends Result {
   def unwrap = value
 }
 
-trait ProduceSequence extends Produce  with Sequence {
+trait ProduceSequence extends Produce[Iterable[Any]]  with Sequence {
 
-  type ResultType = Iterable[Any]
 
-  def wrap[T <: ProduceSequence#ResultType](value: Any): ProduceSequence#ResultType =  value.asInstanceOf[Iterable[Any]]
+
+ // def wrap[T <: ProduceSequence#ResultType](value: Any): ProduceSequence#ResultType =  value.asInstanceOf[Iterable[Any]]
+
+
 
 
   def defaultValue = Iterable.empty[Any]
@@ -316,10 +324,12 @@ trait ProduceSet extends ProduceSequence
 
 
 
-trait ProduceBinary extends Produce with Binary {
+trait ProduceBinary extends Produce[Boolean] with Binary {
 
 
-  def wrap[T <: ProduceBinary#ResultType](value: Any): ProduceBinary#ResultType = value.asInstanceOf[Boolean]
+ // def wrap[T <: ProduceBinary#ResultType](value: Any): ProduceBinary#ResultType = value.asInstanceOf[Boolean]
+
+
 
   type ResultType = Boolean
 
@@ -330,33 +340,39 @@ trait ProduceBinary extends Produce with Binary {
 
 //trait ProduceLiteral extends ProduceComparable with Literal
 
-trait ProduceDocument extends Produce  {
+trait ProduceDocument extends Produce[Document]  {
 
-  type ResultType = Option[Document]
+//  type ResultType = Option[Document]
 
-  def wrap[T <: ProduceDocument#ResultType](value: Any): ProduceDocument#ResultType = value match{
+  /*def wrap[T <: ProduceDocument#ResultType](value: Any): ProduceDocument#ResultType = value match{
     case d:Document=>Some(d)
     case _=>None
 
-  }
+  } */
 
 
 
   def defaultValue = {
     val d:Document = null
-    Option(d)
+    d
   }
 
 }
 
-trait ProduceNumeric extends Produce  with  Numeric   {
-
-  type ResultType = Double
+trait ProduceNumeric extends Produce[Double]  with  Numeric   {
 
 
 
 
+
+ /*
   def wrap[T <: ProduceNumeric#ResultType](value: Any): ProduceNumeric#ResultType = value match {
+    case d: Double => d
+    case i: Int => i.toDouble
+    case _ => 0
+  }*/
+
+  override def wrap[T <: Double](value: Any): Double = value match {
     case d: Double => d
     case i: Int => i.toDouble
     case _ => 0
@@ -368,25 +384,23 @@ trait ProduceNumeric extends Produce  with  Numeric   {
 
 
 
-trait ProduceString extends Produce with Strings {
+trait ProduceString extends Produce[String] with Strings {
 
-  type ResultType = String
+
 
 
 
   def defaultValue= ""
 
-  def wrap[T <: ProduceString#ResultType](value: Any): ProduceString#ResultType = value.toString
+ // def wrap[T <: ProduceString#ResultType](value: Any): ProduceString#ResultType = value.toString
+  override def wrap[T <: String](value: Any): String = value.toString
 }
 
 
-trait ProduceAny extends Produce with Ref   {
-
-  type ResultType = Any
+trait ProduceAny extends Produce[Any] with Ref   {
 
 
-
-  def wrap[T <: ProduceAny#ResultType](value: Any): ProduceAny#ResultType = value
+  override def wrap[T <: Any](value: Any): Any = value
 
   def defaultValue= AnyRef
 }

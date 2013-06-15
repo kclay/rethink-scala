@@ -121,9 +121,11 @@ trait Term extends WithAst {
 
   def termType: ql2.Term.TermType.EnumVal
 
-  def toQuery[T](implicit c:Connection) =new BlockingQuery[T](this,c)
+ // def toQuery[T](implicit c:Connection):Query[T] =new BlockingQuery[T](this,c)
 
-  def run[T](implicit c:Connection) = toQuery.toResult
+  //def run[T](implicit c:Connection):Option[T] = toQuery.toResult
+
+
 
 
 

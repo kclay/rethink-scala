@@ -18,7 +18,12 @@ class DBTest extends FunSuite{
     val version =new Version1("172.16.2.45")
      val connection = new Connection(version)
 
-    val result = db.newTable("bar").run[Boolean](connection)
+    val table =db.newTable("bar")
+
+    val result = table.run(connection)
+
+
+
     println(result)
   }
   /*

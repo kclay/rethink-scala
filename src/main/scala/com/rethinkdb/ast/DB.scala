@@ -137,12 +137,12 @@ case class Insert(table: Table, records: Seq[Map[String, Any]], upsert: Option[B
     case _ => Seq.empty[Any]
   }
 
-  override def fromMap(m: Map[String, Any]) = Some(InsertResult(
+  override def fromMap(m: Map[String, Any]) = InsertResult(
     m.get("inserted"), m.get("replaced"), m.get("unchanged"), m.get("errors"), m.get("first_error"),
     m.get("generated_keys"), m.get("deleated"), m.get("skipped")
 
 
-  ))
+  )
 
 
 }

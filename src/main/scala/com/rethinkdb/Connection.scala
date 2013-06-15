@@ -56,7 +56,7 @@ abstract class Token{
 
 case class QueryToken[R](query:ql2.Query, term: Term,p:Promise[R]) extends Token{
 
-  lazy val produce:Produce = term.asInstanceOf[Produce]
+  lazy val produce:Produce[R] = term.asInstanceOf[Produce[R]]
   def cast(value:Any):R =produce.withResult(value).asInstanceOf[R]
   def success(value: Any) = p success(cast(value))
 

@@ -3,10 +3,7 @@ package com.rethinkdb.ast
 import com.rethinkdb.{Term, Composable}
 import ql2.Term.TermType
 
-abstract class BiOperationTerm(left: Any, right: Any)  extends Produce{
-
-  //override lazy val args = buildArgs(left, right)
-}
+abstract class BiOperationTerm(left: Any, right: Any)
 
 case class Eq(left: Comparable, right: Comparable) extends BiOperationTerm(left, right) with ProduceBinary {
   def termType = TermType.EQ
