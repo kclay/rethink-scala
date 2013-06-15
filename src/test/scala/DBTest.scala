@@ -14,9 +14,12 @@ class DBTest extends FunSuite{
   test("create db instance"){
 
     val db = DB("test")
-    //val connection = new Connection("172.16.2.45")
-    val query = toQuery(db.newTable("bar") ,1)
-    println(query)
+
+    val version =new Version1("172.16.2.45")
+     val connection = new Connection(version)
+
+    val result = db.newTable("bar").run[Boolean](connection)
+    println(result)
   }
   /*
   test("create db instance"){

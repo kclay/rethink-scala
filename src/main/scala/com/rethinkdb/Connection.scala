@@ -27,7 +27,7 @@ import com.rethinkdb.ConvertFrom._
 
 import org.jboss.netty.channel.Channel
 import ql2.Response.ResponseType
-import com.rethinkdb.ast.Datum
+import com.rethinkdb.ast.{Produce, Datum}
 import org.jboss.netty.handler.codec.frame.FrameDecoder
 import java.util.concurrent.atomic.AtomicInteger
 import org.jboss.netty.channel.socket.oio.OioClientSocketChannelFactory
@@ -46,22 +46,33 @@ import com.rethinkdb.Query
  */
 
 
-case class QueryToken[T](query:ql2.Query, term: Term,p:Promise[T]) {
 
-  def success(value: T) = p success(value)
+abstract class Token{
+  val query:ql2.Query
+  val term:Term
+  def success(value:Any)
+  def failure(t:Throwable)
+}
+
+case class QueryToken[R](query:ql2.Query, term: Term,p:Promise[R]) extends Token{
+
+  lazy val produce:Produce = term.asInstanceOf[Produce]
+  def cast(value:Any):R =produce.withResult(value).asInstanceOf[R]
+  def success(value: Any) = p success(cast(value))
 
   def failure(t: Throwable) =p failure(t)
+
 }
 
 
-case class Cursor[T](channel: Channel, query: Query, term: Term, var chunks: Seq[T], completed: Boolean) {
+case class Cursor[T](channel: Channel, query: ql2.Query, term: Term, var chunks: Seq[T], completed: Boolean) {
 
 }
 
 class RethinkDBHandler extends SimpleChannelUpstreamHandler {
 
 
-  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext): Option[QueryToken] = Some(ctx.getChannel.getAttachment.asInstanceOf[QueryToken])
+  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext): Option[Token] = Some(ctx.getChannel.getAttachment.asInstanceOf[Token])
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
 
@@ -193,9 +204,9 @@ case class Connection(version:Version) {
   lazy val bootstrap = {
 
     val factory =
-      new OioClientSocketChannelFactory()
-       // Executors.newCachedThreadPool(),
-        //Executors.newCachedThreadPool())
+      new NioClientSocketChannelFactory(
+       Executors.newCachedThreadPool(),
+        Executors.newCachedThreadPool())
 
     val b = new ClientBootstrap(factory)
     b.setPipelineFactory(new PipelineFactory())

@@ -61,7 +61,7 @@ case class IsEmpty(target:Sequence) extends ProduceBinary{
  * @param target
  * @param filter
  */
-case class Count(target:Countable,filter:Some[BooleanPredicate]=None) extends ProduceNumeric{
+case class Count(target:Countable,filter:Option[BooleanPredicate]=None) extends ProduceNumeric{
 
   override lazy val args = buildArgs(filter.map(Seq(target,_)) .getOrElse(Seq(target)): _*)
   def termType = TermType.COUNT
@@ -233,6 +233,19 @@ case class ChangeAt(target:Sequence,index:Int,value:Any) extends ProduceSequence
 case class Match(target:Strings,regexp:String) extends ProduceDocument with Binary{
   def termType= TermType.MATCH
 }
+
+/**
+ * Gets the type of a value.
+ * @param target
+ */
+case class TypeOf(target:Typed) extends ProduceString{
+  def termType = TermType.TYPEOF
+}
+
+ /*
+case class CoerceTo(target:Typed,dataType:DataType){
+  def termType = TermType.COERCE_TO
+}  */
 
 
 

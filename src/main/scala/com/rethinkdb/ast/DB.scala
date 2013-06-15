@@ -9,16 +9,16 @@ trait WithDB {
   val scopedDB: Option[DB]
 }
 
-case class DB(name: String) {
-  //override lazy val args = buildArgs(name)
+case class DB(name: String) extends TermMessage{
+  override lazy val args = buildArgs(name)
 
-  def toDatum = StringDatum(name)
+
 
   def termType = TermType.DB
 
 
   def newTable(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) = {
-    TableCreate(this, name, primaryKey, dataCenter, cacheSize)
+    TableCreate( name, primaryKey, dataCenter, cacheSize,Some(this))
   }
 
   def ^^(name: String, primaryKey: Option[String], dataCenter: Option[String], cacheSize: Option[Int]) = this newTable(name, primaryKey, dataCenter, cacheSize)
@@ -86,13 +86,13 @@ class DBList extends TermMessage with ProduceSequence {
   def termType = TermType.DB_LIST
 }
 
-case class TableCreate(db: DB, name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None)
+case class TableCreate(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None,db:Option[DB]=None)
   extends TermMessage with ProduceBinary
           with WithDB with WithConversion {
   val resultField = "created"
 
-  val scopedDB = Some(db)
-  override lazy val args = buildArgs(db, name)
+  val scopedDB = db
+  override lazy val args = buildArgs(name)
   override lazy val optargs = buildOptArgs(Map("primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize))
 
   def termType = TermType.TABLE_CREATE
@@ -137,14 +137,14 @@ case class Insert(table: Table, records: Seq[Map[String, Any]], upsert: Option[B
     case _ => Seq.empty[Any]
   }
 
-  override def fromMap(m: Map[String, Any]) = InsertResult(
+  override def fromMap(m: Map[String, Any]) = Some(InsertResult(
     m.get("inserted"), m.get("replaced"), m.get("unchanged"), m.get("errors"), m.get("first_error"),
     m.get("generated_keys"), m.get("deleated"), m.get("skipped")
 
 
-  )
+  ))
 
-  override def defaultValue = DocumentResult(InsertResult())
+
 }
 
 /*

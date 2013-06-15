@@ -6,6 +6,7 @@ import com.rethinkdb.ast._
 import ql2.Term.TermType
 import ql2.Datum.DatumType
 import javax.sql.rowset.Predicate
+import scala.concurrent.Future
 
 
 trait Composable {
@@ -84,17 +85,27 @@ trait Term extends WithAst {
 
 
 
-  def apply(implicit connection:Connection):Query=Query(this,connection)
-  def !(connection:Connection) = apply(connection)
-  def run(connection:Connection)=apply(connection)
+
+
+  protected val  extractArgs = true
+  private def fields(a: AnyRef) ={
+
+    val f = a.getClass.getDeclaredFields
+    f.toSeq.filterNot(_.isSynthetic).take(numConstructorParams(a)).map{field =>
+      field.setAccessible(true)
+      field
+    }
+  }
+  private def numConstructorParams(a: AnyRef) = a.getClass.getConstructors()(0).getParameterTypes.size
+
   def ast = ql2
     .Term(Some(termType))
     .addAllArgs(args.map(_.ast))
     .addAllOptargs(optargs.map(_.pair.asInstanceOf[ql2.Term.AssocPair]))
 
-  lazy val args = Seq.empty[Term]
+  lazy val args:Seq[Term] = if(extractArgs) buildArgs(fields(this).map(_.get(this)): _*) else Seq.empty[Term]
 
-  protected def buildArgs(args: Any*):Seq[Term] = for (a <- args) yield Expr(a)
+  protected def buildArgs(args: Any*):Seq[Term] = for (a <- args) yield com.rethinkdb.ast.Expr(a)
 
   lazy val optargs = Iterable.empty[AssocPair]
 
@@ -110,15 +121,14 @@ trait Term extends WithAst {
 
   def termType: ql2.Term.TermType.EnumVal
 
+  def toQuery[T](implicit c:Connection) =new BlockingQuery[T](this,c)
+
+  def run[T](implicit c:Connection) = toQuery.toResult
 
 
 
-  // implicit def term2DataNum(t: Term): Datum = t.asInstanceOf[Datum]
 
 
 
- // def filter(f:Predicate)
-
-  // setType(termType).addAllArgs(args.map(_.toTerm)).addAllOptargs(optargs.map(_.pair))
 }
 

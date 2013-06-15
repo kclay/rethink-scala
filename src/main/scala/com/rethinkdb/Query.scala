@@ -2,19 +2,69 @@ package com.rethinkdb
 
 
 import com.rethinkdb.ast.Produce
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
 
-case class Query(term:Produce,connection:Connection) {
+abstract class Query[R]{
 
-   type ResultType =term.ResultType
+  val connection:Connection
 
-   lazy val ast:ql2.Term = term.ast
+  def iterator: Iterator[R]
+  val ast:ql2.Term
 
-   def execute:Future[ResultType]={
+  def single:R ={
+    val i = iterator
+    val r = i.next
+    //if(i.hasNext)
 
-     val token = connection.token.getAndIncrement
-     connection.write[ResultType](term)
+    r
+  }
 
-   }
+  def singleOption: Option[R] = {
+    val i = iterator
+    val res =
+      if(i.hasNext)
+        Some(i.next)
+      else
+        None
+
+   // if(i.hasNext)
+     // org.squeryl.internals.Utils.throwError("singleOption called on query returning more than one row : \n" + statement)
+    res
+  }
+
+  def headOption = {
+    val i = iterator
+    if(i.hasNext)
+      Some(i.next)
+    else
+      None
+  }
+
+  def toResult[R]:Option[R]
+
 }
+
+case class BlockingQuery[R](term:Term,connection:Connection) extends Query[R]{
+  def iterator: Iterator[R] = ???
+
+    override lazy val  ast: ql2.Term = term.ast
+
+  def toResult[R] = toResult(Duration.Inf)
+  def toResult[R](atMost:Duration):Option[R] =  {
+
+    val result = Await.result(connection.write[R](term),atMost)
+
+    val r = result match {
+      case Some(a)=> Some(a.asInstanceOf[R])
+      case _=>None
+    }
+    r
+  }
+
+
+}
+
+
+

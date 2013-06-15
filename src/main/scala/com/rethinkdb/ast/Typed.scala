@@ -2,54 +2,89 @@ package com.rethinkdb.ast
 
 import com.rethinkdb.Term
 import scala.util.matching.Regex
+import scala.reflect.ClassTag
 
 
 trait Produce extends Term{
-  type ResultType
 
+
+
+  type ResultType
   import scala.reflect.runtime.universe._
 
 
-  protected val  extractArgs = true
-  private def fields(a: AnyRef) ={
 
-    var f = a.getClass.getDeclaredFields
-    f.toSeq.filterNot(_.isSynthetic).take(numConstructorParams(a)).map{field =>
-      field.setAccessible(true)
-      field
-    }
+  def withResult(result:Any): Option[ResultType] =
+    if (withMapProduce) extract[Map[String, Any]](result, defaultValue)(fromMap _)
+    else Option(wrap(result))
+
+  val withMapProduce = false
+
+  def wrap[T<:ResultType](value: Any): ResultType
+
+
+  def defaultValue:ResultType
+
+  protected def fromMap(m: Map[String, Any]): ResultType = defaultValue
+
+  protected def extract[T: TypeTag](result: Any, defaultValue: ResultType)(f: T => Any): Option[ResultType] = {
+   val v =  result match {
+      case Some(r:Any)=>wrap(f(r.asInstanceOf[T]))
+      case _=>defaultValue
+
   }
-  private def numConstructorParams(a: AnyRef) = a.getClass.getConstructors()(0).getParameterTypes.size
-  override lazy val args = if(extractArgs) buildArgs(fields(this).map(_.get(this)): _*) else Seq.empty[Term]
-
+    Option(v)
+  }
+ /*
+  def toNative
+  def toResult[ResultType](value:Any)=withResult[]
   def withResult[A: TypeTag](result: A): ResultType =
-    if (withMapProduce) extract[A, Map[String, Any]](result, defaultValue)(fromMap _)
+    if (withMapProduce) extract[A, Map[String, Any],ResultType](result, defaultValue)(fromMap _)
     else wrap(result)
 
   val withMapProduce = false
 
-  def wrap(value: Any): ResultType
+  def wrap[ResultType](value: Any): ResultType
 
 
-  def defaultValue: ResultType
+  def defaultValue[ResultType]: ResultType
 
-  protected def fromMap(m: Map[String, Any]): Any = defaultValue
+  protected def fromMap[ResultType](m: Map[String, Any]): ResultType = defaultValue
 
-  protected def extract[A: TypeTag, T: TypeTag](result: A, defaultValue: ResultType)(f: T => Any): ResultType = {
+  protected def extract[A: TypeTag, T: TypeTag,ResultType](result: A, defaultValue: ResultType)(f: T => Any): ResultType = {
     typeOf[A] match {
       case t if t =:= typeOf[T] => wrap(f(result.asInstanceOf[T]))
       case _ => defaultValue
     }
-  }
+  }*/
 
 
 }
+ /*
+sealed trait DataType{
+  def name
+}
 
+case object ObjectData extends DataType{
+  def name="object"
+}
+case object StringData extends DataType{
+  def name="string"
+}
+case object ArrayData extends DataType{
+  def name ="array"
+}
+ */
 sealed trait Typed{
   implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
   implicit def toBooleanPredicate1(f: (Var) => Binary) = new BooleanPredicate1(f)
+
+  def typeOf=TypeOf(this)
 }
 
+trait Convertable extends Typed{
+   //def coerceTo(dataType:DataType)
+}
 trait Addition extends Typed{
   def +(other: Addition) = add(other)
 
@@ -64,6 +99,7 @@ trait Literal extends Comparable with Addition{
 
 trait MapTyped extends Typed
 
+trait ArrayTyped extends Typed
 
 
 trait Comparable extends Typed{
@@ -113,12 +149,13 @@ trait Countable extends Typed{
   def count(filter:BooleanPredicate) = Count(this,Some(filter))
   def count(value:Binary)=Count(this,Some((x:Var)=>value))
 }
-trait Sequence extends Addition with Multiply with Functional with Appendable{
+trait Sequence extends Addition with Multiply with Functional with Appendable {
 
 
+  //def coerceTo(dataType: DataType)=CoerceTo(this,dataType)
 
-  def indexesOf(value:Datum) = IndexesOf(this,Left(value))
-  def indexesOf(value:Binary)=indexesOf((x:Var)=>value)
+  def indexesOf(value:Datum):IndexesOf = IndexesOf(this,Left(value))
+  def indexesOf(value:Binary):IndexesOf=indexesOf((x:Var)=>value)
 
   def isEmpty=IsEmpty(this)
 
@@ -215,6 +252,8 @@ trait Numeric extends Literal with Multiply with Binary{
   def mod(other:Numeric) =Mod(this, other)
 }
 
+
+
 trait Filterable extends Typed{
 
   def filter(value:Binary):Func = filter((x:Var)=> value)
@@ -264,10 +303,13 @@ case class AnyResult(value: Any) extends Result {
 }
 
 trait ProduceSequence extends Produce  with Sequence {
-  type ResultType = IterableResult
 
-  def wrap(value:Any) = IterableResult(value.asInstanceOf[Iterable[Any]])
-  def defaultValue = IterableResult(Iterable.empty[Any])
+  type ResultType = Iterable[Any]
+
+  def wrap[T <: ProduceSequence#ResultType](value: Any): ProduceSequence#ResultType =  value.asInstanceOf[Iterable[Any]]
+
+
+  def defaultValue = Iterable.empty[Any]
 }
 
 trait ProduceSet extends ProduceSequence
@@ -276,40 +318,51 @@ trait ProduceSet extends ProduceSequence
 
 trait ProduceBinary extends Produce with Binary {
 
-  type ResultType = BooleanResult
 
-  def wrap(value: Any) = BooleanResult(value.asInstanceOf[Boolean])
+  def wrap[T <: ProduceBinary#ResultType](value: Any): ProduceBinary#ResultType = value.asInstanceOf[Boolean]
 
-  def defaultValue = BooleanResult(false)
+  type ResultType = Boolean
+
+
+
+  def defaultValue = false
 }
 
 //trait ProduceLiteral extends ProduceComparable with Literal
 
 trait ProduceDocument extends Produce  {
 
-  type ResultType = DocumentResult
+  type ResultType = Option[Document]
 
-  def wrap(value: Any)= DocumentResult(value.asInstanceOf[Document])
+  def wrap[T <: ProduceDocument#ResultType](value: Any): ProduceDocument#ResultType = value match{
+    case d:Document=>Some(d)
+    case _=>None
 
-  def defaultValue = DocumentResult(null)
+  }
+
+
+
+  def defaultValue = {
+    val d:Document = null
+    Option(d)
+  }
 
 }
 
 trait ProduceNumeric extends Produce  with  Numeric   {
 
-  type ResultType = NumericResult
+  type ResultType = Double
 
-  def wrap(value: Any)= {
 
-    val d = value match {
-      case d: Double => d
-      case i: Int => i.toDouble
-      case _ => 0
-    }
-    NumericResult(d)
+
+
+  def wrap[T <: ProduceNumeric#ResultType](value: Any): ProduceNumeric#ResultType = value match {
+    case d: Double => d
+    case i: Int => i.toDouble
+    case _ => 0
   }
 
-   def defaultValue= NumericResult(0)
+  def defaultValue= 0
 
 }
 
@@ -317,21 +370,25 @@ trait ProduceNumeric extends Produce  with  Numeric   {
 
 trait ProduceString extends Produce with Strings {
 
-  type ResultType = StringResult
+  type ResultType = String
 
-  def wrap(value: Any)= StringResult(value.toString)
 
-  def defaultValue= StringResult("")
+
+  def defaultValue= ""
+
+  def wrap[T <: ProduceString#ResultType](value: Any): ProduceString#ResultType = value.toString
 }
 
 
 trait ProduceAny extends Produce with Ref   {
 
-  type ResultType = AnyResult
+  type ResultType = Any
 
-  def wrap(value: Any)= AnyResult(value)
 
-  def defaultValue= AnyResult(None)
+
+  def wrap[T <: ProduceAny#ResultType](value: Any): ProduceAny#ResultType = value
+
+  def defaultValue= AnyRef
 }
 
 

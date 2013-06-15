@@ -1,7 +1,7 @@
 package com.rethinkdb.utils
 
 import ql2.Query
-import com.rethinkdb.ast.{ WithDB}
+import com.rethinkdb.ast.{DB, WithDB}
 import com.rethinkdb.Term
 
 /**
@@ -13,7 +13,9 @@ import com.rethinkdb.Term
  */
 object Helpers {
 
-  def toQuery(term: Term,token:Int)={
+  def toQuery(term: Term,token:Int,db:Option[String]=None)={
+
+    def scopeDB(q:Query,db:DB)=q.addAllGlobalOptargs(Query.AssocPair(Some("db"),Some(db.ast)))
     val query = Some(
       Query().setType(Query.QueryType.START)
         .setQuery(term.ast).setToken(token)
@@ -21,10 +23,15 @@ object Helpers {
     ).map(q => {
       term match {
         case d: WithDB => {
-          d.scopedDB.map(db=>q.addAllGlobalOptargs(Query.AssocPair(Some("db"),Some(db.toDatum.ast)))).get
+          d.scopedDB.map(scopeDB(q,_)).get
 
         }
-        case _ => q
+        case _ => {
+          db.map{
+            name=>scopeDB(q,DB(name))
+          }.getOrElse(q)
+
+        }
       }
 
     }).get

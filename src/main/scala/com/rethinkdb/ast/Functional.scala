@@ -78,9 +78,20 @@ case class Predicate2(f: (Var, Var) => Typed) extends Predicate {
 }
 
 trait  BooleanPredicate extends Predicate
-case class BooleanPredicate1(override val f:(Var) => Binary) extends Predicate1(f) with BooleanPredicate
+case class BooleanPredicate1( f:(Var) => Binary) extends BooleanPredicate{
 
-case class BooleanPredicate2(override val f:(Var, Var) => Binary) extends Predicate2(f) with BooleanPredicate
+  protected def _invoke(vars: Seq[Var]) = f(vars(0))
+
+
+  val amount: Int = 1
+}
+
+case class BooleanPredicate2( f:(Var, Var) => Binary) extends BooleanPredicate{
+  protected def _invoke(v: Seq[Var]) = f(v(0), v(1))
+
+
+  val amount: Int = 2
+}
 
 
 
