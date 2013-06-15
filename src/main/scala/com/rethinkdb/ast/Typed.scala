@@ -15,9 +15,12 @@ trait Produce[ResultType] extends Term{
 
 
 
-  def toQuery(implicit c:Connection):Query[ResultType] =new BlockingQuery[ResultType](this,c)
+  def toQuery[R](implicit c:Connection):Query[R] =new BlockingQuery[R](this,c)
 
+  //http://stackoverflow.com/a/3461734
   def run(implicit c:Connection):Option[ResultType] = toQuery.toResult
+
+  def run[R](implicit c:Connection,s:DummyImplicit) = toQuery.toResult
 
 
   def withResult(result:Any): Option[ResultType] =
