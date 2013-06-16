@@ -5,6 +5,7 @@ import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration.Duration
 import scala.util.{ Success, Failure }
 import scala.reflect.runtime.universe.TypeTag
+import scala.reflect.ClassTag
 
 
 abstract class Query[R] {
@@ -16,7 +17,7 @@ abstract class Query[R] {
 
 }
 
-case class BlockingQuery[R](term: Term, connection: Connection,tt:TypeTag[R]) extends Query[R] {
+case class BlockingQuery[R](term: Term, connection: Connection,tt:Manifest[R]) extends Query[R] {
   def iterator: Iterator[R] = ???
 
 

@@ -7,13 +7,13 @@ import java.net.InetSocketAddress
 
 import org.jboss.netty.channel._
 import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder
-import ql2.{ Response, VersionDummy }
+import ql2.{Response, VersionDummy}
 
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.buffer.ChannelBuffers._
-import org.jboss.netty.buffer.{ ChannelBuffer, HeapChannelBufferFactory }
+import org.jboss.netty.buffer.{ChannelBuffer, HeapChannelBufferFactory}
 import java.nio.ByteOrder
-import com.rethinkdb.utils.{ ConnectionFactory, SimpleConnectionPool }
+import com.rethinkdb.utils.{ConnectionFactory, SimpleConnectionPool}
 import concurrent._
 import org.jboss.netty.channel.Channels.pipeline
 import com.rethinkdb.ConvertFrom._
@@ -26,13 +26,14 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.rethinkdb.utils.Helpers._
 import scala.Some
 import scala.reflect.runtime.universe.TypeTag
+import scala.reflect.ClassTag
 
 
 /** Created by IntelliJ IDEA.
- *  User: Keyston
- *  Date: 3/23/13
- *  Time: 2:53 PM
- */
+  * User: Keyston
+  * Date: 3/23/13
+  * Time: 2:53 PM
+  */
 
 abstract class Token {
   type ResultType
@@ -44,26 +45,31 @@ abstract class Token {
   def failure(t: Throwable)
 }
 
-case class QueryToken[R](query: ql2.Query, term: Term, p: Promise[R],tt:TypeTag[R]) extends Token {
-
+case class QueryToken[R](query: ql2.Query, term: Term, p: Promise[R], tt: Manifest[R]) extends Token {
 
 
   implicit val t = tt
-  import Extract._
-  import scala.reflect.runtime.{universe=>ru}
+
+  import Translate.translate
+  import scala.reflect.runtime.{universe => ru}
 
 
-  type DocType = Map[String,Any]
+  val DocClass = classOf[Document]
+  type MapType = Map[String,Any]
 
 
+  def cast(value: Any): R = {
 
-  def cast(value:Any): R ={
-  val v =ru.typeOf[R]
-  v match{
-    case x if x <:< ru.typeOf[Document]=> extract[DocType, R].extract(value.asInstanceOf[DocType], term)
 
-    case _=> value.asInstanceOf[R]
-  }
+    value match {
+      case (a: Any, s: String) => tt.runtimeClass match {
+
+        case x if DocClass.isAssignableFrom(x)=> translate[MapType, R].read(a.asInstanceOf[MapType],s, term)
+
+        case _ => a.asInstanceOf[R]
+      }
+    }
+
   }
 
   def success(value: Any) = p success (cast(value))
@@ -83,29 +89,28 @@ class RethinkDBHandler extends SimpleChannelUpstreamHandler {
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
 
     ctx.map {
-      token =>
-        {
-          val response = e.getMessage.asInstanceOf[Response]
+      token => {
+        val response = e.getMessage.asInstanceOf[Response]
 
-          //for(d <- response.getResponseList) yield d
+        //for(d <- response.getResponseList) yield d
 
-          (response.`type` match {
+        (response.`type` match {
 
-            case r @ Some(ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR) => toError(response, token term)
-            case s @ Some(ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE) => Cursor(ctx.getChannel, token query, token term, Seq.empty[AnyRef], s == ResponseType.SUCCESS_SEQUENCE)
-            case Some(ResponseType.SUCCESS_ATOM) => if (response.`response`.nonEmpty) Some(Datum.unapply(response.`response`(0))) else None
-            case _ =>
+          case r@Some(ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR) => toError(response, token term)
+          case s@Some(ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE) => Cursor(ctx.getChannel, token query, token term, Seq.empty[AnyRef], s == ResponseType.SUCCESS_SEQUENCE)
+          case Some(ResponseType.SUCCESS_ATOM) => if (response.`response`.nonEmpty) Some(Datum.wrap(response.`response`(0))) else None
+          case _ =>
 
-          }) match {
-            case e: Exception => token failure (e)
+        }) match {
+          case e: Exception => token failure (e)
 
-            case Some(a:Any)=>token success(a)
-
-          }
-
-          //  token success (e.getMessage)
+          case Some(a: Any) => token success (a)
 
         }
+
+        //  token success (e.getMessage)
+
+      }
 
     }
 
@@ -231,13 +236,13 @@ case class Connection(version: Version) {
     }
   }, max = version.maxConnections)
 
-  def write[T](term: Term)(implicit tt:TypeTag[T]): Future[T] =
+  def write[T](term: Term)(implicit tt: Manifest[T]): Future[T] =
     channel[Future[T]]() {
       c =>
 
         val query = toQuery(term, c.token.getAndIncrement)
         val p = promise[T]()
-        val token = QueryToken[T](query, term, p,tt)
+        val token = QueryToken[T](query, term, p, tt)
         c.channel.setAttachment(token)
         c.channel.write(query)
         p.future

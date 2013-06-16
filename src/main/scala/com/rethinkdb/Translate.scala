@@ -11,8 +11,8 @@ import scala.Some
 ;
 
 
-object Extract{
-  def extract[In, Out](implicit ct:TypeTag[Out]): Extract[In, Out] = new BaseExtract[In, Out] {}
+object Translate{
+  def translate[In, Out](implicit ct:Manifest[Out]): Translate[In, Out] = new BaseTranslate[In, Out] {}
   val mapper = new ObjectMapper()
   mapper.registerModule(DefaultScalaModule)
   mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false)
@@ -40,15 +40,16 @@ object Extract{
     }
   }
 }
-trait Extract[In, Out] {
+trait Translate[In, Out] {
 
-  def extract(value: In, term: Term)(implicit ct:TypeTag[Out]): Out
+  def write(value:Out):Any
+  def read(value: In,json:String, term: Term)(implicit ct:Manifest[Out]): Out
 
 }
 
 trait WithConversion[In, Out] {
 
-  def convert(value: In)(implicit ct: TypeTag[Out]): Out
+  def convert(value: In,json:String)(implicit ct: Manifest[Out]): Out
 }
 
 trait MapConversion[Out] extends WithConversion[Map[String, Any], Out]
@@ -56,12 +57,12 @@ trait MapConversion[Out] extends WithConversion[Map[String, Any], Out]
 trait BinaryConversion extends MapConversion[Boolean] {
   val resultField: String
 
-  def convert(value: Map[String, Any])(implicit mf:TypeTag[Boolean]): Boolean = value.get(resultField).getOrElse(0) == 1
+  def convert(value: Map[String, Any],json:String)(implicit mf:Manifest[Boolean]): Boolean = value.get(resultField).getOrElse(0) == 1
 }
 
 trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
-  import scala.reflect.runtime.{universe=>ru}
+  import scala.reflect.runtime.universe._
   import scala.reflect.runtime.currentMirror
 
   /*
@@ -86,69 +87,67 @@ trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
 
 
-  import Extract.{read,write}
+/*
 
-  val fieldAnnotationType=ru.typeOf[Field]
+  private[this] def convert0[T](value:Map[String,Any])(implicit ct:Manifest[T]):T={
+
+
+
+      val tpe = typeOf[T]
+
+      val asClass = tpe.typeSymbol.asClass
+      val ctor = tpe.declaration(nme.CONSTRUCTOR).asMethod
+      val args = ctor.paramss.head.map{ p=>
+
+        val mapTo = p.annotations.find(_.tpe == fieldAnnotationType).map{
+          f=>f.scalaArgs.head.productElement(0).asInstanceOf[Constant].value.asInstanceOf[String]
+        }
+
+
+
+        val TypeRef(pre,sym,_) = p.typeSignature
+        val name = mapTo.getOrElse(p.name.decoded)
+       val ref = p.typeSignature.asInstanceOf[TypeRef]
+      var et = ref.erasure
+        //val pClass = sym.asClass
+
+        p.typeSignature match{
+          case t if t <:< DocType=> convert0(value.get(name).get.asInstanceOf[Map[String,Any]])
+          case _=>value.get(name).get
+        }
+
+      }
+
+
+
+
+      val cm =currentMirror.reflectClass(asClass)
+      val ctorm = cm.reflectConstructor(ctor)
+
+      ctorm.apply(args: _*).asInstanceOf[T]
+
+  }   */
   //
-  def convert(value: Map[String, Any])(implicit ct:TypeTag[Out]): Out ={
-   /* val ctor = ru.typeOf[Out].declaration(ru.nme.CONSTRUCTOR).asMethod
-    val mapping = ctor.paramss.head.map{ p=>
+  def convert(value: Map[String, Any],json:String)(implicit ct:Manifest[Out]): Out ={
 
-      val mapTo = p.annotations.find(_.tpe == fieldAnnotationType).map{
-        f=>Some(f.scalaArgs.head.productElement(0).asInstanceOf[ru.Constant].value.asInstanceOf[String])
-      }
-      (p.name.decoded,mapTo)
-    }*/
+    Translate.read[Out](json)
 
-
-
-
-
- /*
-
-    implicit val fmt =mapping.collect{
-      case (from:String,to:String)=>new CustomSerializer[Out](
-        serializer = renameTo(to,from),
-        deserializer = renameFrom(to,from)
-      )
-    }.foldLeft(DefaultFormats:Formats)(_ + _)
-   */
-
-
-    val tpe = ru.typeOf[Out]
-    val asClass = tpe.typeSymbol.asClass
-    val ctor = tpe.declaration(ru.nme.CONSTRUCTOR).asMethod
-    val mapping = ctor.paramss.head.map{ p=>
-
-      val mapTo = p.annotations.find(_.tpe == fieldAnnotationType).map{
-        f=>f.scalaArgs.head.productElement(0).asInstanceOf[ru.Constant].value.asInstanceOf[String]
-      }
-      (p.name.decoded,mapTo)
-    }
-
-    val args = mapping.collect{
-      case (native:String,Some(json:String))=>json
-      case (native:String,None)=>native
-    }.map(value.get(_).get)
-
-    val cm =currentMirror.reflectClass(asClass)
-    val ctorm = cm.reflectConstructor(ctor)
-
-    ctorm.apply(args: _*).asInstanceOf[Out]
-
+ // convert0[Out](value)
 
   }
 
 }
 
-trait BaseExtract[In, Out] extends Extract[In, Out] {
+trait BaseTranslate[In, Out] extends Translate[In, Out] {
 
   type Conversion = WithConversion[In, Out]
 
-  def extract(value: In, term: Term)(implicit ct:TypeTag[Out]): Out = {
+  def write(value: Out): Any = value
+
+  def read(value: In,json:String, term: Term)(implicit ct:Manifest[Out]): Out = {
     def cast(v: Any): Out = v.asInstanceOf[Out]
     term match {
-      case c: Conversion => cast(c.convert(value))
+      case c: Conversion => cast(c.convert(value,json))
       case _             => cast(value)
     }
 

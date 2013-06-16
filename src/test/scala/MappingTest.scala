@@ -27,4 +27,24 @@ class MappingTest extends FunSuite{
     println(result)
   }
 
+  test("should return TableResult"){
+
+    val db = DB("test")
+
+    val version =new Version1("172.16.2.45")
+    implicit val connection = new Connection(version)
+
+
+    val info =db.table("bar").info
+
+    val result = info.run[TableInfoResult]
+
+    // info.run
+
+
+
+
+    println(result)
+  }
+
 }
