@@ -1,4 +1,4 @@
-package com.rethinkdb.utils
+package com.rethinkscala.utils
 
 import scala.reflect.ClassTag
 import com.thoughtworks.paranamer.{CachingParanamer, BytecodeReadingParanamer}
@@ -13,7 +13,7 @@ import com.thoughtworks.paranamer.{CachingParanamer, BytecodeReadingParanamer}
 object Pickle {
   import scala.reflect.runtime.{universe=>ru}
   import ru._
-  import com.rethinkdb.Field
+  import com.rethinkscala.Field
 
   import reflect.runtime.currentMirror
   val fieldAnnotationType=ru.typeOf[Field]

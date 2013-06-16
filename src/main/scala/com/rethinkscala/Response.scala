@@ -1,4 +1,4 @@
-package com.rethinkdb
+package com.rethinkscala
 
 /** Created by IntelliJ IDEA.
  *  User: Keyston

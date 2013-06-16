@@ -1,10 +1,10 @@
-import com.rethinkdb.ast.DB
-import com.rethinkdb.ast.DB
-import com.rethinkdb.utils.Helpers._
+import com.rethinkscala.ast.DB
+import com.rethinkscala.ast.DB
+import com.rethinkscala.utils.Helpers._
 import org.scalatest.FunSuite
 
-import com.rethinkdb._
-import com.rethinkdb.ast._
+import com.rethinkscala._
+import com.rethinkscala.ast._
 import ql2.{Ql2=>p}
 import scala.concurrent._
 

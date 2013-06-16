@@ -1,10 +1,10 @@
-package com.rethinkdb
+package com.rethinkscala
 
-import com.rethinkdb.ast._
-import com.rethinkdb.ast.Desc
-import com.rethinkdb.ast.SliceRange
-import com.rethinkdb.ast.Asc
-import com.rethinkdb.ast.Var
+import com.rethinkscala.ast._
+import com.rethinkscala.ast.Desc
+import com.rethinkscala.ast.SliceRange
+import com.rethinkscala.ast.Asc
+import com.rethinkscala.ast.Var
 
 /** Created with IntelliJ IDEA.
  *  User: keyston
@@ -13,6 +13,26 @@ import com.rethinkdb.ast.Var
  *  To change this template use File | Settings | File Templates.
  */
 object Implicits {
+
+
+
+  implicit def boolToDataNum(b: Boolean): BooleanDatum = BooleanDatum(b)
+
+  implicit def intToDatNum(i: Int): NumberDatum = NumberDatum(i)
+
+  implicit def longToDatNum(l: Long): NumberDatum = NumberDatum(l)
+
+  implicit def floatToDatNum(f: Float): NumberDatum = NumberDatum(f)
+
+  implicit def string2DatNum(s: String): StringDatum = StringDatum(s)
+
+  implicit def bool2Option(value: Boolean): Option[Boolean] = Some(value)
+
+  implicit def string2Option(value: String): Option[String] = Some(value)
+  implicit def double2Option(value: Double): Option[Double] = Some(value)
+  implicit def int2Option(value: Int): Option[Int] = Some(value)
+
+  implicit def string2DB(name: String): DB = DB(name)
 
   case class String2Ast(name: String) {
     def row = r.row(name)

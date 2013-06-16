@@ -1,6 +1,6 @@
-package com.rethinkdb.ast
+package com.rethinkscala.ast
 
-import com.rethinkdb.{DatumAssocPair, DatumMessage, AssocPair}
+import com.rethinkscala.{DatumAssocPair, DatumMessage, AssocPair}
 import ql2.Datum.DatumType
 
 sealed trait Datum extends DatumMessage {
@@ -13,7 +13,7 @@ object Datum {
 
   import ql2.Datum.DatumType.{R_NULL, R_BOOL, R_NUM, R_STR, R_ARRAY, R_OBJECT}
 
-  import com.rethinkdb.Implicits.Quick._
+  import com.rethinkscala.Implicits.Quick._
 
   def wrap(datum: ql2.Datum): (Any, String) = {
     val buf = new StringBuilder
@@ -87,6 +87,7 @@ object Datum {
     case l: Long => NumberDatum(l)
     case b: Boolean => BooleanDatum(b)
     case d: Double => NumberDatum(d)
+    case _=> NoneDatum()
 
   }
 }

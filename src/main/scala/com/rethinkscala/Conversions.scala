@@ -1,9 +1,9 @@
-package com.rethinkdb
+package com.rethinkscala
 
-import com.rethinkdb.ast._
-import com.rethinkdb.ast.StringDatum
-import com.rethinkdb.ast.BooleanDatum
-import com.rethinkdb.ast.NumberDatum
+import com.rethinkscala.ast._
+import com.rethinkscala.ast.StringDatum
+import com.rethinkscala.ast.BooleanDatum
+import com.rethinkscala.ast.NumberDatum
 import scala.Some
 
 /** Created with IntelliJ IDEA.
@@ -16,13 +16,13 @@ object ConvertFrom {
 
   import ql2.{ Ql2 => p, Backtrace, Response, Frame => QFrame }
 
-  import com.rethinkdb._
+  import com.rethinkscala._
 
-  import com.rethinkdb.RethinkCompileError
-  import com.rethinkdb.RethinkClientError
-  import com.rethinkdb.Frame
+  import com.rethinkscala.RethinkCompileError
+  import com.rethinkscala.RethinkClientError
+  import com.rethinkscala.Frame
 
-  import com.rethinkdb.RethinkRuntimeError
+  import com.rethinkscala.RethinkRuntimeError
   import scala.Some
 
   import Response.ResponseType._

@@ -1,6 +1,8 @@
-package com.rethinkdb.ast
+package com.rethinkscala.ast
 
-import com.rethinkdb.Term
+import com.rethinkscala.Term
+import com.rethinkscala.Document
+import com.rethinkscala.relect.Reflector
 
 object Expr {
 
@@ -20,12 +22,15 @@ object Expr {
 
   def apply(f: Float): NumberDatum = NumberDatum(f)
 
+  def apply(d:Document) = MakeObj(Reflector.toMap(d))
+
   def apply(a: Any): Term = {
     val b = a
     a match {
       case t: Term      => t
       case s: Seq[_]    => MakeArray(s)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
+      case d:Document => apply(d)
       case a: Any       => Datum(a)
 
     }

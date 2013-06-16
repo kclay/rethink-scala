@@ -1,4 +1,4 @@
-package com.rethinkdb
+package com.rethinkscala
 
 import scala.annotation.StaticAnnotation
 import com.fasterxml.jackson.annotation.JsonProperty

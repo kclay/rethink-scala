@@ -1,17 +1,10 @@
-package com.rethinkdb
+package com.rethinkscala
 
-import com.rethinkdb.ast._
+import com.rethinkscala.ast._
 
 import ql2.Term.TermType
 import ql2.Datum.DatumType
-import javax.sql.rowset.Predicate
-import scala.concurrent.Future
-
-trait Composable {
-  def compose(args: Seq[Term], optargs: Map[String, Term]) = {
-    ""
-  }
-}
+import com.rethinkscala.relect.Reflector
 
 trait AssocPair {
 
@@ -70,24 +63,15 @@ case class DatumAssocPair(key: String, value: Any) extends AssocPair {
 trait Term extends WithAst {
 
   protected val extractArgs = true
-  private def fields(a: AnyRef) = {
-
-    val f = a.getClass.getDeclaredFields
-    f.toSeq.filterNot(_.isSynthetic).take(numConstructorParams(a)).map { field =>
-      field.setAccessible(true)
-      field
-    }
-  }
-  private def numConstructorParams(a: AnyRef) = a.getClass.getConstructors()(0).getParameterTypes.size
 
   def ast = ql2
     .Term(Some(termType))
     .addAllArgs(args.map(_.ast))
     .addAllOptargs(optargs.map(_.pair.asInstanceOf[ql2.Term.AssocPair]))
 
-  lazy val args: Seq[Term] = if (extractArgs) buildArgs(fields(this).map(_.get(this)): _*) else Seq.empty[Term]
+  lazy val args: Seq[Term] =  buildArgs(Reflector.fields(this).map(_.get(this)): _*)
 
-  protected def buildArgs(args: Any*): Seq[Term] = for (a <- args) yield com.rethinkdb.ast.Expr(a)
+  protected def buildArgs(args: Any*): Seq[Term] = for (a <- args) yield Expr(a)
 
   lazy val optargs = Iterable.empty[AssocPair]
 
@@ -102,9 +86,6 @@ trait Term extends WithAst {
 
   def termType: ql2.Term.TermType.EnumVal
 
-  // def toQuery[T](implicit c:Connection):Query[T] =new BlockingQuery[T](this,c)
-
-  //def run[T](implicit c:Connection):Option[T] = toQuery.toResult
 
 }
 

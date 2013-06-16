@@ -1,6 +1,6 @@
-package com.rethinkdb.ast
+package com.rethinkscala.ast
 
-import com.rethinkdb.{ InfoResult, DocumentConversion, Term }
+import com.rethinkscala.{ InfoResult, DocumentConversion, Term }
 
 import ql2.Term.TermType
 

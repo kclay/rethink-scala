@@ -1,4 +1,4 @@
-package com.rethinkdb.ast
+package com.rethinkscala.ast
 
 sealed trait Token
 

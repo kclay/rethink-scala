@@ -1,6 +1,6 @@
-package com.rethinkdb.ast
+package com.rethinkscala.ast
 
-import com.rethinkdb.{ Term, Composable }
+import com.rethinkscala.{ Term, Composable }
 import ql2.Term.TermType
 
 abstract class BiOperationTerm(left: Any, right: Any)

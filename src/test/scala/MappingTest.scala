@@ -1,7 +1,7 @@
 import org.scalatest.FunSuite
 
-import com.rethinkdb._
-import com.rethinkdb.ast._
+import com.rethinkscala._
+import com.rethinkscala.ast._
 import ql2.{Ql2=>p}
 
 class MappingTest extends FunSuite{
@@ -17,9 +17,11 @@ class MappingTest extends FunSuite{
 
     val info =db.table("bar").info
 
-    val result = info.run[InfoResult]
+    val result = info.as[InfoResult]
 
-   // info.run
+
+    //val r = info.run
+
 
 
 
@@ -37,12 +39,7 @@ class MappingTest extends FunSuite{
 
     val info =db.table("bar").info
 
-    val result = info.run[TableInfoResult]
-
-    // info.run
-
-
-
+    val result = info.as[TableInfoResult]
 
     println(result)
   }

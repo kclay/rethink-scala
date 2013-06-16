@@ -1,4 +1,4 @@
-package com.rethinkdb
+package com.rethinkscala
 
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
 import java.util.concurrent.Executors
@@ -13,17 +13,17 @@ import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.buffer.ChannelBuffers._
 import org.jboss.netty.buffer.{ChannelBuffer, HeapChannelBufferFactory}
 import java.nio.ByteOrder
-import com.rethinkdb.utils.{ConnectionFactory, SimpleConnectionPool}
+import com.rethinkscala.utils.{ConnectionFactory, SimpleConnectionPool}
 import concurrent._
 import org.jboss.netty.channel.Channels.pipeline
-import com.rethinkdb.ConvertFrom._
+import com.rethinkscala.ConvertFrom._
 
 import org.jboss.netty.channel.Channel
 import ql2.Response.ResponseType
-import com.rethinkdb.ast.Datum
+import com.rethinkscala.ast.Datum
 import org.jboss.netty.handler.codec.frame.FrameDecoder
 import java.util.concurrent.atomic.AtomicInteger
-import com.rethinkdb.utils.Helpers._
+import com.rethinkscala.utils.Helpers._
 import scala.Some
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.ClassTag
@@ -249,6 +249,6 @@ case class Connection(version: Version) {
 
     }
 
-  private[rethinkdb] val token: AtomicInteger = new AtomicInteger()
+  private[rethinkscala] val token: AtomicInteger = new AtomicInteger()
 
 }

@@ -1,6 +1,6 @@
 import org.scalatest.FunSuite
 
-import com.rethinkdb._
+import com.rethinkscala._
 import ast._
 
 class BiOperationTests extends FunSuite{

@@ -1,6 +1,6 @@
-package com.rethinkdb.ast
+package com.rethinkscala.ast
 
-import com.rethinkdb.Term
+import com.rethinkscala.Term
 
 import ql2.Term.TermType
 import ql2.Term.TermType.EnumVal

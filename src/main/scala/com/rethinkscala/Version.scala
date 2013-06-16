@@ -1,9 +1,9 @@
-package com.rethinkdb
+package com.rethinkscala
 
 import org.jboss.netty.channel.Channel
 
 import ql2.VersionDummy
-import com.rethinkdb.ast.DB
+import com.rethinkscala.ast.DB
 
 abstract class Version {
 

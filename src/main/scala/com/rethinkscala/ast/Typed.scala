@@ -1,21 +1,22 @@
-package com.rethinkdb.ast
+package com.rethinkscala.ast
 
-import com.rethinkdb._
+import com.rethinkscala._
 import scala.util.matching.Regex
 import scala.Some
-import com.rethinkdb.BlockingQuery
+import com.rethinkscala.BlockingQuery
 import scala.reflect.ClassTag
 
 
 trait Produce[ResultType] extends Term {
-  import scala.reflect.runtime.universe._
+
+
 
   def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](this, c,tt)
 
   //http://stackoverflow.com/a/3461734
-  //def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, Option[ResultType]] = toQuery.toResult
+  def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, Option[ResultType]] = toQuery.toResult
 
-  def run[R <: ResultType](implicit c: Connection, tt:Manifest[R]):Either[RethinkError,R] = toQuery.toResult
+  def as[R <: ResultType](implicit c: Connection, tt:Manifest[R]):Either[RethinkError,R] = toQuery.toResult
 
 }
 /*

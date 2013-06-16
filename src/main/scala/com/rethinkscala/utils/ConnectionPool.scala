@@ -1,4 +1,4 @@
-package com.rethinkdb.utils
+package com.rethinkscala.utils
 
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger

@@ -1,6 +1,6 @@
-package com.rethinkdb
+package com.rethinkscala
 
-import com.rethinkdb.ast.{ ImplicitVar, Table }
+import com.rethinkscala.ast.{ ImplicitVar, Table }
 
 /** Created with IntelliJ IDEA.
  *  User: keyston

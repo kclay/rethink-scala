@@ -5,7 +5,7 @@
  * Time: 4:16 PM 
  */
 
-import com.rethinkdb.ast.DB
+import com.rethinkscala.ast.DB
 
 
 
@@ -62,9 +62,9 @@ import com.rethinkdb.ast.DB
 
 
 
-import com.rethinkdb.utils.Helpers.toQuery
+import com.rethinkscala.utils.Helpers.toQuery
 import scala.concurrent._
-import com.rethinkdb.Connection
+import com.rethinkscala.Connection
 val db = DB("test")
 val connection = new Connection("172.16.2.45")
 val query = toQuery(db.newTable("bar") ,1)

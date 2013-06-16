@@ -1,6 +1,6 @@
-package com.rethinkdb.ast
+package com.rethinkscala.ast
 
-import com.rethinkdb.{ Term, TermMessage }
+import com.rethinkscala.{ Term, TermMessage }
 
 import ql2.Term.TermType
 import java.util.concurrent.atomic.AtomicInteger
@@ -24,7 +24,7 @@ abstract class Predicate extends {
 
   protected def _invoke(v: Seq[Var]): Typed
 
-  private[rethinkdb] def invoke: Seq[Typed] = {
+  private[rethinkscala] def invoke: Seq[Typed] = {
     val (ids, vars) = take(amount)
     val product = _invoke(vars)
     Seq(MakeArray(ids), product)

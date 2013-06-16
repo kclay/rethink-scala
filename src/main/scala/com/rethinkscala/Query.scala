@@ -1,6 +1,6 @@
-package com.rethinkdb
+package com.rethinkscala
 
-import com.rethinkdb.ast.Produce
+import com.rethinkscala.ast.Produce
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration.Duration
 import scala.util.{ Success, Failure }

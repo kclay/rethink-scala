@@ -1,4 +1,4 @@
-package com.rethinkdb
+package com.rethinkscala
 
 import java.lang.reflect.{Type, ParameterizedType}
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
@@ -62,72 +62,6 @@ trait BinaryConversion extends MapConversion[Boolean] {
 
 trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
-  import scala.reflect.runtime.universe._
-  import scala.reflect.runtime.currentMirror
-
-  /*
-  val pn = new CachingParanamer(new BytecodeReadingParanamer)
-
-  def fill[T](m: Map[String,Any])(]) = for {
-    ctor <- ct.runtimeClass.getDeclaredConstructors.filter(m => m.getParameterTypes.forall(classOf[String]==)).headOption
-    parameters = pn.lookupParameterNames(ctor)
-  } yield ctor.newInstance(parameters.map(m): _*).asInstanceOf[T]
-  private def fields(a: AnyRef) = {
-
-    val f = a.getClass.getDeclaredFields
-    f.toSeq.filterNot(_.isSynthetic).take(numConstructorParams(a)).map { field =>
-      field.setAccessible(true)
-      field
-    }
-  }
-  private def numConstructorParams(a: AnyRef) = a.getClass.getConstructors()(0).getParameterTypes.size
-   */
-
-
-
-
-
-/*
-
-  private[this] def convert0[T](value:Map[String,Any])(implicit ct:Manifest[T]):T={
-
-
-
-      val tpe = typeOf[T]
-
-      val asClass = tpe.typeSymbol.asClass
-      val ctor = tpe.declaration(nme.CONSTRUCTOR).asMethod
-      val args = ctor.paramss.head.map{ p=>
-
-        val mapTo = p.annotations.find(_.tpe == fieldAnnotationType).map{
-          f=>f.scalaArgs.head.productElement(0).asInstanceOf[Constant].value.asInstanceOf[String]
-        }
-
-
-
-        val TypeRef(pre,sym,_) = p.typeSignature
-        val name = mapTo.getOrElse(p.name.decoded)
-       val ref = p.typeSignature.asInstanceOf[TypeRef]
-      var et = ref.erasure
-        //val pClass = sym.asClass
-
-        p.typeSignature match{
-          case t if t <:< DocType=> convert0(value.get(name).get.asInstanceOf[Map[String,Any]])
-          case _=>value.get(name).get
-        }
-
-      }
-
-
-
-
-      val cm =currentMirror.reflectClass(asClass)
-      val ctorm = cm.reflectConstructor(ctor)
-
-      ctorm.apply(args: _*).asInstanceOf[T]
-
-  }   */
-  //
   def convert(value: Map[String, Any],json:String)(implicit ct:Manifest[Out]): Out ={
 
     Translate.read[Out](json)
