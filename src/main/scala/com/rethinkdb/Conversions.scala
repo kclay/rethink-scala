@@ -6,20 +6,17 @@ import com.rethinkdb.ast.BooleanDatum
 import com.rethinkdb.ast.NumberDatum
 import scala.Some
 
-
-/**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 5/25/13
- * Time: 5:30 PM
- * To change this template use File | Settings | File Templates.
+/** Created with IntelliJ IDEA.
+ *  User: keyston
+ *  Date: 5/25/13
+ *  Time: 5:30 PM
+ *  To change this template use File | Settings | File Templates.
  */
 object ConvertFrom {
 
-  import ql2.{Ql2 => p, Backtrace, Response, Frame => QFrame}
+  import ql2.{ Ql2 => p, Backtrace, Response, Frame => QFrame }
 
   import com.rethinkdb._
-
 
   import com.rethinkdb.RethinkCompileError
   import com.rethinkdb.RethinkClientError
@@ -30,24 +27,23 @@ object ConvertFrom {
 
   import Response.ResponseType._
 
-
   implicit def backtrace2Frames(backtrace: Option[Backtrace]): Iterable[Frame] = {
     backtrace.map {
-      b => b.`frames`.map {
-        f => Frame(Some(f match {
-          case QFrame.FrameType.POS => PositionFrame
-          case QFrame.FrameType.OPT => OptionalFrame
-        }), f.`pos`, f.`opt`)
-      }
+      b =>
+        b.`frames`.map {
+          f =>
+            Frame(Some(f match {
+              case QFrame.FrameType.POS => PositionFrame
+              case QFrame.FrameType.OPT => OptionalFrame
+            }), f.`pos`, f.`opt`)
+        }
     }.getOrElse(Seq.empty[Frame])
 
   }
 
   implicit def datumToString(d: ql2.Datum): String = d.`rStr`.getOrElse("")
 
-
   //implicit def datnumCollection2Iterable(d:JList[p.Datum]):Iterable[]
-
 
   def toError(response: Response, term: Term): RethinkError = {
 
@@ -57,7 +53,7 @@ object ConvertFrom {
     response.`type` match {
       case Some(RUNTIME_ERROR) => RethinkRuntimeError(message, term, frames)
       case Some(COMPILE_ERROR) => RethinkCompileError(message, term, frames)
-      case Some(CLIENT_ERROR) => RethinkClientError(message, term, frames)
+      case Some(CLIENT_ERROR)  => RethinkClientError(message, term, frames)
     }
   }
 
@@ -76,7 +72,7 @@ object ConvertTo {
 
   implicit def intToDatNum(i: Int): NumberDatum = NumberDatum(i)
 
-  implicit def longToDatNum(l: Long):NumberDatum = NumberDatum(l)
+  implicit def longToDatNum(l: Long): NumberDatum = NumberDatum(l)
 
   implicit def floatToDatNum(f: Float): NumberDatum = NumberDatum(f)
 
@@ -89,6 +85,5 @@ object ConvertTo {
   implicit def int2Option(value: Int): Option[Int] = Some(value)
 
   implicit def string2DB(name: String): DB = DB(name)
-
 
 }

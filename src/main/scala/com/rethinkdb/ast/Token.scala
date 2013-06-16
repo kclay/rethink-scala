@@ -1,6 +1,5 @@
 package com.rethinkdb.ast
 
-
 sealed trait Token
 
 trait TermBlock extends Token
@@ -31,17 +30,13 @@ case class DatumTokenType(datumType: ql2.Datum.DatumType.EnumVal) extends TokenT
 
 trait AssocPairToken[T] extends Token {
 
-
   val key: String
   val value: Any
   lazy val token = Expr(value)
 
   def pair: AnyRef
 
-
 }
 
-
 // implicit def tokenTypeToTermType(tokenType:Either[p.TermNode.TermType,p.Datum.DatumType]):p.TermNode.TermType =tokenType.left
-
 

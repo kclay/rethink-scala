@@ -1,8 +1,6 @@
 package com.rethinkdb.ast
 
-
 import com.rethinkdb.Term
-
 
 object Expr {
 
@@ -25,11 +23,10 @@ object Expr {
   def apply(a: Any): Term = {
     val b = a
     a match {
-      case t: Term => t
-      case s: Seq[_] => MakeArray(s)
+      case t: Term      => t
+      case s: Seq[_]    => MakeArray(s)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
-      case a: Any => Datum(a)
-
+      case a: Any       => Datum(a)
 
     }
   }

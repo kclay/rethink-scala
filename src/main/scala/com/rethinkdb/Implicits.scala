@@ -6,12 +6,11 @@ import com.rethinkdb.ast.SliceRange
 import com.rethinkdb.ast.Asc
 import com.rethinkdb.ast.Var
 
-/**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 5/30/13
- * Time: 6:49 PM
- * To change this template use File | Settings | File Templates.
+/** Created with IntelliJ IDEA.
+ *  User: keyston
+ *  Date: 5/30/13
+ *  Time: 6:49 PM
+ *  To change this template use File | Settings | File Templates.
  */
 object Implicits {
 
@@ -31,7 +30,6 @@ object Implicits {
     def ~>(j: Int) = SliceRange(i, j)
   }
   implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
-  implicit def toPredicate2(f: (Var,Var) => Typed) = new Predicate2(f)
-
+  implicit def toPredicate2(f: (Var, Var) => Typed) = new Predicate2(f)
 
 }

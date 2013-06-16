@@ -4,11 +4,10 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
 
-/**
- * Created by IntelliJ IDEA.
- * User: Keyston
- * Date: 3/24/13
- * Time: 8:33 PM
+/** Created by IntelliJ IDEA.
+ *  User: Keyston
+ *  Date: 3/24/13
+ *  Time: 8:33 PM
  *
  */
 
@@ -38,7 +37,7 @@ class TimeoutError(message: String) extends Error(message)
 class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
                                  max: Int = 20,
                                  timeout: Int = 500000)
-  extends ConnectionPool[Conn] with LowLevelConnectionPool[Conn] {
+    extends ConnectionPool[Conn] with LowLevelConnectionPool[Conn] {
 
   private val size = new AtomicInteger(0)
   private val pool = new ArrayBlockingQueue[Conn](max)
@@ -60,7 +59,7 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   def borrow(): Conn = {
     pool.poll match {
       case conn: Conn => return conn
-      case _ => createOrBlock
+      case _          => createOrBlock
     }
   }
 
@@ -76,21 +75,21 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   private def createOrBlock: Conn = {
     size.get match {
       case e: Int if e == max => block
-      case _ => create
+      case _                  => create
     }
   }
 
   private def create: Conn = {
     size.incrementAndGet match {
       case e: Int if e > max => size.decrementAndGet; borrow()
-      case e: Int => connectionFactory.create
+      case e: Int            => connectionFactory.create
     }
   }
 
   private def block: Conn = {
     pool.poll(timeout, TimeUnit.NANOSECONDS) match {
       case conn: Conn => conn
-      case _ => throw new TimeoutError("Couldn't acquire a connection in %d nanoseconds.".format(timeout))
+      case _          => throw new TimeoutError("Couldn't acquire a connection in %d nanoseconds.".format(timeout))
     }
   }
 }

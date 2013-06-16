@@ -19,29 +19,26 @@ case class Desc(attr: String) extends Ordering {
   def termType: EnumVal = TermType.DESC
 }
 
-/**
- * Sort the sequence by document values of the given key(s).
- * order by defaults to ascending ordering. To explicitly specify the ordering, wrap the attribute with either r.asc or r.desc.
- * @param target
- * @param keys
+/** Sort the sequence by document values of the given key(s).
+ *  order by defaults to ascending ordering. To explicitly specify the ordering, wrap the attribute with either r.asc or r.desc.
+ *  @param target
+ *  @param keys
  */
-case class OrderBy(target: Document, keys: Seq[Ordering]) extends ProduceSequence {
+case class OrderBy(target: Json, keys: Seq[Ordering]) extends ProduceSequence {
   def termType: EnumVal = TermType.ORDERBY
 }
 
-/**
- * Skip a number of elements from the head of the sequence.
- * @param target
- * @param index
+/** Skip a number of elements from the head of the sequence.
+ *  @param target
+ *  @param index
  */
-case class Skip(target: Sequence, index: Int) extends ProduceSequence{
+case class Skip(target: Sequence, index: Int) extends ProduceSequence {
   def termType: EnumVal = TermType.SKIP
 }
 
-/**
- * Concatenate two sequences.
- * @param target
- * @param others
+/** Concatenate two sequences.
+ *  @param target
+ *  @param others
  */
 case class Union(target: Sequence, others: Sequence) extends ProduceSequence {
 
@@ -50,24 +47,22 @@ case class Union(target: Sequence, others: Sequence) extends ProduceSequence {
   def termType: EnumVal = TermType.UNION
 }
 
-/**
- * Get the nth element of a sequence.
- * @param target
- * @param left
- * @param right
+/** Get the nth element of a sequence.
+ *  @param target
+ *  @param left
+ *  @param right
  */
-case class Slice(target: Sequence, left: Int, right: Int) extends ProduceSequence  {
+case class Slice(target: Sequence, left: Int, right: Int) extends ProduceSequence {
   override lazy val args = buildArgs(target, left, right)
 
   def termType = TermType.SLICE
 }
 
-/**
- * End the sequence after the given number of elements.
- * @param target
- * @param amount
+/** End the sequence after the given number of elements.
+ *  @param target
+ *  @param amount
  */
-case class Limit(target: Sequence, amount: Int) extends ProduceSequence  {
+case class Limit(target: Sequence, amount: Int) extends ProduceSequence {
   override lazy val args = buildArgs(target, amount)
 
   def termType = TermType.LIMIT
