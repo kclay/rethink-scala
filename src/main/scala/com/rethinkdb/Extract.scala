@@ -4,11 +4,15 @@ import java.lang.reflect.{Type, ParameterizedType}
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.`type`.TypeReference;
+import com.fasterxml.jackson.core.`type`.TypeReference
+import scala.reflect.ClassTag
+import scala.reflect.runtime.universe.TypeTag
+import scala.Some
+;
 
 
 object Extract{
-  def extract[In, Out](implicit mf: Manifest[Out]): Extract[In, Out] = new BaseExtract[In, Out] {}
+  def extract[In, Out](implicit ct:TypeTag[Out]): Extract[In, Out] = new BaseExtract[In, Out] {}
   val mapper = new ObjectMapper()
   mapper.registerModule(DefaultScalaModule)
   mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false)
@@ -28,9 +32,9 @@ object Extract{
   }
 
   private [this] def typeFromManifest(m: Manifest[_]): Type = {
-    if (m.typeArguments.isEmpty) { m.erasure }
+    if (m.typeArguments.isEmpty) { m.runtimeClass}
     else new ParameterizedType {
-      def getRawType = m.erasure
+      def getRawType = m.runtimeClass
       def getActualTypeArguments = m.typeArguments.map(typeFromManifest).toArray
       def getOwnerType = null
     }
@@ -38,13 +42,13 @@ object Extract{
 }
 trait Extract[In, Out] {
 
-  def extract(value: In, term: Term)(implicit mf: Manifest[Out]): Out
+  def extract(value: In, term: Term)(implicit ct:TypeTag[Out]): Out
 
 }
 
 trait WithConversion[In, Out] {
 
-  def convert(value: In)(implicit ct: Manifest[Out]): Out
+  def convert(value: In)(implicit ct: TypeTag[Out]): Out
 }
 
 trait MapConversion[Out] extends WithConversion[Map[String, Any], Out]
@@ -52,12 +56,13 @@ trait MapConversion[Out] extends WithConversion[Map[String, Any], Out]
 trait BinaryConversion extends MapConversion[Boolean] {
   val resultField: String
 
-  def convert(value: Map[String, Any])(implicit mf:Manifest[Boolean]): Boolean = value.get(resultField).getOrElse(0) == 1
+  def convert(value: Map[String, Any])(implicit mf:TypeTag[Boolean]): Boolean = value.get(resultField).getOrElse(0) == 1
 }
 
 trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
   import scala.reflect.runtime.{universe=>ru}
+  import scala.reflect.runtime.currentMirror
 
   /*
   val pn = new CachingParanamer(new BytecodeReadingParanamer)
@@ -83,8 +88,9 @@ trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
   import Extract.{read,write}
 
+  val fieldAnnotationType=ru.typeOf[Field]
   //
-  def convert(value: Map[String, Any])(implicit mf: Manifest[Out]): Out ={
+  def convert(value: Map[String, Any])(implicit ct:TypeTag[Out]): Out ={
    /* val ctor = ru.typeOf[Out].declaration(ru.nme.CONSTRUCTOR).asMethod
     val mapping = ctor.paramss.head.map{ p=>
 
@@ -108,7 +114,29 @@ trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
     }.foldLeft(DefaultFormats:Formats)(_ + _)
    */
 
-   read[Out](write(value))
+
+    val tpe = ru.typeOf[Out]
+    val asClass = tpe.typeSymbol.asClass
+    val ctor = tpe.declaration(ru.nme.CONSTRUCTOR).asMethod
+    val mapping = ctor.paramss.head.map{ p=>
+
+      val mapTo = p.annotations.find(_.tpe == fieldAnnotationType).map{
+        f=>f.scalaArgs.head.productElement(0).asInstanceOf[ru.Constant].value.asInstanceOf[String]
+      }
+      (p.name.decoded,mapTo)
+    }
+
+    val args = mapping.collect{
+      case (native:String,Some(json:String))=>json
+      case (native:String,None)=>native
+    }.map(value.get(_).get)
+
+    val cm =currentMirror.reflectClass(asClass)
+    val ctorm = cm.reflectConstructor(ctor)
+
+    ctorm.apply(args: _*).asInstanceOf[Out]
+
+
   }
 
 }
@@ -117,7 +145,7 @@ trait BaseExtract[In, Out] extends Extract[In, Out] {
 
   type Conversion = WithConversion[In, Out]
 
-  def extract(value: In, term: Term)(implicit mf: Manifest[Out]): Out = {
+  def extract(value: In, term: Term)(implicit ct:TypeTag[Out]): Out = {
     def cast(v: Any): Out = v.asInstanceOf[Out]
     term match {
       case c: Conversion => cast(c.convert(value))

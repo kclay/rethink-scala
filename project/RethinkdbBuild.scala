@@ -48,7 +48,7 @@ object RethinkdbBuild extends Build {
       //addProtocCompatibility,
       libraryDependencies <++=(scalaVersion)(sv=> Seq(
         "org.scalatest" %% "scalatest" % "1.9.1" % "test",
-
+        "com.thoughtworks.paranamer" % "paranamer" % "2.3",
 
         "io.netty" % "netty"%"3.6.3.Final",
         "commons-pool"%"commons-pool" %"1.6",

@@ -25,6 +25,8 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder
 import java.util.concurrent.atomic.AtomicInteger
 import com.rethinkdb.utils.Helpers._
 import scala.Some
+import scala.reflect.runtime.universe.TypeTag
+
 
 /** Created by IntelliJ IDEA.
  *  User: Keyston
@@ -42,21 +44,26 @@ abstract class Token {
   def failure(t: Throwable)
 }
 
-case class QueryToken[R](query: ql2.Query, term: Term, p: Promise[R],mf:Manifest[R]) extends Token {
+case class QueryToken[R](query: ql2.Query, term: Term, p: Promise[R],tt:TypeTag[R]) extends Token {
 
 
-  implicit val m = mf
+
+  implicit val t = tt
   import Extract._
+  import scala.reflect.runtime.{universe=>ru}
 
-  val DocumentClass = classOf[Document]
+
   type DocType = Map[String,Any]
 
 
 
-  def cast(value:Any): R = mf.runtimeClass match{
-    case x if DocumentClass.isAssignableFrom(x)=> extract[DocType, R].extract(value.asInstanceOf[DocType], term)
+  def cast(value:Any): R ={
+  val v =ru.typeOf[R]
+  v match{
+    case x if x <:< ru.typeOf[Document]=> extract[DocType, R].extract(value.asInstanceOf[DocType], term)
 
     case _=> value.asInstanceOf[R]
+  }
   }
 
   def success(value: Any) = p success (cast(value))
@@ -224,13 +231,13 @@ case class Connection(version: Version) {
     }
   }, max = version.maxConnections)
 
-  def write[T](term: Term)(implicit mf: Manifest[T]): Future[T] =
+  def write[T](term: Term)(implicit tt:TypeTag[T]): Future[T] =
     channel[Future[T]]() {
       c =>
 
         val query = toQuery(term, c.token.getAndIncrement)
         val p = promise[T]()
-        val token = QueryToken[T](query, term, p,mf)
+        val token = QueryToken[T](query, term, p,tt)
         c.channel.setAttachment(token)
         c.channel.write(query)
         p.future

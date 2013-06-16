@@ -4,15 +4,18 @@ import com.rethinkdb._
 import scala.util.matching.Regex
 import scala.Some
 import com.rethinkdb.BlockingQuery
+import scala.reflect.ClassTag
+
 
 trait Produce[ResultType] extends Term {
+  import scala.reflect.runtime.universe._
 
-  def toQuery[R](implicit c: Connection, mf: Manifest[R]): Query[R] = new BlockingQuery[R](this, c,mf)
+  def toQuery[R](implicit c: Connection, tt: TypeTag[R]): Query[R] = new BlockingQuery[R](this, c,tt)
 
   //http://stackoverflow.com/a/3461734
   //def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, Option[ResultType]] = toQuery.toResult
 
-  def run[R <: ResultType](implicit c: Connection, mf: Manifest[R]):Either[RethinkError,R] = toQuery.toResult
+  def run[R <: ResultType](implicit c: Connection, tt:TypeTag[R]):Either[RethinkError,R] = toQuery.toResult
 
 }
 /*
