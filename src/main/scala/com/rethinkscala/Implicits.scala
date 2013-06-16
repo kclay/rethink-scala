@@ -42,6 +42,14 @@ object Implicits {
     def desc = Desc(name)
   }
 
+
+
+  private def p2t(p:Product) =Expr(p.productIterator.toSeq)
+  implicit def tuple2Typed(t:(Typed,Typed)) = p2t(t)
+  implicit def tuple3Typed(t:(Typed,Typed,Typed)) = p2t(t)
+
+  implicit def tuple4Typed(t:(Typed,Typed,Typed,Typed)) = p2t(t)
+
   implicit def string2Ast(name: String) = String2Ast(name)
 
   implicit def string2Ordering(name: String) = Asc(name)

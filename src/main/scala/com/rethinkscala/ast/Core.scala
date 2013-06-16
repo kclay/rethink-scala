@@ -45,6 +45,10 @@ case class Info(target: Typed) extends ProduceDocument with DocumentConversion[I
   def termType = TermType.INFO
 }
 
+case class Branch(test:BooleanPredicate,passed:Typed,failed:Typed) extends ProduceAny{
+  def termType  = TermType.BRANCH
+}
+
 object Core {
   val row = new ImplicitVar()
 }

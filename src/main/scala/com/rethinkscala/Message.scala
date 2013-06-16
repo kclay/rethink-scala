@@ -69,7 +69,7 @@ trait Term extends WithAst {
     .addAllArgs(args.map(_.ast))
     .addAllOptargs(optargs.map(_.pair.asInstanceOf[ql2.Term.AssocPair]))
 
-  lazy val args: Seq[Term] =  buildArgs(Reflector.fields(this).map(_.get(this)): _*)
+  lazy val args: Seq[Term] =  if(extractArgs) buildArgs(Reflector.fields(this).map(_.get(this)): _*) else Seq.empty[Term]
 
   protected def buildArgs(args: Any*): Seq[Term] = for (a <- args) yield Expr(a)
 

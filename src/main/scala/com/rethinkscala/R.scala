@@ -1,17 +1,54 @@
 package com.rethinkscala
 
-import com.rethinkscala.ast.{ ImplicitVar, Table }
+import com.rethinkscala.ast._
+import com.rethinkscala.ast.Table
+import com.rethinkscala.ast.DBCreate
+import com.rethinkscala.ast.DB
 
-/** Created with IntelliJ IDEA.
- *  User: keyston
- *  Date: 5/28/13
- *  Time: 5:53 PM
- *  To change this template use File | Settings | File Templates.
- */
 object r {
 
   private lazy val _row = new ImplicitVar
 
   def row(name: String) = _row \ name
+
   def table(name: String, useOutDated: Option[Boolean] = None) = Table(name, useOutDated)
+
+  def db(name: String) = DB(name)
+
+  def dbCreate(name: String) = DBCreate(name)
+
+  def dbDrop(name: String) = DBDrop(name)
+
+  def dbs = DBList()
+
+  def tableCreate(name: String, primaryKey: Option[String] = None,
+                  dataCenter: Option[String] = None, cacheSize: Option[Int] = None,
+                  durability: Option[String] = None) {
+    TableCreate(name, primaryKey, dataCenter, cacheSize, durability)
+  }
+
+  def tableDrop(name: String) = TableDrop(name)
+
+  def tables = TableList()
+
+  def branch(predicate: BooleanPredicate, passed: Typed, failed: Typed) = Branch(predicate, passed, failed)
+
+  def sum(attr: String) = Map("SUM" -> attr)
+
+  def avg(attr: String) = Map("AVG" -> attr)
+
+  val count = Map("COUNT" -> true)
+
+  def asc(attr: String) = Asc(attr)
+
+  def desc(attr: String) = Desc(attr)
+
+  private[this] def compute[T](v: T*)(a: (T, T) => T) = v.drop(1).foldLeft(v.head)(a)
+
+  // def eq(base:Comparable,v:Comparable *) = compute[Comparable](v:_*)()
+  def add(v: Addition*) = compute[Addition](v: _*)(_ + _)
+
+  def sub(v: Numeric*) = compute[Numeric](v: _*)(_ - _)
+
+
 }
