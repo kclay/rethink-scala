@@ -4,7 +4,7 @@ import com.rethinkscala.ast._
 
 import ql2.Term.TermType
 import ql2.Datum.DatumType
-import com.rethinkscala.relect.Reflector
+import com.rethinkscala.reflect.Reflector
 
 trait AssocPair {
 
@@ -69,7 +69,7 @@ trait Term extends WithAst {
     .addAllArgs(args.map(_.ast))
     .addAllOptargs(optargs.map(_.pair.asInstanceOf[ql2.Term.AssocPair]))
 
-  lazy val args: Seq[Term] =  if(extractArgs) buildArgs(Reflector.fields(this).map(_.get(this)): _*) else Seq.empty[Term]
+  lazy val args: Seq[Term] = if (extractArgs) buildArgs(Reflector.fields(this).map(_.get(this)): _*) else Seq.empty[Term]
 
   protected def buildArgs(args: Any*): Seq[Term] = for (a <- args) yield Expr(a)
 
@@ -85,7 +85,6 @@ trait Term extends WithAst {
   }
 
   def termType: ql2.Term.TermType.EnumVal
-
 
 }
 

@@ -14,17 +14,17 @@ import com.rethinkscala.ast.Var
  */
 object Implicits {
 
+  implicit def boolToDataNum(b: Boolean): Binary = BooleanDatum(b)
 
+  implicit def intToDatNum(i: Int) = NumberDatum(i)
 
-  implicit def boolToDataNum(b: Boolean): BooleanDatum = BooleanDatum(b)
+  implicit def longToDatNum(l: Long) = NumberDatum(l)
 
-  implicit def intToDatNum(i: Int): NumberDatum = NumberDatum(i)
+  implicit def floatToDatNum(f: Float) = NumberDatum(f)
 
-  implicit def longToDatNum(l: Long): NumberDatum = NumberDatum(l)
+  implicit def string2DatNum(s: String) = StringDatum(s)
 
-  implicit def floatToDatNum(f: Float): NumberDatum = NumberDatum(f)
-
-  implicit def string2DatNum(s: String): StringDatum = StringDatum(s)
+  //implicit def seq2Datum(s:Seq[Datum]) = MakeArray(s)
 
   implicit def bool2Option(value: Boolean): Option[Boolean] = Some(value)
 
@@ -34,6 +34,8 @@ object Implicits {
 
   implicit def string2DB(name: String): DB = DB(name)
 
+
+
   case class String2Ast(name: String) {
     def row = r.row(name)
 
@@ -42,13 +44,11 @@ object Implicits {
     def desc = Desc(name)
   }
 
+  private def p2t(p: Product) = Expr(p.productIterator.toSeq)
+  implicit def tuple2Typed(t: (Typed, Typed)) = p2t(t)
+  implicit def tuple3Typed(t: (Typed, Typed, Typed)) = p2t(t)
 
-
-  private def p2t(p:Product) =Expr(p.productIterator.toSeq)
-  implicit def tuple2Typed(t:(Typed,Typed)) = p2t(t)
-  implicit def tuple3Typed(t:(Typed,Typed,Typed)) = p2t(t)
-
-  implicit def tuple4Typed(t:(Typed,Typed,Typed,Typed)) = p2t(t)
+  implicit def tuple4Typed(t: (Typed, Typed, Typed, Typed)) = p2t(t)
 
   implicit def string2Ast(name: String) = String2Ast(name)
 
@@ -60,7 +60,7 @@ object Implicits {
   implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
   implicit def toPredicate2(f: (Var, Var) => Typed) = new Predicate2(f)
 
-  object Quick{
+  object Quick {
 
     case class Q12Datum(datum: ql2.Datum) {
       def bool = datum.`rBool`.get

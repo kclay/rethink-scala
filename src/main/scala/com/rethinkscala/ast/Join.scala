@@ -1,20 +1,18 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.Term
+import com.rethinkscala.{ AssocPair, Term }
 import ql2.Term.TermType.EnumVal
 import ql2.Term.TermType
 
 abstract class Join extends ProduceSequence {
   val left: Table
-
-  def zip = Zip(this)
+  val right: Table
 
 }
 
 abstract class PredicateJoin extends Join {
-  val right: Table
 
-  val func: Predicate2
+  val func: BooleanPredicate2
   override lazy val args: Seq[Term] = buildArgs(left, right, func())
 }
 
@@ -26,7 +24,7 @@ abstract class PredicateJoin extends Join {
  *  @param right
  *  @param func
  */
-case class InnerJoin(left: Table, right: Table, func: Predicate2) extends PredicateJoin {
+case class InnerJoin(left: Sequence, right: Sequence, func: BooleanPredicate2) extends PredicateJoin {
   def termType: EnumVal = TermType.INNER_JOIN
 }
 
@@ -35,7 +33,7 @@ case class InnerJoin(left: Table, right: Table, func: Predicate2) extends Predic
  *  @param right
  *  @param func
  */
-case class OuterJoin(left: Table, right: Table, func: Predicate2) extends PredicateJoin {
+case class OuterJoin(left: Sequence, right: Sequence, func: BooleanPredicate2) extends PredicateJoin {
   def termType: EnumVal = TermType.OUTER_JOIN
 }
 
@@ -45,18 +43,17 @@ case class OuterJoin(left: Table, right: Table, func: Predicate2) extends Predic
  *  @param attr
  *  @param index
  */
-case class EqJoin(left: Table, right: Table, attr: String, index: Option[String] = None) extends Join {
+case class EqJoin(left: Sequence, attr: String, right: Sequence, index: Option[String] = None) extends Join {
   def termType: EnumVal = TermType.EQ_JOIN
 
-  override lazy val args: Seq[Term] = buildArgs(left, right, attr, index)
+  override lazy val args: Seq[Term] = buildArgs(left, attr, right)
+  override lazy val optargs: Iterable[AssocPair] = buildOptArgs(Map("index" -> index))
 }
 
 /** Used to 'zip' up the result of a join by merging the 'right' fields into 'left' fields of each member of the sequence.
  *  @param target
  */
-case class Zip(target: Join) extends ProduceSequence {
-
-  override lazy val args: Seq[Term] = buildArgs(target)
+case class Zip(target: Sequence) extends ProduceSequence {
 
   def termType: EnumVal = TermType.ZIP
 }

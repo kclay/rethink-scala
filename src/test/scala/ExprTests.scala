@@ -1,6 +1,8 @@
 import org.scalatest.FunSuite
 
 import com.rethinkscala._
+import com.rethinkscala.Implicits._
+import com.rethinkscala.Implicits.Quick._
 import ast._
 
 class ExprTests extends FunSuite {

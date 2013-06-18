@@ -10,6 +10,4 @@ import scala.Some
 package object rethinkscala {
   import com.rethinkscala.ast.{ DB, StringDatum, NumberDatum, BooleanDatum }
 
-
-
 }

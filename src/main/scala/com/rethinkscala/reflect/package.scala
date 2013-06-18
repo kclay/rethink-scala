@@ -2,14 +2,12 @@ package com.rethinkscala
 
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 6/16/13
- * Time: 12:40 PM
- * To change this template use File | Settings | File Templates.
+/** Created with IntelliJ IDEA.
+ *  User: keyston
+ *  Date: 6/16/13
+ *  Time: 12:40 PM
  */
-package object relect {
+package object reflect {
 
   private[reflect] class Memo[A, R] {
     private[this] val cache = new ConcurrentHashMap[A, R](1500, 1, 1)
@@ -23,7 +21,7 @@ package object relect {
       }
     }
 
-    def replace(x: A, v: R):R = {
+    def replace(x: A, v: R): R = {
       cache.put(x, v)
       v
     }

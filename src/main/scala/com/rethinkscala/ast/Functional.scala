@@ -6,12 +6,6 @@ import ql2.Term.TermType
 import java.util.concurrent.atomic.AtomicInteger
 import ql2.Term.TermType.EnumVal
 
-case class Get(from: Term, attribute: String) extends TermMessage with ProduceDocument {
-  override lazy val args = buildArgs(from, attribute)
-
-  def termType = TermType.GET
-}
-
 object Predicate {
   private val _nextVarId = new AtomicInteger()
 
@@ -47,10 +41,6 @@ case class Func(f: Predicate) extends Term {
   def termType: EnumVal = TermType.FUNC
 }
 
-case class FuncCall(f: Predicate, target: Term) extends Term {
-
-  def termType: EnumVal = TermType.FUNCALL
-}
 
 case class Predicate1(f: (Var) => Typed) extends Predicate {
 
@@ -80,40 +70,7 @@ case class BooleanPredicate2(f: (Var, Var) => Binary) extends BooleanPredicate {
   val amount: Int = 2
 }
 
-abstract class Transformation extends ProduceSequence {
-  val target: Functional
-  val func: Predicate
 
-  override lazy val args = buildArgs(target, func())
-
-}
-
-/** Transform each element of the sequence by applying the given mapping function.
- *  @param target
- *  @param func
- */
-case class RMap(target: Functional, func: Predicate1) extends Transformation {
-
-  def termType: EnumVal = TermType.MAP
-
-  def toConcat = ConcatMap(target, func)
-
-}
-
-/** Flattens a sequence of arrays returned by the mappingFunction into a single sequence.
- *  @param target
- *  @param func
- */
-case class ConcatMap(target: Functional, func: Predicate1) extends Transformation {
-
-  def termType: EnumVal = TermType.CONCATMAP
-
-  def toMap = RMap(target, func)
-}
-
-case class Filter(target: Typed, func: Predicate) extends ProduceAny {
-  def termType: EnumVal = TermType.FILTER
-}
 //class Functional {
 
 // TODO : Reduce

@@ -33,11 +33,11 @@ object r {
 
   def branch(predicate: BooleanPredicate, passed: Typed, failed: Typed) = Branch(predicate, passed, failed)
 
-  def sum(attr: String) = Map("SUM" -> attr)
+  def sum(attr: String) =BySum(attr)
 
-  def avg(attr: String) = Map("AVG" -> attr)
+  def avg(attr: String) = ByAvg(attr)
 
-  val count = Map("COUNT" -> true)
+  val count = ByCount
 
   def asc(attr: String) = Asc(attr)
 
@@ -50,5 +50,9 @@ object r {
 
   def sub(v: Numeric*) = compute[Numeric](v: _*)(_ - _)
 
+  def call(f:Predicate,values:Typed*) = FuncCall(f,values)
+  def error(msg:String) = UserError(msg)
+
+  def js(code:String,timeout:Option[Int]=None) = JavaScript(code,timeout)
 
 }

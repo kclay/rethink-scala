@@ -1,12 +1,9 @@
-import com.rethinkscala.ast.DB
-import com.rethinkscala.ast.DB
-import com.rethinkscala.utils.Helpers._
 import org.scalatest.FunSuite
 
 import com.rethinkscala._
 import com.rethinkscala.ast._
 import ql2.{Ql2=>p}
-import scala.concurrent._
+import scala.None
 
 class DBTest extends FunSuite{
 
@@ -19,7 +16,7 @@ class DBTest extends FunSuite{
      val connection = new Connection(version)
 
 
-    val table =db.newTable("bar")
+    val table =db ^+ "bar"
 
 
    // val result = table.run[Boolean](connection)

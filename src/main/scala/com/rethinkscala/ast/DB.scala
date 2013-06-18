@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{InsertResult, DocumentConversion, BinaryConversion, TermMessage}
+import com.rethinkscala.{ BinaryConversion, TermMessage }
 
 import ql2.Term.TermType
 
@@ -13,26 +13,26 @@ case class DB(name: String) extends TermMessage {
 
   def termType = TermType.DB
 
-  def newTable(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None, cacheSize: Option[Int] = None) = {
-    TableCreate(name, primaryKey, dataCenter, cacheSize, Some(this))
+  def tableCreate(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None,
+                  cacheSize: Option[Int] = None, durability: Option[String] = None) = {
+    TableCreate(name, primaryKey, dataCenter, cacheSize, durability, Some(this))
   }
 
-  def ^^(name: String, primaryKey: Option[String], dataCenter: Option[String], cacheSize: Option[Int]) = this newTable(name, primaryKey, dataCenter, cacheSize)
+  def ^+(name: String) = tableCreate(name)
 
-  def dropTable(name: String) = TableDrop(name)
+  def tableDrop(name: String) = TableDrop(name)
 
-  def ^-(name: String) = this dropTable (name)
+  def ^-(name: String) = this tableDrop (name)
 
   def table(name: String, useOutDated: Boolean = false) = Table(name, Some(useOutDated), Some(this))
 
-  def ^(name: String, useOutDated: Boolean = false) = this table(name, useOutDated)
+  def ^(name: String, useOutDated: Boolean = false) = this table (name, useOutDated)
 
 }
 
-
 case class DBCreate(name: String, db: Option[DB] = None)
-  extends TermMessage
-          with ProduceBinary with BinaryConversion with WithDB {
+    extends TermMessage
+    with ProduceBinary with BinaryConversion with WithDB {
   override lazy val args = buildArgs(name)
   val resultField = "created"
 
@@ -46,10 +46,9 @@ case class DBDrop(name: String) extends TermMessage with ProduceBinary with Bina
   def termType = TermType.DB_DROP
 }
 
-case class DBList(db:Option[DB]=None) extends TermMessage with ProduceSequence with WithDB{
+case class DBList(db: Option[DB] = None) extends TermMessage with ProduceSequence with WithDB {
   def termType = TermType.DB_LIST
 }
-
 
 /*
 case class SIndexCreate(table:Table,field:String) extends TermMessage with MethodTerm {

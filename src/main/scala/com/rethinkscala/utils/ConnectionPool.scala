@@ -58,7 +58,7 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
 
   def borrow(): Conn = {
     pool.poll match {
-      case conn: Conn => return conn
+      case conn: Conn => conn
       case _          => createOrBlock
     }
   }

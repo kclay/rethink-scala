@@ -4,18 +4,65 @@ import com.rethinkscala.Term
 import ql2.Term.TermType.EnumVal
 import ql2.Term.TermType
 
+abstract class Transformation extends ProduceSequence {
+  val target: Functional
+  val func: Predicate
+
+  override lazy val args = buildArgs(target, func())
+
+}
+
+/** Transform each element of the sequence by applying the given mapping function.
+ *  @param target
+ *  @param func
+ */
+case class RMap(target: Sequence, func: Predicate1) extends Transformation {
+
+  def termType: EnumVal = TermType.MAP
+
+  def toConcat = ConcatMap(target, func)
+
+}
+
+
+/** Flattens a sequence of arrays returned by the mappingFunction into a single sequence.
+  *  @param target
+  *  @param func
+  */
+case class ConcatMap(target: Sequence, func: Predicate1) extends Transformation {
+
+  def termType: EnumVal = TermType.CONCATMAP
+
+  def toMap = RMap(target, func)
+}
+
+/** Takes a sequence of objects and a list of fields. If any objects in the sequence don't have all of
+ *  the specified fields, they're dropped from the sequence. The remaining objects have the specified fields plucked out.
+ *  (This is identical to `has_fields` followed by `pluck` on a sequence.)
+ *  @param target
+ *  @param fields
+ */
+case class WithFields(target: Sequence, fields:Seq[String]) extends ProduceSequence {
+
+  def termType = TermType.WITH_FIELDS
+  override lazy val args = buildArgs(target, fields: _*)
+}
 case class SliceRange(start: Int = 0, end: Int = -1)
 
 abstract class Ordering extends Term {
   val attr: String
+  def flip:Ordering
   override lazy val args: Seq[Term] = buildArgs(attr)
 }
 
 case class Asc(attr: String) extends Ordering {
+
+  def flip = Desc(attr)
   def termType: EnumVal = TermType.ASC
 }
 
 case class Desc(attr: String) extends Ordering {
+  def flip = Asc(attr)
   def termType: EnumVal = TermType.DESC
 }
 
@@ -24,7 +71,7 @@ case class Desc(attr: String) extends Ordering {
  *  @param target
  *  @param keys
  */
-case class OrderBy(target: Json, keys: Seq[Ordering]) extends ProduceSequence {
+case class OrderBy(target: Sequence, keys: Seq[Ordering]) extends ProduceSequence {
   def termType: EnumVal = TermType.ORDERBY
 }
 
@@ -52,7 +99,7 @@ case class Union(target: Sequence, others: Sequence) extends ProduceSequence {
  *  @param left
  *  @param right
  */
-case class Slice(target: Sequence, left: Int, right: Int) extends ProduceSequence {
+case class Slice(target: Sequence, left: Int=0, right: Int= -1) extends ProduceSequence {
   override lazy val args = buildArgs(target, left, right)
 
   def termType = TermType.SLICE
@@ -66,4 +113,40 @@ case class Limit(target: Sequence, amount: Int) extends ProduceSequence {
   override lazy val args = buildArgs(target, amount)
 
   def termType = TermType.LIMIT
+}
+
+/**
+ * Test if a sequence is empty.
+ * @param target
+ */
+case class IsEmpty(target:Sequence) extends ProduceBinary{
+  def termType = TermType.IS_EMPTY
+}
+
+
+/** Get the indexes of an element in a sequence. If the argument is a predicate, get the indexes of all elements matching it.
+  *  @param target
+  *  @param filter
+  */
+case class IndexesOf(target: Sequence, filter: Either[Datum, BooleanPredicate]) extends ProduceSequence {
+
+  override lazy val args = buildArgs(target,filter match{
+    case Left(x)=>x
+    case Right(f)=>f()
+  })
+  def termType = TermType.INDEXES_OF
+}
+
+
+case class Nth(target: Sequence, index: Int) extends ProduceAny {
+  def termType = TermType.NTH
+}
+
+/**
+ * Select a given number of elements from a sequence with uniform random distribution. Selection is done without replacement.
+ * @param target
+ * @param amount
+ */
+case class Sample(target: Sequence, amount: Int) extends ProduceSequence {
+  def termType = TermType.SAMPLE
 }
