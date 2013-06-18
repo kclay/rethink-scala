@@ -15,6 +15,7 @@ object RethinkdbBuild extends Build {
     "Local Maven Repository" at "file:///" + Path.userHome + "/.m2/repository",
     "Mandubian repository snapshots" at "https://github.com/mandubian/mandubian-mvn/raw/master/snapshots/",
     "Mandubian repository releases" at "https://github.com/mandubian/mandubian-mvn/raw/master/releases/"
+    //"Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
   )
 
   def jackson(v: String) = Seq(

@@ -34,8 +34,6 @@ object Implicits {
 
   implicit def string2DB(name: String): DB = DB(name)
 
-
-
   case class String2Ast(name: String) {
     def row = r.row(name)
 

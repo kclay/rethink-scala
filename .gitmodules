@@ -1,0 +1,3 @@
+[submodule "rethinkdb-driver-development"]
+	path = rethinkdb-driver-development
+	url = git@github.com:neumino/rethinkdb-driver-development.git

@@ -24,11 +24,10 @@ case class RMap(target: Sequence, func: Predicate1) extends Transformation {
 
 }
 
-
 /** Flattens a sequence of arrays returned by the mappingFunction into a single sequence.
-  *  @param target
-  *  @param func
-  */
+ *  @param target
+ *  @param func
+ */
 case class ConcatMap(target: Sequence, func: Predicate1) extends Transformation {
 
   def termType: EnumVal = TermType.CONCATMAP
@@ -42,7 +41,7 @@ case class ConcatMap(target: Sequence, func: Predicate1) extends Transformation 
  *  @param target
  *  @param fields
  */
-case class WithFields(target: Sequence, fields:Seq[String]) extends ProduceSequence {
+case class WithFields(target: Sequence, fields: Seq[String]) extends ProduceSequence {
 
   def termType = TermType.WITH_FIELDS
   override lazy val args = buildArgs(target, fields: _*)
@@ -51,7 +50,7 @@ case class SliceRange(start: Int = 0, end: Int = -1)
 
 abstract class Ordering extends Term {
   val attr: String
-  def flip:Ordering
+  def flip: Ordering
   override lazy val args: Seq[Term] = buildArgs(attr)
 }
 
@@ -99,7 +98,7 @@ case class Union(target: Sequence, others: Sequence) extends ProduceSequence {
  *  @param left
  *  @param right
  */
-case class Slice(target: Sequence, left: Int=0, right: Int= -1) extends ProduceSequence {
+case class Slice(target: Sequence, left: Int = 0, right: Int = -1) extends ProduceSequence {
   override lazy val args = buildArgs(target, left, right)
 
   def termType = TermType.SLICE
@@ -115,37 +114,33 @@ case class Limit(target: Sequence, amount: Int) extends ProduceSequence {
   def termType = TermType.LIMIT
 }
 
-/**
- * Test if a sequence is empty.
- * @param target
+/** Test if a sequence is empty.
+ *  @param target
  */
-case class IsEmpty(target:Sequence) extends ProduceBinary{
+case class IsEmpty(target: Sequence) extends ProduceBinary {
   def termType = TermType.IS_EMPTY
 }
 
-
 /** Get the indexes of an element in a sequence. If the argument is a predicate, get the indexes of all elements matching it.
-  *  @param target
-  *  @param filter
-  */
+ *  @param target
+ *  @param filter
+ */
 case class IndexesOf(target: Sequence, filter: Either[Datum, BooleanPredicate]) extends ProduceSequence {
 
-  override lazy val args = buildArgs(target,filter match{
-    case Left(x)=>x
-    case Right(f)=>f()
+  override lazy val args = buildArgs(target, filter match {
+    case Left(x)  => x
+    case Right(f) => f()
   })
   def termType = TermType.INDEXES_OF
 }
-
 
 case class Nth(target: Sequence, index: Int) extends ProduceAny {
   def termType = TermType.NTH
 }
 
-/**
- * Select a given number of elements from a sequence with uniform random distribution. Selection is done without replacement.
- * @param target
- * @param amount
+/** Select a given number of elements from a sequence with uniform random distribution. Selection is done without replacement.
+ *  @param target
+ *  @param amount
  */
 case class Sample(target: Sequence, amount: Int) extends ProduceSequence {
   def termType = TermType.SAMPLE

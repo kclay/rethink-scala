@@ -3,9 +3,9 @@ package com.rethinkscala.ast
 import com.rethinkscala.{ Term }
 import ql2.Term.TermType
 
-abstract class Math{
-  val left: Literal 
-  val right:Literal
+abstract class Math {
+  val left: Literal
+  val right: Literal
 }
 
 case class Eq(left: Comparable, right: Comparable) extends Math with ProduceBinary {

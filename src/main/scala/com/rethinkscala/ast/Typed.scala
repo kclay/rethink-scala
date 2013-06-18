@@ -17,23 +17,21 @@ trait Produce[ResultType] extends Term {
 
 }
 
-
-sealed trait DataType{
-  def name:String
+sealed trait DataType {
+  def name: String
 }
 
-case object ObjectData extends DataType{
-  def name="object"
+case object ObjectData extends DataType {
+  def name = "object"
 }
-case object StringData extends DataType{
-  def name="string"
+case object StringData extends DataType {
+  def name = "string"
 }
-case object ArrayData extends DataType{
-  def name ="array"
+case object ArrayData extends DataType {
+  def name = "array"
 }
 
 sealed trait Typed {
-
 
   implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
 
@@ -42,9 +40,8 @@ sealed trait Typed {
   def info = Info(this)
 
   def typeOf = TypeOf(this)
-  def coerceTo(dataType:DataType) = CoerceTo(this,dataType)
+  def coerceTo(dataType: DataType) = CoerceTo(this, dataType)
 }
-
 
 trait Addition extends Typed {
   def +(other: Addition) = add(other)
@@ -62,24 +59,24 @@ trait Literal extends Comparable with Addition {
 
 trait MapTyped extends Typed
 
-trait ArrayTyped extends Sequence{
+trait ArrayTyped extends Sequence {
   def append(value: Datum) = Append(this, value)
 
-  def :+(value:Datum) = append(value)
-  def prepend(value:Datum) = Prepend(this, value)
+  def :+(value: Datum) = append(value)
+  def prepend(value: Datum) = Prepend(this, value)
 
   def +:(value: Datum) = prepend(value)
-  def difference(values:Datum*) = Difference(this,values)
+  def difference(values: Datum*) = Difference(this, values)
 
-  def setInert(value:Datum) = SetInsert(this,value)
-  def setUnion(values:Datum*) = SetUnion(this,values)
-  def setIntersection(values:Datum*)= SetIntersection(this,values)
-  def setDifference(values:Datum*) = SetDifference(this,values)
-  def insertAt(index:Int,value:Datum) = InsertAt(this,index,value)
-  def spliceAt(index:Int,values:Datum*) =SpliceAt(this,index,values)
+  def setInert(value: Datum) = SetInsert(this, value)
+  def setUnion(values: Datum*) = SetUnion(this, values)
+  def setIntersection(values: Datum*) = SetIntersection(this, values)
+  def setDifference(values: Datum*) = SetDifference(this, values)
+  def insertAt(index: Int, value: Datum) = InsertAt(this, index, value)
+  def spliceAt(index: Int, values: Datum*) = SpliceAt(this, index, values)
 
-  def deleteAt(start:Int,end:Option[Int]=None) = DeleteAt(this,start,end)
-  def changeAt(index:Int,value:Datum) = ChangeAt(this,index,value)
+  def deleteAt(start: Int, end: Option[Int] = None) = DeleteAt(this, start, end)
+  def changeAt(index: Int, value: Datum) = ChangeAt(this, index, value)
 
 }
 
@@ -131,10 +128,7 @@ trait Multiply {
   def mul(other: Numeric) = Mul(this, other)
 }
 
-
-
-
-trait Sequence extends  Multiply  with Filterable with Manipulation {
+trait Sequence extends Multiply with Filterable with Manipulation {
 
   type ManipulationType = Sequence
   //def coerceTo(dataType: DataType)=CoerceTo(this,dataType)
@@ -148,8 +142,6 @@ trait Sequence extends  Multiply  with Filterable with Manipulation {
   def sample(amount: Int) = Sample(this, amount)
 
   def indexesOf(predicate: BooleanPredicate1) = IndexesOf(this, Right(predicate))
-
-
 
   def apply(index: Int) = Nth(this, index)
 
@@ -187,29 +179,25 @@ trait Sequence extends  Multiply  with Filterable with Manipulation {
 
   def count(value: Binary) = Count(this, Some(Right((x: Var) => value)))
 
-
   def mapReduce(grouping: Predicate1, mapping: Predicate1,
                 reduction: Predicate2, base: Option[Datum] = None) = GroupMapReduce(this, grouping, mapping, reduction, base)
 
-  def groupBy(method:AggregateByMethod,attrs:String*) = GroupBy(this,method,attrs)
-
+  def groupBy(method: AggregateByMethod, attrs: String*) = GroupBy(this, method, attrs)
 
   def contains(attrs: Datum*) = Contains(this, attrs)
 
   def ?(attr: Datum) = contains(attr)
-  def pluck(attrs: String*) = Pluck(this,attrs)
-  def without(attrs:String*) = Without(this,attrs)
+  def pluck(attrs: String*) = Pluck(this, attrs)
+  def without(attrs: String*) = Without(this, attrs)
 
   def merge(other: Sequence) = Merge(this, other)
 
   def +(other: Sequence) = merge(other)
-  def foreach(value:Predicate1) = ForEach(this,value)
+  def foreach(value: Predicate1) = ForEach(this, value)
 
 }
 
-
-
-trait Manipulation{
+trait Manipulation {
   type ManipulationType
   def pluck(attrs: String*)
   def without(attrs: String*)
@@ -218,13 +206,12 @@ trait Manipulation{
   def +(other: ManipulationType)
 }
 
-trait Json extends Typed with Manipulation  {
+trait Json extends Typed with Manipulation {
 
-  type ManipulationType= Json
-  def pluck(attrs: String*) =Pluck(this,attrs)
+  type ManipulationType = Json
+  def pluck(attrs: String*) = Pluck(this, attrs)
 
   def without(attrs: String*) = Without(this, attrs)
-
 
   def attr(name: String) = GetAttr(this, name)
 
@@ -233,7 +220,7 @@ trait Json extends Typed with Manipulation  {
   def merge(other: Json) = Merge(this, other)
 
   def +(other: Json) = merge(other)
-  def hasFields(values:String*) = HasFields(this,values)
+  def hasFields(values: String*) = HasFields(this, values)
 
   def keys = Keys(this)
 
@@ -304,7 +291,7 @@ trait ProduceBinary extends Produce[Boolean] with Binary
 
 //trait ProduceLiteral extends ProduceComparable with Literal
 
-trait ProduceDocument extends Produce[Document]  with Json
+trait ProduceDocument extends Produce[Document] with Json
 
 trait ProduceNumeric extends Produce[Double] with Numeric
 

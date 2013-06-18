@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{Document, InfoResult, DocumentConversion, Term}
+import com.rethinkscala.{ Document, InfoResult, DocumentConversion, Term }
 
 import ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
@@ -25,11 +25,10 @@ case class Var(id: Int) extends Term with ProduceAny {
   def termType = TermType.VAR
 }
 
-case class JavaScript(code: String,timeout:Option[Int] = None) extends Term {
+case class JavaScript(code: String, timeout: Option[Int] = None) extends Term {
   override lazy val args = buildArgs(code)
 
-
-  override lazy val optargs = buildOptArgs(Map("timeout"->timeout))
+  override lazy val optargs = buildOptArgs(Map("timeout" -> timeout))
 
   def termType = TermType.JAVASCRIPT
 }
@@ -56,32 +55,27 @@ object Core {
   val row = new ImplicitVar()
 }
 
-
-/**
- * Loop over a sequence, evaluating the given write query for each element.
- * @param target
- * @param function
+/** Loop over a sequence, evaluating the given write query for each element.
+ *  @param target
+ *  @param function
  */
-case class ForEach(target:Sequence,function:Predicate1) extends ProduceDocument{
+case class ForEach(target: Sequence, function: Predicate1) extends ProduceDocument {
 
-  override lazy val args = buildArgs(target,function())
+  override lazy val args = buildArgs(target, function())
 
   def termType = TermType.FOREACH
 }
 
+case class CoerceTo(target: Typed, dataType: DataType) extends ProduceAny {
 
-case class CoerceTo(target:Typed,dataType:DataType) extends ProduceAny{
-
-
-  override lazy val args = buildArgs(target,dataType.name)
+  override lazy val args = buildArgs(target, dataType.name)
 
   def termType = TermType.COERCE_TO
 }
 
-case class FuncCall(function:Predicate,values:Seq[Typed]) extends ProduceAny{
+case class FuncCall(function: Predicate, values: Seq[Typed]) extends ProduceAny {
 
-
-  override lazy val args = buildArgs(function(),values:_*)
+  override lazy val args = buildArgs(function(), values: _*)
 
   def termType = TermType.FUNCALL
 }

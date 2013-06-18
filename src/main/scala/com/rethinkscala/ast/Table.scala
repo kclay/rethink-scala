@@ -37,7 +37,7 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
   def \\(attribute: String) = get(attribute)
 
   def get(attribute: String) = Get(this, attribute)
-  def getAll(attr: String,index:Option[String]=None) = GetAll(this, attr,index)
+  def getAll(attr: String, index: Option[String] = None) = GetAll(this, attr, index)
 
   def indexes = IndexList(this)
 
