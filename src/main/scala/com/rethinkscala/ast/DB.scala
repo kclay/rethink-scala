@@ -30,9 +30,9 @@ case class DB(name: String) extends TermMessage {
 
 }
 
-case class DBCreate(name: String, db: Option[DB] = None)
-    extends TermMessage
-    with ProduceBinary with BinaryConversion with WithDB {
+case class DBCreate(name: String)
+
+    extends ProduceBinary with BinaryConversion {
   override lazy val args = buildArgs(name)
   val resultField = "created"
 
@@ -46,7 +46,10 @@ case class DBDrop(name: String) extends TermMessage with ProduceBinary with Bina
   def termType = TermType.DB_DROP
 }
 
-case class DBList(db: Option[DB] = None) extends TermMessage with ProduceSequence with WithDB {
+case class DBList(db: Option[DB] = None) extends ProduceSequence with WithDB {
+
+  override protected val extractArgs = false
+
   def termType = TermType.DB_LIST
 }
 

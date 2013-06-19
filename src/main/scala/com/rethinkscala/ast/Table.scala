@@ -8,8 +8,8 @@ import com.rethinkscala.Document
 
 case class Table(name: String, useOutDated: Option[Boolean] = None,
                  db: Option[DB] = None)
-    extends TermMessage
-    with ProduceStreamSelection
+
+    extends ProduceStreamSelection
     with WithDB {
 
   override lazy val args = buildArgs(name)
