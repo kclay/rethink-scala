@@ -3,7 +3,6 @@ package com.rethinkscala.ast
 import com.rethinkscala._
 import ql2.Term.TermType
 import com.rethinkscala.InsertResult
-import com.rethinkscala.ast.Table
 import scala.Some
 import com.rethinkscala.reflect.Reflector
 

@@ -75,7 +75,7 @@ case class CoerceTo(target: Typed, dataType: DataType) extends ProduceAny {
 
 case class FuncCall(function: Predicate, values: Seq[Typed]) extends ProduceAny {
 
-  override lazy val args = buildArgs(function(), values: _*)
+  override lazy val args = buildArgs(values.+:(function()): _*)
 
   def termType = TermType.FUNCALL
 }

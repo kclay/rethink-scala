@@ -5,8 +5,8 @@ import ql2.Term.TermType.EnumVal
 import ql2.Term.TermType
 
 abstract class Join extends ProduceSequence {
-  val left: Table
-  val right: Table
+  val left: Sequence
+  val right: Sequence
 
 }
 

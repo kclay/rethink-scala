@@ -69,7 +69,7 @@ case class GroupMapReduce(target: Sequence, grouping: Predicate1, mapping: Predi
  */
 case class GroupBy(target: Sequence, method: AggregateByMethod, attrs: Seq[String]) extends ProduceSequence {
 
-  override lazy val args = buildArgs(target, method.underlying, attrs: _*)
+  override lazy val args = buildArgs((Seq(target, method.underlying) ++ attrs): _*)
 
   def termType = TermType.GROUPBY
 }
@@ -79,7 +79,7 @@ case class GroupBy(target: Sequence, method: AggregateByMethod, attrs: Seq[Strin
  *  @param value
  */
 case class Contains(target: Sequence, value: Seq[Datum]) extends ProduceBinary {
-  override lazy val args = buildArgs(target, value: _*)
+  override lazy val args = buildArgs((Seq(target) ++ value): _*)
 
   def termType = TermType.CONTAINS
 }

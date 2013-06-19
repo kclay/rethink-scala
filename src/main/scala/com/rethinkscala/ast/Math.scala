@@ -4,31 +4,31 @@ import com.rethinkscala.{ Term }
 import ql2.Term.TermType
 
 abstract class Math {
-  val left: Literal
-  val right: Literal
+  val left: Typed
+  val right: Typed
 }
 
-case class Eq(left: Comparable, right: Comparable) extends Math with ProduceBinary {
+case class Eq(left: Literal, right: Literal) extends Math with ProduceBinary {
   def termType = TermType.EQ
 }
 
-case class Ne(left: Comparable, right: Comparable) extends Math with ProduceBinary {
+case class Ne(left: Literal, right: Literal) extends Math with ProduceBinary {
   def termType = TermType.NE
 }
 
-case class Lt(left: Comparable, right: Comparable) extends Math with ProduceBinary {
+case class Lt(left: Literal, right: Literal) extends Math with ProduceBinary {
   def termType = TermType.LT
 }
 
-case class Le(left: Comparable, right: Comparable) extends Math with ProduceBinary {
+case class Le(left: Literal, right: Literal) extends Math with ProduceBinary {
   def termType = TermType.LE
 }
 
-case class Gt(left: Comparable, right: Comparable) extends Math with ProduceBinary {
+case class Gt(left: Literal, right: Literal) extends Math with ProduceBinary {
   def termType = TermType.GT
 }
 
-case class Ge(left: Comparable, right: Comparable) extends Math with ProduceBinary {
+case class Ge(left: Literal, right: Literal) extends Math with ProduceBinary {
   def termType = TermType.GE
 }
 

@@ -20,7 +20,7 @@ case class GetAll(target: Table, attr: String, index: Option[String] = None) ext
 case class Between(target: StreamSelection, start: Literal, end: Literal, index: Option[String] = None) extends ProduceStreamSelection {
   override lazy val args = buildArgs(target, start, end)
 
-  override lazy val optargs = buildArgs(Map("index" -> index))
+  override lazy val optargs = buildOptArgs(Map("index" -> index))
 
   def termType = TermType.BETWEEN
 }

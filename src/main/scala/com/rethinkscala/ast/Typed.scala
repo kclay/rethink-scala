@@ -51,10 +51,35 @@ trait Addition extends Typed {
   def +=(other: Addition) = Add(this, other)
 }
 
-trait Literal extends Comparable with Addition {
+trait Literal extends Addition {
   def ~(other: Term) = not(other)
 
   def not(other: Term) = Not(this)
+
+  def ==(other: Literal) = eq(other)
+
+  def eq(other: Literal) = Eq(this, other)
+
+  def !=(other: Literal) = ne(other)
+
+  def ne(other: Literal) = Ne(this, other)
+
+  def <(other: Literal) = lt(other)
+
+  def lt(other: Literal) = Lt(this, other)
+
+  def <=(other: Literal) = lte(other)
+
+  def lte(other: Literal) = Le(this, other)
+
+  def >(other: Literal) = gt(other)
+
+  def gt(other: Literal) = Gt(this, other)
+
+  def >=(other: Literal) = gte(other)
+
+  def gte(other: Literal) = Ge(this, other)
+
 }
 
 trait MapTyped extends Typed
@@ -93,44 +118,15 @@ trait StreamSelection extends Selection with Stream {
 
 trait SingleSelection extends Selection
 
-trait Comparable extends Typed {
-
-  def ==(other: Comparable) = eq(other)
-
-  def eq(other: Comparable) = Eq(this, other)
-
-  def !=(other: Comparable) = ne(other)
-
-  def ne(other: Comparable) = Ne(this, other)
-
-  def <(other: Comparable) = lt(other)
-
-  def lt(other: Comparable) = Lt(this, other)
-
-  def <=(other: Comparable) = lte(other)
-
-  def lte(other: Comparable) = Le(this, other)
-
-  def >(other: Comparable) = gt(other)
-
-  def gt(other: Comparable) = Gt(this, other)
-
-  def >=(other: Comparable) = gte(other)
-
-  def gte(other: Comparable) = Ge(this, other)
-
-}
-
-trait Multiply {
+trait Multiply extends Typed {
 
   def *(other: Numeric) = mul(other)
 
   def mul(other: Numeric) = Mul(this, other)
 }
 
-trait Sequence extends Multiply with Filterable with Manipulation {
+trait Sequence extends Multiply with Filterable {
 
-  type ManipulationType = Sequence
   //def coerceTo(dataType: DataType)=CoerceTo(this,dataType)
 
   def indexesOf(value: Datum): IndexesOf = IndexesOf(this, Left(value))
@@ -187,8 +183,9 @@ trait Sequence extends Multiply with Filterable with Manipulation {
   def contains(attrs: Datum*) = Contains(this, attrs)
 
   def ?(attr: Datum) = contains(attr)
-  def pluck(attrs: String*) = Pluck(this, attrs)
-  def without(attrs: String*) = Without(this, attrs)
+  // add dummy implicit to allow methods for Ref
+  def pluck(attrs: String*)(implicit d: DummyImplicit) = Pluck(this, attrs)
+  def without(attrs: String*)(implicit d: DummyImplicit) = Without(this, attrs)
 
   def merge(other: Sequence) = Merge(this, other)
 
@@ -197,18 +194,8 @@ trait Sequence extends Multiply with Filterable with Manipulation {
 
 }
 
-trait Manipulation {
-  type ManipulationType
-  def pluck(attrs: String*)
-  def without(attrs: String*)
-  def merge(other: ManipulationType)
+trait Json extends Typed {
 
-  def +(other: ManipulationType)
-}
-
-trait Json extends Typed with Manipulation {
-
-  type ManipulationType = Json
   def pluck(attrs: String*) = Pluck(this, attrs)
 
   def without(attrs: String*) = Without(this, attrs)
@@ -281,7 +268,9 @@ trait Filterable extends Typed {
 
 }
 
-trait Ref extends Numeric with Binary with Json with ArrayTyped with Comparable with Literal with Strings
+trait Ref extends Numeric with Binary with Json with ArrayTyped with Literal with Strings {
+
+}
 
 trait ProduceSequence extends Produce[Iterable[Any]] with Sequence
 
@@ -289,7 +278,7 @@ trait ProduceSet extends ProduceArray
 
 trait ProduceBinary extends Produce[Boolean] with Binary
 
-//trait ProduceLiteral extends ProduceComparable with Literal
+//trait ProduceLiteral extends ProduceLiteral with Literal
 
 trait ProduceDocument extends Produce[Document] with Json
 

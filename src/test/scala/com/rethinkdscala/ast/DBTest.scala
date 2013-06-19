@@ -2,6 +2,8 @@ import org.scalatest.FunSuite
 
 import com.rethinkscala._
 import com.rethinkscala.ast._
+import com.rethinkscala.Implicits.Quick._
+import ql2._
 
 
 class DBTest extends FunSuite with BaseTest {
@@ -9,19 +11,22 @@ class DBTest extends FunSuite with BaseTest {
 
   test("create db instance") {
 
-    val db = DB("dbCreate")
 
 
 
+    var ast = r.dbCreate("foo").ast
 
 
-    val table = db ^+ "bar"
+    assert(ast, Term.TermType.DB_CREATE)
+    assert(ast.`args`.size == 1)
+    assert(ast.`args`(0), Term.TermType.DATUM)
+    assert(ast.`args`(0).`datum`,"foo")
 
 
     // val result = table.run[Boolean](connection)
 
 
-    // println(result)
+   println(ast)
   }
   /*
   test("create db instance"){

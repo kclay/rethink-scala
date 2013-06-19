@@ -31,45 +31,53 @@ case class GetAttr(target: Json, name: String) extends ProduceAny {
   def termType = TermType.GETATTR
 }
 
-/** Plucks out one or more attributes from either an object or a sequence of objects (projection).
- *  @param target
- *  @param attrs
- */
-case class Pluck(target: Typed, attrs: Iterable[String]) {
-  self: Term =>
+abstract class Pluck extends Term {
 
-  override lazy val args = buildArgs(target, attrs: _*)
+  val target: Typed
+  val attrs: Seq[String]
+
+  override lazy val args = buildArgs(attrs.+:(target): _*)
 
   def termType = TermType.PLUCK
 }
 
 object Pluck {
-  def apply(target: Sequence, attrs: Iterable[String]) = new Pluck(target, attrs) with ProduceSequence
+  def apply(target: Sequence, attrs: Seq[String]) = SPluck(target, attrs)
 
-  def apply(target: Json, attrs: Iterable[String]) = new Pluck(target, attrs) with ProduceDocument
+  def apply(target: Json, attrs: Seq[String]) = OPluck(target, attrs)
 }
 
-case class Without(target: Typed, attributes: Iterable[String]) {
-  self: Term =>
+/** Plucks out one or more attributes from either an object or a sequence of objects (projection).
+ *  @param target
+ *  @param attrs
+ */
+case class SPluck(target: Sequence, attrs: Seq[String]) extends Pluck with ProduceSequence
 
-  override lazy val args = buildArgs(target, attributes: _*)
+/** Plucks out one or more attributes from either an object or a sequence of objects (projection).
+ *  @param target
+ *  @param attrs
+ */
+case class OPluck(target: Json, attrs: Seq[String]) extends Pluck with ProduceDocument
+
+abstract class Without(target: Typed, attributes: Seq[String]) extends Term {
+
+  override lazy val args = buildArgs(attributes.+:(target): _*)
 
   def termType = TermType.WITHOUT
 }
 
 object Without {
 
-  def apply(target: Sequence, attrs: Iterable[String]) = new Without(target, attrs) with ProduceSequence
+  def apply(target: Sequence, attrs: Seq[String]) = new Without(target, attrs) with ProduceSequence
 
-  def apply(target: Json, attrs: Iterable[String]) = new Without(target, attrs) with ProduceDocument
+  def apply(target: Json, attrs: Seq[String]) = new Without(target, attrs) with ProduceDocument
 }
 
 /** Merge two objects together to construct a new object with properties from both. Gives preference to attributes from other when there is a conflict.
  *  @param target
  *  @param other
  */
-case class Merge(target: Typed, other: Typed) {
-  self: Term =>
+abstract class Merge(target: Typed, other: Typed) extends Term {
 
   override lazy val args = buildArgs(target, other)
 
@@ -81,6 +89,7 @@ object Merge {
   def apply(target: Sequence, other: Sequence) = new Merge(target, other) with ProduceSequence
 
   def apply(target: Json, other: Json) = new Merge(target, other) with ProduceDocument
+  def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
 }
 
 /** Remove the elements of one array from another array.
@@ -138,7 +147,7 @@ case class SetDifference(target: Sequence, values: Seq[Datum]) extends ProduceSe
  */
 case class HasFields(target: Json, fields: Seq[String]) extends ProduceBinary {
 
-  override lazy val args = buildArgs(target, fields: _*)
+  override lazy val args = buildArgs(fields.+:(target): _*)
 
   def termType = TermType.HAS_FIELDS
 }

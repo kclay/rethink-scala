@@ -5,7 +5,7 @@ import ql2.Term.TermType.EnumVal
 import ql2.Term.TermType
 
 abstract class Transformation extends ProduceSequence {
-  val target: Functional
+  val target: Sequence
   val func: Predicate
 
   override lazy val args = buildArgs(target, func())
@@ -44,7 +44,7 @@ case class ConcatMap(target: Sequence, func: Predicate1) extends Transformation 
 case class WithFields(target: Sequence, fields: Seq[String]) extends ProduceSequence {
 
   def termType = TermType.WITH_FIELDS
-  override lazy val args = buildArgs(target, fields: _*)
+  override lazy val args = buildArgs(fields.+:(target): _*)
 }
 case class SliceRange(start: Int = 0, end: Int = -1)
 
