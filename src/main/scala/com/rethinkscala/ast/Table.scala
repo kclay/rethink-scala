@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ BinaryConversion, TermMessage }
+import com.rethinkscala.{BinaryConversion, TermMessage}
 import ql2.Term.TermType
 import com.rethinkscala.Document
 
@@ -9,13 +9,23 @@ import com.rethinkscala.Document
 case class Table(name: String, useOutDated: Option[Boolean] = None,
                  db: Option[DB] = None)
 
-    extends ProduceStreamSelection
-    with WithDB {
+  extends ProduceStreamSelection
+  with WithDB {
 
   override lazy val args = buildArgs(name)
   override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
 
   def termType = TermType.TABLE
+
+  def drop = TableDrop(name, db)
+
+  def create = create()
+
+  def create(primaryKey: Option[String] = None, dataCenter: Option[String] = None,
+             cacheSize: Option[Int] = None, durability: Option[String] = None) = {
+    TableCreate(name, primaryKey, dataCenter, cacheSize, durability, db)
+
+  }
 
   def insert(records: Seq[Map[String, Any]], upsert: Boolean = false, durability: Option[String] = None): Insert = Insert(this, Left(records), Some(upsert), durability)
 
@@ -50,8 +60,8 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
 
 case class TableCreate(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None,
                        cacheSize: Option[Int] = None, durability: Option[String] = None, db: Option[DB] = None)
-    extends ProduceBinary
-    with WithDB with BinaryConversion {
+  extends ProduceBinary
+  with WithDB with BinaryConversion {
   val resultField = "created"
 
   override lazy val args = buildArgs(name)
@@ -77,10 +87,10 @@ case class TableList(db: Option[DB] = None) extends TermMessage with ProduceAnyS
 }
 
 /** Create a new secondary index on this table.
- *  @param target
- *  @param name
- *  @param predicate
- */
+  * @param target
+  * @param name
+  * @param predicate
+  */
 case class IndexCreate(target: Table, name: String, predicate: Option[Predicate] = None) extends ProduceDocument {
 
   override lazy val args = buildArgs(predicate.map {
@@ -91,17 +101,17 @@ case class IndexCreate(target: Table, name: String, predicate: Option[Predicate]
 }
 
 /** Delete a previously created secondary index of this table.
- *  @param target
- *  @param name
- */
+  * @param target
+  * @param name
+  */
 case class IndexDrop(target: Table, name: String) extends ProduceDocument {
 
   def termType = TermType.INDEX_DROP
 }
 
 /** List all the secondary indexes of this table.
- *  @param target
- */
+  * @param target
+  */
 case class IndexList(target: Table) extends ProduceDocument {
   def termType = TermType.INDEX_LIST
 }

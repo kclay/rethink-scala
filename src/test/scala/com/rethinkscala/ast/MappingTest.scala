@@ -3,9 +3,7 @@ package com.rethinkscala.ast
 import org.scalatest.FunSuite
 
 import com.rethinkscala._
-import com.rethinkscala.ast._
 import ql2.{Ql2 => p}
-import com.rethinkdscala.BaseTest
 
 class MappingTest extends FunSuite with BaseTest {
 
@@ -15,11 +13,13 @@ class MappingTest extends FunSuite with BaseTest {
 
     assert(db.tableCreate("bar"), true)
 
-    val info = db.table("bar").info
+    val table = db.table("bar")
 
-    assertAs[TableInfoResult](info, {
+
+    assertAs[TableInfoResult](table.info, {
       i: TableInfoResult => i.name == "bar" && i.kind == "TABLE" && i.db.name == "test"
     })
+    table.drop
   }
 
 }
