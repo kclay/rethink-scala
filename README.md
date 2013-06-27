@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kclay/rethink-scala.png)](https://travis-ci.org/kclay/rethink-scala)
+
 Scala Rethinkdb Driver
 =========
 
