@@ -8,6 +8,8 @@ import com.rethinkscala.Implicits._
 
 trait Produce[ResultType] extends Term {
 
+  type resultType = ResultType
+
   def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](this, c, tt)
 
   //http://stackoverflow.com/a/3461734
@@ -24,9 +26,11 @@ sealed trait DataType {
 case object ObjectData extends DataType {
   def name = "object"
 }
+
 case object StringData extends DataType {
   def name = "string"
 }
+
 case object ArrayData extends DataType {
   def name = "array"
 }
@@ -40,6 +44,7 @@ sealed trait Typed {
   def info = Info(this)
 
   def typeOf = TypeOf(this)
+
   def coerceTo(dataType: DataType) = CoerceTo(this, dataType)
 }
 
@@ -88,19 +93,27 @@ trait ArrayTyped extends Sequence {
   def append(value: Datum) = Append(this, value)
 
   def :+(value: Datum) = append(value)
+
   def prepend(value: Datum) = Prepend(this, value)
 
   def +:(value: Datum) = prepend(value)
+
   def difference(values: Datum*) = Difference(this, values)
 
   def setInert(value: Datum) = SetInsert(this, value)
+
   def setUnion(values: Datum*) = SetUnion(this, values)
+
   def setIntersection(values: Datum*) = SetIntersection(this, values)
+
   def setDifference(values: Datum*) = SetDifference(this, values)
+
   def insertAt(index: Int, value: Datum) = InsertAt(this, index, value)
+
   def spliceAt(index: Int, values: Datum*) = SpliceAt(this, index, values)
 
   def deleteAt(start: Int, end: Option[Int] = None) = DeleteAt(this, start, end)
+
   def changeAt(index: Int, value: Datum) = ChangeAt(this, index, value)
 
 }
@@ -183,13 +196,16 @@ trait Sequence extends Multiply with Filterable {
   def contains(attrs: Datum*) = Contains(this, attrs)
 
   def ?(attr: Datum) = contains(attr)
+
   // add dummy implicit to allow methods for Ref
   def pluck(attrs: String*)(implicit d: DummyImplicit) = Pluck(this, attrs)
+
   def without(attrs: String*)(implicit d: DummyImplicit) = Without(this, attrs)
 
   def merge(other: Sequence) = Merge(this, other)
 
   def +(other: Sequence) = merge(other)
+
   def foreach(value: Predicate1) = ForEach(this, value)
 
 }
@@ -207,6 +223,7 @@ trait Json extends Typed {
   def merge(other: Json) = Merge(this, other)
 
   def +(other: Json) = merge(other)
+
   def hasFields(values: String*) = HasFields(this, values)
 
   def keys = Keys(this)
@@ -273,9 +290,8 @@ trait Ref extends Numeric with Binary with Json with ArrayTyped with Literal wit
 }
 
 trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence
+
 trait ProduceAnySequence extends ProduceSequence[Any]
-
-
 
 trait ProduceSet extends ProduceArray
 

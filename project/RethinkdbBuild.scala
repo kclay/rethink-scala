@@ -27,7 +27,7 @@ object RethinkdbBuild extends Build {
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % v
   )
 
-  val scalaBuffVersion = "1.2.3-SNAPSHOT"
+  val scalaBuffVersion = "1.3.1"
   lazy val root = Project(
     id = "rethink-scala",
     base = file("."),

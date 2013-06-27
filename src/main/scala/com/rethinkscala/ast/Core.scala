@@ -14,6 +14,8 @@ case class MakeArray(array: Seq[Any]) extends Term with ArrayTyped {
 }
 
 case class MakeObj(data: Map[String, Any]) extends Term with MapTyped {
+
+  override protected val extractArgs = false
   override lazy val optargs = buildOptArgs2(data)
 
   def termType = TermType.MAKE_OBJ

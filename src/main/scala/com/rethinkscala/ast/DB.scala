@@ -48,7 +48,6 @@ case class DBDrop(name: String) extends TermMessage with ProduceBinary with Bina
 
 case class DBList(db: Option[DB] = None) extends ProduceSequence[String] with WithDB {
 
-
   override protected val extractArgs = false
 
   def termType = TermType.DB_LIST
