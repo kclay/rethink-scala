@@ -4,7 +4,7 @@ import com.rethinkscala.{ AssocPair, Term }
 import ql2.Term.TermType.EnumVal
 import ql2.Term.TermType
 
-abstract class Join extends ProduceSequence {
+abstract class Join extends ProduceAnySequence {
   val left: Sequence
   val right: Sequence
 
@@ -53,7 +53,7 @@ case class EqJoin(left: Sequence, attr: String, right: Sequence, index: Option[S
 /** Used to 'zip' up the result of a join by merging the 'right' fields into 'left' fields of each member of the sequence.
  *  @param target
  */
-case class Zip(target: Sequence) extends ProduceSequence {
+case class Zip(target: Sequence) extends ProduceAnySequence {
 
   def termType: EnumVal = TermType.ZIP
 }

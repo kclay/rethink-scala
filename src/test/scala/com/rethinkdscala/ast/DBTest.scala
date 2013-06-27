@@ -22,8 +22,9 @@ class DBTest extends FunSuite with BaseTest {
     assert(ast.`args`(0), Term.TermType.DATUM)
     assert(ast.`args`(0).`datum`,"foo")
 
+    //r.dbs.run.
 
-    // val result = table.run[Boolean](connection)
+   val result = r.dbs
 
 
    println(ast)

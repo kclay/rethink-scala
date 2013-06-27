@@ -25,7 +25,7 @@ case class Between(target: StreamSelection, start: Literal, end: Literal, index:
   def termType = TermType.BETWEEN
 }
 
-case class Filter(target: Sequence, filter: Either[MakeObj, Predicate1]) extends ProduceSequence {
+case class Filter(target: Sequence, filter: Either[MakeObj, Predicate1]) extends ProduceAnySequence {
 
   override lazy val args = buildArgs(target, filter match {
     case Left(x)  => x

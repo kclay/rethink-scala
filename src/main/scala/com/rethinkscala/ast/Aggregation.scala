@@ -41,7 +41,7 @@ case class Count(target: Sequence, filter: Option[Either[String, BooleanPredicat
 /** Remove duplicate elements from the sequence.
  *  @param target
  */
-case class Distinct(target: Sequence) extends ProduceSequence {
+case class Distinct(target: Sequence) extends ProduceAnySequence {
   def termType = TermType.DISTINCT
 }
 
@@ -67,7 +67,7 @@ case class GroupMapReduce(target: Sequence, grouping: Predicate1, mapping: Predi
  *  @param method
  *  @param attrs
  */
-case class GroupBy(target: Sequence, method: AggregateByMethod, attrs: Seq[String]) extends ProduceSequence {
+case class GroupBy(target: Sequence, method: AggregateByMethod, attrs: Seq[String]) extends ProduceAnySequence {
 
   override lazy val args = buildArgs((Seq(target, method.underlying) ++ attrs): _*)
 

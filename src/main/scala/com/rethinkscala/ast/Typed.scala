@@ -11,7 +11,7 @@ trait Produce[ResultType] extends Term {
   def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](this, c, tt)
 
   //http://stackoverflow.com/a/3461734
-  def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, Option[ResultType]] = toQuery.toResult
+  def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery.toResult
 
   def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery.toResult
 
@@ -272,7 +272,10 @@ trait Ref extends Numeric with Binary with Json with ArrayTyped with Literal wit
 
 }
 
-trait ProduceSequence extends Produce[Iterable[Any]] with Sequence
+trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence
+trait ProduceAnySequence extends ProduceSequence[Any]
+
+
 
 trait ProduceSet extends ProduceArray
 
@@ -292,8 +295,8 @@ trait ProduceSelection extends Selection
 
 trait ProduceSingleSelection extends ProduceDocument with ProduceSelection with SingleSelection
 
-trait ProduceStreamSelection extends ProduceSequence with ProduceSelection with StreamSelection
+trait ProduceStreamSelection extends ProduceAnySequence with ProduceSelection with StreamSelection
 
-trait ProduceArray extends ProduceSequence with ArrayTyped
+trait ProduceArray extends ProduceAnySequence with ArrayTyped
 
 sealed trait LogicSignature

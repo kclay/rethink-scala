@@ -39,7 +39,7 @@ abstract class Token {
   val query: ql2.Query
   val term: Term
 
-  def success(value: Any)
+  def success(value: Any, json: String)
 
   def failure(t: Throwable)
 }
@@ -49,25 +49,22 @@ case class QueryToken[R](query: ql2.Query, term: Term, p: Promise[R], tt: Manife
   implicit val t = tt
 
   import Translate.translate
-  import scala.reflect.runtime.{ universe => ru }
 
   val DocClass = classOf[Document]
-  type MapType = Map[String, Any]
+  type MapType = Map[String, _]
+  type IterableType = Iterable[MapType]
 
-  def cast(value: Any): R = {
+  def cast(value: Any, json: String): R = {
 
     value match {
-      case (a: Any, s: String) => tt.runtimeClass match {
+      case v: MapType      => translate[MapType, R].read(v.asInstanceOf[MapType], json, term)
+      case a: IterableType => translate[IterableType, R].read(a.asInstanceOf[IterableType], json, term)
 
-        case x if DocClass.isAssignableFrom(x) => translate[MapType, R].read(a.asInstanceOf[MapType], s, term)
-
-        case _                                 => a.asInstanceOf[R]
-      }
     }
 
   }
 
-  def success(value: Any) = p success (cast(value))
+  def success(value: Any, json: String) = p success (cast(value, json))
 
   def failure(t: Throwable) = p failure (t)
 
@@ -98,9 +95,9 @@ class RethinkDBHandler extends SimpleChannelUpstreamHandler {
             case _ =>
 
           }) match {
-            case e: Exception => token failure (e)
+            case e: Exception                 => token failure (e)
 
-            case Some(a: Any) => token success (a)
+            case Some((a: Any, json: String)) => token success (a, json)
 
           }
 
@@ -244,7 +241,5 @@ case class Connection(version: Version) {
         p.future
 
     }
-
-  private[rethinkscala] val token: AtomicInteger = new AtomicInteger()
 
 }

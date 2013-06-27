@@ -68,7 +68,7 @@ case class TableDrop(name: String, db: Option[DB] = None) extends TermMessage wi
 
 }
 
-case class TableList(db: Option[DB] = None) extends TermMessage with ProduceSequence with WithDB {
+case class TableList(db: Option[DB] = None) extends TermMessage with ProduceAnySequence with WithDB {
 
   override protected val extractArgs: Boolean = false
 

@@ -7,36 +7,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.`type`.TypeReference
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
-import scala.Some;
+import scala.Some
+import com.rethinkscala.reflect.Reflector;
 
 object Translate {
   def translate[In, Out](implicit ct: Manifest[Out]): Translate[In, Out] = new BaseTranslate[In, Out] {}
-  val mapper = new ObjectMapper()
-  mapper.registerModule(DefaultScalaModule)
-  mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-  def write(value: Any): String = {
-    import java.io.StringWriter
-    val writer = new StringWriter()
-    mapper.writeValue(writer, value)
-    writer.toString
-  }
-
-  def read[T: Manifest](value: String): T =
-    mapper.readValue(value, typeReference[T])
-
-  private[this] def typeReference[T: Manifest] = new TypeReference[T] {
-    override def getType = typeFromManifest(manifest[T])
-  }
-
-  private[this] def typeFromManifest(m: Manifest[_]): Type = {
-    if (m.typeArguments.isEmpty) { m.runtimeClass }
-    else new ParameterizedType {
-      def getRawType = m.runtimeClass
-      def getActualTypeArguments = m.typeArguments.map(typeFromManifest).toArray
-      def getOwnerType = null
-    }
-  }
 }
 trait Translate[In, Out] {
 
@@ -49,6 +25,9 @@ trait WithConversion[In, Out] {
 
   def convert(value: In, json: String)(implicit ct: Manifest[Out]): Out
 }
+trait WithIterableConversion[Out] extends WithConversion[Iterable[Map[String, _]], Iterable[Out]] {
+  def convert(value: Iterable[Map[String, _]], json: String)(implicit ct: Manifest[Out]) = Reflector.fromJson[Iterable[Out]](json)
+}
 
 trait MapConversion[Out] extends WithConversion[Map[String, Any], Out]
 
@@ -60,13 +39,8 @@ trait BinaryConversion extends MapConversion[Boolean] {
 
 trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
-  def convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]): Out = {
-
-    Translate.read[Out](json)
-
-    // convert0[Out](value)
-
-  }
+  def convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]): Out =
+    Reflector.fromJson[Out](json)
 
 }
 
@@ -77,10 +51,10 @@ trait BaseTranslate[In, Out] extends Translate[In, Out] {
   def write(value: Out): Any = value
 
   def read(value: In, json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
-    def cast(v: Any): Out = v.asInstanceOf[Out]
+
     term match {
-      case c: Conversion => cast(c.convert(value, json))
-      case _             => cast(value)
+      case c: Conversion => c.convert(value, json)
+      case _             => value.asInstanceOf[Out]
     }
 
   }

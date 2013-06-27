@@ -51,7 +51,7 @@ object Pluck {
  *  @param target
  *  @param attrs
  */
-case class SPluck(target: Sequence, attrs: Seq[String]) extends Pluck with ProduceSequence
+case class SPluck(target: Sequence, attrs: Seq[String]) extends Pluck with ProduceAnySequence
 
 /** Plucks out one or more attributes from either an object or a sequence of objects (projection).
  *  @param target
@@ -68,7 +68,7 @@ abstract class Without(target: Typed, attributes: Seq[String]) extends Term {
 
 object Without {
 
-  def apply(target: Sequence, attrs: Seq[String]) = new Without(target, attrs) with ProduceSequence
+  def apply(target: Sequence, attrs: Seq[String]) = new Without(target, attrs) with ProduceAnySequence
 
   def apply(target: Json, attrs: Seq[String]) = new Without(target, attrs) with ProduceDocument
 }
@@ -86,7 +86,7 @@ abstract class Merge(target: Typed, other: Typed) extends Term {
 
 object Merge {
 
-  def apply(target: Sequence, other: Sequence) = new Merge(target, other) with ProduceSequence
+  def apply(target: Sequence, other: Sequence) = new Merge(target, other) with ProduceAnySequence
 
   def apply(target: Json, other: Json) = new Merge(target, other) with ProduceDocument
   def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
