@@ -34,6 +34,7 @@ object RethinkdbBuild extends Build {
     settings = Project.defaultSettings ++ scalabuffSettings ++ scalariformSettings ++ Seq(
       name := "rethink-scala",
       organization := "com.rethinkscala",
+      testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
       version := "0.1-SNAPSHOT",
       scalaVersion := "2.10.0",
       scalabuffVersion := scalaBuffVersion,

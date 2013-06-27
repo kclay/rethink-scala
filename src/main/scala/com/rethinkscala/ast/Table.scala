@@ -37,6 +37,7 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
   def \\(attribute: String) = get(attribute)
 
   def get(attribute: String) = Get(this, attribute)
+
   def getAll(attr: String, index: Option[String] = None) = GetAll(this, attr, index)
 
   def indexes = IndexList(this)
@@ -49,7 +50,7 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
 
 case class TableCreate(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None,
                        cacheSize: Option[Int] = None, durability: Option[String] = None, db: Option[DB] = None)
-    extends TermMessage with ProduceBinary
+    extends ProduceBinary
     with WithDB with BinaryConversion {
   val resultField = "created"
 
@@ -60,7 +61,7 @@ case class TableCreate(name: String, primaryKey: Option[String] = None, dataCent
 
 }
 
-case class TableDrop(name: String, db: Option[DB] = None) extends TermMessage with ProduceBinary with BinaryConversion {
+case class TableDrop(name: String, db: Option[DB] = None) extends ProduceBinary with BinaryConversion {
   val resultField = "dropped"
   override lazy val args = buildArgs(name)
 

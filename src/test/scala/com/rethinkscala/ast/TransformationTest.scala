@@ -13,7 +13,7 @@ class TransformationTest extends FunSuite {
 
     val ast = term.ast
 
-    println(ast)
+    //println(ast)
 
   }
 }
