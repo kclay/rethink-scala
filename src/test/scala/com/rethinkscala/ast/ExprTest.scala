@@ -1,4 +1,4 @@
-package com.rethinkdscala.ast
+package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
 
@@ -36,6 +36,8 @@ class ExprTest extends FunSuite {
 
     val array = optargs(2).array
 
-    array.left.get.zipWithIndex foreach { e => assert(e._1.num.get == e._2 + 1) }
+    array.left.get.zipWithIndex foreach {
+      e => assert(e._1.num.get == e._2 + 1)
+    }
   }
 }

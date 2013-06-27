@@ -1,10 +1,10 @@
-package com.rethinkdscala.ast
+package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
 
 import com.rethinkscala._
 import com.rethinkscala.ast._
-import ql2.{ Ql2 => p }
+import ql2.{Ql2 => p}
 import com.rethinkdscala.BaseTest
 
 class MappingTest extends FunSuite with BaseTest {

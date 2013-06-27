@@ -1,10 +1,10 @@
-package com.rethinkdscala.ast
+package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
 
 import com.rethinkscala._
 import ql2._
-import com.rethinkdscala.BaseTest
+import com.rethinkscala.BaseTest
 
 class DBTest extends FunSuite with BaseTest {
 
