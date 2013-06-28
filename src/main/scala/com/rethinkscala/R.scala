@@ -22,9 +22,9 @@ object r {
   def dbs = DBList()
 
   def tableCreate(name: String, primaryKey: Option[String] = None,
-                  dataCenter: Option[String] = None, cacheSize: Option[Int] = None,
-                  durability: Option[String] = None) {
-    TableCreate(name, primaryKey, dataCenter, cacheSize, durability)
+                  cacheSize: Option[Int] = None,
+                  durability: Option[String] = None, dataCenter: Option[String] = None) = {
+    TableCreate(name, primaryKey, cacheSize, durability, dataCenter)
   }
 
   def tableDrop(name: String) = TableDrop(name)

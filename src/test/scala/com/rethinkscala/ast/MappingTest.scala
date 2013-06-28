@@ -3,23 +3,24 @@ package com.rethinkscala.ast
 import org.scalatest.FunSuite
 
 import com.rethinkscala._
-import ql2.{Ql2 => p}
+import ql2.{ Ql2 => p }
 
 class MappingTest extends FunSuite with BaseTest {
 
+  after {
+    r.table(tableName).drop.run
+  }
   test("should return TableResult") {
 
-    val db = DB("test")
+    val table = r.table(tableName)
 
-    assert(db.tableCreate("bar"), true)
-
-    val table = db.table("bar")
-
+    assert(table.create, true)
 
     assertAs[TableInfoResult](table.info, {
-      i: TableInfoResult => i.name == "bar" && i.kind == "TABLE" && i.db.name == "test"
+      i: TableInfoResult => i.name == tableName && i.kind == "TABLE" && i.db.name == "test"
+
     })
-    table.drop
+    //table.drop.run
   }
 
 }

@@ -22,7 +22,7 @@ object Helpers {
     ).map(q => {
         term match {
           case d: WithDB => {
-            d.db.map(scopeDB(q, _)).getOrElse(q)
+            d.db.map(scopeDB(q, _)).getOrElse(db.map { name => scopeDB(q, DB(name)) }.getOrElse(q))
 
           }
           case _ => {

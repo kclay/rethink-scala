@@ -10,6 +10,7 @@ abstract class Version {
   val host: String
   val port: Int
   val maxConnections: Int
+  val db: Option[String]
 
   def configure(c: Channel)
 }

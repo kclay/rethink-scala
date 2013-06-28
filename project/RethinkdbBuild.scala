@@ -14,7 +14,8 @@ object RethinkdbBuild extends Build {
   val repos = Seq(
     "Local Maven Repository" at "file:///" + Path.userHome + "/.m2/repository",
     "Mandubian repository snapshots" at "https://github.com/mandubian/mandubian-mvn/raw/master/snapshots/",
-    "Mandubian repository releases" at "https://github.com/mandubian/mandubian-mvn/raw/master/releases/"
+    "Mandubian repository releases" at "https://github.com/mandubian/mandubian-mvn/raw/master/releases/",
+    "Sonatype OSS Repository" at "https://oss.sonatype.org/content/groups/public/"
     //"Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
   )
 

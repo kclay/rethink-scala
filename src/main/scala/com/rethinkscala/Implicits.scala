@@ -55,6 +55,8 @@ object Implicits {
   implicit def intWithTildyArrow(i: Int) = new {
     def ~>(j: Int) = SliceRange(i, j)
   }
+  implicit def toPredicate1Opt(f: (Var) => Typed) = Some(new Predicate1(f))
+  implicit def toPredicate2Opt(f: (Var, Var) => Typed) = Some(new Predicate2(f))
   implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
   implicit def toPredicate2(f: (Var, Var) => Typed) = new Predicate2(f)
 

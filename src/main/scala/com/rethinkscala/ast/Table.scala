@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{BinaryConversion, TermMessage}
+import com.rethinkscala.{ BinaryConversion, TermMessage }
 import ql2.Term.TermType
 import com.rethinkscala.Document
 
@@ -9,8 +9,8 @@ import com.rethinkscala.Document
 case class Table(name: String, useOutDated: Option[Boolean] = None,
                  db: Option[DB] = None)
 
-  extends ProduceStreamSelection
-  with WithDB {
+    extends ProduceStreamSelection
+    with WithDB {
 
   override lazy val args = buildArgs(name)
   override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
@@ -19,11 +19,11 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
 
   def drop = TableDrop(name, db)
 
-  def create = create()
+  def create: TableCreate = create()
 
-  def create(primaryKey: Option[String] = None, dataCenter: Option[String] = None,
-             cacheSize: Option[Int] = None, durability: Option[String] = None) = {
-    TableCreate(name, primaryKey, dataCenter, cacheSize, durability, db)
+  def create(primaryKey: Option[String] = None,
+             cacheSize: Option[Int] = None, durability: Option[String] = None, dataCenter: Option[String] = None): TableCreate = {
+    TableCreate(name, primaryKey, cacheSize, durability, dataCenter, db)
 
   }
 
@@ -58,10 +58,10 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
 
 }
 
-case class TableCreate(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None,
-                       cacheSize: Option[Int] = None, durability: Option[String] = None, db: Option[DB] = None)
-  extends ProduceBinary
-  with WithDB with BinaryConversion {
+case class TableCreate(name: String, primaryKey: Option[String] = None,
+                       cacheSize: Option[Int] = None, durability: Option[String] = None, dataCenter: Option[String] = None, db: Option[DB] = None)
+    extends ProduceBinary
+    with WithDB with BinaryConversion {
   val resultField = "created"
 
   override lazy val args = buildArgs(name)
@@ -71,7 +71,7 @@ case class TableCreate(name: String, primaryKey: Option[String] = None, dataCent
 
 }
 
-case class TableDrop(name: String, db: Option[DB] = None) extends ProduceBinary with BinaryConversion {
+case class TableDrop(name: String, db: Option[DB] = None) extends ProduceBinary with BinaryConversion with WithDB {
   val resultField = "dropped"
   override lazy val args = buildArgs(name)
 
@@ -87,31 +87,35 @@ case class TableList(db: Option[DB] = None) extends TermMessage with ProduceAnyS
 }
 
 /** Create a new secondary index on this table.
-  * @param target
-  * @param name
-  * @param predicate
-  */
-case class IndexCreate(target: Table, name: String, predicate: Option[Predicate] = None) extends ProduceDocument {
+ *  @param target
+ *  @param name
+ *  @param predicate
+ */
+case class IndexCreate(target: Table, name: String, predicate: Option[Predicate] = None) extends ProduceBinary with BinaryConversion {
 
   override lazy val args = buildArgs(predicate.map {
     f => Seq(target, name, f())
   }.getOrElse(Seq(target, name)): _*)
 
   def termType = TermType.INDEX_CREATE
+
+  val resultField = "created"
 }
 
 /** Delete a previously created secondary index of this table.
-  * @param target
-  * @param name
-  */
-case class IndexDrop(target: Table, name: String) extends ProduceDocument {
+ *  @param target
+ *  @param name
+ */
+case class IndexDrop(target: Table, name: String) extends ProduceBinary with BinaryConversion {
+
+  val resultField = "dropped"
 
   def termType = TermType.INDEX_DROP
 }
 
 /** List all the secondary indexes of this table.
-  * @param target
-  */
+ *  @param target
+ */
 case class IndexList(target: Table) extends ProduceDocument {
   def termType = TermType.INDEX_LIST
 }

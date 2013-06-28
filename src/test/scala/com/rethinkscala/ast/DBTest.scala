@@ -29,11 +29,12 @@ class DBTest extends FunSuite with BaseTest {
       x: IS => x.exists(a => a == "foo")
     })
   }
+
   test("drop db instance") {
 
     val query = r.dbDrop("foo")
 
-    assert[Boolean](query, true)
+    assert(query, true)
   }
 
   /*

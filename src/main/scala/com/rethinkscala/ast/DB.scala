@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{BinaryConversion, TermMessage}
+import com.rethinkscala.{ BinaryConversion, TermMessage }
 
 import ql2.Term.TermType
 
@@ -13,9 +13,9 @@ case class DB(name: String) extends TermMessage {
 
   def termType = TermType.DB
 
-  def tableCreate(name: String, primaryKey: Option[String] = None, dataCenter: Option[String] = None,
-                  cacheSize: Option[Int] = None, durability: Option[String] = None) = {
-    TableCreate(name, primaryKey, dataCenter, cacheSize, durability, Some(this))
+  def tableCreate(name: String, primaryKey: Option[String] = None,
+                  cacheSize: Option[Int] = None, durability: Option[String] = None, dataCenter: Option[String] = None) = {
+    TableCreate(name, primaryKey, cacheSize, durability, dataCenter, Some(this))
   }
 
   def create = DBCreate(name)
@@ -30,13 +30,13 @@ case class DB(name: String) extends TermMessage {
 
   def table(name: String, useOutDated: Boolean = false) = Table(name, Some(useOutDated), Some(this))
 
-  def ^(name: String, useOutDated: Boolean = false) = this table(name, useOutDated)
+  def ^(name: String, useOutDated: Boolean = false) = this table (name, useOutDated)
 
 }
 
 case class DBCreate(name: String)
 
-  extends ProduceBinary with BinaryConversion {
+    extends ProduceBinary with BinaryConversion {
   override lazy val args = buildArgs(name)
   val resultField = "created"
 

@@ -12,7 +12,7 @@ class TransformationTest extends FunSuite {
     val term = r.table("marvel").map((hero: Var) => hero \ "combatPower" + hero \ "combatPower" * 2)
 
     val ast = term.ast
-
+    assert(true)
     //println(ast)
 
   }

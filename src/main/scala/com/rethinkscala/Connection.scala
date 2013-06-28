@@ -191,6 +191,7 @@ object Connection {
 
 case class Connection(version: Version) {
 
+  private val defaultDB = Some(version.db.getOrElse("test"))
   lazy val bootstrap = {
 
     val factory =
@@ -233,7 +234,7 @@ case class Connection(version: Version) {
     channel[Future[T]]() {
       c =>
 
-        val query = toQuery(term, c.token.getAndIncrement)
+        val query = toQuery(term, c.token.getAndIncrement, defaultDB)
         val p = promise[T]()
         val token = QueryToken[T](query, term, p, tt)
         c.channel.setAttachment(token)
