@@ -6,6 +6,11 @@ import com.rethinkscala.Document
 
 // TODO FuncCall
 
+object Durability extends Enumeration {
+  type Kind = Value
+  val Hard = Value("hard")
+  val Soft = Value("soft")
+}
 case class Table(name: String, useOutDated: Option[Boolean] = None,
                  db: Option[DB] = None)
 
@@ -22,8 +27,9 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
   def create: TableCreate = create()
 
   def create(primaryKey: Option[String] = None,
-             cacheSize: Option[Int] = None, durability: Option[String] = None, dataCenter: Option[String] = None): TableCreate = {
-    TableCreate(name, primaryKey, cacheSize, durability, dataCenter, db)
+             durability: Option[Durability.Kind] = None, cacheSize: Option[Int] = None, dataCenter: Option[String] = None): TableCreate = {
+
+    TableCreate(name, primaryKey, durability, cacheSize, dataCenter, db)
 
   }
 
@@ -59,13 +65,13 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
 }
 
 case class TableCreate(name: String, primaryKey: Option[String] = None,
-                       cacheSize: Option[Int] = None, durability: Option[String] = None, dataCenter: Option[String] = None, db: Option[DB] = None)
+                       durability: Option[Durability.Kind] = None, cacheSize: Option[Int] = None, dataCenter: Option[String] = None, db: Option[DB] = None)
     extends ProduceBinary
     with WithDB with BinaryConversion {
   val resultField = "created"
 
   override lazy val args = buildArgs(name)
-  override lazy val optargs = buildOptArgs(Map("primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize))
+  override lazy val optargs = buildOptArgs(Map("primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize, "durability" -> durability))
 
   def termType = TermType.TABLE_CREATE
 

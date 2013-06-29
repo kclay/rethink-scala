@@ -81,7 +81,10 @@ trait Term extends WithAst {
     case (key: String, value: Any) => optArgsBuilder(key, value)
   }
   protected def buildOptArgs(optargs: Map[String, Option[Any]]): Iterable[AssocPair] = optargs.filter(_._2.isDefined) collect {
-    case (key: String, value: Option[Any]) => optArgsBuilder(key, value.get)
+    case (key: String, value: Some[Any]) => optArgsBuilder(key, value.get match {
+      case e: Enumeration#Value => e.toString()
+      case x: Any               => x
+    })
   }
 
   def termType: ql2.Term.TermType.EnumVal

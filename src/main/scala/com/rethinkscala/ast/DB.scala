@@ -14,8 +14,8 @@ case class DB(name: String) extends TermMessage {
   def termType = TermType.DB
 
   def tableCreate(name: String, primaryKey: Option[String] = None,
-                  cacheSize: Option[Int] = None, durability: Option[String] = None, dataCenter: Option[String] = None) = {
-    TableCreate(name, primaryKey, cacheSize, durability, dataCenter, Some(this))
+                  durability: Option[Durability.Kind] = None, cacheSize: Option[Int] = None, dataCenter: Option[String] = None) = {
+    TableCreate(name, primaryKey, durability, cacheSize, dataCenter, Some(this))
   }
 
   def create = DBCreate(name)

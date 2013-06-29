@@ -21,7 +21,7 @@ class TableTest extends FunSuite with BaseTest {
   test("create table with options") {
 
     val table = r.table(tableName)
-    val create = table.create(Some("a"), Some(10), Some("hard"))
+    val create = table.create(Some("a"), Some(Durability.Hard), Some(10))
 
     assert(create)
 
