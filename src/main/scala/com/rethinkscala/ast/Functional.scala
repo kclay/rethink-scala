@@ -41,6 +41,7 @@ case class Func(f: Predicate) extends Term {
   def termType: EnumVal = TermType.FUNC
 }
 
+
 case class Predicate1(f: (Var) => Typed) extends Predicate {
 
   protected def _invoke(vars: Seq[Var]) = f(vars(0))

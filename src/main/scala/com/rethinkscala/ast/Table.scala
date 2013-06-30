@@ -17,7 +17,7 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
     extends ProduceStreamSelection
     with WithDB {
 
-  override lazy val args = buildArgs(db.map(Seq(_,name)).getOrElse(Seq(name)):_*)
+  override lazy val args = buildArgs(db.map(Seq(_, name)).getOrElse(Seq(name)): _*)
   override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
 
   def termType = TermType.TABLE

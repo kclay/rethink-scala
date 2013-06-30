@@ -27,7 +27,6 @@ object Helpers {
           }
           case _ => q
 
-
         }
 
       }).get

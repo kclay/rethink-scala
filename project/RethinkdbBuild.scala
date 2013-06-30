@@ -32,7 +32,7 @@ object RethinkdbBuild extends Build {
   lazy val root = Project(
     id = "rethink-scala",
     base = file("."),
-    settings = Project.defaultSettings ++ scalabuffSettings ++ scalariformSettings ++ Seq(
+    settings = Project.defaultSettings ++ scalabuffSettings ++ defaultScalariformSettings ++ Seq(
       name := "rethink-scala",
       organization := "com.rethinkscala",
       testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),

@@ -24,6 +24,8 @@ object Implicits {
 
   implicit def string2DatNum(s: String) = StringDatum(s)
 
+  implicit def map2Typed(m:Map[String,Any]):Typed = MakeObj(m)
+
   //implicit def seq2Datum(s:Seq[Datum]) = MakeArray(s)
 
   implicit def bool2Option(value: Boolean): Option[Boolean] = Some(value)

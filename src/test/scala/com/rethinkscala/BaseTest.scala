@@ -41,7 +41,7 @@ trait BaseTest extends BeforeAndAfterAll {
   override protected def afterAll() {
     super.afterAll()
     if (setupDB) {
-      db.drop.run
+    //  db.drop.run
     }
   }
 
@@ -103,9 +103,9 @@ trait BaseTest extends BeforeAndAfterAll {
 
   }
 
-  def assertAs[T, Result](query: Produce[T], check: Result => Boolean)(implicit mf: Manifest[Result]) {
+  def assertAs[Result <:Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
 
-    // assert[Result](() => query.as[Result], check)
+     assert[Result](() => query.as[Result], check)
 
   }
 

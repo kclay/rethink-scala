@@ -120,13 +120,25 @@ trait ArrayTyped extends Sequence {
 
 trait Stream extends Sequence
 
-trait Selection extends Typed
+trait Selection extends Typed{
+
+  def update(attributes:Map[String,Any],durability:Option[Durability.Kind],nonAtomic:Option[Boolean]) = Update(this,Left(attributes),durability,nonAtomic)
+  def update(attributes:Map[String,Any]):Update  = update(attributes,None,None)
+  def update(p:Predicate1,durability:Option[Durability.Kind],nonAtomic:Option[Boolean]) = Update(this,Right(p),durability,nonAtomic)
+  def update(p:Predicate1):Update = update(p,None,None)
+
+  def replace(p:Predicate1):Replace = Replace(this,Right(p))
+  def replace(data:Map[String,Any]):Replace = Replace(this,Left(data))
+
+}
 
 trait StreamSelection extends Selection with Stream {
 
   def between(start: Int, stop: Int) = Between(this, start, stop)
 
   def between(start: String, stop: String) = Between(this, start, stop)
+
+
 }
 
 trait SingleSelection extends Selection
@@ -285,10 +297,7 @@ trait Filterable extends Typed {
 
 }
 
-trait Ref extends Numeric with Binary with Json with ArrayTyped with Literal with Strings {
-
-}
-
+trait Ref extends Numeric with Binary with Json with ArrayTyped with Literal with Strings
 trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence
 
 trait ProduceAnySequence extends ProduceSequence[Any]
