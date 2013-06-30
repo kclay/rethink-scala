@@ -24,7 +24,9 @@ object Implicits {
 
   implicit def string2DatNum(s: String) = StringDatum(s)
 
-  implicit def map2Typed(m:Map[String,Any]):Typed = MakeObj(m)
+  //implicit def map2Typed(m:Map[String,Any]):Typed = MakeObj(m)
+  implicit def untypedPredicteToTyped(f:Var=>Map[String,Any]) = new Predicate1((v:Var)=> Expr(f(v)))
+
 
   //implicit def seq2Datum(s:Seq[Datum]) = MakeArray(s)
 

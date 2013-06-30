@@ -46,7 +46,7 @@ class WriteTest extends FunSuite with BaseTest {
     })
 
     // TODO fix api so results of function are automaticly converted to Typed
-    update = fetch.update((v: Var) => MakeObj(Map("a"->v.attr("a").add(3))))
+    update = fetch.update((v: Var) => Map("a"->v.attr("a").add(3)))
 
     assert(update, {
       u: UpdateResult => u.replaced == 1
