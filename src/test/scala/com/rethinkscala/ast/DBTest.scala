@@ -23,10 +23,8 @@ class DBTest extends FunSuite with BaseTest {
   }
   test("list database") {
 
-    val query = r.dbs
-
-    assert[IS](query, {
-      x: IS => x.exists(a => a == "foo")
+    assert[IS](r.dbs, {
+      x: IS => x.toSeq.contains("foo")
     })
   }
 

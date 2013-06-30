@@ -17,7 +17,7 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
     extends ProduceStreamSelection
     with WithDB {
 
-  override lazy val args = buildArgs(name)
+  override lazy val args = buildArgs(db.map(Seq(_,name)).getOrElse(Seq(name)):_*)
   override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
 
   def termType = TermType.TABLE
@@ -33,12 +33,12 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
 
   }
 
-  def insert(records: Seq[Map[String, Any]], upsert: Boolean = false, durability: Option[String] = None): Insert = Insert(this, Left(records), Some(upsert), durability)
+  def insert(records: Seq[Map[String, Any]], upsert: Boolean = false, durability: Option[Durability.Kind] = None): Insert = Insert(this, Left(records), Some(upsert), durability)
 
-  def insert(record: Document, upsert: Boolean, durability: Option[String]): Insert = insert(Seq(record), upsert, durability)
+  def insert(record: Document, upsert: Boolean, durability: Option[Durability.Kind]): Insert = insert(Seq(record), upsert, durability)
 
   def insert(records: Seq[Document], upsert: Boolean,
-             durability: Option[String])(implicit d: DummyImplicit): Insert = Insert(this, Right(records), Some(upsert), durability)
+             durability: Option[Durability.Kind])(implicit d: DummyImplicit): Insert = Insert(this, Right(records), Some(upsert), durability)
 
   def insert(records: Seq[Document]) = Insert(this, Right(records), None, None)
 
@@ -85,7 +85,7 @@ case class TableDrop(name: String, db: Option[DB] = None) extends ProduceBinary 
 
 }
 
-case class TableList(db: Option[DB] = None) extends TermMessage with ProduceAnySequence with WithDB {
+case class TableList(db: Option[DB] = None) extends ProduceSequence[String] with WithDB {
 
   override protected val extractArgs: Boolean = false
 
@@ -122,6 +122,6 @@ case class IndexDrop(target: Table, name: String) extends ProduceBinary with Bin
 /** List all the secondary indexes of this table.
  *  @param target
  */
-case class IndexList(target: Table) extends ProduceDocument {
+case class IndexList(target: Table) extends ProduceSequence[String] {
   def termType = TermType.INDEX_LIST
 }

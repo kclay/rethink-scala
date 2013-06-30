@@ -46,7 +46,7 @@ object Datum {
         val unwraped = datum.array.zipWithIndex map {
           case (value: ql2.Datum, index: Int) => {
             val rtn = wrap(value, buf)
-            if (index < len) buf ++= ","
+            if (index < len-1) buf ++= ","
             rtn
           }
         }

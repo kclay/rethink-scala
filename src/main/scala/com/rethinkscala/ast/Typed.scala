@@ -299,7 +299,9 @@ trait ProduceBinary extends Produce[Boolean] with Binary
 
 //trait ProduceLiteral extends ProduceLiteral with Literal
 
-trait ProduceDocument extends Produce[Document] with Json
+trait ProduceDocument[T <: Document] extends Produce[T] with Json with DocumentConversion[T]
+
+trait ProduceAnyDocument extends ProduceDocument[Document] with Json
 
 trait ProduceNumeric extends Produce[Double] with Numeric
 
@@ -309,7 +311,7 @@ trait ProduceAny extends Produce[Any] with Ref
 
 trait ProduceSelection extends Selection
 
-trait ProduceSingleSelection extends ProduceDocument with ProduceSelection with SingleSelection
+trait ProduceSingleSelection extends ProduceAnyDocument with ProduceSelection with SingleSelection
 
 trait ProduceStreamSelection extends ProduceAnySequence with ProduceSelection with StreamSelection
 

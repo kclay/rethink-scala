@@ -1,7 +1,7 @@
 package com.rethinkscala
 
-import org.scalatest.{ BeforeAndAfter, FunSuite }
-import com.rethinkscala.ast.Produce
+import org.scalatest.{ BeforeAndAfterAll, FunSuite }
+import com.rethinkscala.ast.{ ProduceDocument, Produce }
 import org.scalatest.exceptions.TestFailedException
 
 /** Created by IntelliJ IDEA.
@@ -13,7 +13,7 @@ import org.scalatest.exceptions.TestFailedException
 import ql2._
 import com.rethinkscala.Implicits.Quick._
 
-trait BaseTest extends BeforeAndAfter {
+trait BaseTest extends BeforeAndAfterAll {
   self: FunSuite =>
   val host = (Option(scala.util.Properties.envOrElse("TRAVIS", "empty")) map {
     case "empty" => "172.16.2.45"
@@ -23,6 +23,29 @@ trait BaseTest extends BeforeAndAfter {
   val authKey = ""
   val version1 = new Version1(host, port)
   val version2 = new Version2(host, port, authKey = authKey)
+
+  def setupDB = true
+
+  lazy val db = r.db(dbName)
+  lazy val table = db.table(tableName)
+  override protected def beforeAll() {
+
+    super.beforeAll()
+    if (setupDB) {
+      db.create.run
+      table.create.run
+    }
+
+  }
+
+  override protected def afterAll() {
+    super.afterAll()
+    if (setupDB) {
+      db.drop.run
+    }
+  }
+
+  lazy val dbName = randomAlphanumericString(5)
 
   lazy val tableName = randomAlphanumericString(5)
 
@@ -36,6 +59,7 @@ trait BaseTest extends BeforeAndAfter {
   // Generate a random alphabnumeric string of length n
   def randomAlphanumericString(n: Int) =
     randomString("abcdefghijklmnopqrstuvwxyz0123456789")(n)
+
   def useVersion = version1
 
   type IS = Iterable[String]
@@ -62,6 +86,7 @@ trait BaseTest extends BeforeAndAfter {
     if (!condition)
       throw new TestFailedException(cause, 5)
   }
+
   def assert[Result](query: Produce[Result], testValue: Result)(implicit mf: Manifest[Result]) {
     assert[Result](() => query.run, {
       r: Result => r == testValue
@@ -72,14 +97,15 @@ trait BaseTest extends BeforeAndAfter {
   def assert(query: Produce[Boolean]) {
     assert[Boolean](query, true)
   }
+
   def assert[Result](query: Produce[Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
     assert[Result](() => query.run, check)
 
   }
 
-  def assertAs[Result <: Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
+  def assertAs[T, Result](query: Produce[T], check: Result => Boolean)(implicit mf: Manifest[Result]) {
 
-    assert[Result](() => query.as[Result], check)
+    // assert[Result](() => query.as[Result], check)
 
   }
 

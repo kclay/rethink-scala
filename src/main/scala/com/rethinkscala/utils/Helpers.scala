@@ -25,12 +25,9 @@ object Helpers {
             d.db.map(scopeDB(q, _)).getOrElse(db.map { name => scopeDB(q, DB(name)) }.getOrElse(q))
 
           }
-          case _ => {
-            db.map {
-              name => scopeDB(q, DB(name))
-            }.getOrElse(q)
+          case _ => q
 
-          }
+
         }
 
       }).get

@@ -57,7 +57,7 @@ case class SPluck(target: Sequence, attrs: Seq[String]) extends Pluck with Produ
  *  @param target
  *  @param attrs
  */
-case class OPluck(target: Json, attrs: Seq[String]) extends Pluck with ProduceDocument
+case class OPluck(target: Json, attrs: Seq[String]) extends Pluck with ProduceAnyDocument
 
 abstract class Without(target: Typed, attributes: Seq[String]) extends Term {
 
@@ -70,7 +70,7 @@ object Without {
 
   def apply(target: Sequence, attrs: Seq[String]) = new Without(target, attrs) with ProduceAnySequence
 
-  def apply(target: Json, attrs: Seq[String]) = new Without(target, attrs) with ProduceDocument
+  def apply(target: Json, attrs: Seq[String]) = new Without(target, attrs) with ProduceAnyDocument
 }
 
 /** Merge two objects together to construct a new object with properties from both. Gives preference to attributes from other when there is a conflict.
@@ -88,7 +88,7 @@ object Merge {
 
   def apply(target: Sequence, other: Sequence) = new Merge(target, other) with ProduceAnySequence
 
-  def apply(target: Json, other: Json) = new Merge(target, other) with ProduceDocument
+  def apply(target: Json, other: Json) = new Merge(target, other) with ProduceAnyDocument
   def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
 }
 
@@ -202,7 +202,7 @@ case class ChangeAt(target: ArrayTyped, index: Int, value: Datum) extends Produc
  *  @param target
  *  @param regexp
  */
-case class Match(target: Strings, regexp: String) extends ProduceDocument with Binary {
+case class Match(target: Strings, regexp: String) extends ProduceAnyDocument with Binary {
   def termType = TermType.MATCH
 }
 

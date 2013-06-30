@@ -45,7 +45,7 @@ class ImplicitVar extends Term with ProduceAny {
   def termType = TermType.IMPLICIT_VAR
 }
 
-case class Info(target: Typed) extends ProduceDocument with DocumentConversion[InfoResult] {
+case class Info(target: Typed) extends ProduceDocument[InfoResult] {
   def termType = TermType.INFO
 }
 
@@ -61,7 +61,7 @@ object Core {
  *  @param target
  *  @param function
  */
-case class ForEach(target: Sequence, function: Predicate1) extends ProduceDocument {
+case class ForEach(target: Sequence, function: Predicate1) extends ProduceAnyDocument {
 
   override lazy val args = buildArgs(target, function())
 
