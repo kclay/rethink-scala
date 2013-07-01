@@ -7,11 +7,11 @@ import com.rethinkscala.reflect.Reflector
 
 case class Insert(table: Table, records: Either[Seq[Map[String, Any]], Seq[Document]],
                   upsert: Option[Boolean] = None, durability: Option[Durability.Kind] = None)
-    extends ProduceDocument[InsertResult] {
+  extends ProduceDocument[InsertResult] {
 
   override lazy val args = buildArgs(table, records match {
     case Left(x: Seq[Map[String, Any]]) => x
-    case Right(x: Seq[Document])        => x.map(Reflector.toMap(_))
+    case Right(x: Seq[Document]) => x.map(Reflector.toMap(_))
   })
   override lazy val optargs = buildOptArgs(Map("upsert" -> upsert, "durability" -> durability))
 
@@ -21,11 +21,11 @@ case class Insert(table: Table, records: Either[Seq[Map[String, Any]], Seq[Docum
 
 case class Update(target: Selection, data: Either[Map[String, Any], Predicate],
                   durability: Option[Durability.Kind] = None, nonAtomic: Option[Boolean] = None)
-    extends ProduceDocument[ChangeResult] {
+  extends ProduceDocument[ChangeResult] {
 
   override lazy val args = buildArgs(target, data match {
     case Left(x: Map[String, Any]) => x
-    case Right(x: Predicate)       => x()
+    case Right(x: Predicate) => x()
   })
   override lazy val optargs = buildOptArgs(Map("non_atomic" -> nonAtomic, "durability" -> durability))
 
@@ -34,14 +34,23 @@ case class Update(target: Selection, data: Either[Map[String, Any], Predicate],
 
 case class Replace(target: Selection, data: Either[Map[String, Any], Predicate1],
                    durability: Option[Durability.Kind] = None, nonAtomic: Option[Boolean] = None)
-    extends ProduceDocument[ChangeResult] {
+  extends ProduceDocument[ChangeResult] {
 
   override lazy val args = buildArgs(target, data match {
     case Left(x: Map[String, Any]) => x
-    case Right(x: Predicate1)      => x()
+    case Right(x: Predicate1) => x()
   })
   override lazy val optargs = buildOptArgs(Map("non_atomic" -> nonAtomic, "durability" -> durability))
 
   def termType = TermType.REPLACE
 
+}
+
+case class Delete(target: Selection, durability: Option[Durability.Kind] = None) extends ProduceDocument[ChangeResult] {
+
+
+  override lazy val args = buildArgs(target)
+  override lazy val optargs = buildOptArgs(Map("durability" -> durability))
+
+  def termType = TermType.DELETE
 }

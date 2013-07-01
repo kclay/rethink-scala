@@ -80,4 +80,12 @@ class WriteTest extends FunSuite with BaseTest {
     })
   }
 
+  test("delete data"){
+
+
+    assert(fetch.delete,{
+      cr:ChangeResult => cr.deleted == 1
+    })
+  }
+
 }

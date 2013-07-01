@@ -130,6 +130,9 @@ trait Selection extends Typed{
   def replace(p:Predicate1):Replace = Replace(this,Right(p))
   def replace(data:Map[String,Any]):Replace = Replace(this,Left(data))
 
+  def delete:Delete=delete()
+  def delete(durability:Option[Durability.Kind]=None):Delete = Delete(this)
+
 }
 
 trait StreamSelection extends Selection with Stream {
