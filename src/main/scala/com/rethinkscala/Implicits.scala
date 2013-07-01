@@ -7,11 +7,11 @@ import com.rethinkscala.ast.Asc
 import com.rethinkscala.ast.Var
 
 /** Created with IntelliJ IDEA.
- *  User: keyston
- *  Date: 5/30/13
- *  Time: 6:49 PM
- *  To change this template use File | Settings | File Templates.
- */
+  * User: keyston
+  * Date: 5/30/13
+  * Time: 6:49 PM
+  * To change this template use File | Settings | File Templates.
+  */
 object Implicits {
 
   implicit def boolToDataNum(b: Boolean): Binary = BooleanDatum(b)
@@ -24,8 +24,16 @@ object Implicits {
 
   implicit def string2DatNum(s: String) = StringDatum(s)
 
+  implicit def toPredicate1Opt(f: (Var) => Typed) = Some(new Predicate1(f))
+
+  implicit def toPredicate2Opt(f: (Var, Var) => Typed) = Some(new Predicate2(f))
+
+  implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
+
+  implicit def toPredicate2(f: (Var, Var) => Typed) = new Predicate2(f)
+
   //implicit def map2Typed(m:Map[String,Any]):Typed = MakeObj(m)
-  implicit def untypedPredicteToTyped(f:Var=>Map[String,Any]) = new Predicate1((v:Var)=> Expr(f(v)))
+  implicit def untypedPredicateToTyped(f: Var => Map[String, Any]): Predicate1 = (v: Var) => Expr(f(v))
 
 
   //implicit def seq2Datum(s:Seq[Datum]) = MakeArray(s)
@@ -33,7 +41,9 @@ object Implicits {
   implicit def bool2Option(value: Boolean): Option[Boolean] = Some(value)
 
   implicit def string2Option(value: String): Option[String] = Some(value)
+
   implicit def double2Option(value: Double): Option[Double] = Some(value)
+
   implicit def int2Option(value: Int): Option[Int] = Some(value)
 
   implicit def string2DB(name: String): DB = DB(name)
@@ -47,33 +57,38 @@ object Implicits {
   }
 
   private def p2t(p: Product) = Expr(p.productIterator.toSeq)
+
   implicit def tuple2Typed(t: (Typed, Typed)) = p2t(t)
+
   implicit def tuple3Typed(t: (Typed, Typed, Typed)) = p2t(t)
 
   implicit def tuple4Typed(t: (Typed, Typed, Typed, Typed)) = p2t(t)
 
   implicit def string2Ast(name: String) = String2Ast(name)
 
-  implicit def string2Ordering(name: String) = Asc(name)
+  implicit def string2Ordering(name: String) = name asc
 
   implicit def intWithTildyArrow(i: Int) = new {
     def ~>(j: Int) = SliceRange(i, j)
   }
-  implicit def toPredicate1Opt(f: (Var) => Typed) = Some(new Predicate1(f))
-  implicit def toPredicate2Opt(f: (Var, Var) => Typed) = Some(new Predicate2(f))
-  implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
-  implicit def toPredicate2(f: (Var, Var) => Typed) = new Predicate2(f)
+
 
   object Quick {
 
     case class Q12Datum(datum: ql2.Datum) {
       def bool = datum.`rBool`.get
+
       def obj = datum.`rObject`
+
       def str = datum.`rStr`.get
+
       def num = datum.`rNum`.get
+
       def array = datum.`rArray`
     }
+
     implicit def datum2Ql2Datum(d: ql2.Datum) = Q12Datum(d)
+
     implicit def optdatum2Ql2Datum(d: Option[ql2.Datum]) = Q12Datum(d.get)
 
     implicit def termAssocPair2Ql2TermAssocPair(p: ql2.Term.AssocPair) = Ql2TermAssocPair(p)
@@ -84,25 +99,36 @@ object Implicits {
 
     case class Ql2Term(term: ql2.Term) {
       def datum = term.`datum`
+
       def bool = datum.bool
+
       def obj = datum.obj
+
       def str = datum.str
+
       def num = datum.num
+
       def array: Either[Seq[ql2.Term], Seq[ql2.Datum]] = term.`type` match {
         case Some(ql2.Term.TermType.MAKE_ARRAY) => Left(term.`args`)
-        case _                                  => Right(datum.array)
+        case _ => Right(datum.array)
       }
     }
 
     case class Ql2TermAssocPair(p: ql2.Term.AssocPair) {
       val key = p.`key`.get
       val value = p.`val`
+
       def bool = value.bool
+
       def obj = value.obj
+
       def str = value.str
+
       def num = value.num
+
       def array = value.array
     }
+
   }
 
 }

@@ -21,7 +21,7 @@ case class Insert(table: Table, records: Either[Seq[Map[String, Any]], Seq[Docum
 
 case class Update(target: Selection, data: Either[Map[String, Any], Predicate],
                   durability: Option[Durability.Kind] = None, nonAtomic: Option[Boolean] = None)
-    extends ProduceDocument[UpdateResult] {
+    extends ProduceDocument[ChangeResult] {
 
   override lazy val args = buildArgs(target, data match {
     case Left(x: Map[String, Any]) => x
@@ -34,7 +34,7 @@ case class Update(target: Selection, data: Either[Map[String, Any], Predicate],
 
 case class Replace(target: Selection, data: Either[Map[String, Any], Predicate1],
                    durability: Option[Durability.Kind] = None, nonAtomic: Option[Boolean] = None)
-    extends ProduceDocument[ReplaceResult] {
+    extends ProduceDocument[ChangeResult] {
 
   override lazy val args = buildArgs(target, data match {
     case Left(x: Map[String, Any]) => x

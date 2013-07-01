@@ -233,6 +233,7 @@ trait Json extends Typed {
   def \(name: String) = attr(name)
 
   def merge(other: Json) = Merge(this, other)
+  def merge(other:Map[String,Any]) =Merge(this,other)
 
   def +(other: Json) = merge(other)
 

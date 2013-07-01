@@ -88,6 +88,8 @@ object Merge {
 
   def apply(target: Sequence, other: Sequence) = new Merge(target, other) with ProduceAnySequence
 
+  def apply(target:Json,other:Map[String,Any])=new Merge(target,Expr(other)) with ProduceAnyDocument
+
   def apply(target: Json, other: Json) = new Merge(target, other) with ProduceAnyDocument
   def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
 }
