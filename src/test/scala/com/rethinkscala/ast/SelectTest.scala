@@ -1,8 +1,9 @@
 package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
-import com.rethinkscala.Document
+
 import com.rethinkscala.BaseTest
+import com.rethinkscala.Document
 import com.rethinkscala.Implicits._
 
 /**
@@ -19,12 +20,9 @@ class SelectTest extends FunSuite with BaseTest{
 
   test("select between"){
 
-    val records = for(i <-1 to  50) yield SelectFoo(i)
-
+    val records = for(i <-1 to  5) yield SelectFoo(i)
     table.insert(records).run
-
-
-    val results = table.between(10,20).order("id").as[SelectFoo]
+    val results = table.between(2,4).order("id").as[SelectFoo]
 
 
 
