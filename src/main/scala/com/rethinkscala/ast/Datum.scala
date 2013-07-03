@@ -15,6 +15,8 @@ object Datum {
 
   import com.rethinkscala.Implicits.Quick._
 
+
+
   def wrap(datum: ql2.Datum): (Any, String) = {
     val buf = new StringBuilder
     (wrap(datum, buf), buf.toString())

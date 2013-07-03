@@ -8,7 +8,9 @@ import com.fasterxml.jackson.core.`type`.TypeReference
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 import scala.Some
-import com.rethinkscala.reflect.Reflector;
+import com.rethinkscala.reflect.Reflector
+import com.rethinkscala.Document
+;
 
 object Translate {
   def translate[In, Out](implicit ct: Manifest[Out]): Translate[In, Out] = new BaseTranslate[In, Out] {}
@@ -52,9 +54,12 @@ trait BaseTranslate[In, Out] extends Translate[In, Out] {
 
   def read(value: In, json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
 
+    val isDocument = classOf[Document] isAssignableFrom ct.runtimeClass
     term match {
       case c: Conversion => c.convert(value, json)
-      case _             => value.asInstanceOf[Out]
+
+      case _             => if(isDocument)Reflector.fromJson[Out](json) else value.asInstanceOf[Out]
+
     }
 
   }

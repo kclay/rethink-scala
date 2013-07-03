@@ -4,7 +4,7 @@ import com.rethinkscala.{ AssocPair, Term }
 import ql2.Term.TermType
 import ql2.Term.TermType.EnumVal
 
-case class Get(target: Table, attribute: String) extends ProduceSingleSelection {
+case class Get(target: Table, attribute: Any) extends ProduceSingleSelection {
 
   def termType = TermType.GET
 }

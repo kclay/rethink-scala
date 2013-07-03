@@ -56,6 +56,9 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
     }
   }
 
+  def nonEmpty = size.get() > 0
+  def isEmpty  = size.get() == 1
+
   def borrow(): Conn = {
     pool.poll match {
       case conn: Conn => conn

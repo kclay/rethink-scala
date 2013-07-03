@@ -1,8 +1,9 @@
 package com.rethinkscala
 
 import org.scalatest.{ BeforeAndAfterAll, FunSuite }
-import com.rethinkscala.ast.{ ProduceDocument, Produce }
+import com.rethinkscala.ast.{ProduceSequence, ProduceDocument, Produce}
 import org.scalatest.exceptions.TestFailedException
+import com.rethinkscala.net.Connection
 
 /** Created by IntelliJ IDEA.
  *  User: Keyston
@@ -107,6 +108,10 @@ trait BaseTest extends BeforeAndAfterAll {
 
      assert[Result](() => query.as[Result], check)
 
+  }
+
+  def assert[Result](result:Either[RethinkError,Result],check:Result=>Boolean)(implicit mf: Manifest[Result]){
+    assert[Result](()=>result,check)
   }
 
   def assert0(condition: Boolean) {

@@ -71,6 +71,10 @@ case class Desc(attr: String) extends Ordering {
  *  @param keys
  */
 case class OrderBy(target: Sequence, keys: Seq[Ordering]) extends ProduceAnySequence {
+
+
+  override lazy val args = buildArgs(keys.+:(target):_*)
+
   def termType: EnumVal = TermType.ORDERBY
 }
 

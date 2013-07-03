@@ -6,6 +6,7 @@ import scala.concurrent.duration.Duration
 import scala.util.{ Success, Failure }
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.ClassTag
+import com.rethinkscala.net.Connection
 
 abstract class Query[R] {
 
@@ -39,4 +40,9 @@ case class BlockingQuery[R](term: Term, connection: Connection, tt: Manifest[R])
   }
 
 }
+
+
+
+
+
 

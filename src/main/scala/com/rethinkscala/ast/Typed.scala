@@ -5,19 +5,20 @@ import scala.util.matching.Regex
 import scala.Some
 import com.rethinkscala.BlockingQuery
 import com.rethinkscala.Implicits._
+import com.rethinkscala.net.Connection
 
-trait Produce[ResultType] extends Term {
+  trait Produce[ResultType] extends Term {
 
-  type resultType = ResultType
+    type resultType = ResultType
 
-  def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](this, c, tt)
+    def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](this, c, tt)
 
-  //http://stackoverflow.com/a/3461734
-  def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery.toResult
+    //http://stackoverflow.com/a/3461734
+    def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery.toResult
 
-  def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery.toResult
+    def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery.toResult
 
-}
+  }
 
 sealed trait DataType {
   def name: String
@@ -302,7 +303,10 @@ trait Filterable extends Typed {
 }
 
 trait Ref extends Numeric with Binary with Json with ArrayTyped with Literal with Strings
-trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence
+trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence{
+
+  def as[R <: T](implicit c: Connection,mf:Manifest[R],d:DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R].toResult
+}
 
 trait ProduceAnySequence extends ProduceSequence[Any]
 

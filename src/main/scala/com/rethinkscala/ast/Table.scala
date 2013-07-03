@@ -50,9 +50,11 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
 
   def ++=(records: Seq[Document])(implicit d: DummyImplicit): Insert = this insert (records)
 
-  def \\(attribute: String) = get(attribute)
+  def \\(attribute: Any) = get(attribute)
 
-  def get(attribute: String) = Get(this, attribute)
+
+  def get(attribute: Any) = Get(this, attribute)
+
 
   def getAll(attr: String, index: Option[String] = None) = GetAll(this, attr, index)
 
