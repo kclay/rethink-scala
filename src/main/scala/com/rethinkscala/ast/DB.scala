@@ -1,8 +1,9 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ BinaryConversion, TermMessage }
+import com.rethinkscala.{ TermMessage }
 
 import ql2.Term.TermType
+import com.rethinkscala.net.BinaryConversion
 
 trait WithDB {
   val db: Option[DB]

@@ -44,7 +44,7 @@ scala> import com.rethinkscala._
 import com.rethinkscala._
 
 scala> val version =new Version1("172.16.2.45")
-version: com.rethinkscala.Version1 = Version1(172.16.2.45,28015,None,5)
+version: com.rethinkscala.net.Version1 = Version1(172.16.2.45,28015,None,5)
 
 scala> implicit val connection = new Connection(version)
 connection: com.rethinkscala.Connection = Connection(Version1(172.16.2.45,28015,None,5))
@@ -56,11 +56,11 @@ info: com.rethinkscala.ast.Info = Info(Table(bar,Some(false),Some(DB(foo))))
 //case class TableInfoResult(name: String, @JsonProperty("type") kind: String, db: DBResult) extends Document
 
 scala> val result = info.as[TableInfoResult]
-result: Either[com.rethinkscala.RethinkError,com.rethinkscala.TableInfoResult] = Right(TableInfoResult(bar,TABLE,DBResult(test,DB)))
+result: Either[com.rethinkscala.net.RethinkError,com.rethinkscala.net.TableInfoResult] = Right(TableInfoResult(bar,TABLE,DBResult(test,DB)))
 
 // selecting data
 scala> r.db("test").table("foos").create.run
-res1: Either[com.rethinkscala.RethinkError,Boolean] = Right(true)
+res1: Either[com.rethinkscala.net.RethinkError,Boolean] = Right(true)
 
 scala> val table = r.db("test").table("foos")
 table: com.rethinkscala.ast.Table = Table(foos,Some(false),Some(DB(test)))
@@ -69,16 +69,16 @@ scala> val records = for(i <-1 to  5) yield SelectFoo(i)
 records: scala.collection.immutable.IndexedSeq[SelectFoo] = Vector(SelectFoo(1), SelectFoo(2), SelectFoo(3), SelectFoo(4), SelectFoo(5))
 
 scala> table.insert(records).run
-res2: Either[com.rethinkscala.RethinkError,com.rethinkscala.InsertResult] = Right(InsertResult(5,0,0,0,None,null,0,0))
+res2: Either[com.rethinkscala.net.RethinkError,com.rethinkscala.net.InsertResult] = Right(InsertResult(5,0,0,0,None,null,0,0))
 
 scala> val results = table.between(2,4).order("id").as[SelectFoo]
-results: Either[com.rethinkscala.RethinkError,Seq[SelectFoo]] = Right(Cursor(SelectFoo(2), SelectFoo(3), SelectFoo(4)))
+results: Either[com.rethinkscala.net.RethinkError,Seq[SelectFoo]] = Right(Cursor(SelectFoo(2), SelectFoo(3), SelectFoo(4)))
 
 scala> val results = table.filter((f:Var)=> f \ "id"> 2).as[SelectFoo]
-results: Either[com.rethinkscala.RethinkError,Seq[SelectFoo]] = Right(Cursor(SelectFoo(3), SelectFoo(5), SelectFoo(4)))
+results: Either[com.rethinkscala.net.RethinkError,Seq[SelectFoo]] = Right(Cursor(SelectFoo(3), SelectFoo(5), SelectFoo(4)))
 
 scala> val results = table.filter((f:Var)=> f \ "id"> 2).order("id".desc).as[SelectFoo]
-results: Either[com.rethinkscala.RethinkError,Seq[SelectFoo]] = Right(Cursor(SelectFoo(5), SelectFoo(4), SelectFoo(3)))
+results: Either[com.rethinkscala.net.RethinkError,Seq[SelectFoo]] = Right(Cursor(SelectFoo(5), SelectFoo(4), SelectFoo(3)))
 
 
 ```

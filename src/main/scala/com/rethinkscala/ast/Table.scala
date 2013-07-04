@@ -1,8 +1,8 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ BinaryConversion, TermMessage }
+import com.rethinkscala.{ TermMessage }
 import ql2.Term.TermType
-import com.rethinkscala.Document
+import com.rethinkscala.net.{BinaryConversion, Document}
 
 // TODO FuncCall
 

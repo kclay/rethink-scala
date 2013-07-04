@@ -25,10 +25,10 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder
 import java.util.concurrent.atomic.AtomicInteger
 import com.rethinkscala.utils.Helpers._
 import scala.Some
-import com.rethinkscala.Document
-import com.rethinkscala.Translate._
-import com.rethinkscala.{Term, Version}
+import Translate._
+import com.rethinkscala.{Term}
 import com.rethinkscala.reflect.Reflector
+import com.rethinkscala.net.Document
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -52,8 +52,6 @@ abstract class Token {
 
   private[rethinkscala] def context=connection
 
-
-  val DocClass = classOf[Document]
   type ResultType = R
   type MapType = Map[String, _]
   type IterableType = Iterable[MapType]
@@ -79,7 +77,6 @@ abstract class Token {
 
       case r@Some(ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR) => toError(response, term)
       case s@Some(ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE) => toCursor(0, response)
-      //s == ResponseType.SUCCESS_SEQUENCE)
       case Some(ResponseType.SUCCESS_ATOM) =>  toResult(response)
       case _ =>
 
@@ -99,11 +96,6 @@ abstract class Token {
     val seq= for (d <- response.`response`) yield (Datum.wrap(d) match  {
       case (a: Any, json: String) => cast(a,json)
     })
-
-
-
-
-
 
     new Cursor[R](id, this, seq,response.`type` match{
       case Some(ResponseType.SUCCESS_SEQUENCE)=>true

@@ -1,4 +1,4 @@
-package com.rethinkscala
+package com.rethinkscala.net
 
 import java.lang.reflect.{ Type, ParameterizedType }
 import com.fasterxml.jackson.databind.{ DeserializationFeature, ObjectMapper }
@@ -9,7 +9,8 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 import scala.Some
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.Document
+import com.rethinkscala.net.Document
+import com.rethinkscala.Term
 ;
 
 object Translate {

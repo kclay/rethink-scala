@@ -5,6 +5,7 @@ import com.rethinkscala.ast.StringDatum
 import com.rethinkscala.ast.BooleanDatum
 import com.rethinkscala.ast.NumberDatum
 import scala.Some
+import com.rethinkscala.net.{OptionalFrame, PositionFrame, RethinkError}
 
 /** Created with IntelliJ IDEA.
  *  User: keyston
@@ -18,14 +19,12 @@ object ConvertFrom {
 
   import com.rethinkscala._
 
-  import com.rethinkscala.RethinkCompileError
-  import com.rethinkscala.RethinkClientError
-  import com.rethinkscala.Frame
 
-  import com.rethinkscala.RethinkRuntimeError
   import scala.Some
 
   import Response.ResponseType._
+  import com.rethinkscala.net.{RethinkCompileError, RethinkClientError, Frame, RethinkRuntimeError}
+  import ql2.Frame
 
   implicit def backtrace2Frames(backtrace: Option[Backtrace]): Iterable[Frame] = {
     backtrace.map {

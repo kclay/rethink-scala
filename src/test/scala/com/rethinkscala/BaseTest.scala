@@ -3,7 +3,7 @@ package com.rethinkscala
 import org.scalatest.{ BeforeAndAfterAll, FunSuite }
 import com.rethinkscala.ast.{ProduceSequence, ProduceDocument, Produce}
 import org.scalatest.exceptions.TestFailedException
-import com.rethinkscala.net.Connection
+import com.rethinkscala.net.{RethinkError, Document, Connection}
 
 /** Created by IntelliJ IDEA.
  *  User: Keyston

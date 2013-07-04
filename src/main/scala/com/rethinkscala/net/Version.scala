@@ -1,10 +1,15 @@
-package com.rethinkscala
-
+package com.rethinkscala.net
 import org.jboss.netty.channel.Channel
-
 import ql2.VersionDummy
-import com.rethinkscala.ast.DB
 
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: keyston
+ * Date: 7/3/13
+ * Time: 5:22 PM
+ *
+ */
 abstract class Version {
 
   val host: String
@@ -14,6 +19,7 @@ abstract class Version {
 
   def configure(c: Channel)
 }
+
 case class Version1(host: String = "localhost", port: Int = 28015, db: Option[String] = None, maxConnections: Int = 5) extends Version {
   def configure(c: Channel) {
     c.write(VersionDummy.Version.V0_1).await()

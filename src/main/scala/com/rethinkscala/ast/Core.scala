@@ -1,9 +1,10 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ Document, InfoResult, DocumentConversion, Term }
+import com.rethinkscala.{ Term }
 
 import ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
+import com.rethinkscala.net.{InfoResult, Document}
 
 case class MakeArray(array: Seq[Any]) extends Term with ArrayTyped {
   override lazy val args = buildArgs(array: _*)

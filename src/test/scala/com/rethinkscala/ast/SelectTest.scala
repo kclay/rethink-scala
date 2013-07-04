@@ -3,8 +3,8 @@ package com.rethinkscala.ast
 import org.scalatest.FunSuite
 
 import com.rethinkscala.BaseTest
-import com.rethinkscala.Document
 import com.rethinkscala.Implicits._
+import com.rethinkscala.net.Document
 
 /**
  * Created with IntelliJ IDEA.

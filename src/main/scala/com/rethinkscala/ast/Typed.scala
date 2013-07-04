@@ -3,11 +3,75 @@ package com.rethinkscala.ast
 import com.rethinkscala._
 import scala.util.matching.Regex
 import scala.Some
-import com.rethinkscala.BlockingQuery
 import com.rethinkscala.Implicits._
-import com.rethinkscala.net.Connection
+import com.rethinkscala.net._
+import com.rethinkscala.ast.IndexesOf
+import com.rethinkscala.ast.Mod
+import com.rethinkscala.ast.Prepend
+import com.rethinkscala.ast.InsertAt
+import com.rethinkscala.ast.Match
+import com.rethinkscala.ast.OrderBy
+import com.rethinkscala.ast.Replace
+import com.rethinkscala.ast.Mul
+import com.rethinkscala.ast.Update
+import com.rethinkscala.ast.Between
+import com.rethinkscala.ast.Predicate2
+import com.rethinkscala.ast.WithFields
+import com.rethinkscala.ast.SetIntersection
+import com.rethinkscala.ast.OuterJoin
+import scala.Some
+import com.rethinkscala.ast.SpliceAt
+import com.rethinkscala.ast.EqJoin
+import com.rethinkscala.ast.ChangeAt
+import com.rethinkscala.ast.HasFields
+import com.rethinkscala.ast.All
+import com.rethinkscala.ast.TypeOf
+import com.rethinkscala.ast.SetUnion
+import com.rethinkscala.ast.Keys
+import com.rethinkscala.ast.Info
+import com.rethinkscala.ast.Contains
+import com.rethinkscala.ast.Sub
+import com.rethinkscala.ast.GroupBy
+import com.rethinkscala.ast.SetInsert
+import com.rethinkscala.ast.Ge
+import com.rethinkscala.ast.BooleanPredicate1
+import com.rethinkscala.ast.Eq
+import com.rethinkscala.ast.InnerJoin
+import com.rethinkscala.ast.Difference
+import com.rethinkscala.ast.GetAttr
+import com.rethinkscala.ast.Count
+import com.rethinkscala.ast.Gt
+import com.rethinkscala.ast.Or
+import com.rethinkscala.ast.SliceRange
+import com.rethinkscala.ast.Le
+import com.rethinkscala.ast.IsEmpty
+import com.rethinkscala.ast.Filter
+import com.rethinkscala.ast.Var
+import com.rethinkscala.ast.Not
+import com.rethinkscala.ast.CoerceTo
+import com.rethinkscala.ast.ConcatMap
+import com.rethinkscala.ast.BooleanPredicate2
+import com.rethinkscala.ast.RMap
+import com.rethinkscala.ast.Append
+import com.rethinkscala.ast.ForEach
+import com.rethinkscala.ast.Lt
+import com.rethinkscala.ast.Sample
+import com.rethinkscala.ast.Div
+import com.rethinkscala.ast.Union
+import com.rethinkscala.ast.SetDifference
+import com.rethinkscala.ast.Delete
+import com.rethinkscala.ast.Add
+import com.rethinkscala.ast.Table
+import com.rethinkscala.ast.Predicate1
+import com.rethinkscala.net.BlockingQuery
+import com.rethinkscala.ast.Nth
+import com.rethinkscala.ast.Skip
+import com.rethinkscala.ast.DeleteAt
+import com.rethinkscala.ast.Slice
+import com.rethinkscala.ast.Ne
+import com.rethinkscala.ast.GroupMapReduce
 
-  trait Produce[ResultType] extends Term {
+trait Produce[ResultType] extends Term {
 
     type resultType = ResultType
 
@@ -125,10 +189,10 @@ trait Selection extends Typed{
 
   def update(attributes:Map[String,Any],durability:Option[Durability.Kind],nonAtomic:Option[Boolean]) = Update(this,Left(attributes),durability,nonAtomic)
   def update(attributes:Map[String,Any]):Update  = update(attributes,None,None)
-  def update(p:Predicate1,durability:Option[Durability.Kind],nonAtomic:Option[Boolean]) = Update(this,Right(p),durability,nonAtomic)
-  def update(p:Predicate1):Update = update(p,None,None)
+  def update(p:Var=>Typed,durability:Option[Durability.Kind],nonAtomic:Option[Boolean]) = Update(this,Right(p),durability,nonAtomic)
+  def update(p:Var=>Typed):Update = update(p,None,None)
 
-  def replace(p:Predicate1):Replace = Replace(this,Right(p))
+  def replace(p:Var=>Typed):Replace = Replace(this,Right(p))
   def replace(data:Map[String,Any]):Replace = Replace(this,Left(data))
 
   def delete:Delete=delete()
@@ -166,7 +230,7 @@ trait Sequence extends Multiply with Filterable {
 
   def sample(amount: Int) = Sample(this, amount)
 
-  def indexesOf(predicate: BooleanPredicate1) = IndexesOf(this, Right(predicate))
+  def indexesOf(p:Var=>Binary) = IndexesOf(this, Right(p))
 
   def apply(index: Int) = Nth(this, index)
 
@@ -186,9 +250,9 @@ trait Sequence extends Multiply with Filterable {
 
   def outerJoin(other: Table, func: BooleanPredicate2) = OuterJoin(this, other, func)
 
-  def map(func: Predicate1) = RMap(this, func)
+  def map(func:Var=>Typed) = RMap(this, func)
 
-  def concatMap(func: Predicate1) = ConcatMap(this, func)
+  def concatMap(func: Var=>Typed) = ConcatMap(this, func)
 
   def order(keys: Ordering*) = OrderBy(this, keys)
 
@@ -200,7 +264,7 @@ trait Sequence extends Multiply with Filterable {
 
   def count(value: String) = Count(this, Some(Left(value)))
 
-  def count(filter: BooleanPredicate) = Count(this, Some(Right(filter)))
+  def count(filter: Var=>Binary) = Count(this, Some(Right(filter)))
 
   def count(value: Binary) = Count(this, Some(Right((x: Var) => value)))
 
@@ -222,7 +286,7 @@ trait Sequence extends Multiply with Filterable {
 
   def +(other: Sequence) = merge(other)
 
-  def foreach(value: Predicate1) = ForEach(this, value)
+  def foreach(f:Var=>Typed) = ForEach(this, f)
 
 }
 
@@ -294,11 +358,11 @@ trait Numeric extends Literal with Multiply with Binary {
 
 trait Filterable extends Typed {
   self: Sequence =>
-  def filter(value: Binary): Filterable = filter((x: Var) => value)
+  def filter(value: Binary): Filter = filter((x: Var) => value)
 
   def filter(value: Map[String, Any]): Filter = Filter(this, Left(Expr(value)))
 
-  def filter(f: Predicate1): Filter = Filter(this, Right(f))
+  def filter(f:Var=>Binary): Filter = Filter(this, Right(f))
 
 }
 

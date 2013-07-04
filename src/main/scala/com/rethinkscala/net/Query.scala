@@ -1,4 +1,4 @@
-package com.rethinkscala
+package com.rethinkscala.net
 
 import com.rethinkscala.ast.Produce
 import scala.concurrent.{ Await, Future }
@@ -6,7 +6,8 @@ import scala.concurrent.duration.Duration
 import scala.util.{ Success, Failure }
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.ClassTag
-import com.rethinkscala.net.Connection
+import com.rethinkscala.net.{RethinkError, Connection}
+import com.rethinkscala.Term
 
 abstract class Query[R] {
 
@@ -29,6 +30,7 @@ case class BlockingQuery[R](term: Term, connection: Connection, tt: Manifest[R])
     Await.ready(f, atMost)
 
     val v = f.value
+
     val r = v match {
       case Some(Failure(e: RethinkError)) => Left(e)
       case Some(Success(r: R))            => Right(r)
