@@ -3,17 +3,44 @@ import sbt._
 import Keys._
 import scalabuff.ScalaBuffPlugin._
 import scalariform.formatter.preferences._
-import sbtrelease.ReleasePlugin._
 
 import com.typesafe.sbt.SbtScalariform._
 import sbtrelease._
 import ReleasePlugin._
-import ReleaseKeys._
+import sbtrelease.ReleasePlugin.ReleaseKeys._
 import ReleaseStateTransformations._
-import ReleaseStateTransformations._
+
+object BuildSettings {
+
+
+  lazy val releaseSteps = Seq[ReleaseStep](
+    checkSnapshotDependencies, // : ReleaseStep
+    inquireVersions, // : ReleaseStep
+    runTest, // : ReleaseStep
+    setReleaseVersion, // : ReleaseStep
+    commitReleaseVersion, // : ReleaseStep, performs the initial git checks
+    tagRelease, // : ReleaseStep
+    //publishArtifacts,                       // : ReleaseStep, checks whether `publishTo` is properly set up
+    setNextVersion, // : ReleaseStep
+    commitNextVersion, // : ReleaseStep
+    pushChanges // : ReleaseStep, also checks that an upstream branch is properly configured
+  )
+  val buildSettings = Project.defaultSettings ++ defaultScalariformSettings ++ Seq(
+    organization := "com.rethinkscala",
+    testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
+    version := "0.1-SNAPSHOT",
+    scalaVersion := "2.10.0"
+
+  )
+
+  val buildWithRelease = buildSettings ++ releaseSettings ++ Seq(
+    releaseProcess := releaseSteps
+  )
+}
 
 object RethinkdbBuild extends Build {
 
+  import BuildSettings._
 
   val repos = Seq(
     "Local Maven Repository" at "file:///" + Path.userHome + "/.m2/repository",
@@ -32,32 +59,22 @@ object RethinkdbBuild extends Build {
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % v
   )
 
-
-  lazy val releaseSteps = Seq[ReleaseStep](
-    checkSnapshotDependencies,              // : ReleaseStep
-    inquireVersions,                        // : ReleaseStep
-    runTest,                                // : ReleaseStep
-    setReleaseVersion,                      // : ReleaseStep
-    commitReleaseVersion,                   // : ReleaseStep, performs the initial git checks
-    tagRelease,                             // : ReleaseStep
-    //publishArtifacts,                       // : ReleaseStep, checks whether `publishTo` is properly set up
-    setNextVersion,                         // : ReleaseStep
-    commitNextVersion,                      // : ReleaseStep
-    pushChanges                             // : ReleaseStep, also checks that an upstream branch is properly configured
-  )
   val scalaBuffVersion = "1.3.1"
+
   lazy val root = Project(
+    "root",
+    file("."),
+    settings = buildSettings
+  ) aggregate(core, lifted)
+  lazy val core = Project(
     id = "rethink-scala",
-    base = file("."),
-    settings = Project.defaultSettings ++ scalabuffSettings ++ releaseSettings ++ defaultScalariformSettings ++ Seq(
+    base = file("core"),
+    settings = buildWithRelease ++ scalabuffSettings ++ Seq(
       name := "rethink-scala",
-      organization := "com.rethinkscala",
-      testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
-      version := "0.1-SNAPSHOT",
-      scalaVersion := "2.10.0",
+
       scalabuffVersion := scalaBuffVersion,
       resolvers ++= repos,
-      releaseProcess := releaseSteps,
+
 
 
       //   scalabuffArgs := Seq("--stdout"),
@@ -87,5 +104,11 @@ object RethinkdbBuild extends Build {
 
 
   ).configs(ScalaBuff)
+
+  lazy val lifted = Project(
+    "lifted",
+    file("lifted"),
+    settings = buildWithRelease
+  ) dependsOn (core)
 
 }

@@ -16,6 +16,7 @@ object Implicits {
 
   implicit def boolToDataNum(b: Boolean): Binary = BooleanDatum(b)
 
+
   implicit def intToDatNum(i: Int) = NumberDatum(i)
 
   implicit def longToDatNum(l: Long) = NumberDatum(l)
