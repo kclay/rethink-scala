@@ -13,6 +13,7 @@ import com.rethinkscala.net.{RethinkError, Document, Connection}
 
 import ql2._
 import com.rethinkscala.Implicits.Quick._
+import com.rethinkscala.net._
 
 trait BaseTest extends BeforeAndAfterAll {
   self: FunSuite =>

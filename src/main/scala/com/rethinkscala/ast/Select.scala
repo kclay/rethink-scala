@@ -1,6 +1,5 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ AssocPair, Term }
 import ql2.Term.TermType
 import ql2.Term.TermType.EnumVal
 

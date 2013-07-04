@@ -8,23 +8,21 @@ import scala.Some
 import com.rethinkscala.net.{OptionalFrame, PositionFrame, RethinkError}
 
 /** Created with IntelliJ IDEA.
- *  User: keyston
- *  Date: 5/25/13
- *  Time: 5:30 PM
- *  To change this template use File | Settings | File Templates.
- */
+  * User: keyston
+  * Date: 5/25/13
+  * Time: 5:30 PM
+  * To change this template use File | Settings | File Templates.
+  */
 object ConvertFrom {
 
-  import ql2.{ Ql2 => p, Backtrace, Response, Frame => QFrame }
-
-  import com.rethinkscala._
+  import ql2.{Backtrace, Response, Frame => QFrame}
 
 
   import scala.Some
 
   import Response.ResponseType._
   import com.rethinkscala.net.{RethinkCompileError, RethinkClientError, Frame, RethinkRuntimeError}
-  import ql2.Frame
+
 
   implicit def backtrace2Frames(backtrace: Option[Backtrace]): Iterable[Frame] = {
     backtrace.map {
@@ -52,7 +50,8 @@ object ConvertFrom {
     response.`type` match {
       case Some(RUNTIME_ERROR) => RethinkRuntimeError(message, term, frames)
       case Some(COMPILE_ERROR) => RethinkCompileError(message, term, frames)
-      case Some(CLIENT_ERROR)  => RethinkClientError(message, term, frames)
+      case Some(CLIENT_ERROR) => RethinkClientError(message, term, frames)
+      case _ => RethinkRuntimeError(message, term, frames)
     }
   }
 

@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ Term }
+import com.rethinkscala.Term
 import ql2.Term.TermType
 
 abstract class Math {

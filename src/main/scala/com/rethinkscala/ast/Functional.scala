@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ Term, TermMessage }
+import com.rethinkscala.Term
 
 import ql2.Term.TermType
 import java.util.concurrent.atomic.AtomicInteger

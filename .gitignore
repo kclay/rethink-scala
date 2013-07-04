@@ -9,6 +9,7 @@ src_managed/
 project/boot/
 project/plugins/project/
 python/
+rethinkdb-driver-development/
 
 # Scala-IDE specific
 .scala_dependencies
@@ -19,4 +20,5 @@ python/
 *.iws
 .idea/
 .vagrant
+
 

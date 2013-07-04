@@ -33,6 +33,8 @@ object Implicits {
   implicit def toPredicate2(f: (Var, Var) => Typed) = new Predicate2(f)
 
   //implicit def map2Typed(m:Map[String,Any]):Typed = MakeObj(m)
+  implicit def map2Typed(m: Map[String, Any]) = Expr(m)
+
   implicit def untypedPredicateToTyped(f: Var => Map[String, Any]): Predicate1 = (v: Var) => Expr(f(v))
 
 

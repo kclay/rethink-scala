@@ -1,15 +1,7 @@
 package com.rethinkscala.net
 
-import java.lang.reflect.{ Type, ParameterizedType }
-import com.fasterxml.jackson.databind.{ DeserializationFeature, ObjectMapper }
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.`type`.TypeReference
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe.TypeTag
-import scala.Some
+
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.net.Document
 import com.rethinkscala.Term
 ;
 

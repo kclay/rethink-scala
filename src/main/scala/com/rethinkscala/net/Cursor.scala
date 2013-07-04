@@ -2,9 +2,7 @@ package com.rethinkscala.net
 
 import com.rethinkscala.ast.Sequence
 
-import collection.TraversableLike
-import scala.collection.generic.{SeqForwarder, GenericTraversableTemplate}
-import com.rethinkscala.net.RethinkError
+import scala.collection.generic.SeqForwarder
 
 
 //http://stackoverflow.com/questions/14299454/create-a-custom-scala-collection-where-map-defaults-to-returning-the-custom-coll

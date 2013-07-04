@@ -26,9 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.rethinkscala.utils.Helpers._
 import scala.Some
 import Translate._
-import com.rethinkscala.{Term}
-import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.net.Document
+import com.rethinkscala.Term
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -41,35 +39,32 @@ abstract class Token {
   type ResultType
   val query: ql2.Query
   val term: Term
+
   def handle(response: Response)
 
 
 }
 
-  case class QueryToken[R](connection:Connection,query: ql2.Query, term: Term, p: Promise[R], mf: Manifest[R]) extends Token {
+case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p: Promise[R], mf: Manifest[R]) extends Token {
 
   implicit val t = mf
 
-  private[rethinkscala] def context=connection
+  private[rethinkscala] def context = connection
 
   type ResultType = R
   type MapType = Map[String, _]
   type IterableType = Iterable[MapType]
 
-  def cast(value: Any, json: String): ResultType = {
-
-    value match {
-      case v: MapType => translate[MapType, ResultType].read(v.asInstanceOf[MapType], json, term)
-      case a: IterableType => translate[IterableType, ResultType].read(a.asInstanceOf[IterableType], json, term)
-
-    }
+  def cast(value: Any, json: String): ResultType = value match {
+    case v: MapType => translate[MapType, ResultType].read(v.asInstanceOf[MapType], json, term)
+    case a: IterableType => translate[IterableType, ResultType].read(a.asInstanceOf[IterableType], json, term)
 
   }
 
 
-  def toResult(response: Response)={
-    val (data:Any,json:String) = Datum.wrap(response.`response`(0))
-    cast(data,json)
+  def toResult(response: Response) = {
+    val (data: Any, json: String) = Datum.wrap(response.`response`(0))
+    cast(data, json)
   }
 
   def handle(response: Response) = {
@@ -77,15 +72,14 @@ abstract class Token {
 
       case r@Some(ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR) => toError(response, term)
       case s@Some(ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE) => toCursor(0, response)
-      case Some(ResponseType.SUCCESS_ATOM) =>  toResult(response)
+      case Some(ResponseType.SUCCESS_ATOM) => toResult(response)
       case _ =>
 
     }) match {
       case e: Exception => p failure (e)
-      case e: Any=> p success (e.asInstanceOf[R])
+      case e: Any => p success (e.asInstanceOf[R])
     }
   }
-
 
 
   def toCursor(id: Int, response: Response) = {
@@ -93,13 +87,13 @@ abstract class Token {
 
     //val seqManifest = implicitly[Manifest[Seq[R]]]
 
-    val seq= for (d <- response.`response`) yield (Datum.wrap(d) match  {
-      case (a: Any, json: String) => cast(a,json)
+    val seq = for (d <- response.`response`) yield (Datum.wrap(d) match {
+      case (a: Any, json: String) => cast(a, json)
     })
 
-    new Cursor[R](id, this, seq,response.`type` match{
-      case Some(ResponseType.SUCCESS_SEQUENCE)=>true
-      case _=> false
+    new Cursor[R](id, this, seq, response.`type` match {
+      case Some(ResponseType.SUCCESS_SEQUENCE) => true
+      case _ => false
     })
 
   }
@@ -115,7 +109,7 @@ class RethinkDBHandler extends SimpleChannelUpstreamHandler {
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
 
-    ctx.map (_.handle(e.getMessage.asInstanceOf[Response]))
+    ctx.map(_.handle(e.getMessage.asInstanceOf[Response]))
 
 
   }
@@ -227,7 +221,6 @@ case class Connection(version: Version) {
   }
 
 
-
   protected val channel = new SimpleConnectionPool(new ConnectionFactory[ChannelWrapper] {
 
     def create(): ChannelWrapper = {
@@ -246,13 +239,13 @@ case class Connection(version: Version) {
     }
   }, max = version.maxConnections)
 
-  def write[T](term: Term)(implicit tt: Manifest[T]): Future[T] =
+  def write[T](term: Term)(implicit mf: Manifest[T]): Future[T] =
     channel[Future[T]]() {
       c =>
 
         val query = toQuery(term, c.token.getAndIncrement, defaultDB)
         val p = promise[T]()
-        val token = QueryToken[T](this,query, term, p, tt)
+        val token = QueryToken[T](this, query, term, p, mf)
         c.channel.setAttachment(token)
         c.channel.write(query)
         p.future

@@ -1,6 +1,5 @@
 package com
 
-import scala.Some
 
 /** Created by IntelliJ IDEA.
  *  User: Keyston
@@ -8,6 +7,5 @@ import scala.Some
  *  Time: 7:32 PM
  */
 package object rethinkscala {
-  import com.rethinkscala.ast.{ DB, StringDatum, NumberDatum, BooleanDatum }
 
 }

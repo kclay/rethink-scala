@@ -1,12 +1,8 @@
 package com.rethinkscala.net
 
-import com.rethinkscala.ast.Produce
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.{ Success, Failure }
-import scala.reflect.runtime.universe.TypeTag
-import scala.reflect.ClassTag
-import com.rethinkscala.net.{RethinkError, Connection}
 import com.rethinkscala.Term
 
 abstract class Query[R] {
@@ -17,7 +13,7 @@ abstract class Query[R] {
 
 }
 
-case class BlockingQuery[R](term: Term, connection: Connection, tt: Manifest[R]) extends Query[R] {
+case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R]) extends Query[R] {
   def iterator: Iterator[R] = ???
 
   lazy val ast: ql2.Term = term.ast
@@ -25,7 +21,7 @@ case class BlockingQuery[R](term: Term, connection: Connection, tt: Manifest[R])
   def toResult[R] = toResult(Duration.Inf)
   def toResult[R](atMost: Duration): Either[RethinkError, R] = {
 
-    val f = connection.write(term)(tt)
+    val f = connection.write(term)(mf)
 
     Await.ready(f, atMost)
 
