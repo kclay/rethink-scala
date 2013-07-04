@@ -9,6 +9,7 @@ src_managed/
 project/boot/
 project/plugins/project/
 python/
+rethinkdb_data/
 rethinkdb-driver-development/
 
 # Scala-IDE specific
