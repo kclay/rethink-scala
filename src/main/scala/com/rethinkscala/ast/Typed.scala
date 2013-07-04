@@ -156,6 +156,10 @@ trait Multiply extends Typed {
 
 trait Sequence extends Multiply with Filterable {
 
+ // def field(name: String)(implicit d:DummyImplicit) = GetField(this, name)
+
+ // def \(name: String)(implicit d:DummyImplicit) = field(name)
+
   //def coerceTo(dataType: DataType)=CoerceTo(this,dataType)
 
   def indexesOf(value: Datum): IndexesOf = IndexesOf(this, Left(value))
@@ -218,6 +222,8 @@ trait Sequence extends Multiply with Filterable {
 
   def without(attrs: String*)(implicit d: DummyImplicit) = Without(this, attrs)
 
+  def pluck(m:Map[String,Any])(implicit d:DummyImplicit) = Pluck(this,m)
+
   def merge(other: Sequence) = Merge(this, other)
 
   def +(other: Sequence) = merge(other)
@@ -226,15 +232,24 @@ trait Sequence extends Multiply with Filterable {
 
 }
 
-trait Json extends Typed {
+
+
+trait Hash{
+  self:Typed=>
+  def field(name:String) = GetField(this,name)
+  def apply[T<:Typed](name:String):T = GetField(this,name).asInstanceOf[T]
+
+  def \(name: String) = field(name)
+}
+
+trait Json extends Typed with Hash {
 
   def pluck(attrs: String*) = Pluck(this, attrs)
 
+  def pluck(m:Map[String,Any]) = Pluck(this,m)
+
   def without(attrs: String*) = Without(this, attrs)
 
-  def attr(name: String) = GetAttr(this, name)
-
-  def \(name: String) = attr(name)
 
   def merge(other: Json) = Merge(this, other)
   def merge(other:Map[String,Any]) =Merge(this,other)

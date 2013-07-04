@@ -75,6 +75,8 @@ object Implicits {
   }
 
 
+
+
   object Quick {
 
     case class Q12Datum(datum: ql2.Datum) {

@@ -5,59 +5,93 @@ import com.rethinkscala.Term
 import ql2.Term.TermType
 
 /** Append a value to an array.
- *  @param target
- *  @param value
- */
+  * @param target
+  * @param value
+  */
 case class Append(target: ArrayTyped, value: Datum) extends ProduceArray {
 
   def termType = TermType.APPEND
 }
 
 /** Prepend a value to an array.
- *  @param target
- *  @param value
- */
+  * @param target
+  * @param value
+  */
 case class Prepend(target: ArrayTyped, value: Datum) extends ProduceArray {
   def termType = TermType.PREPEND
 }
 
 /** Get a single attribute from an object.
- *  @param target
- *  @param name
- */
-case class GetAttr(target: Json, name: String) extends ProduceAny {
+  * @param target
+  * @param name
+  */
+abstract class GetField(target:Typed,name:String) extends Term {
+
+
   override lazy val args = buildArgs(target, name)
 
-  def termType = TermType.GETATTR
+  def termType = TermType.GET_FIELD
 }
+
+
+object GetField {
+
+
+
+  def apply(target: Sequence, name: String) = new GetField(target, name) with ProduceAnySequence
+
+ // def apply(target: Json, name: String) = new GetField(target, name) with ProduceAnyDocument
+  def apply(target:Typed,name:String) = new GetField(target,name) with ProduceAny
+}
+
+
 
 abstract class Pluck extends Term {
 
   val target: Typed
-  val attrs: Seq[String]
 
-  override lazy val args = buildArgs(attrs.+:(target): _*)
+  val data: Either[Seq[String], Map[String, Any]]
+
+
+  override lazy val args = buildArgs(target, data match {
+    case Left(a) => a
+    case Right(b) => b
+  })
 
   def termType = TermType.PLUCK
 }
 
 object Pluck {
-  def apply(target: Sequence, attrs: Seq[String]) = SPluck(target, attrs)
 
-  def apply(target: Json, attrs: Seq[String]) = OPluck(target, attrs)
+
+
+  def apply(target: Sequence, attrs: Seq[String]) = SPluck(target, Left(attrs))
+
+  def apply(target: Sequence, m: Map[String, Any]) = SPluck(target, Right(m))
+
+
+
+
+
+  def apply(target: Json, attrs: Seq[String]) = OPluck(target, Left(attrs))
+
+  def apply(target: Json, m: Map[String, Any]) = OPluck(target, Right(m))
 }
 
-/** Plucks out one or more attributes from either an object or a sequence of objects (projection).
- *  @param target
- *  @param attrs
- */
-case class SPluck(target: Sequence, attrs: Seq[String]) extends Pluck with ProduceAnySequence
 
 /** Plucks out one or more attributes from either an object or a sequence of objects (projection).
- *  @param target
- *  @param attrs
- */
-case class OPluck(target: Json, attrs: Seq[String]) extends Pluck with ProduceAnyDocument
+  * @param target
+  * @param data
+  */
+case class SPluck(target: Sequence, data: Either[Seq[String], Map[String, Any]]) extends Pluck
+                                                                                         with ProduceAnySequence
+
+/** Plucks out one or more attributes from either an object or a sequence of objects (projection).
+  * @param target
+  * @param data
+  */
+case class OPluck(target: Json, data: Either[Seq[String], Map[String, Any]]) extends Pluck
+                                                                                     with ProduceAnyDocument
 
 abstract class Without(target: Typed, attributes: Seq[String]) extends Term {
 
@@ -74,9 +108,9 @@ object Without {
 }
 
 /** Merge two objects together to construct a new object with properties from both. Gives preference to attributes from other when there is a conflict.
- *  @param target
- *  @param other
- */
+  * @param target
+  * @param other
+  */
 abstract class Merge(target: Typed, other: Typed) extends Term {
 
   override lazy val args = buildArgs(target, other)
@@ -88,65 +122,71 @@ object Merge {
 
   def apply(target: Sequence, other: Sequence) = new Merge(target, other) with ProduceAnySequence
 
-  def apply(target:Json,other:Map[String,Any])=new Merge(target,Expr(other)) with ProduceAnyDocument
+  def apply(target: Json, other: Map[String, Any]) = new Merge(target, Expr(other)) with ProduceAnyDocument
 
   def apply(target: Json, other: Json) = new Merge(target, other) with ProduceAnyDocument
+
   def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
 }
 
 /** Remove the elements of one array from another array.
- *  @param target
- *  @param diff
- */
+  * @param target
+  * @param diff
+  */
 case class Difference(target: ArrayTyped, diff: Seq[Datum]) extends ProduceArray {
   override lazy val args = buildArgs(target, MakeArray(diff))
+
   def termType = TermType.DIFFERENCE
 }
 
 /** Add a value to an array and return it as a set (an array with distinct values).
- *  @param target
- *  @param value
- */
+  * @param target
+  * @param value
+  */
 case class SetInsert(target: ArrayTyped, value: Datum) extends ProduceSet {
   override lazy val args = buildArgs(target, value)
+
   def termType = TermType.SET_INSERT
 }
 
 /** Add a several values to an array and return it as a set (an array with distinct values).
- *  @param target
- *  @param values
- */
+  * @param target
+  * @param values
+  */
 case class SetUnion(target: ArrayTyped, values: Seq[Datum]) extends ProduceSet {
 
   override lazy val args = buildArgs(target, MakeArray(values))
+
   def termType = TermType.SET_UNION
 }
 
 /** Intersect two arrays returning values that occur in both of them as a set (an array with distinct values).
- *  @param target
- *  @param values
- */
+  * @param target
+  * @param values
+  */
 case class SetIntersection(target: ArrayTyped, values: Seq[Datum]) extends ProduceSet {
 
   override lazy val args = buildArgs(target, MakeArray(values))
+
   def termType = TermType.SET_INTERSECTION
 }
 
 /** Remove the elements of one array from another and return them as a set (an array with distinct values).
- *  @param target
- *  @param values
- */
+  * @param target
+  * @param values
+  */
 case class SetDifference(target: Sequence, values: Seq[Datum]) extends ProduceSet {
 
   override lazy val args = buildArgs(target, MakeArray(values))
+
   def termType = TermType.SET_DIFFERENCE
 }
 
 /** Test if an object has all of the specified fields. An object has a field if it has the specified
- *  key and that key maps to a non-null value. For instance, the object `{'a':1,'b':2,'c':null}` has the fields `a` and `b`.
- *  @param target
- *  @param fields
- */
+  * key and that key maps to a non-null value. For instance, the object `{'a':1,'b':2,'c':null}` has the fields `a` and `b`.
+  * @param target
+  * @param fields
+  */
 case class HasFields(target: Json, fields: Seq[String]) extends ProduceBinary {
 
   override lazy val args = buildArgs(fields.+:(target): _*)
@@ -155,19 +195,19 @@ case class HasFields(target: Json, fields: Seq[String]) extends ProduceBinary {
 }
 
 /** Insert a value in to an array at a given index. Returns the modified array.
- *  @param target
- *  @param index
- *  @param value
- */
+  * @param target
+  * @param index
+  * @param value
+  */
 case class InsertAt(target: ArrayTyped, index: Int, value: Datum) extends ProduceArray {
   def termType = TermType.INSERT_AT
 }
 
 /** Insert several values in to an array at a given index. Returns the modified array.
- *  @param target
- *  @param index
- *  @param values
- */
+  * @param target
+  * @param index
+  * @param values
+  */
 case class SpliceAt(target: ArrayTyped, index: Int, values: Seq[Datum]) extends ProduceArray {
 
   override lazy val args = buildArgs(target, index, MakeArray(values))
@@ -176,10 +216,10 @@ case class SpliceAt(target: ArrayTyped, index: Int, values: Seq[Datum]) extends 
 }
 
 /** Remove an element from an array at a given index. Returns the modified array.
- *  @param target
- *  @param start
- *  @param end
- */
+  * @param target
+  * @param start
+  * @param end
+  */
 
 case class DeleteAt(target: ArrayTyped, start: Int, end: Option[Int] = None) extends ProduceArray {
 
@@ -189,28 +229,28 @@ case class DeleteAt(target: ArrayTyped, start: Int, end: Option[Int] = None) ext
 }
 
 /** Change a value in an array at a given index. Returns the modified array.
- *  @param target
- *  @param index
- *  @param value
- */
+  * @param target
+  * @param index
+  * @param value
+  */
 case class ChangeAt(target: ArrayTyped, index: Int, value: Datum) extends ProduceArray {
   def termType = TermType.CHANGE_AT
 }
 
 /** Match against a regular expression. Returns a match object containing the matched string,
- *  that string's start/end position, and the capture groups.
- *  Accepts RE2 syntax (https://code.google.com/p/re2/wiki/Syntax). You can enable case-insensitive matching by
- *  prefixing the regular expression with `(?i)`. (See linked RE2 documentation for more flags.)
- *  @param target
- *  @param regexp
- */
+  * that string's start/end position, and the capture groups.
+  * Accepts RE2 syntax (https://code.google.com/p/re2/wiki/Syntax). You can enable case-insensitive matching by
+  * prefixing the regular expression with `(?i)`. (See linked RE2 documentation for more flags.)
+  * @param target
+  * @param regexp
+  */
 case class Match(target: Strings, regexp: String) extends ProduceAnyDocument with Binary {
   def termType = TermType.MATCH
 }
 
 /** Gets the type of a value.
- *  @param target
- */
+  * @param target
+  */
 case class TypeOf(target: Typed) extends ProduceString {
   def termType = TermType.TYPEOF
 }
