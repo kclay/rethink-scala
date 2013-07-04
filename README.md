@@ -19,6 +19,7 @@ TODO
   - Implement Cursor Response (this should have the same interface as a Seq/Iterable),not that the `Connection` class will need
   to be updated so that it knows which connection to reuse to fetch more data.
   - Fix compile warns
+  - Allow type safety for `Predicate` classes via macros
 
 
 Examples
@@ -100,6 +101,9 @@ sbt compile
 
 Version
 -
+###0.2 - 07/04/13
 
-0.1 - Initial release
+Streams are now supported, this means that when using methods like `.getAll` and `between` the results will be wrapped in a `com.rethinkscala.net.Cursor[R]` which will act like an `Seq[R]`
 
+###0.1 - 
+Initial release
