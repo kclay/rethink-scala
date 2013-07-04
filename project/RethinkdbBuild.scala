@@ -2,11 +2,15 @@
 import sbt._
 import Keys._
 import scalabuff.ScalaBuffPlugin._
-import com.typesafe.sbt.SbtScalariform.scalariformSettings
 import scalariform.formatter.preferences._
+import sbtrelease.ReleasePlugin._
 
 import com.typesafe.sbt.SbtScalariform._
-
+import sbtrelease._
+import ReleasePlugin._
+import ReleaseKeys._
+import ReleaseStateTransformations._
+import ReleaseStateTransformations._
 
 object RethinkdbBuild extends Build {
 
@@ -28,11 +32,24 @@ object RethinkdbBuild extends Build {
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % v
   )
 
+
+  lazy val releaseSteps = Seq[ReleaseStep](
+    checkSnapshotDependencies,              // : ReleaseStep
+    inquireVersions,                        // : ReleaseStep
+    runTest,                                // : ReleaseStep
+    setReleaseVersion,                      // : ReleaseStep
+    commitReleaseVersion,                   // : ReleaseStep, performs the initial git checks
+    tagRelease,                             // : ReleaseStep
+    //publishArtifacts,                       // : ReleaseStep, checks whether `publishTo` is properly set up
+    setNextVersion,                         // : ReleaseStep
+    commitNextVersion,                      // : ReleaseStep
+    pushChanges                             // : ReleaseStep, also checks that an upstream branch is properly configured
+  )
   val scalaBuffVersion = "1.3.1"
   lazy val root = Project(
     id = "rethink-scala",
     base = file("."),
-    settings = Project.defaultSettings ++ scalabuffSettings ++ defaultScalariformSettings ++ Seq(
+    settings = Project.defaultSettings ++ scalabuffSettings ++ releaseSettings ++ defaultScalariformSettings ++ Seq(
       name := "rethink-scala",
       organization := "com.rethinkscala",
       testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
@@ -40,6 +57,7 @@ object RethinkdbBuild extends Build {
       scalaVersion := "2.10.0",
       scalabuffVersion := scalaBuffVersion,
       resolvers ++= repos,
+      releaseProcess := releaseSteps,
 
 
       //   scalabuffArgs := Seq("--stdout"),
@@ -66,6 +84,8 @@ object RethinkdbBuild extends Build {
         .setPreference(MultilineScaladocCommentsStartOnFirstLine, true)
         .setPreference(PreserveDanglingCloseParenthesis, true)
     )
+
+
   ).configs(ScalaBuff)
 
 }
