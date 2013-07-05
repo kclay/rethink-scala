@@ -12,3 +12,6 @@ before_install:
   - sudo apt-get install -qq rethinkdb
 before_script:
   - rethinkdb --daemon
+branches:
+  only:
+    - master
