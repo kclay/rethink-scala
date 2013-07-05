@@ -1,15 +1,15 @@
 package com.rethinkscala
 
-import org.scalatest.{ BeforeAndAfterAll, FunSuite }
-import com.rethinkscala.ast.{ProduceSequence, ProduceDocument, Produce}
+import org.scalatest.{BeforeAndAfterAll, FunSuite}
+
 import org.scalatest.exceptions.TestFailedException
-import com.rethinkscala.net.{RethinkError, Document, Connection}
+import com.rethinkscala.ast.Produce
 
 /** Created by IntelliJ IDEA.
- *  User: Keyston
- *  Date: 6/18/13
- *  Time: 3:45 PM
- */
+  * User: Keyston
+  * Date: 6/18/13
+  * Time: 3:45 PM
+  */
 
 import ql2._
 import com.rethinkscala.Implicits.Quick._
@@ -19,7 +19,7 @@ trait BaseTest extends BeforeAndAfterAll {
   self: FunSuite =>
   val host = (Option(scala.util.Properties.envOrElse("TRAVIS", "empty")) map {
     case "empty" => "172.16.2.45"
-    case _       => "127.0.0.1"
+    case _ => "127.0.0.1"
   }).get
   val port = 28015
   val authKey = ""
@@ -30,6 +30,7 @@ trait BaseTest extends BeforeAndAfterAll {
 
   lazy val db = r.db(dbName)
   lazy val table = db.table(tableName)
+
   override protected def beforeAll() {
 
     super.beforeAll()
@@ -43,7 +44,7 @@ trait BaseTest extends BeforeAndAfterAll {
   override protected def afterAll() {
     super.afterAll()
     if (setupDB) {
-    //  db.drop.run
+      //  db.drop.run
     }
   }
 
@@ -82,7 +83,7 @@ trait BaseTest extends BeforeAndAfterAll {
 
   private def assert[Result](f: () => Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
     val (condition, cause) = f() match {
-      case Left(e)  => (false, e.getMessage)
+      case Left(e) => (false, e.getMessage)
       case Right(r) => (check(r), "Successful query but invalid response")
     }
     if (!condition)
@@ -105,14 +106,14 @@ trait BaseTest extends BeforeAndAfterAll {
 
   }
 
-  def assertAs[Result <:Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
+  def assertAs[Result <: Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
 
-     assert[Result](() => query.as[Result], check)
+    assert[Result](() => query.as[Result], check)
 
   }
 
-  def assert[Result](result:Either[RethinkError,Result],check:Result=>Boolean)(implicit mf: Manifest[Result]){
-    assert[Result](()=>result,check)
+  def assert[Result](result: Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
+    assert[Result](() => result, check)
   }
 
   def assert0(condition: Boolean) {

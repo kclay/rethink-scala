@@ -14,17 +14,6 @@ import com.rethinkscala.ast.{Typed, Var}
 class LiftedTest {
 
 
-  trait Doc {
-
-    var __scope__ : Var
-
-    def __enter__(implicit v: Var) = __scope__ = v
-
-    def __exit__ = _
-
-
-
-  }
   case class Bar(foo:Boolean)
 
   def map[T](f:T=>Any) = 1
