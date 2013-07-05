@@ -29,7 +29,7 @@ object BuildSettings {
     organization := "com.rethinkscala",
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     version := "0.1-SNAPSHOT",
-    scalaVersion := "2.10.0"
+    scalaVersion := "2.10.2"
 
   )
 
