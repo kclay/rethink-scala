@@ -42,14 +42,15 @@ case class Func(f: Predicate) extends Term {
 }
 
 
-case class Predicate1(f: (Var) => Typed) extends Predicate {
+
+class Predicate1(f: (Var) => Typed) extends Predicate {
 
   protected def _invoke(vars: Seq[Var]) = f(vars(0))
 
   val amount: Int = 1
 }
 
-case class Predicate2(f: (Var, Var) => Typed) extends Predicate {
+class Predicate2(f: (Var, Var) => Typed) extends Predicate {
 
   protected def _invoke(v: Seq[Var]) = f(v(0), v(1))
 
@@ -57,6 +58,7 @@ case class Predicate2(f: (Var, Var) => Typed) extends Predicate {
 }
 
 trait BooleanPredicate extends Predicate
+
 case class BooleanPredicate1(f: (Var) => Binary) extends BooleanPredicate {
 
   protected def _invoke(vars: Seq[Var]) = f(vars(0))

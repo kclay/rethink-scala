@@ -20,7 +20,9 @@ trait Produce[ResultType] extends Term {
 
   }
 
-sealed trait DataType {
+sealed trait DataType
+{
+
   def name: String
 }
 
@@ -51,6 +53,7 @@ sealed trait Typed {
 
 trait Addition extends Typed {
   def +(other: Addition) = add(other)
+
 
   def add(other: Addition) = Add(this, other)
 
