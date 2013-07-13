@@ -29,7 +29,13 @@ object BuildSettings {
     organization := "com.rethinkscala",
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     version := "0.1-SNAPSHOT",
-    scalaVersion := "2.10.2"
+    scalaVersion := "2.10.2",
+
+    scalacOptions ++= Seq(),
+
+    scalaOrganization := "org.scala-lang",
+    resolvers += Resolver.sonatypeRepo("snapshots")
+
 
   )
 
@@ -65,12 +71,12 @@ object RethinkdbBuild extends Build {
     "root",
     file("."),
     settings = buildSettings
-  ) aggregate(core, lifted)
+  ) aggregate(lifted, core)
   lazy val core = Project(
-    id = "rethink-scala",
+    id = "core",
     base = file("core"),
     settings = buildWithRelease ++ scalabuffSettings ++ Seq(
-      name := "rethink-scala",
+
 
       scalabuffVersion := scalaBuffVersion,
       resolvers ++= repos,
@@ -108,7 +114,17 @@ object RethinkdbBuild extends Build {
   lazy val lifted = Project(
     "lifted",
     file("lifted"),
-    settings = buildWithRelease
+    settings = buildWithRelease ++ Seq(
+      // NOTE: macros are compiled with macro paradise 2.10
+      // scalaVersion := "2.10.2-SNAPSHOT",
+      //scalaOrganization := "org.scala-lang.macro-paradise",
+      libraryDependencies <++= (scalaVersion)(sv => Seq(
+        "org.scala-lang" % "scala-reflect" % sv,
+        "org.scala-lang" % "scala-compiler" % sv,
+        "org.scala-lang" % "scala-library" % sv
+      )
+      )
+    )
   ) dependsOn (core)
 
 }
