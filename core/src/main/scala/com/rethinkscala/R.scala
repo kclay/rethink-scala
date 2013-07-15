@@ -12,6 +12,9 @@ object r {
   def row(name:String) = _row field name
   //def row[T<:Sequence](name: String)(implicit d:DummyImplicit) = _row.asInstanceOf[T] field name
 
+
+
+
   def table(name: String, useOutDated: Option[Boolean] = None) = Table(name, useOutDated)
 
   def db(name: String) = DB(name)

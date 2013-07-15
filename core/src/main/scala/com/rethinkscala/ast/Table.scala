@@ -10,10 +10,10 @@ object Durability extends Enumeration {
   val Hard = Value("hard")
   val Soft = Value("soft")
 }
-case class Table(name: String, useOutDated: Option[Boolean] = None,
+case class Table[R <:Document](name: String, useOutDated: Option[Boolean] = None,
                  db: Option[DB] = None)
 
-    extends ProduceStreamSelection
+    extends ProduceTypedStreamSelection[R]
     with WithDB {
 
   override lazy val args = buildArgs(db.map(Seq(_, name)).getOrElse(Seq(name)): _*)
@@ -34,28 +34,28 @@ case class Table(name: String, useOutDated: Option[Boolean] = None,
 
   def insert(records: Seq[Map[String, Any]], upsert: Boolean = false, durability: Option[Durability.Kind] = None): Insert = Insert(this, Left(records), Some(upsert), durability)
 
-  def insert(record: Document, upsert: Boolean, durability: Option[Durability.Kind]): Insert = insert(Seq(record), upsert, durability)
+  def insert(record: R, upsert: Boolean, durability: Option[Durability.Kind]): Insert = insert(Seq(record), upsert, durability)
 
-  def insert(records: Seq[Document], upsert: Boolean,
+  def insert(records: Seq[R], upsert: Boolean,
              durability: Option[Durability.Kind])(implicit d: DummyImplicit): Insert = Insert(this, Right(records), Some(upsert), durability)
 
-  def insert(records: Seq[Document]) = Insert(this, Right(records), None, None)
+  def insert(records: Seq[R]) = Insert(this, Right(records), None, None)
 
-  def insert(record: Document) = Insert(this, Right(Seq(record)), None, None)
+  def insert(record: R) = Insert(this, Right(Seq(record)), None, None)
 
-  def ++=(record: Document): Insert = insert(record)
+  def ++=(record: R): Insert = insert(record)
 
   def ++=(records: Seq[Map[String, Any]]): Insert = this insert (records)
 
-  def ++=(records: Seq[Document])(implicit d: DummyImplicit): Insert = this insert (records)
+  def ++=(records: Seq[R])(implicit d: DummyImplicit): Insert = this insert (records)
 
   def \\(attribute: Any) = get(attribute)
 
 
-  def get(attribute: Any) = Get(this, attribute)
+  def get(attribute: Any) = Get[R](this, attribute)
 
 
-  def getAll(attr: String, index: Option[String] = None) = GetAll(this, attr, index)
+  def getAll(attr: String, index: Option[String] = None) = GetAll[R](this, attr, index)
 
   def indexes = IndexList(this)
 
@@ -98,7 +98,7 @@ case class TableList(db: Option[DB] = None) extends ProduceSequence[String] with
  *  @param name
  *  @param predicate
  */
-case class IndexCreate(target: Table, name: String, predicate: Option[Predicate] = None) extends ProduceBinary with BinaryConversion {
+case class IndexCreate(target: Table[Document], name: String, predicate: Option[Predicate] = None) extends ProduceBinary with BinaryConversion {
 
   override lazy val args = buildArgs(predicate.map {
     f => Seq(target, name, f())
@@ -113,7 +113,7 @@ case class IndexCreate(target: Table, name: String, predicate: Option[Predicate]
  *  @param target
  *  @param name
  */
-case class IndexDrop(target: Table, name: String) extends ProduceBinary with BinaryConversion {
+case class IndexDrop(target: Table[Document], name: String) extends ProduceBinary with BinaryConversion {
 
   val resultField = "dropped"
 
@@ -123,6 +123,6 @@ case class IndexDrop(target: Table, name: String) extends ProduceBinary with Bin
 /** List all the secondary indexes of this table.
  *  @param target
  */
-case class IndexList(target: Table) extends ProduceSequence[String] {
+case class IndexList(target: Table[Document]) extends ProduceSequence[String] {
   def termType = TermType.INDEX_LIST
 }

@@ -2,13 +2,14 @@ package com.rethinkscala.ast
 
 import ql2.Term.TermType
 import ql2.Term.TermType.EnumVal
+import com.rethinkscala.net.Document
 
-case class Get(target: Table, attribute: Any) extends ProduceSingleSelection {
+case class Get[R <:Document](target: Table[R], attribute: Any) extends ProduceTypedSingleSelection[R] {
 
   def termType = TermType.GET
 }
 
-case class GetAll(target: Table, attr: String, index: Option[String] = None) extends ProduceArray {
+case class GetAll[R <:Document](target: Table[R], attr: String, index: Option[String] = None) extends ProduceTypedArray[R] {
 
   override lazy val optargs = buildOptArgs(Map("index" -> index))
   override lazy val args = buildArgs(target, attr)

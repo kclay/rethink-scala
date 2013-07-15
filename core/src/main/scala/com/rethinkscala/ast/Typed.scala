@@ -159,6 +159,9 @@ trait Multiply extends Typed {
 
 trait Sequence extends Multiply with Filterable {
 
+
+  type SequenceType = Any
+
  // def field(name: String)(implicit d:DummyImplicit) = GetField(this, name)
 
  // def \(name: String)(implicit d:DummyImplicit) = field(name)
@@ -191,7 +194,7 @@ trait Sequence extends Multiply with Filterable {
 
   def innerJoin(other: Sequence, func: BooleanPredicate2) = InnerJoin(this, other, func)
 
-  def outerJoin(other: Table, func: BooleanPredicate2) = OuterJoin(this, other, func)
+  def outerJoin(other: Table[_], func: BooleanPredicate2) = OuterJoin(this, other, func)
 
   def map(func:Var=>Typed) = RMap(this, func)
 
@@ -348,8 +351,13 @@ trait ProduceSelection extends Selection
 
 trait ProduceSingleSelection extends ProduceAnyDocument with ProduceSelection with SingleSelection
 
+trait ProduceTypedSingleSelection[T] extends ProduceDocument[T] with ProduceSelection with SingleSelection
+
 trait ProduceStreamSelection extends ProduceAnySequence with ProduceSelection with StreamSelection
 
+trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with ProduceSelection with StreamSelection
+
 trait ProduceArray extends ProduceAnySequence with ArrayTyped
+trait ProduceTypedArray[T] extends ProduceSequence[T] with ArrayTyped
 
 sealed trait LogicSignature

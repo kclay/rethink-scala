@@ -4,7 +4,7 @@ import ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.net.{ChangeResult, Document, InsertResult}
 
-case class Insert(table: Table, records: Either[Seq[Map[String, Any]], Seq[Document]],
+case class Insert(table: Table[_], records: Either[Seq[Map[String, Any]], Seq[Document]],
                   upsert: Option[Boolean] = None, durability: Option[Durability.Kind] = None)
   extends ProduceDocument[InsertResult] {
 
