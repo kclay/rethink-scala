@@ -10,11 +10,12 @@ object Durability extends Enumeration {
   val Hard = Value("hard")
   val Soft = Value("soft")
 }
-case class Table[R <:Document](name: String, useOutDated: Option[Boolean] = None,
-                 db: Option[DB] = None)
 
-    extends ProduceTypedStreamSelection[R]
-    with WithDB {
+case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = None,
+                                db: Option[DB] = None)
+
+  extends ProduceTypedStreamSelection[T]
+  with WithDB with TableTyped {
 
   override lazy val args = buildArgs(db.map(Seq(_, name)).getOrElse(Seq(name)): _*)
   override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
@@ -32,30 +33,30 @@ case class Table[R <:Document](name: String, useOutDated: Option[Boolean] = None
 
   }
 
-  def insert(records: Seq[Map[String, Any]], upsert: Boolean = false, durability: Option[Durability.Kind] = None): Insert = Insert(this, Left(records), Some(upsert), durability)
+  def insert(records: Seq[Map[String, Any]], upsert: Boolean = false, durability: Option[Durability.Kind] = None) = Insert[T](this, Left(records), Some(upsert), durability)
 
-  def insert(record: R, upsert: Boolean, durability: Option[Durability.Kind]): Insert = insert(Seq(record), upsert, durability)
+  def insert(record: T, upsert: Boolean, durability: Option[Durability.Kind]): Insert[T] = insert(Seq(record), upsert, durability)
 
-  def insert(records: Seq[R], upsert: Boolean,
-             durability: Option[Durability.Kind])(implicit d: DummyImplicit): Insert = Insert(this, Right(records), Some(upsert), durability)
+  def insert(records: Seq[T], upsert: Boolean,
+             durability: Option[Durability.Kind])(implicit d: DummyImplicit) = Insert[T](this, Right(records), Some(upsert), durability)
 
-  def insert(records: Seq[R]) = Insert(this, Right(records), None, None)
+  def insert[R <: T](records: Seq[R]) = Insert(this, Right(records), None, None)
 
-  def insert(record: R) = Insert(this, Right(Seq(record)), None, None)
+  def insert(record: T) = Insert(this, Right(Seq(record)), None, None)
 
-  def ++=(record: R): Insert = insert(record)
+  def ++=(record: T) = insert(record)
 
-  def ++=(records: Seq[Map[String, Any]]): Insert = this insert (records)
+  def ++=(records: Seq[Map[String, Any]]) = this insert (records)
 
-  def ++=(records: Seq[R])(implicit d: DummyImplicit): Insert = this insert (records)
+  def ++=(records: Seq[T])(implicit d: DummyImplicit) = this insert (records)
 
   def \\(attribute: Any) = get(attribute)
 
 
-  def get(attribute: Any) = Get[R](this, attribute)
+  def get(attribute: Any) = Get[T](this, attribute)
 
 
-  def getAll(attr: String, index: Option[String] = None) = GetAll[R](this, attr, index)
+  def getAll(attr: String, index: Option[String] = None) = GetAll[T](this, attr, index)
 
   def indexes = IndexList(this)
 
@@ -67,8 +68,8 @@ case class Table[R <:Document](name: String, useOutDated: Option[Boolean] = None
 
 case class TableCreate(name: String, primaryKey: Option[String] = None,
                        durability: Option[Durability.Kind] = None, cacheSize: Option[Int] = None, dataCenter: Option[String] = None, db: Option[DB] = None)
-    extends ProduceBinary
-    with WithDB with BinaryConversion {
+  extends ProduceBinary
+  with WithDB with BinaryConversion {
   val resultField = "created"
 
   override lazy val args = buildArgs(name)
@@ -94,11 +95,11 @@ case class TableList(db: Option[DB] = None) extends ProduceSequence[String] with
 }
 
 /** Create a new secondary index on this table.
- *  @param target
- *  @param name
- *  @param predicate
- */
-case class IndexCreate(target: Table[Document], name: String, predicate: Option[Predicate] = None) extends ProduceBinary with BinaryConversion {
+  * @param target
+  * @param name
+  * @param predicate
+  */
+case class IndexCreate(target: TableTyped, name: String, predicate: Option[Predicate] = None) extends ProduceBinary with BinaryConversion {
 
   override lazy val args = buildArgs(predicate.map {
     f => Seq(target, name, f())
@@ -110,10 +111,10 @@ case class IndexCreate(target: Table[Document], name: String, predicate: Option[
 }
 
 /** Delete a previously created secondary index of this table.
- *  @param target
- *  @param name
- */
-case class IndexDrop(target: Table[Document], name: String) extends ProduceBinary with BinaryConversion {
+  * @param target
+  * @param name
+  */
+case class IndexDrop(target: TableTyped, name: String) extends ProduceBinary with BinaryConversion {
 
   val resultField = "dropped"
 
@@ -121,8 +122,8 @@ case class IndexDrop(target: Table[Document], name: String) extends ProduceBinar
 }
 
 /** List all the secondary indexes of this table.
- *  @param target
- */
-case class IndexList(target: Table[Document]) extends ProduceSequence[String] {
+  * @param target
+  */
+case class IndexList(target: TableTyped) extends ProduceSequence[String] {
   def termType = TermType.INDEX_LIST
 }

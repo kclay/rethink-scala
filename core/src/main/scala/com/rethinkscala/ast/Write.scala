@@ -4,15 +4,21 @@ import ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.net.{ChangeResult, Document, InsertResult}
 
-case class Insert(table: Table[_], records: Either[Seq[Map[String, Any]], Seq[Document]],
-                  upsert: Option[Boolean] = None, durability: Option[Durability.Kind] = None)
+case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String, Any]], Seq[T]],
+                                 upsert: Option[Boolean] = None, durability: Option[Durability.Kind] = None, returnValues: Option[Boolean] = None)
   extends ProduceDocument[InsertResult] {
 
   override lazy val args = buildArgs(table, records match {
     case Left(x: Seq[Map[String, Any]]) => x
-    case Right(x: Seq[Document]) => x.map(Reflector.toMap(_))
+    case Right(x: Seq[T]) => {
+      val r = x.map(Reflector.toMap(_))
+      //
+      if (x.size > 1) r else r(0)
+    }
   })
-  override lazy val optargs = buildOptArgs(Map("upsert" -> upsert, "durability" -> durability))
+  override lazy val optargs = buildOptArgs(Map("upsert" -> upsert, "durability" -> durability, "return_vals" -> returnValues))
+
+  def withResults = Insert[T](table, records, upsert, durability, Some(true))
 
   def termType = TermType.INSERT
 

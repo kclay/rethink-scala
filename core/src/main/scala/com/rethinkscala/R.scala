@@ -4,18 +4,18 @@ import com.rethinkscala.ast._
 import com.rethinkscala.ast.Table
 import com.rethinkscala.ast.DBCreate
 import com.rethinkscala.ast.DB
+import com.rethinkscala.net.Document
 
 object r {
 
   private lazy val _row = new ImplicitVar
 
-  def row(name:String) = _row field name
+  def row(name: String) = _row field name
+
   //def row[T<:Sequence](name: String)(implicit d:DummyImplicit) = _row.asInstanceOf[T] field name
 
 
-
-
-  def table(name: String, useOutDated: Option[Boolean] = None) = Table(name, useOutDated)
+  def table[T <: Document](name: String, useOutDated: Option[Boolean] = None) = Table[T](name, useOutDated)
 
   def db(name: String) = DB(name)
 
@@ -55,6 +55,7 @@ object r {
   def sub(v: Numeric*) = compute[Numeric](v: _*)(_ - _)
 
   def call(f: Predicate, values: Typed*) = FuncCall(f, values)
+
   def error(msg: String) = UserError(msg)
 
   def js(code: String, timeout: Option[Int] = None) = JavaScript(code, timeout)

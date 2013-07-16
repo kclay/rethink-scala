@@ -3,6 +3,7 @@ package com.rethinkscala
 import com.rethinkscala.ast._
 import com.rethinkscala.ast.Var
 import scala.reflect.macros.Context
+import scala.language.experimental.macros;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,7 +35,7 @@ package object lifted {
 
         generate(body, Some(ctx))
       }
-      case Apply(fun, args) =>
+      case Apply(fun, args) => context.universe.reify("")
     }
 
 
@@ -56,7 +57,7 @@ package object lifted {
 
     def predicate1[T: c.WeakTypeTag, R: c.WeakTypeTag](c: Context)(f: c.Expr[T => R]): c.Expr[Predicate1] = {
       val helper = new Helper[c.type](c)
-      helper.generate(f.tree)
+      // helper.generate(f.tree)
       c.universe.reify {
         new Predicate1((v: Var) => v)
       }

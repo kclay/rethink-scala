@@ -28,7 +28,7 @@ object BuildSettings {
   val buildSettings = Project.defaultSettings ++ defaultScalariformSettings ++ Seq(
     organization := "com.rethinkscala",
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
-    version := "0.1-SNAPSHOT",
+    version := "0.3-SNAPSHOT",
     scalaVersion := "2.10.2",
 
     scalacOptions ++= Seq(),

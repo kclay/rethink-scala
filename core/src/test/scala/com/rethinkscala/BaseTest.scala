@@ -14,6 +14,7 @@ import com.rethinkscala.ast.Produce
 import ql2._
 import com.rethinkscala.Implicits.Quick._
 import com.rethinkscala.net._
+import com.rethinkscala.ast.Table
 
 trait BaseTest extends BeforeAndAfterAll {
   self: FunSuite =>
@@ -29,7 +30,7 @@ trait BaseTest extends BeforeAndAfterAll {
   def setupDB = true
 
   lazy val db = r.db(dbName)
-  lazy val table = db.table(tableName)
+  lazy val table: Table[Document] = db.table(tableName)
 
   override protected def beforeAll() {
 

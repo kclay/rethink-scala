@@ -59,9 +59,9 @@ object Core {
 }
 
 /** Loop over a sequence, evaluating the given write query for each element.
- *  @param target
- *  @param function
- */
+  * @param target
+  * @param function
+  */
 case class ForEach(target: Sequence, function: Predicate1) extends ProduceAnyDocument {
 
   override lazy val args = buildArgs(target, function())
@@ -106,13 +106,17 @@ object Expr {
   def apply(a: Any): Term = {
     val b = a
     a match {
-      case t: Term      => t
-      case s: Seq[_]    => MakeArray(s)
+      case t: Term => t
+      case s: Seq[_] => MakeArray(s)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
-      case d: Document  => apply(d)
-      case a: Any       => Datum(a)
+      case d: Document => apply(d)
+      case a: Any => Datum(a)
 
     }
   }
 
+}
+
+case class Json(value: String) extends Produce[Datum] {
+  def termType = TermType.JSON
 }

@@ -4,6 +4,7 @@ import com.rethinkscala.TermMessage
 
 import ql2.Term.TermType
 import com.rethinkscala.net.BinaryConversion
+import com.rethinkscala.net.Document
 
 trait WithDB {
   val db: Option[DB]
@@ -29,15 +30,15 @@ case class DB(name: String) extends TermMessage {
 
   def ^-(name: String) = this tableDrop (name)
 
-  def table(name: String, useOutDated: Boolean = false) = Table(name, Some(useOutDated), Some(this))
+  def table[T <: Document](name: String, useOutDated: Boolean = false) = Table[T](name, Some(useOutDated), Some(this))
 
-  def ^(name: String, useOutDated: Boolean = false) = this table (name, useOutDated)
+  def ^(name: String, useOutDated: Boolean = false) = this table(name, useOutDated)
 
 }
 
 case class DBCreate(name: String)
 
-    extends ProduceBinary with BinaryConversion {
+  extends ProduceBinary with BinaryConversion {
   override lazy val args = buildArgs(name)
   val resultField = "created"
 

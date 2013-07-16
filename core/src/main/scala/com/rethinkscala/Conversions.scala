@@ -5,7 +5,7 @@ import com.rethinkscala.ast.StringDatum
 import com.rethinkscala.ast.BooleanDatum
 import com.rethinkscala.ast.NumberDatum
 import scala.Some
-import com.rethinkscala.net.{OptionalFrame, PositionFrame, RethinkError}
+import com.rethinkscala.net.{UnknownFrame, OptionalFrame, PositionFrame, RethinkError}
 
 /** Created with IntelliJ IDEA.
   * User: keyston
@@ -32,6 +32,7 @@ object ConvertFrom {
             Frame(Some(f match {
               case QFrame.FrameType.POS => PositionFrame
               case QFrame.FrameType.OPT => OptionalFrame
+              case _ => UnknownFrame
             }), f.`pos`, f.`opt`)
         }
     }.getOrElse(Seq.empty[Frame])

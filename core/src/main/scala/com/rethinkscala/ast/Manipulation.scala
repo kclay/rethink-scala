@@ -40,7 +40,7 @@ object GetField {
 
   def apply(target: Sequence, name: String) = new GetField(target, name) with ProduceAnySequence
 
- // def apply(target: Json, name: String) = new GetField(target, name) with ProduceAnyDocument
+ // def apply(target: Record, name: String) = new GetField(target, name) with ProduceAnyDocument
   def apply(target:Typed,name:String) = new GetField(target,name) with ProduceAny
 }
 
@@ -73,9 +73,9 @@ object Pluck {
 
 
 
-  def apply(target: Json, attrs: Seq[String]) = OPluck(target, Left(attrs))
+  def apply(target: Record, attrs: Seq[String]) = OPluck(target, Left(attrs))
 
-  def apply(target: Json, m: Map[String, Any]) = OPluck(target, Right(m))
+  def apply(target: Record, m: Map[String, Any]) = OPluck(target, Right(m))
 }
 
 
@@ -90,7 +90,7 @@ case class SPluck(target: Sequence, data: Either[Seq[String], Map[String, Any]])
   * @param target
   * @param data
   */
-case class OPluck(target: Json, data: Either[Seq[String], Map[String, Any]]) extends Pluck
+case class OPluck(target: Record, data: Either[Seq[String], Map[String, Any]]) extends Pluck
                                                                                      with ProduceAnyDocument
 
 abstract class Without(target: Typed, attributes: Seq[String]) extends Term {
@@ -104,7 +104,7 @@ object Without {
 
   def apply(target: Sequence, attrs: Seq[String]) = new Without(target, attrs) with ProduceAnySequence
 
-  def apply(target: Json, attrs: Seq[String]) = new Without(target, attrs) with ProduceAnyDocument
+  def apply(target: Record, attrs: Seq[String]) = new Without(target, attrs) with ProduceAnyDocument
 }
 
 /** Merge two objects together to construct a new object with properties from both. Gives preference to attributes from other when there is a conflict.
@@ -122,9 +122,9 @@ object Merge {
 
   def apply(target: Sequence, other: Sequence) = new Merge(target, other) with ProduceAnySequence
 
-  def apply(target: Json, other: Map[String, Any]) = new Merge(target, Expr(other)) with ProduceAnyDocument
+  def apply(target: Record, other: Map[String, Any]) = new Merge(target, Expr(other)) with ProduceAnyDocument
 
-  def apply(target: Json, other: Json) = new Merge(target, other) with ProduceAnyDocument
+  def apply(target: Record, other: Record) = new Merge(target, other) with ProduceAnyDocument
 
   def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
 }
@@ -187,7 +187,7 @@ case class SetDifference(target: Sequence, values: Seq[Datum]) extends ProduceSe
   * @param target
   * @param fields
   */
-case class HasFields(target: Json, fields: Seq[String]) extends ProduceBinary {
+case class HasFields(target: Record, fields: Seq[String]) extends ProduceBinary {
 
   override lazy val args = buildArgs(fields.+:(target): _*)
 
@@ -255,7 +255,7 @@ case class TypeOf(target: Typed) extends ProduceString {
   def termType = TermType.TYPEOF
 }
 
-case class Keys(target: Json) extends ProduceArray {
+case class Keys(target: Record) extends ProduceArray {
   def termType = TermType.KEYS
 }
 

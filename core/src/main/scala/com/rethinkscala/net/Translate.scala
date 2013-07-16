@@ -8,10 +8,20 @@ import com.rethinkscala.Term
 object Translate {
   def translate[In, Out](implicit ct: Manifest[Out]): Translate[In, Out] = new BaseTranslate[In, Out] {}
 
+
 }
+
 trait Translate[In, Out] {
+  lazy val fromMap = new MapConversion[Out] {
+    def convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]) = {
+      val out = Reflector.fromJson[Out](json)
+      out.asInstanceOf[Document].underlying(value)
+      out
+    }
+  }
 
   def write(value: Out): Any
+
   def read(value: In, json: String, term: Term)(implicit ct: Manifest[Out]): Out
 
 }
@@ -20,8 +30,20 @@ trait WithConversion[In, Out] {
 
   def convert(value: In, json: String)(implicit ct: Manifest[Out]): Out
 }
+
 trait WithIterableConversion[Out] extends WithConversion[Iterable[Map[String, _]], Iterable[Out]] {
-  def convert(value: Iterable[Map[String, _]], json: String)(implicit ct: Manifest[Out]) = Reflector.fromJson[Iterable[Out]](json)
+  def convert(value: Iterable[Map[String, _]], json: String)(implicit ct: Manifest[Out]) = {
+    val isDocument = classOf[Document] isAssignableFrom ct.runtimeClass
+    val out = Reflector.fromJson[Iterable[Out]](json)
+
+    if (isDocument) {
+      val seq = value.toSeq
+      out.zipWithIndex foreach {
+        case (o: Document, i) => o.underlying(seq(i))
+      }
+    }
+    out
+  }
 }
 
 trait MapConversion[Out] extends WithConversion[Map[String, Any], Out]
@@ -34,8 +56,11 @@ trait BinaryConversion extends MapConversion[Boolean] {
 
 trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
-  def convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]): Out =
-    Reflector.fromJson[Out](json)
+  def convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]): Out = {
+    val out = Reflector.fromJson[Out](json)
+    out.underlying(value)
+    out
+  }
 
 }
 
@@ -51,7 +76,7 @@ trait BaseTranslate[In, Out] extends Translate[In, Out] {
     term match {
       case c: Conversion => c.convert(value, json)
 
-      case _             => if(isDocument)Reflector.fromJson[Out](json) else value.asInstanceOf[Out]
+      case _ => if (isDocument) fromMap.convert(value.asInstanceOf[Map[String, Any]], json) else value.asInstanceOf[Out]
 
     }
 

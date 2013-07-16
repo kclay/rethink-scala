@@ -14,6 +14,8 @@ sealed trait FrameType
 
 case object OptionalFrame extends FrameType
 
+case object UnknownFrame extends FrameType
+
 case object PositionFrame extends FrameType
 
 abstract class RethinkError(message: String) extends Exception(message) {
@@ -21,6 +23,7 @@ abstract class RethinkError(message: String) extends Exception(message) {
   val term: Term
   val frames: Iterable[Frame]
 }
+
 
 case class RethinkClientError(message: String, term: Term, frames: Iterable[Frame]) extends RethinkError(message)
 

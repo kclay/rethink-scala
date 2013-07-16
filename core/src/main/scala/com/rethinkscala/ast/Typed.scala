@@ -9,19 +9,18 @@ import com.rethinkscala.net.BlockingQuery
 
 trait Produce[ResultType] extends Term {
 
-    type resultType = ResultType
+  type resultType = ResultType
 
-    def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](this, c, tt)
+  def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](this, c, tt)
 
-    //http://stackoverflow.com/a/3461734
-    def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery.toResult
+  //http://stackoverflow.com/a/3461734
+  def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery.toResult
 
-    def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery.toResult
+  def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery.toResult
 
-  }
+}
 
-sealed trait DataType
-{
+sealed trait DataType {
 
   def name: String
 }
@@ -50,6 +49,9 @@ sealed trait Typed {
 
   def coerceTo(dataType: DataType) = CoerceTo(this, dataType)
 }
+
+
+trait TableTyped extends Typed
 
 trait Addition extends Typed {
   def +(other: Addition) = add(other)
@@ -124,18 +126,23 @@ trait ArrayTyped extends Sequence {
 
 trait Stream extends Sequence
 
-trait Selection extends Typed{
+trait Selection extends Typed {
 
-  def update(attributes:Map[String,Any],durability:Option[Durability.Kind],nonAtomic:Option[Boolean]) = Update(this,Left(attributes),durability,nonAtomic)
-  def update(attributes:Map[String,Any]):Update  = update(attributes,None,None)
-  def update(p:Var=>Typed,durability:Option[Durability.Kind],nonAtomic:Option[Boolean]) = Update(this,Right(p),durability,nonAtomic)
-  def update(p:Var=>Typed):Update = update(p,None,None)
+  def update(attributes: Map[String, Any], durability: Option[Durability.Kind], nonAtomic: Option[Boolean]) = Update(this, Left(attributes), durability, nonAtomic)
 
-  def replace(p:Var=>Typed):Replace = Replace(this,Right(p))
-  def replace(data:Map[String,Any]):Replace = Replace(this,Left(data))
+  def update(attributes: Map[String, Any]): Update = update(attributes, None, None)
 
-  def delete:Delete=delete()
-  def delete(durability:Option[Durability.Kind]=None):Delete = Delete(this)
+  def update(p: Var => Typed, durability: Option[Durability.Kind], nonAtomic: Option[Boolean]) = Update(this, Right(p), durability, nonAtomic)
+
+  def update(p: Var => Typed): Update = update(p, None, None)
+
+  def replace(p: Var => Typed): Replace = Replace(this, Right(p))
+
+  def replace(data: Map[String, Any]): Replace = Replace(this, Left(data))
+
+  def delete: Delete = delete()
+
+  def delete(durability: Option[Durability.Kind] = None): Delete = Delete(this)
 
 }
 
@@ -162,9 +169,9 @@ trait Sequence extends Multiply with Filterable {
 
   type SequenceType = Any
 
- // def field(name: String)(implicit d:DummyImplicit) = GetField(this, name)
+  // def field(name: String)(implicit d:DummyImplicit) = GetField(this, name)
 
- // def \(name: String)(implicit d:DummyImplicit) = field(name)
+  // def \(name: String)(implicit d:DummyImplicit) = field(name)
 
   //def coerceTo(dataType: DataType)=CoerceTo(this,dataType)
 
@@ -176,7 +183,7 @@ trait Sequence extends Multiply with Filterable {
 
   def sample(amount: Int) = Sample(this, amount)
 
-  def indexesOf(p:Var=>Binary) = IndexesOf(this, Right(p))
+  def indexesOf(p: Var => Binary) = IndexesOf(this, Right(p))
 
   def apply(index: Int) = Nth(this, index)
 
@@ -196,9 +203,9 @@ trait Sequence extends Multiply with Filterable {
 
   def outerJoin(other: Table[_], func: BooleanPredicate2) = OuterJoin(this, other, func)
 
-  def map(func:Var=>Typed) = RMap(this, func)
+  def map(func: Var => Typed) = RMap(this, func)
 
-  def concatMap(func: Var=>Typed) = ConcatMap(this, func)
+  def concatMap(func: Var => Typed) = ConcatMap(this, func)
 
   def order(keys: Ordering*) = OrderBy(this, keys)
 
@@ -210,7 +217,7 @@ trait Sequence extends Multiply with Filterable {
 
   def count(value: String) = Count(this, Some(Left(value)))
 
-  def count(filter: Var=>Binary) = Count(this, Some(Right(filter)))
+  def count(filter: Var => Binary) = Count(this, Some(Right(filter)))
 
   def count(value: Binary) = Count(this, Some(Right((x: Var) => value)))
 
@@ -228,39 +235,40 @@ trait Sequence extends Multiply with Filterable {
 
   def without(attrs: String*)(implicit d: DummyImplicit) = Without(this, attrs)
 
-  def pluck(m:Map[String,Any])(implicit d:DummyImplicit) = Pluck(this,m)
+  def pluck(m: Map[String, Any])(implicit d: DummyImplicit) = Pluck(this, m)
 
   def merge(other: Sequence) = Merge(this, other)
 
   def +(other: Sequence) = merge(other)
 
-  def foreach(f:Var=>Typed) = ForEach(this, f)
+  def foreach(f: Var => Typed) = ForEach(this, f)
 
 }
 
 
+trait Hash {
+  self: Typed =>
+  def field(name: String) = GetField(this, name)
 
-trait Hash{
-  self:Typed=>
-  def field(name:String) = GetField(this,name)
-  def apply[T<:Typed](name:String):T = GetField(this,name).asInstanceOf[T]
+  def apply[T <: Typed](name: String): T = GetField(this, name).asInstanceOf[T]
 
   def \(name: String) = field(name)
 }
 
-trait Json extends Typed with Hash {
+trait Record extends Typed with Hash {
 
   def pluck(attrs: String*) = Pluck(this, attrs)
 
-  def pluck(m:Map[String,Any]) = Pluck(this,m)
+  def pluck(m: Map[String, Any]) = Pluck(this, m)
 
   def without(attrs: String*) = Without(this, attrs)
 
 
-  def merge(other: Json) = Merge(this, other)
-  def merge(other:Map[String,Any]) =Merge(this,other)
+  def merge(other: Record) = Merge(this, other)
 
-  def +(other: Json) = merge(other)
+  def merge(other: Map[String, Any]) = Merge(this, other)
+
+  def +(other: Record) = merge(other)
 
   def hasFields(values: String*) = HasFields(this, values)
 
@@ -319,14 +327,15 @@ trait Filterable extends Typed {
 
   def filter(value: Map[String, Any]): Filter = Filter(this, Left(Expr(value)))
 
-  def filter(f:Var=>Binary): Filter = Filter(this, Right(f))
+  def filter(f: Var => Binary): Filter = Filter(this, Right(f))
 
 }
 
-trait Ref extends Numeric with Binary with Json with ArrayTyped with Literal with Strings
-trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence{
+trait Ref extends Numeric with Binary with Record with ArrayTyped with Literal with Strings
 
-  def as[R <: T](implicit c: Connection,mf:Manifest[R],d:DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R].toResult
+trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence {
+
+  def as[R <: T](implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R].toResult
 }
 
 trait ProduceAnySequence extends ProduceSequence[Any]
@@ -337,9 +346,9 @@ trait ProduceBinary extends Produce[Boolean] with Binary
 
 //trait ProduceLiteral extends ProduceLiteral with Literal
 
-trait ProduceDocument[T <: Document] extends Produce[T] with Json with DocumentConversion[T]
+trait ProduceDocument[T <: Document] extends Produce[T] with Record with DocumentConversion[T]
 
-trait ProduceAnyDocument extends ProduceDocument[Document] with Json
+trait ProduceAnyDocument extends ProduceDocument[Document] with Record
 
 trait ProduceNumeric extends Produce[Double] with Numeric
 
@@ -351,13 +360,14 @@ trait ProduceSelection extends Selection
 
 trait ProduceSingleSelection extends ProduceAnyDocument with ProduceSelection with SingleSelection
 
-trait ProduceTypedSingleSelection[T] extends ProduceDocument[T] with ProduceSelection with SingleSelection
+trait ProduceTypedSingleSelection[T <: Document] extends ProduceDocument[T] with ProduceSelection with SingleSelection
 
 trait ProduceStreamSelection extends ProduceAnySequence with ProduceSelection with StreamSelection
 
 trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with ProduceSelection with StreamSelection
 
 trait ProduceArray extends ProduceAnySequence with ArrayTyped
+
 trait ProduceTypedArray[T] extends ProduceSequence[T] with ArrayTyped
 
 sealed trait LogicSignature
