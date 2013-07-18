@@ -3,6 +3,7 @@ package com.rethinkscala.net
 
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.Term
+import com.rethinkscala.ast.{After, WithLifecycle}
 ;
 
 object Translate {
@@ -13,7 +14,7 @@ object Translate {
 
 trait Translate[In, Out] {
   lazy val fromMap = new MapConversion[Out] {
-    def convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]) = {
+    protected def _convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]) = {
       val out = Reflector.fromJson[Out](json)
       out.asInstanceOf[Document].underlying(value)
       out
@@ -28,11 +29,29 @@ trait Translate[In, Out] {
 
 trait WithConversion[In, Out] {
 
-  def convert(value: In, json: String)(implicit ct: Manifest[Out]): Out
+  def convert(value: In, json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
+    term: Term
+    val rtn = _convert(value, json)
+
+    if (rtn.isInstanceOf[GeneratesKeys]) {
+      val gks = rtn.asInstanceOf[GeneratesKeys]
+
+      term match {
+        case wlf: WithLifecycle[_] => wlf(After(gks.generatedKeys))
+
+        case _ =>
+      }
+
+    }
+    rtn
+
+  }
+
+  protected def _convert(value: In, json: String)(implicit ct: Manifest[Out]): Out
 }
 
 trait WithIterableConversion[Out] extends WithConversion[Iterable[Map[String, _]], Iterable[Out]] {
-  def convert(value: Iterable[Map[String, _]], json: String)(implicit ct: Manifest[Out]) = {
+  protected def _convert(value: Iterable[Map[String, _]], json: String)(implicit ct: Manifest[Out]) = {
     val isDocument = classOf[Document] isAssignableFrom ct.runtimeClass
     val out = Reflector.fromJson[Iterable[Out]](json)
 
@@ -51,12 +70,12 @@ trait MapConversion[Out] extends WithConversion[Map[String, Any], Out]
 trait BinaryConversion extends MapConversion[Boolean] {
   val resultField: String
 
-  def convert(value: Map[String, Any], json: String)(implicit mf: Manifest[Boolean]): Boolean = value.get(resultField).getOrElse(0) == 1
+  protected def _convert(value: Map[String, Any], json: String)(implicit mf: Manifest[Boolean]): Boolean = value.get(resultField).getOrElse(0) == 1
 }
 
 trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
-  def convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]): Out = {
+  protected def _convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]): Out = {
     val out = Reflector.fromJson[Out](json)
     out.underlying(value)
     out
@@ -74,9 +93,9 @@ trait BaseTranslate[In, Out] extends Translate[In, Out] {
 
     val isDocument = classOf[Document] isAssignableFrom ct.runtimeClass
     term match {
-      case c: Conversion => c.convert(value, json)
+      case c: Conversion => c.convert(value, json, term)
 
-      case _ => if (isDocument) fromMap.convert(value.asInstanceOf[Map[String, Any]], json) else value.asInstanceOf[Out]
+      case _ => if (isDocument) fromMap.convert(value.asInstanceOf[Map[String, Any]], json, term) else value.asInstanceOf[Out]
 
     }
 

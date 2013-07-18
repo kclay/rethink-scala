@@ -2,6 +2,7 @@ package com.rethinkscala.net
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.rethinkscala.reflect.Reflector
+import scala.collection.mutable.ArrayBuffer
 
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {
@@ -38,11 +39,32 @@ trait Document {
   def \(name: String) = DocPath(_underlying, List(name))
 
   def toMap = _underlying
+
+  private val _beforeInsert = ArrayBuffer.empty[() => Unit]
+
+  private val _afterInsert = ArrayBuffer.empty[String => Unit]
+
+
+  protected def afterInsert(f: String => Unit) = _afterInsert append f
+
+  protected def beforeInsert(f: () => Unit) = _beforeInsert append f
+
+  private[rethinkscala] def beforeInsert = {
+    _beforeInsert.foreach(_())
+  }
+
+  private[rethinkscala] def afterInsert(id: String) = {
+    _afterInsert.foreach(_(id))
+  }
 }
 
 trait KeyedDocument[K] extends Document {
   type Key = K
   val id: Key
+}
+
+trait GeneratesKeys {
+  val generatedKeys: Option[Seq[String]]
 }
 
 trait ReturnValues {
@@ -69,8 +91,8 @@ abstract class InfoResult(name: String, @JsonProperty("type") kind: String) exte
 
 case class InsertResult(inserted: Int = 0, replaced: Int = 0, unchanged: Int = 0, errors: Int = 0, @JsonProperty("first_error") firstError: Option[String] = None,
 
-                        @JsonProperty("generated_keys") generatedKeys: Seq[String] = Seq.empty[String],
-                        deleted: Int = 0, skipped: Int = 0) extends Document with ReturnValues {
+                        @JsonProperty("generated_keys") generatedKeys: Option[Seq[String]],
+                        deleted: Int = 0, skipped: Int = 0) extends Document with ReturnValues with GeneratesKeys {
 
   //private var _returnValues = ???
 
@@ -81,4 +103,5 @@ case class InsertResult(inserted: Int = 0, replaced: Int = 0, unchanged: Int = 0
 case class TableInfoResult(name: String, @JsonProperty("type") kind: String, db: DBResult) extends InfoResult(name, kind)
 
 
-case class ChangeResult(replaced: Int, unchanged: Int, inserted: Int, deleted: Int, errors: Int, @JsonProperty("first_error") firstError: Option[String], skipped: Int) extends Document
+case class ChangeResult(replaced: Int, unchanged: Int, inserted: Int, deleted: Int, errors: Int, @JsonProperty("first_error") firstError: Option[String],
+                        skipped: Int, @JsonProperty("generated_keys") generatedKeys: Option[Seq[String]]) extends Document with ReturnValues with GeneratesKeys

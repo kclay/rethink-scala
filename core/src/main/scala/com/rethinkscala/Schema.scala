@@ -4,6 +4,11 @@ import com.rethinkscala.ast._
 import com.rethinkscala.net.{Connection, RethinkClientError, RethinkError, Document}
 import java.lang.Exception
 import scala.collection.mutable.ArrayBuffer
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.databind.{ObjectMapper, DeserializationFeature}
+import com.fasterxml.jackson.annotation.PropertyAccessor
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
+import com.rethinkscala.reflect.Reflector
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,11 +24,22 @@ class Schema {
 
   protected implicit def thisSchema = this
 
+
+  protected def defineMapper = {
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
+    mapper
+  }
+
+  Reflector.mapper = defineMapper
+
   implicit def doc2Active[A <: Document](a: A)(implicit m: Manifest[A], c: Connection) =
     new ActiveRecord(a, m)
 
   class ActiveRecord[T <: Document](o: T, m: Manifest[T])(implicit c: Connection) {
-    private def _performAction[R](action: (Table[T]) => Produce[R])(implicit m: Manifest[R]): Either[Exception, R] = (
+    private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] = (
       _tableTypes get (m.runtimeClass) map {
         table: Table[_] => action(table.asInstanceOf[Table[T]]).run
 
@@ -38,8 +54,8 @@ class Schema {
     /**
      * Same as {{{table.update(a)}}}
      */
-    /* def update =
-       _performAction(_.update(o))  */
+    def replace =
+      _performAction(_.get(o.asInstanceOf[ {val id: Option[Int]}].id.get).replace(o))
 
     // def save: Option[T]
   }

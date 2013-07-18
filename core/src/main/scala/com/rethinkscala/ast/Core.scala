@@ -14,6 +14,15 @@ case class MakeArray(array: Seq[Any]) extends Term with ArrayTyped {
 
 }
 
+
+private[rethinkscala] case class MakeObj2(data: Document) extends Term with MapTyped {
+
+  override protected val extractArgs = false
+  override lazy val optargs = buildOptArgs2(Reflector.toMap(data))
+
+  def termType = TermType.MAKE_OBJ
+}
+
 case class MakeObj(data: Map[String, Any]) extends Term with MapTyped {
 
   override protected val extractArgs = false

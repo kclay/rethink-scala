@@ -11,6 +11,7 @@ trait Produce[ResultType] extends Term {
 
   type resultType = ResultType
 
+
   def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](this, c, tt)
 
   //http://stackoverflow.com/a/3461734
@@ -67,7 +68,7 @@ trait Literal extends Addition {
 
   def not(other: Term) = Not(this)
 
-  def ==(other: Literal) = eq(other)
+  def ===(other: Literal) = eq(other)
 
   def eq(other: Literal) = Eq(this, other)
 
@@ -126,7 +127,7 @@ trait ArrayTyped extends Sequence {
 
 trait Stream extends Sequence
 
-trait Selection extends Typed {
+trait Selection extends Sequence {
 
   def update(attributes: Map[String, Any], durability: Option[Durability.Kind], nonAtomic: Option[Boolean]) = Update(this, Left(attributes), durability, nonAtomic)
 
@@ -134,9 +135,13 @@ trait Selection extends Typed {
 
   def update(p: Var => Typed, durability: Option[Durability.Kind], nonAtomic: Option[Boolean]) = Update(this, Right(p), durability, nonAtomic)
 
+  def update(d: Document): Update = update((x: Var) => MakeObj2(d))
+
   def update(p: Var => Typed): Update = update(p, None, None)
 
   def replace(p: Var => Typed): Replace = Replace(this, Right(p))
+
+  def replace(d: Document): Replace = replace((x: Var) => MakeObj2(d))
 
   def replace(data: Map[String, Any]): Replace = Replace(this, Left(data))
 
@@ -335,6 +340,9 @@ trait Ref extends Numeric with Binary with Record with ArrayTyped with Literal w
 
 trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence {
 
+
+  def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T].toResult
+
   def as[R <: T](implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R].toResult
 }
 
@@ -356,15 +364,13 @@ trait ProduceString extends Produce[String] with Strings
 
 trait ProduceAny extends Produce[Any] with Ref
 
-trait ProduceSelection extends Selection
+trait ProduceSingleSelection extends ProduceAnyDocument with SingleSelection
 
-trait ProduceSingleSelection extends ProduceAnyDocument with ProduceSelection with SingleSelection
+trait ProduceTypedSingleSelection[T <: Document] extends ProduceDocument[T] with SingleSelection
 
-trait ProduceTypedSingleSelection[T <: Document] extends ProduceDocument[T] with ProduceSelection with SingleSelection
+trait ProduceStreamSelection extends ProduceAnySequence with StreamSelection
 
-trait ProduceStreamSelection extends ProduceAnySequence with ProduceSelection with StreamSelection
-
-trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with ProduceSelection with StreamSelection
+trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with StreamSelection
 
 trait ProduceArray extends ProduceAnySequence with ArrayTyped
 

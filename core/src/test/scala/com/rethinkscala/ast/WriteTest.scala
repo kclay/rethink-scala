@@ -47,7 +47,13 @@ class WriteTest extends FunSuite with BaseTest {
 
 
   }
+  test("replace") {
+    assert(fetch.replace(Foo(Some("a"), 10, 60)).withResults, {
+      c: ChangeResult => c.replaced == 1 && c.returnedValue[Foo].map(_.a == 10).getOrElse(false)
+    })
 
+  }
+  /*
   test("updating data") {
 
 
@@ -98,6 +104,6 @@ class WriteTest extends FunSuite with BaseTest {
     assert(fetch.delete, {
       cr: ChangeResult => cr.deleted == 1
     })
-  }
+  }    */
 
 }

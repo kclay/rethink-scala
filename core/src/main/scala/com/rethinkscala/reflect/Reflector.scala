@@ -13,14 +13,17 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
+import com.fasterxml.jackson.annotation.JsonInclude.Include
 
 object Reflector {
 
   import java.io.StringWriter
 
   private[this] val classFields = new Memo[Class[_], Seq[Field]]
-  private[this] val mapper = new ObjectMapper()
+  private[rethinkscala] var mapper = new ObjectMapper()
+
   mapper.registerModule(DefaultScalaModule)
+  mapper.setSerializationInclusion(Include.NON_NULL);
   mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
 

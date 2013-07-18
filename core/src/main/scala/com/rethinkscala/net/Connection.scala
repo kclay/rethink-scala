@@ -20,7 +20,7 @@ import com.rethinkscala.ConvertFrom._
 
 import org.jboss.netty.channel.Channel
 import ql2.Response.ResponseType
-import com.rethinkscala.ast.Datum
+import com.rethinkscala.ast.{After, WithLifecycle, Insert, Datum}
 import org.jboss.netty.handler.codec.frame.FrameDecoder
 import java.util.concurrent.atomic.AtomicInteger
 import com.rethinkscala.utils.Helpers._
@@ -47,6 +47,8 @@ abstract class Token {
 
 case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p: Promise[R], mf: Manifest[R]) extends Token {
 
+  import com.rethinkscala.ast.SingleSelection
+
   implicit val t = mf
 
   private[rethinkscala] def context = connection
@@ -64,7 +66,16 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
   def toResult(response: Response) = {
     val (data: Any, json: String) = Datum.wrap(response.`response`(0))
-    cast(data, json)
+
+    val rtn = data match {
+      case None => None
+      case _ => cast(data, json)
+    }
+
+
+    rtn
+
+
   }
 
   def handle(response: Response) = {
