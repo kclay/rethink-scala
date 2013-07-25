@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.{ObjectMapper, DeserializationFeature}
 import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
 import com.rethinkscala.reflect.Reflector
+import com.fasterxml.jackson.annotation.JsonInclude.Include
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,6 +31,7 @@ class Schema {
     mapper.registerModule(DefaultScalaModule)
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
+    mapper.setSerializationInclusion(Include.NON_NULL)
     mapper
   }
 

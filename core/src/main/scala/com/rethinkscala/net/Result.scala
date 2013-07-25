@@ -43,14 +43,21 @@ trait Document {
   private val _beforeInsert = ArrayBuffer.empty[() => Unit]
 
   private val _afterInsert = ArrayBuffer.empty[String => Unit]
+  private val _afterInsert0 = ArrayBuffer.empty[() => Unit]
 
 
   protected def afterInsert(f: String => Unit) = _afterInsert append f
+
+  protected def afterInsert(f: () => Unit) = _afterInsert0 append f
 
   protected def beforeInsert(f: () => Unit) = _beforeInsert append f
 
   private[rethinkscala] def beforeInsert = {
     _beforeInsert.foreach(_())
+  }
+
+  private[rethinkscala] def afterInsert = {
+    _afterInsert0.foreach(_())
   }
 
   private[rethinkscala] def afterInsert(id: String) = {

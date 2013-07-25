@@ -16,12 +16,15 @@ abstract class WithLifecycle[R](implicit mf: Manifest[R]) {
 
   private[rethinkscala] def apply(lc: Lifecycle) = lc match {
     case Before => before
-    case After(v) => v.map {
-      x => if (mf.runtimeClass isAssignableFrom x.getClass) after(x.asInstanceOf[R])
+    case After(v) => v match {
+      case Some(x) => if (mf.runtimeClass isAssignableFrom x.getClass) after(x.asInstanceOf[R])
+      case _ => after
     }
   }
 
   protected def before = {}
+
+  protected def after = {}
 
   protected def after(values: R) = {}
 }
@@ -51,6 +54,8 @@ case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String
     }
     case _ =>
   }
+
+  override protected def after = lifecycle((d, i) => d.afterInsert)
 
   override protected def before = lifecycle((d, i) => d.beforeInsert)
 

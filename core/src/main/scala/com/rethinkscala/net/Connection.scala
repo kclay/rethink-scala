@@ -47,7 +47,6 @@ abstract class Token {
 
 case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p: Promise[R], mf: Manifest[R]) extends Token {
 
-  import com.rethinkscala.ast.SingleSelection
 
   implicit val t = mf
 
@@ -226,9 +225,10 @@ case class Connection(version: Version) {
 
   }
 
-  case class ChannelWrapper(channel: Channel) {
+  case class ChannelWrapper(private val cf: ChannelFuture) {
     val id = connectionId.incrementAndGet()
     val token: AtomicInteger = new AtomicInteger();
+    lazy val channel = cf.getChannel
   }
 
 
@@ -236,8 +236,14 @@ case class Connection(version: Version) {
 
     def create(): ChannelWrapper = {
 
-      val c = bootstrap.connect(new InetSocketAddress(version.host, version.port)).await().getChannel
-      version.configure(c)
+      val c = bootstrap.connect(new InetSocketAddress(version.host, version.port))
+      c.addListener(new ChannelFutureListener {
+        def operationComplete(future: ChannelFuture) {
+          version.configure(future.getChannel)
+        }
+      })
+
+
       new ChannelWrapper(c)
     }
 

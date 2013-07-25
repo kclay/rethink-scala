@@ -31,9 +31,12 @@ case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R])
 
     val r = v match {
       case Some(Failure(e: RethinkError)) => Left(e)
-      case Some(Success(r)) => if (mf.runtimeClass.isAssignableFrom(r.getClass) || itClass.isAssignableFrom(r.getClass)) Right(r.asInstanceOf[R])
-      else
-        Left(RethinkNoResultsError("No results found for " + mf.runtimeClass.getSimpleName, term))
+      case Some(Success(r)) => r match {
+        case x: Option[Nothing] => Left(RethinkNoResultsError("No results found for " + mf.runtimeClass.getSimpleName, term))
+        case _ => Right(r.asInstanceOf[R])
+
+
+      }
 
       case Some(Failure(e: Exception)) => Left(RethinkRuntimeError(e.getMessage, term))
       case _ => Left(RethinkRuntimeError("Opps", term))

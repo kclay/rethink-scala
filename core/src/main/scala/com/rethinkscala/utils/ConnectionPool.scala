@@ -40,6 +40,7 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   extends ConnectionPool[Conn] with LowLevelConnectionPool[Conn] {
 
   private val size = new AtomicInteger(0)
+
   private val pool = new ArrayBlockingQueue[Conn](max)
 
   def apply[A]()(f: Conn => A): A = {
