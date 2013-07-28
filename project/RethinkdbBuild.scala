@@ -20,7 +20,7 @@ object BuildSettings {
     setReleaseVersion, // : ReleaseStep
     commitReleaseVersion, // : ReleaseStep, performs the initial git checks
     tagRelease, // : ReleaseStep
-    //publishArtifacts,                       // : ReleaseStep, checks whether `publishTo` is properly set up
+    publishArtifacts, // : ReleaseStep, checks whether `publishTo` is properly set up
     setNextVersion, // : ReleaseStep
     commitNextVersion, // : ReleaseStep
     pushChanges // : ReleaseStep, also checks that an upstream branch is properly configured
@@ -39,8 +39,16 @@ object BuildSettings {
 
   )
 
+  val repo = file("../kclay.github.io")
   val buildWithRelease = buildSettings ++ releaseSettings ++ Seq(
-    releaseProcess := releaseSteps
+    releaseProcess := releaseSteps,
+    publishArtifact in Test := false,
+
+    publishTo <<= version {
+      (v: String) => Some(Resolver.file("file", repo / (if (v.trim.endsWith("SNAPSHOT")) "snapshots" else "releases")))
+
+
+    }
   )
 }
 
@@ -70,7 +78,7 @@ object RethinkdbBuild extends Build {
   lazy val root = Project(
     "root",
     file("."),
-    settings = buildSettings
+    settings = buildWithRelease
   ) aggregate(lifted, core)
   lazy val core = Project(
     id = "core",
