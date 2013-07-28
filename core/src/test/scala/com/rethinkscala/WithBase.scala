@@ -16,7 +16,7 @@ import com.rethinkscala.Implicits.Quick._
 import com.rethinkscala.net._
 import com.rethinkscala.ast.Table
 
-trait BaseTest extends BeforeAndAfterAll {
+trait WithBase extends BeforeAndAfterAll {
   self: FunSuite =>
   val host = (Option(scala.util.Properties.envOrElse("TRAVIS", "empty")) map {
     case "empty" => "172.16.2.45"

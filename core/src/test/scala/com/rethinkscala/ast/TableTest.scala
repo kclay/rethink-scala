@@ -1,7 +1,7 @@
 package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
-import com.rethinkscala.BaseTest
+import com.rethinkscala.WithBase
 import com.rethinkscala._
 import com.rethinkscala.Implicits._
 
@@ -11,7 +11,7 @@ import com.rethinkscala.Implicits._
  *  Time: 4:33 PM
  *  To change this template use File | Settings | File Templates.
  */
-class TableTest extends FunSuite with BaseTest {
+class TableTest extends FunSuite with WithBase {
 
   test("create table with options") {
 

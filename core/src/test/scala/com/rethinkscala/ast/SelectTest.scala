@@ -2,7 +2,7 @@ package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
 
-import com.rethinkscala.BaseTest
+import com.rethinkscala.WithBase
 import com.rethinkscala.Implicits._
 import com.rethinkscala.net.Document
 
@@ -16,10 +16,10 @@ import com.rethinkscala.net.Document
 
 case class SelectFoo(id: Int) extends Document
 
-class SelectTest extends FunSuite with BaseTest {
+class SelectTest extends FunSuite with WithBase {
 
-  /*
-  test("select between") {
+
+  ignore("select between") {
 
     val records = for (i <- 1 to 50) yield SelectFoo(i)
     table.insert(records).run
@@ -33,7 +33,7 @@ class SelectTest extends FunSuite with BaseTest {
 
   }
 
-  test("table select") {
+  ignore("table select") {
 
     val results = table.order("id").as[SelectFoo]
     assert(results, {
@@ -41,14 +41,14 @@ class SelectTest extends FunSuite with BaseTest {
     })
   }
 
-  test("table.get") {
-    table.get(1).run
-    //assertAs[SelectFoo](,{
-    f: SelectFoo => f.id == 1
-    // })
+  ignore("table.get") {
+
+    assertAs[SelectFoo](table.get(1), {
+      f: SelectFoo => f.id == 1
+    })
   }
 
-  test("select filter") {
+  ignore("select filter") {
 
     var results = table.filter(Map("id" -> 1)).as[SelectFoo]
     assert(results, {
@@ -66,6 +66,6 @@ class SelectTest extends FunSuite with BaseTest {
     })
 
 
-  }     */
+  }
 
 }

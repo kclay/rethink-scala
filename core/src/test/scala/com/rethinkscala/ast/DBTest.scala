@@ -4,9 +4,9 @@ import org.scalatest.FunSuite
 
 import com.rethinkscala._
 import ql2._
-import com.rethinkscala.BaseTest
+import com.rethinkscala.WithBase
 
-class DBTest extends FunSuite with BaseTest {
+class DBTest extends FunSuite with WithBase {
 
   test("create db instance") {
 

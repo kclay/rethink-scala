@@ -69,7 +69,7 @@ object BuildSettings {
   lazy val releaseSteps = Seq[ReleaseStep](
     checkSnapshotDependencies, // : ReleaseStep
     inquireVersions, // : ReleaseStep
-    runTest, // : ReleaseStep
+   // runTest, // : ReleaseStep
     setReleaseVersion, // : ReleaseStep
     commitReleaseVersion, // : ReleaseStep, performs the initial git checks
     tagRelease, // : ReleaseStep

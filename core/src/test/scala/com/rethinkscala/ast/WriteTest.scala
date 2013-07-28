@@ -18,7 +18,7 @@ case class Foo(id: Option[String], a: Int, b: Int) extends Document
 
 case class Foo2(id: String, a: Int, b: Int, @JsonProperty("is_fav") fav: Boolean) extends Document
 
-class WriteTest extends FunSuite with BaseTest {
+class WriteTest extends FunSuite with WithBase {
 
   def fetch = table.get("a")
 
