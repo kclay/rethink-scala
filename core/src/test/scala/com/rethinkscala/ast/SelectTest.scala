@@ -15,7 +15,7 @@ import com.rethinkscala.net.Document
  */
 
 case class SelectFoo(id: Int) extends Document
-
+  /*
 class SelectTest extends FunSuite with WithBase {
 
 
@@ -43,6 +43,8 @@ class SelectTest extends FunSuite with WithBase {
 
   ignore("table.get") {
 
+
+
     assertAs[SelectFoo](table.get(1), {
       f: SelectFoo => f.id == 1
     })
@@ -69,3 +71,4 @@ class SelectTest extends FunSuite with WithBase {
   }
 
 }
+          */

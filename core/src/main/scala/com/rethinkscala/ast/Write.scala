@@ -55,11 +55,11 @@ case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String
     case _ =>
   }
 
-  override protected def after = lifecycle((d, i) => d.afterInsert)
+  override protected def after = lifecycle((d, i) => d.invokeAfterInsert)
 
-  override protected def before = lifecycle((d, i) => d.beforeInsert)
+  override protected def before = lifecycle((d, i) => d.invokeBeforeInsert)
 
-  override protected def after(values: Seq[String]) = lifecycle((d, i) => d.afterInsert(values(i)))
+  override protected def after(values: Seq[String]) = lifecycle((d, i) => d.invokeAfterInsert(values(i)))
 }
 
 case class Update(target: Selection, data: Either[Map[String, Any], Predicate],

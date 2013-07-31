@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ DatumAssocPair, DatumMessage, AssocPair }
+import com.rethinkscala.{DatumAssocPair, DatumMessage, AssocPair}
 import ql2.Datum.DatumType
 
 sealed trait Datum extends DatumMessage {
@@ -11,10 +11,9 @@ sealed trait Datum extends DatumMessage {
 
 object Datum {
 
-  import ql2.Datum.DatumType.{ R_NULL, R_BOOL, R_NUM, R_STR, R_ARRAY, R_OBJECT }
+  import ql2.Datum.DatumType.{R_NULL, R_BOOL, R_NUM, R_STR, R_ARRAY, R_OBJECT}
 
   import com.rethinkscala.Implicits.Quick._
-
 
 
   def wrap(datum: ql2.Datum): (Any, String) = {
@@ -34,8 +33,8 @@ object Datum {
         datum.bool
       }
       case Some(R_NUM) => {
-        buf ++= datum.num.toString
-        datum.num
+        buf ++= datum.num.toLong.toString
+        datum.num.toLong
       }
       case Some(R_STR) => {
         buf ++= "\"" + datum.str + "\""
@@ -62,8 +61,7 @@ object Datum {
 
         var index = 0 // FixMe couldn't get .zipWithIndex to work
         val unwrapped = datum.obj.map {
-          ap =>
-            {
+            ap => {
               buf ++= "\"" + ap.`key`.get + "\":"
               val rtn = (ap.`key`.get, wrap(ap.`val`.get, buf))
               index += 1
@@ -72,7 +70,7 @@ object Datum {
               rtn
             }
 
-        }
+          }
         buf ++= "}"
         unwrapped.toMap
 
@@ -83,15 +81,15 @@ object Datum {
 
   def apply(a: Any): Datum = a match {
 
-    case Some(v)    => Datum(v)
-    case None       => NoneDatum()
-    case s: String  => StringDatum(s)
-    case i: Int     => NumberDatum(i)
-    case f: Float   => NumberDatum(f)
-    case l: Long    => NumberDatum(l)
+    case Some(v) => Datum(v)
+    case None => NoneDatum()
+    case s: String => StringDatum(s)
+    case i: Int => NumberDatum(i)
+    case f: Float => NumberDatum(f)
+    case l: Long => NumberDatum(l)
     case b: Boolean => BooleanDatum(b)
-    case d: Double  => NumberDatum(d)
-    case _          => NoneDatum()
+    case d: Double => NumberDatum(d)
+    case _ => NoneDatum()
 
   }
 }

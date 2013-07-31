@@ -6,7 +6,7 @@ import ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.net.{InfoResult, Document}
 
-case class MakeArray(array: Seq[Any]) extends Term with ArrayTyped {
+case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
   override lazy val args = buildArgs(array: _*)
 
   // def datumTermType:TermType.EnumVal=ql2.Datum

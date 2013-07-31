@@ -40,29 +40,18 @@ trait Document {
 
   def toMap = _underlying
 
-  private val _beforeInsert = ArrayBuffer.empty[() => Unit]
-
-  private val _afterInsert = ArrayBuffer.empty[String => Unit]
-  private val _afterInsert0 = ArrayBuffer.empty[() => Unit]
+  private[rethinkscala] def invokeBeforeInsert = beforeInsert
 
 
-  protected def afterInsert(f: String => Unit) = _afterInsert append f
+  protected def beforeInsert = {}
 
-  protected def afterInsert(f: () => Unit) = _afterInsert0 append f
+  protected def afterInsert = {}
 
-  protected def beforeInsert(f: () => Unit) = _beforeInsert append f
+  protected def afterInsert(id: String) = {}
 
-  private[rethinkscala] def beforeInsert = {
-    _beforeInsert.foreach(_())
-  }
+  private[rethinkscala] def invokeAfterInsert = afterInsert
 
-  private[rethinkscala] def afterInsert = {
-    _afterInsert0.foreach(_())
-  }
-
-  private[rethinkscala] def afterInsert(id: String) = {
-    _afterInsert.foreach(_(id))
-  }
+  private[rethinkscala] def invokeAfterInsert(id: String) = afterInsert(id)
 }
 
 trait KeyedDocument[K] extends Document {

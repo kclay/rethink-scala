@@ -29,9 +29,11 @@ class Schema {
   protected def defineMapper = {
     val mapper = new ObjectMapper()
     mapper.registerModule(DefaultScalaModule)
+
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
     mapper.setSerializationInclusion(Include.NON_NULL)
+
     mapper
   }
 
@@ -51,7 +53,7 @@ class Schema {
      * Same as {{{table.insert(a)}}}
      */
     def save =
-      _performAction(_.insert(o))
+      _performAction(_.insert(o) withResults)
 
     /**
      * Same as {{{table.update(a)}}}
@@ -75,6 +77,7 @@ class Schema {
   protected def table[T <: Document](implicit manifestT: Manifest[T]): Table[T] =
     table(tableNameFromClass(manifestT.runtimeClass))(manifestT)
 
+
   protected def table[T <: Document](name: String, useOutDated: Option[Boolean] = None, db: Option[String] = None
                                       )(implicit manifestT: Manifest[T]): Table[T] = {
 
@@ -86,21 +89,31 @@ class Schema {
     t
   }
 
-  def on[T <: Document](table: Table[T])(f: TableView[T] => Unit) = ???
+  private val _tableViews = ArrayBuffer.empty[TableView[_]]
+
+  def on[T <: Document](table: Table[T])(f: TableView[T] => Unit)(implicit mf: Manifest[T]) = {
+    val view = new TableView[T](table)
+    f(view)
+    _tableViews.append(view)
+  }
 
   def db(name: String) = r.db(name)
 
-  def setup(implicit c: Connection) = tables.foreach {
-    t => {
-      t.db.map(_.create.run match {
-        case Left(e) => println(e)
-        case Right(v) => println(s"Db ${t.name} created -> $v")
-      })
-      t.create.run match {
-        case Left(e) => println(e)
-        case Right(v) => println(s"Table ${t.name} created -> $v")
+  def setup(implicit c: Connection) = {
+    tables.foreach {
+      t => {
+
+        t.db.map(_.create.run match {
+          case Left(e) => println(e)
+          case Right(v) => println(s"Db ${t.name} created -> $v")
+        })
+        t.create.run match {
+          case Left(e) => println(e)
+          case Right(v) => println(s"Table ${t.name} created -> $v")
+        }
       }
     }
+    _tableViews foreach (_.apply)
   }
 
 
@@ -108,9 +121,16 @@ class Schema {
 
 class TableView[T <: Document](table: Table[T]) {
 
+  private[rethinkscala] val _indexes = ArrayBuffer.empty[ProduceBinary]
+
+  private[rethinkscala] def apply(implicit c: Connection) = {
+    _indexes foreach (_.run)
+  }
+
   def db(name: String) = ???
 
-  def index(name: String) = ???
+  def index(name: String) = _indexes += table.indexCreate(name)
+
 
   def index(name: String, f: Var => Typed) = ???
 }

@@ -14,7 +14,10 @@ import com.rethinkscala.net.{Document, ChangeResult, InsertResult}
   *
   */
 
-case class Foo(id: Option[String], a: Int, b: Int) extends Document
+case class Foo(id: Option[String], a: Int, b: Int) extends Document {
+
+
+}
 
 case class Foo2(id: String, a: Int, b: Int, @JsonProperty("is_fav") fav: Boolean) extends Document
 

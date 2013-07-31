@@ -59,6 +59,7 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
   def cast(value: Any, json: String): ResultType = value match {
     case v: MapType => translate[MapType, ResultType].read(v.asInstanceOf[MapType], json, term)
     case a: IterableType => translate[IterableType, ResultType].read(a.asInstanceOf[IterableType], json, term)
+    case x: Any => x.asInstanceOf[R]
 
   }
 

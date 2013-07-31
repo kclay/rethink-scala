@@ -18,7 +18,7 @@ case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R])
 
   lazy val ast: ql2.Term = term.ast
 
-  def toResult[R] = toResult(Duration.Inf)
+  def toResult[R] = toResult(Duration(20, "seconds"))
 
   def toResult[R](atMost: Duration): Either[RethinkError, R] = {
 
@@ -28,6 +28,7 @@ case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R])
 
     val v = f.value
     val itClass = classOf[Iterable[R]]
+
 
     val r = v match {
       case Some(Failure(e: RethinkError)) => Left(e)

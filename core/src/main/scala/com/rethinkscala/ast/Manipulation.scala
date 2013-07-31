@@ -25,7 +25,7 @@ case class Prepend(target: ArrayTyped, value: Datum) extends ProduceArray {
   * @param target
   * @param name
   */
-abstract class GetField(target:Typed,name:String) extends Term {
+abstract class GetField(target: Typed, name: String) extends Term {
 
 
   override lazy val args = buildArgs(target, name)
@@ -37,13 +37,14 @@ abstract class GetField(target:Typed,name:String) extends Term {
 object GetField {
 
 
+  //def apply(target: ArrayTyped, name: String) = new GetField(target, name) with ProduceArray
 
-  def apply(target: Sequence, name: String) = new GetField(target, name) with ProduceAnySequence
 
- // def apply(target: Record, name: String) = new GetField(target, name) with ProduceAnyDocument
-  def apply(target:Typed,name:String) = new GetField(target,name) with ProduceAny
+  def apply[T](target: Sequence, name: String) = new GetField(target, name) with ProduceTypedArray[T]
+
+  // def apply(target: Record, name: String) = new GetField(target, name) with ProduceAnyDocument
+  def apply(target: Typed, name: String) = new GetField(target, name) with ProduceAny
 }
-
 
 
 abstract class Pluck extends Term {
@@ -64,13 +65,9 @@ abstract class Pluck extends Term {
 object Pluck {
 
 
-
   def apply(target: Sequence, attrs: Seq[String]) = SPluck(target, Left(attrs))
 
   def apply(target: Sequence, m: Map[String, Any]) = SPluck(target, Right(m))
-
-
-
 
 
   def apply(target: Record, attrs: Seq[String]) = OPluck(target, Left(attrs))
@@ -84,14 +81,14 @@ object Pluck {
   * @param data
   */
 case class SPluck(target: Sequence, data: Either[Seq[String], Map[String, Any]]) extends Pluck
-                                                                                         with ProduceAnySequence
+with ProduceAnySequence
 
 /** Plucks out one or more attributes from either an object or a sequence of objects (projection).
   * @param target
   * @param data
   */
 case class OPluck(target: Record, data: Either[Seq[String], Map[String, Any]]) extends Pluck
-                                                                                     with ProduceAnyDocument
+with ProduceAnyDocument
 
 abstract class Without(target: Typed, attributes: Seq[String]) extends Term {
 
@@ -131,10 +128,10 @@ object Merge {
 
 /** Remove the elements of one array from another array.
   * @param target
-  * @param diff
+  * @param array
   */
-case class Difference(target: ArrayTyped, diff: Seq[Datum]) extends ProduceArray {
-  override lazy val args = buildArgs(target, MakeArray(diff))
+case class Difference(target: ArrayTyped, array: ArrayTyped) extends ProduceArray {
+  override lazy val args = buildArgs(target, array)
 
   def termType = TermType.DIFFERENCE
 }

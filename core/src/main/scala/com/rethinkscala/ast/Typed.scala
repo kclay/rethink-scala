@@ -19,6 +19,10 @@ trait Produce[ResultType] extends Term {
 
   def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery.toResult
 
+  def asOpt[R <: ResultType](implicit c: Connection, tt: Manifest[R]) = as[R] fold(x => None, Some(_))
+
+  def asOpt(implicit c: Connection, mf: Manifest[ResultType], d: DummyImplicit) = run fold(x => None, Some(_))
+
 }
 
 sealed trait DataType {
@@ -97,6 +101,8 @@ trait Literal extends Addition {
 trait MapTyped extends Typed
 
 trait ArrayTyped extends Sequence {
+
+
   def append(value: Datum) = Append(this, value)
 
   def :+(value: Datum) = append(value)
@@ -105,13 +111,21 @@ trait ArrayTyped extends Sequence {
 
   def +:(value: Datum) = prepend(value)
 
-  def difference(values: Datum*) = Difference(this, values)
+  def diff(values: Datum*) = Difference(this, Expr(values))
+
+  def diff(array: ArrayTyped) = Difference(this, array)
+
+  def idiff(array: ArrayTyped) = Difference(array, this)
+
+  def idiff(values: Datum*) = Difference(Expr(values), this)
+
 
   def setInert(value: Datum) = SetInsert(this, value)
 
   def setUnion(values: Datum*) = SetUnion(this, values)
 
   def setIntersection(values: Datum*) = SetIntersection(this, values)
+
 
   def setDifference(values: Datum*) = SetDifference(this, values)
 
@@ -169,16 +183,22 @@ trait Multiply extends Typed {
   def mul(other: Numeric) = Mul(this, other)
 }
 
-trait Sequence extends Multiply with Filterable {
-
+trait Sequence extends Multiply with Filterable with Record {
+  self: Sequence =>
 
   type SequenceType = Any
 
+
   // def field(name: String)(implicit d:DummyImplicit) = GetField(this, name)
 
-  // def \(name: String)(implicit d:DummyImplicit) = field(name)
+  //def \(name: String)(implicit d:DummyImplicit) = field(name)
 
   //def coerceTo(dataType: DataType)=CoerceTo(this,dataType)
+
+  //def field(name: String) = GetField(this, name)
+
+  //def \(name: String) = field(name)
+
 
   def indexesOf(value: Datum): IndexesOf = IndexesOf(this, Left(value))
 
@@ -253,7 +273,9 @@ trait Sequence extends Multiply with Filterable {
 
 trait Hash {
   self: Typed =>
-  def field(name: String) = GetField(this, name)
+  type FieldProduce
+
+  def field(name: String): FieldProduce
 
   def apply[T <: Typed](name: String): T = GetField(this, name).asInstanceOf[T]
 
@@ -304,9 +326,9 @@ trait Binary extends Typed {
 
 trait Strings extends Literal {
 
-  def ===(regexp: Regex) = find(regexp.toString())
+  // def ===(regexp: Regex) = find(regexp.toString())
 
-  def ===(regexp: String) = find(regexp)
+  // def ===(regexp: String) = find(regexp)
 
   def find(regex: String) = Match(this, regex)
 }
@@ -340,6 +362,9 @@ trait Ref extends Numeric with Binary with Record with ArrayTyped with Literal w
 
 trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence {
 
+  type FieldProduce = ProduceTypedArray[T]
+
+  def field(name: String): ProduceTypedArray[T] = GetField[T](this, name)
 
   def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T].toResult
 
@@ -354,7 +379,13 @@ trait ProduceBinary extends Produce[Boolean] with Binary
 
 //trait ProduceLiteral extends ProduceLiteral with Literal
 
-trait ProduceDocument[T <: Document] extends Produce[T] with Record with DocumentConversion[T]
+
+trait ProduceDocument[T <: Document] extends Produce[T] with Record with DocumentConversion[T] {
+
+  type FieldProduce = ProduceAny
+
+  def field(name: String): ProduceAny = GetField(this, name)
+}
 
 trait ProduceAnyDocument extends ProduceDocument[Document] with Record
 
@@ -362,7 +393,12 @@ trait ProduceNumeric extends Produce[Double] with Numeric
 
 trait ProduceString extends Produce[String] with Strings
 
-trait ProduceAny extends Produce[Any] with Ref
+trait ProduceAny extends Produce[Any] with Ref {
+
+  type FieldProduce = ProduceAny
+
+  def field(name: String): ProduceAny = GetField(this.asInstanceOf[Typed], name)
+}
 
 trait ProduceSingleSelection extends ProduceAnyDocument with SingleSelection
 
@@ -372,7 +408,9 @@ trait ProduceStreamSelection extends ProduceAnySequence with StreamSelection
 
 trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with StreamSelection
 
-trait ProduceArray extends ProduceAnySequence with ArrayTyped
+trait ProduceArray extends ProduceAnySequence with ArrayTyped {
+
+}
 
 trait ProduceTypedArray[T] extends ProduceSequence[T] with ArrayTyped
 

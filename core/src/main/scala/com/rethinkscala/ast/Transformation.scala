@@ -68,12 +68,12 @@ case class Desc(attr: String) extends Ordering {
 /** Sort the sequence by document values of the given key(s).
  *  order by defaults to ascending ordering. To explicitly specify the ordering, wrap the attribute with either r.asc or r.desc.
  *  @param target
- *  @param keys
+ *  @param values
  */
-case class OrderBy(target: Sequence, keys: Seq[Ordering]) extends ProduceAnySequence {
+case class OrderBy(target: Sequence, values: Seq[Ordering]) extends ProduceAnySequence {
 
 
-  override lazy val args = buildArgs(keys.+:(target):_*)
+  override lazy val args = buildArgs(values.+:(target):_*)
 
   def termType: EnumVal = TermType.ORDERBY
 }
