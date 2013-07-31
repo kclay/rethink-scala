@@ -1,7 +1,7 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
-import com.rethinkscala.net.{Connection, RethinkClientError, RethinkError, Document}
+import com.rethinkscala.net._
 import java.lang.Exception
 import scala.collection.mutable.ArrayBuffer
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -10,6 +10,15 @@ import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
 import com.rethinkscala.reflect.Reflector
 import com.fasterxml.jackson.annotation.JsonInclude.Include
+import com.rethinkscala.ast.Var
+import com.rethinkscala.ast.DB
+import com.rethinkscala.ast.Table
+import scala.concurrent.Future
+import scala._
+import com.rethinkscala.ast.Var
+import com.rethinkscala.ast.DB
+import scala.Some
+import com.rethinkscala.ast.Table
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,6 +35,7 @@ class Schema {
   protected implicit def thisSchema = this
 
 
+
   protected def defineMapper = {
     val mapper = new ObjectMapper()
     mapper.registerModule(DefaultScalaModule)
@@ -39,15 +49,21 @@ class Schema {
 
   Reflector.mapper = defineMapper
 
-  implicit def doc2Active[A <: Document](a: A)(implicit m: Manifest[A], c: Connection) =
-    new ActiveRecord(a, m)
+
+  implicit def doc2Active[A <: Document](a: A)(implicit m: Manifest[A], c: Connection {type QueryMode = Blocking}) = new ActiveRecord(a, m)
+
 
   class ActiveRecord[T <: Document](o: T, m: Manifest[T])(implicit c: Connection) {
-    private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] = (
-      _tableTypes get (m.runtimeClass) map {
-        table: Table[_] => action(table.asInstanceOf[Table[T]]).run
 
-      }) getOrElse (Left(new Exception(s"No Table found in Schema for this ${m.runtimeClass}")))
+    private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] = {
+
+
+      _tableTypes get (m.runtimeClass) map {
+        table: Table[_] => action(table.asInstanceOf[Table[T]]).run.asInstanceOf[Either[Exception, R]]
+
+
+      } getOrElse (Left(new Exception(s"No Table found in Schema for this ${m.runtimeClass}")))
+    }
 
     /**
      * Same as {{{table.insert(a)}}}

@@ -22,6 +22,8 @@ trait WithBase extends BeforeAndAfterAll {
     case "empty" => "172.16.2.45"
     case _ => "127.0.0.1"
   }).get
+
+
   val port = 28015
   val authKey = ""
   val version1 = new Version1(host, port)
@@ -70,6 +72,7 @@ trait WithBase extends BeforeAndAfterAll {
   type IA = Iterable[Any]
   implicit val connection: Connection = new Connection(useVersion)
 
+
   def assert(t: ql2.Term, tt: Term.TermType.EnumVal) {
     assert(t.`type`.get == tt)
   }
@@ -82,10 +85,10 @@ trait WithBase extends BeforeAndAfterAll {
     assert(d.str == value)
   }
 
-  private def assert[Result](f: () => Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
+  private def assert[Result](f: () => Any, check: Result => Boolean)(implicit mf: Manifest[Result]) {
     val (condition, cause) = f() match {
-      case Left(e) => (false, e.getMessage)
-      case Right(r) => (check(r), "Successful query but invalid response")
+      case Left(e:Exception) => (false, e.getMessage)
+      case Right(r) => (check(r.asInstanceOf[Result]), "Successful query but invalid response")
     }
     if (!condition)
       throw new TestFailedException(cause, 5)

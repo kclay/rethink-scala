@@ -208,8 +208,14 @@ object Connection {
 
 case class Connection(version: Version) {
 
+  type QueryMode = version.queryMode.type
+
+
+  private[rethinkscala] def newQuery[R](term: Term, mf: Manifest[R]) = version.queryMode[R](term, this, mf)
+
+
   private val defaultDB = Some(version.db.getOrElse("test"))
-  private[this] val connectionId = new AtomicInteger();
+  private[this] val connectionId = new AtomicInteger()
   lazy val bootstrap = {
 
     val factory =

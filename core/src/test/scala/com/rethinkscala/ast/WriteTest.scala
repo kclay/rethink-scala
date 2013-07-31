@@ -23,6 +23,7 @@ case class Foo2(id: String, a: Int, b: Int, @JsonProperty("is_fav") fav: Boolean
 
 class WriteTest extends FunSuite with WithBase {
 
+
   def fetch = table.get("a")
 
   test("insert documents") {
