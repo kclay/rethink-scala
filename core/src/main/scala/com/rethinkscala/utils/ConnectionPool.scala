@@ -3,6 +3,7 @@ package com.rethinkscala.utils
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
+import scala.concurrent.{future, Future}
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -21,7 +22,7 @@ trait ConnectionFactory[Connection] {
 }
 
 trait ConnectionPool[Connection] {
-  def apply[A]()(f: Connection => A): A
+  def apply[A]()(f: Connection => A): Future[A]
 }
 
 trait LowLevelConnectionPool[Connection] {
@@ -37,19 +38,36 @@ class TimeoutError(message: String) extends Error(message)
 class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
                                  max: Int = 20,
                                  timeout: Int = 500000)
+
+
   extends ConnectionPool[Conn] with LowLevelConnectionPool[Conn] {
+
+  import scala.concurrent.ExecutionContext.Implicits._
 
   private val size = new AtomicInteger(0)
 
   private val pool = new ArrayBlockingQueue[Conn](max)
 
-  def apply[A]()(f: Conn => A): A = {
+  def apply[A]()(f: Conn => A): Future[A] = future {
     val connection = borrow
 
     try {
       val result = f(connection)
       giveBack(connection)
       result
+    } catch {
+      case t: Throwable =>
+        invalidate(connection)
+        throw t
+    }
+  }
+
+  def take(f: (Conn, Conn => Unit) => Unit): Unit = {
+    val connection = borrow
+
+    try {
+      f(connection, giveBack)
+
     } catch {
       case t: Throwable =>
         invalidate(connection)
