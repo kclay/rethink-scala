@@ -27,6 +27,7 @@ import com.rethinkscala.utils.Helpers._
 import scala.Some
 import Translate._
 import com.rethinkscala.Term
+import scala.concurrent.duration.Duration
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -66,7 +67,7 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
   def toResult(response: Response) = {
     val (data: Any, json: String) = Datum.wrap(response.`response`(0))
-
+    println(s"Connection.toResult($response)")
     val rtn = data match {
       case None => None
       case _ => cast(data, json)
@@ -257,17 +258,28 @@ case class Connection(version: Version) {
     }
   }, max = version.maxConnections)
 
-  def write[T](term: Term)(implicit mf: Manifest[T]): Future[T] =
-    channel[Future[T]]() {
-      c =>
+  import scala.concurrent.ExecutionContext.Implicits._
 
+  def write[T](term: Term)(implicit mf: Manifest[T]): Future[T] = {
+    val p = promise[T]
+    val f = p.future
+    channel take {
+      case (c, restore) => {
         val query = toQuery(term, c.token.getAndIncrement, defaultDB)
-        val p = promise[T]()
+
+
         val token = QueryToken[T](this, query, term, p, mf)
+        // TODO : Check into dropping netty and using sockets for each,
+        // Or find a way so that we can store the token for the netty handler to complete
+
         c.channel.setAttachment(token)
         c.channel.write(query)
-        p.future
-
+        f onComplete {
+          case _ => restore(c)
+        }
+      }
     }
 
+    f
+  }
 }
