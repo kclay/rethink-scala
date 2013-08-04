@@ -16,11 +16,13 @@ import com.rethinkscala.net.Document
 
 case class SelectFoo(id: Int) extends Document
 
-/*
+
 class SelectTest extends FunSuite with WithBase {
 
 
-  ignore("select between") {
+  implicit val conn = connection
+
+  test("select between") {
 
     val records = for (i <- 1 to 50) yield SelectFoo(i)
     table.insert(records).run
@@ -30,15 +32,13 @@ class SelectTest extends FunSuite with WithBase {
 
 
 
-
-
-    assert(results, {
+    assert(results.as[SelectFoo], {
       f: Seq[SelectFoo] => f.size == 11 & f(0).id == 10
     })
 
   }
 
-  ignore("table select") {
+  test("table select") {
 
     val results = table.order("id").as[SelectFoo]
     assert(results, {
@@ -46,7 +46,7 @@ class SelectTest extends FunSuite with WithBase {
     })
   }
 
-  ignore("table.get") {
+  test("table.get") {
 
 
     assertAs[SelectFoo](table.get(1), {
@@ -54,7 +54,7 @@ class SelectTest extends FunSuite with WithBase {
     })
   }
 
-  ignore("select filter") {
+  test("select filter") {
 
     var results = table.filter(Map("id" -> 1)).as[SelectFoo]
     assert(results, {
@@ -75,4 +75,4 @@ class SelectTest extends FunSuite with WithBase {
   }
 
 }
-*/
+

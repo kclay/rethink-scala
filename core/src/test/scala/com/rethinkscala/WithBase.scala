@@ -13,10 +13,12 @@ import com.rethinkscala.ast.Produce
 
 import ql2._
 import com.rethinkscala.Implicits.Quick._
-import com.rethinkscala.net._
+import com.rethinkscala.net.{RethinkError, Document}
+
 import com.rethinkscala.ast.Table
 
-trait WithBase extends BeforeAndAfterAll {
+
+trait WithBase extends BeforeAndAfterAll with Blocking {
   self: FunSuite =>
   val host = (Option(scala.util.Properties.envOrElse("TRAVIS", "empty")) map {
     case "empty" => "172.16.2.45"
@@ -28,6 +30,7 @@ trait WithBase extends BeforeAndAfterAll {
   val authKey = ""
   val version1 = new Version1(host, port)
   val version2 = new Version2(host, port, authKey = authKey)
+  implicit val connection = Connection(useVersion)
 
   def setupDB = true
 
@@ -70,7 +73,6 @@ trait WithBase extends BeforeAndAfterAll {
 
   type IS = Iterable[String]
   type IA = Iterable[Any]
-  implicit val connection: Connection = new Connection(useVersion)
 
 
   def assert(t: ql2.Term, tt: Term.TermType.EnumVal) {
@@ -87,7 +89,7 @@ trait WithBase extends BeforeAndAfterAll {
 
   private def assert[Result](f: () => Any, check: Result => Boolean)(implicit mf: Manifest[Result]) {
     val (condition, cause) = f() match {
-      case Left(e:Exception) => (false, e.getMessage)
+      case Left(e: Exception) => (false, e.getMessage)
       case Right(r) => (check(r.asInstanceOf[Result]), "Successful query but invalid response")
     }
     if (!condition)

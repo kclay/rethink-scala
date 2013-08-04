@@ -28,8 +28,7 @@ class CustomCollectionBuilder[A] extends Builder[A, Cursor[A]] {
 class Cursor[A](connectionId: Int, token: Token, chunk: Seq[A], completed: Boolean) extends SeqForwarder[A] {
 
 
-  val _underlying =  collection.mutable.Buffer.empty[A]++=chunk
-
+  val _underlying = collection.mutable.Buffer.empty[A] ++= chunk
 
 
   // override def companion: GenericCompanion[Cursor] = Cursor

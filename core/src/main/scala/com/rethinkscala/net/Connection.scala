@@ -67,9 +67,8 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
   def toResult(response: Response) = {
     val (data: Any, json: String) = Datum.wrap(response.`response`(0))
-    println(s"Connection.toResult($response)")
     val rtn = data match {
-      case None => None
+      case None => new Exception("No results found for " + mf.runtimeClass.getSimpleName)
       case _ => cast(data, json)
     }
 
@@ -200,20 +199,12 @@ private class PipelineFactory extends ChannelPipelineFactory {
   }
 }
 
-object Connection {
 
-  lazy val defaultConnection = Connection
+abstract class Connection {
 
+  val version: com.rethinkscala.Version
 
-}
-
-case class Connection(version: Version) {
-
-  type QueryMode = version.queryMode.type
-
-
-  private[rethinkscala] def newQuery[R](term: Term, mf: Manifest[R]) = version.queryMode[R](term, this, mf)
-
+  def newQuery[R](term: Term, mf: Manifest[R]): Query[R]
 
   private val defaultDB = Some(version.db.getOrElse("test"))
   private[this] val connectionId = new AtomicInteger()
@@ -289,3 +280,14 @@ case class Connection(version: Version) {
     f
   }
 }
+
+
+private[rethinkscala] case class BlockingConnection(version: com.rethinkscala.Version) extends Connection {
+  def newQuery[R](term: Term, mf: Manifest[R]) = BlockingQuery[R](term,this, mf)
+}
+
+private[rethinkscala] case class AsyncConnection(version: com.rethinkscala.Version) extends Connection {
+  def newQuery[R](term: Term, mf: Manifest[R]) = AsyncQuery[R](term, this, mf)
+}
+
+

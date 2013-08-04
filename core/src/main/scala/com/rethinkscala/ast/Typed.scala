@@ -6,6 +6,7 @@ import com.rethinkscala.Implicits._
 import com.rethinkscala.net._
 import scala.Some
 import com.rethinkscala.net.BlockingQuery
+import scala.concurrent.Future
 
 
 trait Produce[ResultType] extends Term {
@@ -15,17 +16,8 @@ trait Produce[ResultType] extends Term {
 
   def toQuery[R](implicit c: Connection, tt: Manifest[R]) = c.newQuery[R](this, tt)
 
+
   def run(implicit c: Connection, mf: Manifest[ResultType]) = toQuery.toResult
-
-
-  def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]) = toQuery.toResult
-
-
-  // def toQuery[R](implicit c: Connection, tt: Manifest[R]) = c.newQuery[R](this, tt)
-
-  //def run(implicit c: Connection, mf: Manifest[ResultType]) = toQuery.toResult
-
-  // def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]) = toQuery.toResult
 
 
 }
@@ -171,14 +163,15 @@ trait Selection extends Sequence {
 
 }
 
-trait StreamSelection extends Selection with Stream {
+trait StreamSelection[T] extends Selection with Stream {
 
-  def between(start: Int, stop: Int) = Between(this, start, stop)
+  def between(start: Int, stop: Int) = Between[T](this, start, stop)
 
-  def between(start: String, stop: String) = Between(this, start, stop)
+  def between(start: String, stop: String) = Between[T](this, start, stop)
 
 
 }
+
 
 trait SingleSelection extends Selection
 
@@ -410,9 +403,9 @@ trait ProduceSingleSelection extends ProduceAnyDocument with SingleSelection
 
 trait ProduceTypedSingleSelection[T <: Document] extends ProduceDocument[T] with SingleSelection
 
-trait ProduceStreamSelection extends ProduceAnySequence with StreamSelection
+trait ProduceStreamSelection extends ProduceAnySequence with StreamSelection[Any]
 
-trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with StreamSelection
+trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with StreamSelection[T]
 
 trait ProduceArray extends ProduceAnySequence with ArrayTyped {
 

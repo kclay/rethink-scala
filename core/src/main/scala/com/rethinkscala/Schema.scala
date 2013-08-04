@@ -2,7 +2,6 @@ package com.rethinkscala
 
 import com.rethinkscala.ast._
 import com.rethinkscala.net._
-import java.lang.Exception
 import scala.collection.mutable.ArrayBuffer
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.databind.{ObjectMapper, DeserializationFeature}
@@ -10,14 +9,9 @@ import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
 import com.rethinkscala.reflect.Reflector
 import com.fasterxml.jackson.annotation.JsonInclude.Include
-import com.rethinkscala.ast.Var
-import com.rethinkscala.ast.DB
-import com.rethinkscala.ast.Table
-import scala.concurrent.Future
 import scala._
 import com.rethinkscala.ast.Var
 import com.rethinkscala.ast.DB
-import scala.Some
 import com.rethinkscala.ast.Table
 
 /**
