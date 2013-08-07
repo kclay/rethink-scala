@@ -10,6 +10,7 @@ import ReleasePlugin._
 import sbtrelease.ReleasePlugin.ReleaseKeys._
 import ReleaseStateTransformations._
 
+
 object BuildSettings {
 
 
@@ -76,11 +77,11 @@ object RethinkdbBuild extends Build {
 
   val scalaBuffVersion = "1.3.3"
 
-   lazy val root = Project(
-     "root",
-     file("."),
-     settings = buildWithRelease
-   ) aggregate(lifted, core)
+  lazy val root = Project(
+    "root",
+    file("."),
+    settings = buildWithRelease
+  ) aggregate(lifted, core)
   lazy val core = Project(
     id = "core",
     base = file("core"),
@@ -93,18 +94,19 @@ object RethinkdbBuild extends Build {
 
 
 
-        //   scalabuffArgs := Seq("--stdout"),
-        // set the directory for generated scala sources to src/main/generated_scala
-        //generatedSource in scalaBuffConfig <<= (sourceDirectory in Compile)(_ / "generated_scala"),
-        // generatedSource in protobufConfig <<= (sourceDirectory in Compile)(_ / "generated_java"),
+      //   scalabuffArgs := Seq("--stdout"),
+      // set the directory for generated scala sources to src/main/generated_scala
+      //generatedSource in scalaBuffConfig <<= (sourceDirectory in Compile)(_ / "generated_scala"),
+      // generatedSource in protobufConfig <<= (sourceDirectory in Compile)(_ / "generated_java"),
 
-        // it's not possible to generate both java and scala sources due to a "bug" in ScalaBuff.
-        //addProtocCompatibility,
-        libraryDependencies <++=(scalaVersion)(sv => Seq(
+      // it's not possible to generate both java and scala sources due to a "bug" in ScalaBuff.
+      //addProtocCompatibility,
+      libraryDependencies <++= (scalaVersion)(sv => Seq(
         "org.scalatest" %% "scalatest" % "1.9.1" % "test",
 
-        "io.netty" % "netty" % "3.6.3.Final",
+        "io.netty" % "netty" % "3.6.6.Final",
         "org.scala-lang" % "scala-reflect" % sv,
+
         "net.sandrogrzicic" %% "scalabuff-runtime" % scalaBuffVersion
 
       ) ++ jackson("2.2.2")),

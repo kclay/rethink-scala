@@ -22,7 +22,7 @@ trait ConnectionFactory[Connection] {
 }
 
 trait ConnectionPool[Connection] {
-  def apply[A]()(f: Connection => A): Future[A]
+  def apply[A]()(f: Connection => A): A
 }
 
 trait LowLevelConnectionPool[Connection] {
@@ -42,13 +42,12 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
 
   extends ConnectionPool[Conn] with LowLevelConnectionPool[Conn] {
 
-  import scala.concurrent.ExecutionContext.Implicits._
 
   private val size = new AtomicInteger(0)
 
   private val pool = new ArrayBlockingQueue[Conn](max)
 
-  def apply[A]()(f: Conn => A): Future[A] = future {
+  def apply[A]()(f: Conn => A): A = {
     val connection = borrow
 
     try {
@@ -63,6 +62,7 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   }
 
   def take(f: (Conn, Conn => Unit) => Unit): Unit = {
+    println(s"ConnectionPool size = ${size.get}")
     val connection = borrow
 
     try {
@@ -100,8 +100,15 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
 
   private def create: Conn = {
     size.incrementAndGet match {
-      case e: Int if e > max => size.decrementAndGet; borrow()
-      case e: Int => connectionFactory.create
+      case e: Int if e > max => {
+        println(s"$e > $max , re-borrowing")
+        size.decrementAndGet
+        borrow()
+      }
+      case e: Int => {
+        println("Creating new connection")
+        connectionFactory.create
+      }
     }
   }
 

@@ -25,7 +25,7 @@ abstract class RethinkError(message: String) extends Exception(message) {
 }
 
 
-case class RethinkClientError(message: String, term: Term, frames: Iterable[Frame]) extends RethinkError(message)
+case class RethinkClientError(message: String, term: Term, frames: Iterable[Frame] = Iterable.empty[Frame]) extends RethinkError(message)
 
 case class Frame(frameType: Option[FrameType], pos: Option[Long], opt: Option[String])
 

@@ -6,7 +6,7 @@ import org.jboss.netty.bootstrap.ClientBootstrap
 import java.net.InetSocketAddress
 
 import org.jboss.netty.channel._
-import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder
+
 import ql2.{Response, VersionDummy}
 
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
@@ -28,6 +28,7 @@ import scala.Some
 import Translate._
 import com.rethinkscala.Term
 import scala.concurrent.duration.Duration
+
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -67,7 +68,6 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
   def toResult(response: Response) = {
     val (data: Any, json: String) = Datum.wrap(response.`response`(0))
-    println(s"Connection.toResult($response)")
     val rtn = data match {
       case None => None
       case _ => cast(data, json)
@@ -174,6 +174,7 @@ private class RethinkDBEncoder extends OneToOneEncoder {
         b.writeInt(size)
 
         b.writeBytes(q.toByteArray)
+        println(b)
         b
       }
     }
@@ -207,7 +208,7 @@ object Connection {
 
 }
 
-case class Connection(version: Version) {
+case class Connection(version: Version, timeoutDuration: Duration = Duration(30, "seconds")) {
 
   private val defaultDB = Some(version.db.getOrElse("test"))
   private[this] val connectionId = new AtomicInteger();
@@ -260,7 +261,7 @@ case class Connection(version: Version) {
 
   import scala.concurrent.ExecutionContext.Implicits._
 
-  def write[T](term: Term)(implicit mf: Manifest[T]): Future[T] = {
+  protected[rethinkscala] def write[T](term: Term)(implicit mf: Manifest[T]): Promise[T] = {
     val p = promise[T]
     val f = p.future
     channel take {
@@ -280,6 +281,6 @@ case class Connection(version: Version) {
       }
     }
 
-    f
+    p
   }
 }

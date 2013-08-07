@@ -1,9 +1,11 @@
 package com.rethinkscala.net
 
-import scala.concurrent.Await
+import scala.concurrent._
 import scala.concurrent.duration.Duration
-import scala.util.{Success, Failure}
 import com.rethinkscala.Term
+import scala.util.Success
+import scala.util.Failure
+import scala.Some
 
 abstract class Query[R] {
 
@@ -18,16 +20,22 @@ case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R])
 
   lazy val ast: ql2.Term = term.ast
 
-  def toResult[R] = toResult(Duration(20, "seconds"))
+  def toResult[R] = toResult(connection.timeoutDuration)
 
   def toResult[R](atMost: Duration): Either[RethinkError, R] = {
 
-    val f = connection.write(term)(mf)
+    val p = connection.write(term)(mf)
 
-    Await.ready(f, atMost)
 
-    val v = f.value
-    val itClass = classOf[Iterable[R]]
+    try {
+      Await.ready(p.future, atMost)
+    } catch {
+      case e: Exception => p.failure(e)
+
+    }
+
+
+    val v = p.future.value
 
 
     val r = v match {

@@ -19,9 +19,10 @@ trait Produce[ResultType] extends Term {
 
   def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery.toResult
 
-  def asOpt[R <: ResultType](implicit c: Connection, tt: Manifest[R]) = as[R] fold(x => None, Some(_))
 
-  def asOpt(implicit c: Connection, mf: Manifest[ResultType], d: DummyImplicit) = run fold(x => None, Some(_))
+  def toOpt(implicit c: Connection, mf: Manifest[ResultType]) = run fold(x => None, Some(_))
+
+  def asOpt[R <: ResultType](implicit c: Connection, tt: Manifest[R], d: DummyImplicit) = as[R] fold(x => None, Some(_))
 
 }
 
@@ -369,6 +370,8 @@ trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence {
   def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T].toResult
 
   def as[R <: T](implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R].toResult
+
+
 }
 
 trait ProduceAnySequence extends ProduceSequence[Any]
