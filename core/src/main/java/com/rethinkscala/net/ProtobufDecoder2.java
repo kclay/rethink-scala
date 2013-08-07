@@ -15,7 +15,7 @@ import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
  * Time: 8:02 PM
  */
 @ChannelHandler.Sharable
-public class ProtobufDecoder extends OneToOneDecoder {
+public class ProtobufDecoder2 extends OneToOneDecoder {
     private static final boolean HAS_PARSER = false;  // fix for ScalaBuff 1.3.3
     /*
      static {
@@ -36,11 +36,11 @@ public class ProtobufDecoder extends OneToOneDecoder {
     /**
      * Creates a new instance.
      */
-    public ProtobufDecoder(MessageLite prototype) {
+    public ProtobufDecoder2(MessageLite prototype) {
         this(prototype, null);
     }
 
-    public ProtobufDecoder(MessageLite prototype, ExtensionRegistry extensionRegistry) {
+    public ProtobufDecoder2(MessageLite prototype, ExtensionRegistry extensionRegistry) {
         if (prototype == null) {
             throw new NullPointerException("prototype");
         }

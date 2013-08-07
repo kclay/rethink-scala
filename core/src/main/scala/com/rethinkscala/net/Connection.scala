@@ -28,6 +28,7 @@ import scala.Some
 import Translate._
 import com.rethinkscala.Term
 import scala.concurrent.duration.Duration
+import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder
 
 
 /** Created by IntelliJ IDEA.
