@@ -2,9 +2,9 @@ package com.rethinkscala.ast
 
 import com.rethinkscala.Term
 
-import ql2.Term.TermType
+import ql2.Ql2.Term.TermType
 import java.util.concurrent.atomic.AtomicInteger
-import ql2.Term.TermType.EnumVal
+
 
 object Predicate {
   private val _nextVarId = new AtomicInteger()
@@ -38,7 +38,7 @@ case class Func(f: Predicate) extends Term {
 
   override lazy val args = buildArgs(f.invoke: _*)
 
-  def termType: EnumVal = TermType.FUNC
+  def termType = TermType.FUNC
 }
 
 

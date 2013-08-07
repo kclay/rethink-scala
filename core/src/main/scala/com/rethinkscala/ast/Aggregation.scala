@@ -1,15 +1,15 @@
 package com.rethinkscala.ast
 
-import ql2.Term.TermType
+import ql2.Ql2.Term.TermType
 
 /** Produce a single value from a sequence through repeated application of a reduction function.
- *  The reduce function gets invoked repeatedly not only for the input values but also for results of
- *  previous reduce invocations. The type and format of the object that is passed in to reduce must be
- *  the same with the one returned from reduce.
- *  @param target
- *  @param f
- *  @param base
- */
+  * The reduce function gets invoked repeatedly not only for the input values but also for results of
+  * previous reduce invocations. The type and format of the object that is passed in to reduce must be
+  * the same with the one returned from reduce.
+  * @param target
+  * @param f
+  * @param base
+  */
 case class Reduce(target: Sequence, f: Predicate2, base: Option[Any] = None) extends ProduceAny {
 
   override lazy val args = buildArgs(target, f())
@@ -20,17 +20,17 @@ case class Reduce(target: Sequence, f: Predicate2, base: Option[Any] = None) ext
 }
 
 /** Count the number of elements in the sequence. With a single argument, count the number of elements equal to it.
- *  If the argument is a function, it is equivalent to calling filter before count.
- *  @param target
- *  @param filter
- */
+  * If the argument is a function, it is equivalent to calling filter before count.
+  * @param target
+  * @param filter
+  */
 case class Count(target: Sequence, filter: Option[Either[String, BooleanPredicate]] = None) extends ProduceNumeric {
 
   override lazy val args = buildArgs(filter.map {
     a =>
       Seq(target, a match {
 
-        case Left(x)  => x
+        case Left(x) => x
         case Right(f) => f()
       })
   }.getOrElse(Seq(target)): _*)
@@ -39,20 +39,20 @@ case class Count(target: Sequence, filter: Option[Either[String, BooleanPredicat
 }
 
 /** Remove duplicate elements from the sequence.
- *  @param target
- */
+  * @param target
+  */
 case class Distinct(target: Sequence) extends ProduceAnySequence {
   def termType = TermType.DISTINCT
 }
 
 /** Partition the sequence into groups based on the grouping function. The elements of each group are then mapped
- *  using the mapping function and reduced using the reduction function.
- *  @param target
- *  @param grouping
- *  @param mapping
- *  @param reduce
- *  @param base
- */
+  * using the mapping function and reduced using the reduction function.
+  * @param target
+  * @param grouping
+  * @param mapping
+  * @param reduce
+  * @param base
+  */
 case class GroupMapReduce(target: Sequence, grouping: Predicate1, mapping: Predicate1, reduce: Predicate2, base: Option[Datum] = None) extends ProduceArray {
 
   override lazy val args = buildArgs(target, grouping(), mapping(), reduce())
@@ -62,11 +62,11 @@ case class GroupMapReduce(target: Sequence, grouping: Predicate1, mapping: Predi
 }
 
 /** Groups elements by the values of the given attributes and then applies the given reduction.
- *  Though similar to grouped_map_reduce, groupby takes a standardized object
- *  @param target
- *  @param method
- *  @param attrs
- */
+  * Though similar to grouped_map_reduce, groupby takes a standardized object
+  * @param target
+  * @param method
+  * @param attrs
+  */
 case class GroupBy(target: Sequence, method: AggregateByMethod, attrs: Seq[String]) extends ProduceAnySequence {
 
   override lazy val args = buildArgs((Seq(target, method.underlying) ++ attrs): _*)
@@ -75,9 +75,9 @@ case class GroupBy(target: Sequence, method: AggregateByMethod, attrs: Seq[Strin
 }
 
 /** Test if an object has the given attribute.
- *  @param target
- *  @param value
- */
+  * @param target
+  * @param value
+  */
 case class Contains(target: Sequence, value: Seq[Datum]) extends ProduceBinary {
   override lazy val args = buildArgs((Seq(target) ++ value): _*)
 

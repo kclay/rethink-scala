@@ -9,6 +9,8 @@ import ast._
 
 class ExprTest extends FunSuite {
 
+  import scala.collection.JavaConverters._
+
   test("auto casting") {
 
     assert(Expr(1).isInstanceOf[NumberDatum])
@@ -24,7 +26,7 @@ class ExprTest extends FunSuite {
 
     val objTerm = Expr(map).ast
 
-    val optargs = objTerm.`optargs`
+    val optargs = objTerm.getOptargsList asScala
 
     assert(optargs.size == 3)
     assert(optargs(0).key.get == "foo")

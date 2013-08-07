@@ -6,6 +6,12 @@ import com.rethinkscala.ast.BooleanDatum
 import com.rethinkscala.ast.NumberDatum
 import scala.Some
 import com.rethinkscala.net.{UnknownFrame, OptionalFrame, PositionFrame, RethinkError}
+import scala.collection.JavaConversions._
+import com.rethinkscala.ast.StringDatum
+import com.rethinkscala.ast.BooleanDatum
+import com.rethinkscala.ast.DB
+import com.rethinkscala.ast.NumberDatum
+import scala.Some
 
 /** Created with IntelliJ IDEA.
   * User: keyston
@@ -15,8 +21,9 @@ import com.rethinkscala.net.{UnknownFrame, OptionalFrame, PositionFrame, Rethink
   */
 object ConvertFrom {
 
-  import ql2.{Backtrace, Response, Frame => QFrame}
+  import ql2.Ql2.{Backtrace, Response, Frame => QFrame}
 
+  import scala.collection.JavaConversions._
 
   import scala.Some
 
@@ -27,31 +34,31 @@ object ConvertFrom {
   implicit def backtrace2Frames(backtrace: Option[Backtrace]): Iterable[Frame] = {
     backtrace.map {
       b =>
-        b.`frames`.map {
+        b.getFramesList.map {
           f =>
             Frame(Some(f match {
               case QFrame.FrameType.POS => PositionFrame
               case QFrame.FrameType.OPT => OptionalFrame
               case _ => UnknownFrame
-            }), f.`pos`, f.`opt`)
+            }), Option(f.getPos), Option(f.getOpt))
         }
     }.getOrElse(Seq.empty[Frame])
 
   }
 
-  implicit def datumToString(d: ql2.Datum): String = d.`rStr`.getOrElse("")
+  implicit def datumToString(d: ql2.Ql2.Datum): String = Option(d.getRStr).getOrElse("")
 
   //implicit def datnumCollection2Iterable(d:JList[p.Datum]):Iterable[]
 
   def toError(response: Response, term: Term): RethinkError = {
 
-    val message: String = response.`response`(0)
-    val frames: Iterable[Frame] = response.`backtrace`
+    val message: String = response.getResponse(0)
+    val frames: Iterable[Frame] = Option(response.getBacktrace)
 
-    response.`type` match {
-      case Some(RUNTIME_ERROR) => RethinkRuntimeError(message, term, frames)
-      case Some(COMPILE_ERROR) => RethinkCompileError(message, term, frames)
-      case Some(CLIENT_ERROR) => RethinkClientError(message, term, frames)
+    response.getType match {
+      case RUNTIME_ERROR => RethinkRuntimeError(message, term, frames)
+      case COMPILE_ERROR => RethinkCompileError(message, term, frames)
+      case CLIENT_ERROR => RethinkClientError(message, term, frames)
       case _ => RethinkRuntimeError(message, term, frames)
     }
   }

@@ -1,7 +1,9 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala.{DatumAssocPair, DatumMessage, AssocPair}
+import ql2.{Ql2 => ql2}
 import ql2.Datum.DatumType
+
 
 sealed trait Datum extends DatumMessage {
 
@@ -23,28 +25,30 @@ object Datum {
   }
 
   def wrap(datum: ql2.Datum, buf: StringBuilder): Any = {
-    datum.`type` match {
-      case Some(R_NULL) => {
+    import scala.collection.JavaConverters._
+    datum.getType match {
+      case R_NULL => {
         buf ++= "null"
         None
       }
-      case Some(R_BOOL) => {
-        buf ++= datum.bool.toString
-        datum.bool
+      case R_BOOL => {
+        buf ++= datum.getRBool.toString
+        datum.getRBool
       }
-      case Some(R_NUM) => {
-        buf ++= datum.num.toLong.toString
-        datum.num.toLong
+      case R_NUM => {
+        buf ++= datum.getRNum.toLong.toString
+        datum.getRNum.toLong
       }
-      case Some(R_STR) => {
-        buf ++= "\"" + datum.str + "\""
+      case R_STR => {
+        buf ++= "\"" + datum.getRStr + "\""
 
-        datum.str
+        datum.getRStr
       }
-      case Some(R_ARRAY) => {
+      case R_ARRAY => {
         buf ++= "["
-        val len = datum.array.size
-        val unwraped = datum.array.zipWithIndex map {
+        val array = datum.getRArrayList.asScala
+        val len = array.size
+        val unwraped = array.zipWithIndex map {
           case (value: ql2.Datum, index: Int) => {
             val rtn = wrap(value, buf)
             if (index < len - 1) buf ++= ","
@@ -55,15 +59,16 @@ object Datum {
         unwraped
 
       }
-      case Some(R_OBJECT) => {
+      case R_OBJECT => {
         buf ++= "{"
-        val len = datum.obj.size
+        val obj = datum.getRObjectList.asScala
+        val len = obj.size
 
         var index = 0 // FixMe couldn't get .zipWithIndex to work
-        val unwrapped = datum.obj.map {
+        val unwrapped = obj.map {
             ap => {
-              buf ++= "\"" + ap.`key`.get + "\":"
-              val rtn = (ap.`key`.get, wrap(ap.`val`.get, buf))
+              buf ++= "\"" + ap.getKey + "\":"
+              val rtn = (ap.getKey, wrap(ap.getVal, buf))
               index += 1
               if (index < len) buf ++= ","
 
@@ -102,7 +107,7 @@ class NoneDatum extends Datum {
 
   def datumType = DatumType.R_NULL
 
-  def build(d: ql2.Datum) = d
+  def build(d: ql2.Datum.Builder) = d
 
   def defaultValue = None
 }
@@ -113,7 +118,7 @@ case class BooleanDatum(value: Boolean) extends Datum with ProduceBinary {
 
   def datumType = DatumType.R_BOOL
 
-  def build(d: ql2.Datum) = d.setRBool(value)
+  def build(d: ql2.Datum.Builder) = d.setRBool(value)
 
 }
 
@@ -123,7 +128,7 @@ case class NumberDatum(value: Double) extends Datum with ProduceNumeric {
 
   def datumType = DatumType.R_NUM
 
-  def build(d: ql2.Datum) = d.setRNum(value)
+  def build(d: ql2.Datum.Builder) = d.setRNum(value)
 
 }
 
@@ -133,6 +138,6 @@ case class StringDatum(value: String) extends Datum with ProduceString {
 
   def datumType = DatumType.R_STR
 
-  def build(d: ql2.Datum) = d.setRStr(value)
+  def build(d: ql2.Datum.Builder) = d.setRStr(value)
 
 }

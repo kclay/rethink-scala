@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import ql2.Term.TermType
+import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.net.{ChangeResult, Document, InsertResult}
 

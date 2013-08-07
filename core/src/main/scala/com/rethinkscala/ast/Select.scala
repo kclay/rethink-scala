@@ -1,7 +1,6 @@
 package com.rethinkscala.ast
 
-import ql2.Term.TermType
-import ql2.Term.TermType.EnumVal
+import ql2.Ql2.Term.TermType
 import com.rethinkscala.net.Document
 
 case class Get[R <:Document](target: Table[R], attribute: Any) extends ProduceTypedSingleSelection[R] {
@@ -32,5 +31,5 @@ case class Filter(target: Sequence, filter: Either[MakeObj, Predicate1]) extends
     case Right(x) => x()
   })
 
-  def termType: EnumVal = TermType.FILTER
+  def termType= TermType.FILTER
 }

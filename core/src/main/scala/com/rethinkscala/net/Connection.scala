@@ -7,6 +7,7 @@ import java.net.InetSocketAddress
 
 import org.jboss.netty.channel._
 
+import ql2.{Ql2 => ql2}
 import ql2.{Response, VersionDummy}
 
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
@@ -20,7 +21,7 @@ import com.rethinkscala.ConvertFrom._
 
 import org.jboss.netty.channel.Channel
 import ql2.Response.ResponseType
-import com.rethinkscala.ast.{After, WithLifecycle, Insert, Datum}
+import com.rethinkscala.ast.Datum
 import org.jboss.netty.handler.codec.frame.FrameDecoder
 import java.util.concurrent.atomic.AtomicInteger
 import com.rethinkscala.utils.Helpers._
@@ -68,7 +69,7 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
 
   def toResult(response: Response) = {
-    val (data: Any, json: String) = Datum.wrap(response.`response`(0))
+    val (data: Any, json: String) = Datum.wrap(response.getResponse(0))
     val rtn = data match {
       case None => None
       case _ => cast(data, json)
@@ -81,11 +82,11 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
   }
 
   def handle(response: Response) = {
-    (response.`type` match {
+    (response.getType match {
 
-      case r@Some(ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR) => toError(response, term)
-      case s@Some(ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE) => toCursor(0, response)
-      case Some(ResponseType.SUCCESS_ATOM) => toResult(response)
+      case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => toError(response, term)
+      case ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE => toCursor(0, response)
+      case ResponseType.SUCCESS_ATOM => toResult(response)
       case _ =>
 
     }) match {
@@ -96,16 +97,16 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
 
   def toCursor(id: Int, response: Response) = {
-
+    import scala.collection.JavaConverters._
 
     //val seqManifest = implicitly[Manifest[Seq[R]]]
 
-    val seq = for (d <- response.`response`) yield (Datum.wrap(d) match {
+    val seq = for (d <- response.getResponseList.asScala) yield (Datum.wrap(d) match {
       case (a: Any, json: String) => cast(a, json)
     })
 
-    new Cursor[R](id, this, seq, response.`type` match {
-      case Some(ResponseType.SUCCESS_SEQUENCE) => true
+    new Cursor[R](id, this, seq, response.getType match {
+      case ResponseType.SUCCESS_SEQUENCE => true
       case _ => false
     })
 
@@ -158,7 +159,7 @@ private class RethinkDBEncoder extends OneToOneEncoder {
   def encode(ctx: ChannelHandlerContext, channel: Channel, msg: Any): AnyRef = {
 
     msg match {
-      case v: VersionDummy.Version.EnumVal => {
+      case v: VersionDummy.Version => {
         val b = buffer(ByteOrder.LITTLE_ENDIAN, 4)
         b.writeInt(v.getNumber)
         b
@@ -175,7 +176,6 @@ private class RethinkDBEncoder extends OneToOneEncoder {
         b.writeInt(size)
 
         b.writeBytes(q.toByteArray)
-        println(b)
         b
       }
     }

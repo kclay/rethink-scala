@@ -1,8 +1,8 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala.{ AssocPair, Term }
-import ql2.Term.TermType.EnumVal
-import ql2.Term.TermType
+
+import ql2.Ql2.Term.TermType
 
 abstract class Join extends ProduceAnySequence {
   val left: Sequence
@@ -25,7 +25,7 @@ abstract class PredicateJoin extends Join {
  *  @param func
  */
 case class InnerJoin(left: Sequence, right: Sequence, func: BooleanPredicate2) extends PredicateJoin {
-  def termType: EnumVal = TermType.INNER_JOIN
+  def termType = TermType.INNER_JOIN
 }
 
 /** Computes a left outer join by retaining each row in the left table even if no match was found in the right table.
@@ -34,7 +34,7 @@ case class InnerJoin(left: Sequence, right: Sequence, func: BooleanPredicate2) e
  *  @param func
  */
 case class OuterJoin(left: Sequence, right: Sequence, func: BooleanPredicate2) extends PredicateJoin {
-  def termType: EnumVal = TermType.OUTER_JOIN
+  def termType = TermType.OUTER_JOIN
 }
 
 /** An efficient join that looks up elements in the right table by primary key.
@@ -44,7 +44,7 @@ case class OuterJoin(left: Sequence, right: Sequence, func: BooleanPredicate2) e
  *  @param index
  */
 case class EqJoin(left: Sequence, attr: String, right: Sequence, index: Option[String] = None) extends Join {
-  def termType: EnumVal = TermType.EQ_JOIN
+  def termType = TermType.EQ_JOIN
 
   override lazy val args: Seq[Term] = buildArgs(left, attr, right)
   override lazy val optargs: Iterable[AssocPair] = buildOptArgs(Map("index" -> index))
@@ -55,5 +55,5 @@ case class EqJoin(left: Sequence, attr: String, right: Sequence, index: Option[S
  */
 case class Zip(target: Sequence) extends ProduceAnySequence {
 
-  def termType: EnumVal = TermType.ZIP
+  def termType = TermType.ZIP
 }

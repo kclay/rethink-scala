@@ -70,17 +70,13 @@ public class ProtobufDecoder2 extends OneToOneDecoder {
         }
 
         if (extensionRegistry == null) {
-            if (HAS_PARSER) {
-                return prototype.getParserForType().parseFrom(array, offset, length);
-            } else {
-                return prototype.newBuilderForType().mergeFrom(array, offset, length).build();
-            }
+
+            return prototype.newBuilderForType().mergeFrom(array, offset, length).build();
+
         } else {
-            if (HAS_PARSER) {
-                return prototype.getParserForType().parseFrom(array, offset, length, extensionRegistry);
-            } else {
-                return prototype.newBuilderForType().mergeFrom(array, offset, length, extensionRegistry).build();
-            }
+
+            return prototype.newBuilderForType().mergeFrom(array, offset, length, extensionRegistry).build();
+
         }
     }
 }

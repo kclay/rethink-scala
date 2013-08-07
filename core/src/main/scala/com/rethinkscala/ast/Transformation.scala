@@ -1,8 +1,7 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala.Term
-import ql2.Term.TermType.EnumVal
-import ql2.Term.TermType
+import ql2.Ql2.Term.TermType
 
 abstract class Transformation extends ProduceAnySequence {
   val target: Sequence
@@ -18,7 +17,7 @@ abstract class Transformation extends ProduceAnySequence {
  */
 case class RMap(target: Sequence, func: Predicate1) extends Transformation {
 
-  def termType: EnumVal = TermType.MAP
+  def termType = TermType.MAP
 
   def toConcat = ConcatMap(target, func)
 
@@ -30,7 +29,7 @@ case class RMap(target: Sequence, func: Predicate1) extends Transformation {
  */
 case class ConcatMap(target: Sequence, func: Predicate1) extends Transformation {
 
-  def termType: EnumVal = TermType.CONCATMAP
+  def termType = TermType.CONCATMAP
 
   def toMap = RMap(target, func)
 }
@@ -57,12 +56,12 @@ abstract class Ordering extends Term {
 case class Asc(attr: String) extends Ordering {
 
   def flip = Desc(attr)
-  def termType: EnumVal = TermType.ASC
+  def termType = TermType.ASC
 }
 
 case class Desc(attr: String) extends Ordering {
   def flip = Asc(attr)
-  def termType: EnumVal = TermType.DESC
+  def termType = TermType.DESC
 }
 
 /** Sort the sequence by document values of the given key(s).
@@ -75,7 +74,7 @@ case class OrderBy(target: Sequence, values: Seq[Ordering]) extends ProduceAnySe
 
   override lazy val args = buildArgs(values.+:(target):_*)
 
-  def termType: EnumVal = TermType.ORDERBY
+  def termType = TermType.ORDERBY
 }
 
 /** Skip a number of elements from the head of the sequence.
@@ -83,7 +82,7 @@ case class OrderBy(target: Sequence, values: Seq[Ordering]) extends ProduceAnySe
  *  @param index
  */
 case class Skip(target: Sequence, index: Int) extends ProduceAnySequence {
-  def termType: EnumVal = TermType.SKIP
+  def termType = TermType.SKIP
 }
 
 /** Concatenate two sequences.
@@ -94,7 +93,7 @@ case class Union(target: Sequence, others: Sequence) extends ProduceAnySequence 
 
   override lazy val args: Seq[Term] = buildArgs(target, others)
 
-  def termType: EnumVal = TermType.UNION
+  def termType = TermType.UNION
 }
 
 /** Get the nth element of a sequence.

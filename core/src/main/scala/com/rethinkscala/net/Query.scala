@@ -1,5 +1,6 @@
 package com.rethinkscala.net
 
+import ql2.{Ql2 => ql2}
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 import com.rethinkscala.Term

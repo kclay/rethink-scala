@@ -2,7 +2,7 @@ package com.rethinkscala.ast
 
 import com.rethinkscala.TermMessage
 
-import ql2.Term.TermType
+import ql2.Ql2.Term.TermType
 import com.rethinkscala.net.BinaryConversion
 import com.rethinkscala.net.Document
 

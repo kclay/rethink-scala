@@ -4,6 +4,7 @@ import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 import org.scalatest.exceptions.TestFailedException
 import com.rethinkscala.ast.Produce
+import ql2.{Ql2 => ql2}
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -45,7 +46,7 @@ trait WithBase extends BeforeAndAfterAll {
   override protected def afterAll() {
     super.afterAll()
     if (setupDB) {
-      //  db.drop.run
+      db.drop.run
     }
   }
 
@@ -68,10 +69,10 @@ trait WithBase extends BeforeAndAfterAll {
 
   type IS = Iterable[String]
   type IA = Iterable[Any]
-  implicit val connection: Connection = new Connection(useVersion)
+  implicit val connection = new Connection(useVersion)
 
-  def assert(t: ql2.Term, tt: Term.TermType.EnumVal) {
-    assert(t.`type`.get == tt)
+  def assert(t: ql2.Term, tt: Term.TermType) {
+    assert(t.getType == tt)
   }
 
   def assert(d: Option[ql2.Datum], value: String) {

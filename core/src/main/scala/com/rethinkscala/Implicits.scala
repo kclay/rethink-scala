@@ -76,20 +76,21 @@ object Implicits {
   }
 
 
-
-
   object Quick {
 
+    import ql2.{Ql2 => ql2}
+    import scala.collection.JavaConverters._
+
     case class Q12Datum(datum: ql2.Datum) {
-      def bool = datum.`rBool`.get
+      def bool = datum.getRBool
 
-      def obj = datum.`rObject`
+      def obj = datum.getRObjectList.asScala
 
-      def str = datum.`rStr`.get
+      def str = datum.getRStr
 
-      def num = datum.`rNum`.get
+      def num = datum.getRNum
 
-      def array = datum.`rArray`
+      def array = datum.getRArrayList.asScala
     }
 
     implicit def datum2Ql2Datum(d: ql2.Datum) = Q12Datum(d)
@@ -103,7 +104,7 @@ object Implicits {
     implicit def optTerm2Ql2Term(t: Option[ql2.Term]) = Ql2Term(t.get)
 
     case class Ql2Term(term: ql2.Term) {
-      def datum = term.`datum`
+      def datum = term.getDatum
 
       def bool = datum.bool
 
@@ -113,15 +114,15 @@ object Implicits {
 
       def num = datum.num
 
-      def array: Either[Seq[ql2.Term], Seq[ql2.Datum]] = term.`type` match {
-        case Some(ql2.Term.TermType.MAKE_ARRAY) => Left(term.`args`)
+      def array: Either[Seq[ql2.Term], Seq[ql2.Datum]] = term.getType match {
+        case ql2.Term.TermType.MAKE_ARRAY => Left(term.getArgsList.asScala)
         case _ => Right(datum.array)
       }
     }
 
     case class Ql2TermAssocPair(p: ql2.Term.AssocPair) {
-      val key = p.`key`.get
-      val value = p.`val`
+      val key = p.getKey
+      val value = p.getVal
 
       def bool = value.bool
 

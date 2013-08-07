@@ -1,6 +1,7 @@
 package com.rethinkscala.net
+
 import org.jboss.netty.channel.Channel
-import ql2.VersionDummy
+import ql2.Ql2.VersionDummy
 
 
 /**
