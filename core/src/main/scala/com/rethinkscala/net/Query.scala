@@ -31,7 +31,9 @@ case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R])
     try {
       Await.ready(p.future, atMost)
     } catch {
-      case e: Exception => p.failure(e)
+      case e: TimeoutException => p failure RethinkTimeoutError(e.getMessage, term)
+      case e: InterruptedException => p failure RethinkClientError(e.getMessage, term)
+
 
     }
 
@@ -42,7 +44,7 @@ case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R])
     val r = v match {
       case Some(Failure(e: RethinkError)) => Left(e)
       case Some(Success(r)) => r match {
-        case x: Option[Nothing] => Left(RethinkNoResultsError("No results found for " + mf.runtimeClass.getSimpleName, term))
+        case x: None.type => Left(RethinkNoResultsError("No results found for " + mf.runtimeClass.getSimpleName, term))
         case _ => Right(r.asInstanceOf[R])
 
 

@@ -62,7 +62,7 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   }
 
   def take(f: (Conn, Conn => Unit) => Unit): Unit = {
-    println(s"ConnectionPool size = ${size.get}")
+
     val connection = borrow
 
     try {
@@ -101,12 +101,12 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   private def create: Conn = {
     size.incrementAndGet match {
       case e: Int if e > max => {
-        println(s"$e > $max , re-borrowing")
+
         size.decrementAndGet
         borrow()
       }
       case e: Int => {
-        println("Creating new connection")
+
         connectionFactory.create
       }
     }

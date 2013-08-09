@@ -81,18 +81,16 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
   }
 
-  def handle(response: Response) = {
-    (response.getType match {
+  def handle(response: Response) = (response.getType match {
 
-      case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => toError(response, term)
-      case ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE => toCursor(0, response)
-      case ResponseType.SUCCESS_ATOM => toResult(response)
-      case _ =>
+    case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => toError(response, term)
+    case ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE => toCursor(0, response)
+    case ResponseType.SUCCESS_ATOM => toResult(response)
+    case _ =>
 
-    }) match {
-      case e: Exception => p failure (e)
-      case e: Any => p success (e.asInstanceOf[R])
-    }
+  }) match {
+    case e: Exception => p failure (e)
+    case e: Any => p success (e.asInstanceOf[R])
   }
 
 
@@ -191,7 +189,7 @@ private class PipelineFactory extends ChannelPipelineFactory {
     val p = pipeline()
 
     p.addLast("frameDecoder", new RethinkDBFrameDecoder())
-    p.addLast("protobufDecoder", new ProtobufDecoder(Response.getDefaultInstance))
+    p.addLast("protobufDecoder", new ProtobufDecoder2(Response.getDefaultInstance))
 
     //p.addLast("frameEncoder", new ProtobufVarint32LengthFieldPrepender());
 
@@ -229,7 +227,7 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
 
   }
 
-  case class ChannelWrapper(private val cf: ChannelFuture) {
+  case class ChannelWrapper(val cf: ChannelFuture) {
     val id = connectionId.incrementAndGet()
     val token: AtomicInteger = new AtomicInteger();
     lazy val channel = cf.getChannel
@@ -244,6 +242,7 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
       c.addListener(new ChannelFutureListener {
         def operationComplete(future: ChannelFuture) {
           version.configure(future.getChannel)
+          future.removeListener(this)
         }
       })
 
@@ -267,15 +266,26 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
     val f = p.future
     channel take {
       case (c, restore) => {
-        val query = toQuery(term, c.token.getAndIncrement, defaultDB)
+
+        val con = this
+        // add a channel future to ensure that all setup has been done
+        c.cf.addListener(new ChannelFutureListener {
+          def operationComplete(future: ChannelFuture) {
+
+            val query = toQuery(term, c.token.getAndIncrement, defaultDB)
 
 
-        val token = QueryToken[T](this, query, term, p, mf)
-        // TODO : Check into dropping netty and using sockets for each,
-        // Or find a way so that we can store the token for the netty handler to complete
+            val token = QueryToken[T](con, query, term, p, mf)
+            // TODO : Check into dropping netty and using sockets for each,
+            // Or find a way so that we can store the token for the netty handler to complete
 
-        c.channel.setAttachment(token)
-        c.channel.write(query)
+            c.channel.setAttachment(token)
+            c.channel.write(query)
+            future.removeListener(this)
+          }
+        })
+
+
         f onComplete {
           case _ => restore(c)
         }

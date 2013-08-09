@@ -1,6 +1,7 @@
 
 import sbt._
 import Keys._
+
 //import scalabuff.ScalaBuffPlugin._
 
 import scalariform.formatter.preferences._
@@ -76,7 +77,7 @@ object RethinkdbBuild extends Build {
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % v
   )
 
-  val scalaBuffVersion = "1.2.4-SNAPSHOT"
+
 
   lazy val root = Project(
     "root",
@@ -86,13 +87,12 @@ object RethinkdbBuild extends Build {
   lazy val core = Project(
     id = "core",
     base = file("core"),
-    settings = buildWithRelease ++  Seq(
+    settings = buildWithRelease ++ Seq(
 
 
-     // scalabuffVersion := scalaBuffVersion,
+      // scalabuffVersion := scalaBuffVersion,
       resolvers ++= repos,
       //scalabuffArgs := Seq("--verbose", "--verbose"),
-
 
 
       //   scalabuffArgs := Seq("--stdout"),
@@ -109,7 +109,7 @@ object RethinkdbBuild extends Build {
         "com.google.protobuf" % "protobuf-java" % "2.4.1",
         "org.scala-lang" % "scala-reflect" % sv
 
-       // "net.sandrogrzicic" %% "scalabuff-runtime" % scalaBuffVersion
+        // "net.sandrogrzicic" %% "scalabuff-runtime" % scalaBuffVersion
 
       ) ++ jackson("2.2.2")),
 
@@ -123,7 +123,7 @@ object RethinkdbBuild extends Build {
     )
 
 
-  )//.configs(ScalaBuff)
+  ) //.configs(ScalaBuff)
 
   lazy val lifted = Project(
     "lifted",
