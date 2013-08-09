@@ -22,6 +22,12 @@ TODO
   - Allow type safety for `Predicate` classes via macros
 
 
+SBT Users
+```scala
+val main = Project(....).settings(resolvers ++= Seq("RethinkScala Repository" at "http://kclay.github.io/releases"))
+
+val rethinkscala = "com.rethinkscala" %% "core" % "0.4",
+```
 Examples
 ```scala
 scala> import com.rethinkscala.r
@@ -101,6 +107,10 @@ sbt compile
 
 Version
 -
+###0.4 - 08/09/13
+ - Fixed race conditions in connection pool
+ - Switched to using protobuf-java 2.4.1 due to compatibility issues with akka-cluster 2.2.0
+ - minor bug fixes
 ###0.3 - 07/28/13
  - A `com.rethinkscala.Schema` object can be created , this provides some helper methods to provide type-saftey for tables
  - The map representation of the query is returned as well if cased to `com.rethinkscala.net.Document` and is accessable by using a a `com.rethinkscala.net.DocPath`
