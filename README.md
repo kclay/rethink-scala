@@ -107,6 +107,8 @@ sbt compile
 
 Version
 -
+###0.4.2 - 08/12/13
+ - Fixed update and filter quries
 ###0.4 - 08/09/13
  - Fixed race conditions in connection pool
  - Switched to using protobuf-java 2.4.1 due to compatibility issues with akka-cluster 2.2.0
