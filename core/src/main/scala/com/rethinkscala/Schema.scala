@@ -20,10 +20,26 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include
  */
 
 
+case object CurrentSchema {
+
+  private var _current: Option[Schema] = None
+
+  def apply(s: Schema) = if (_current.isEmpty) _current = Some(s)
+
+  def unapply = _current
+
+
+}
+
 class Schema {
 
 
   protected implicit def thisSchema = this
+
+
+  def defaultConnection: Option[Connection] = None
+
+  CurrentSchema(this)
 
 
   protected def defineMapper = {
@@ -39,12 +55,22 @@ class Schema {
 
   Reflector.mapper = defineMapper
 
+
+  def get[T <: Document](implicit mf: Manifest[T]): Option[Table[T]] = _tableTypes get (mf.runtimeClass) map {
+    t => t.asInstanceOf[Table[T]]
+  }
+
+  def lift[T <: Document](f: PartialFunction[Table[T], Unit])(implicit mf: Manifest[T]): Unit = get[T] map (f(_))
+
+  def liftAs[T <: Document, R](f: PartialFunction[Table[T], R])(implicit mf: Manifest[T]): Option[R] = get[T] map (f(_))
+
+
   implicit def doc2Active[A <: Document](a: A)(implicit m: Manifest[A], c: Connection) =
     new ActiveRecord(a, m)
 
   class ActiveRecord[T <: Document](o: T, m: Manifest[T])(implicit c: Connection) {
     private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] = (
-      _tableTypes get (m.runtimeClass) map {
+      CurrentSchema.unapply.get._tableTypes get (m.runtimeClass) map {
         table: Table[_] => action(table.asInstanceOf[Table[T]]).run
 
       }) getOrElse (Left(new Exception(s"No Table found in Schema for this ${m.runtimeClass}")))

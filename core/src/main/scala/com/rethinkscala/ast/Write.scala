@@ -67,7 +67,7 @@ case class Update(target: Selection, data: Either[Map[String, Any], Predicate],
   extends ProduceDocument[ChangeResult] {
 
   override lazy val args = buildArgs(target, data match {
-    case Left(x: Map[String, Any]) => x
+    case Left(x: Map[String, Any]) => Wrap(Expr(x))()
     case Right(x: Predicate) => x()
   })
   override lazy val optargs = buildOptArgs(Map("non_atomic" -> nonAtomic, "durability" -> durability, "return_vals" -> returnValues))

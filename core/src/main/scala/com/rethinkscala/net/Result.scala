@@ -3,6 +3,7 @@ package com.rethinkscala.net
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.rethinkscala.reflect.Reflector
 import scala.collection.mutable.ArrayBuffer
+import com.rethinkscala.Schema
 
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {

@@ -10,6 +10,12 @@ object Predicate {
   private val _nextVarId = new AtomicInteger()
 
   def nextVarId = _nextVarId.incrementAndGet()
+
+
+}
+
+object Wrap {
+  def apply(t: Typed) = new Predicate1((v: Var) => t)
 }
 
 abstract class Predicate extends {
@@ -40,7 +46,6 @@ case class Func(f: Predicate) extends Term {
 
   def termType = TermType.FUNC
 }
-
 
 
 class Predicate1(f: (Var) => Typed) extends Predicate {

@@ -353,7 +353,7 @@ trait Filterable extends Typed {
   self: Sequence =>
   def filter(value: Binary): Filter = filter((x: Var) => value)
 
-  def filter(value: Map[String, Any]): Filter = Filter(this, Left(Expr(value)))
+  def filter(value: Map[String, Any]): Filter = Filter(this, Left(value))
 
   def filter(f: Var => Binary): Filter = Filter(this, Right(f))
 

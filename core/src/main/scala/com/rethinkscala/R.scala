@@ -11,7 +11,7 @@ object r {
   private lazy val _row = new ImplicitVar
 
   // TODO Fix me, clashes with Sequence and Hash
-  def row(name: String) = (_row: Hash) field name
+  def row(name: String) = (_row: ProduceAny) field name
 
   //def row[T<:Sequence](name: String)(implicit d:DummyImplicit) = _row.asInstanceOf[T] field name
 

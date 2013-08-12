@@ -14,9 +14,10 @@ import com.rethinkscala.net.{Document, ChangeResult, InsertResult}
   *
   */
 
-case class Foo(id: Option[String], a: Int, b: Int) extends Document {
-
-
+case class Foo(id: Option[String] = None, a: Int, b: Int) extends Document {
+  override protected def afterInsert(id: String) {
+    println(id)
+  }
 }
 
 case class Foo2(id: String, a: Int, b: Int, @JsonProperty("is_fav") fav: Boolean) extends Document
@@ -28,7 +29,7 @@ class WriteTest extends FunSuite with WithBase {
   test("insert documents") {
 
 
-    assert(table.insert(Foo("a", 1, 1)), {
+    assert(table.insert(Foo("a", a = 1, b = 1)), {
       rs: InsertResult => rs.inserted == 1
     })
 
