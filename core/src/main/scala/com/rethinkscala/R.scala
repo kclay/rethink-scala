@@ -36,7 +36,7 @@ object r {
 
   def tables = TableList()
 
-  def branch(predicate: BooleanPredicate, passed: Typed, failed: Typed) = Branch(predicate, passed, failed)
+  def branch(predicate: Binary, passed: Typed, failed: Typed) = Branch(predicate, passed, failed)
 
   def sum(attr: String) = BySum(attr)
 

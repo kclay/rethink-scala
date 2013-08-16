@@ -20,13 +20,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include
  */
 
 
-case object CurrentSchema {
+object CurrentSchema {
+
 
   private var _current: Option[Schema] = None
 
-  def apply(s: Schema) = if (_current.isEmpty) _current = Some(s)
+  def apply(o: Option[Schema]) = _current = o
 
-  def unapply = _current
+
+  def getOrElse(s: Schema) = _current.getOrElse(s)
 
 
 }
@@ -38,8 +40,6 @@ class Schema {
 
 
   def defaultConnection: Option[Connection] = None
-
-  CurrentSchema(this)
 
 
   protected def defineMapper = {
@@ -70,7 +70,7 @@ class Schema {
 
   class ActiveRecord[T <: Document](o: T, m: Manifest[T])(implicit c: Connection) {
     private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] = (
-      CurrentSchema.unapply.get._tableTypes get (m.runtimeClass) map {
+      CurrentSchema.getOrElse(thisSchema)._tableTypes get (m.runtimeClass) map {
         table: Table[_] => action(table.asInstanceOf[Table[T]]).run
 
       }) getOrElse (Left(new Exception(s"No Table found in Schema for this ${m.runtimeClass}")))

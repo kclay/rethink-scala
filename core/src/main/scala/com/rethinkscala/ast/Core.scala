@@ -59,7 +59,9 @@ case class Info(target: Typed) extends ProduceDocument[InfoResult] {
   def termType = TermType.INFO
 }
 
-case class Branch(test: BooleanPredicate, passed: Typed, failed: Typed) extends ProduceAny {
+case class Branch(test: Binary, passed: Typed, failed: Typed) extends ProduceAny {
+
+
   def termType = TermType.BRANCH
 }
 
@@ -115,6 +117,7 @@ object Expr {
   def apply(a: Any): Term = {
     val b = a
     a match {
+      case p: BooleanPredicate => p()
       case t: Term => t
       case s: Seq[_] => MakeArray(s)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])

@@ -152,6 +152,10 @@ trait Selection extends Sequence {
 
   def update(d: Document): Update = update((x: Var) => MakeObj2(d))
 
+  def update(t: Typed, durability: Option[Durability.Kind], nonAtomic: Option[Boolean]): Update = Update(this, Left(t), durability, nonAtomic)
+
+  def update(t: Typed): Update = update(t, None, None)
+
   def update(p: Var => Typed): Update = update(p, None, None)
 
   def replace(p: Var => Typed): Replace = Replace(this, Right(p))

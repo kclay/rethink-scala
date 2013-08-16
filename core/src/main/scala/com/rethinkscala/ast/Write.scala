@@ -62,12 +62,12 @@ case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String
   override protected def after(values: Seq[String]) = lifecycle((d, i) => d.invokeAfterInsert(values(i)))
 }
 
-case class Update(target: Selection, data: Either[Map[String, Any], Predicate],
+case class Update(target: Selection, data: Either[Typed, Predicate],
                   durability: Option[Durability.Kind] = None, nonAtomic: Option[Boolean] = None, returnValues: Option[Boolean] = None)
   extends ProduceDocument[ChangeResult] {
 
   override lazy val args = buildArgs(target, data match {
-    case Left(x: Map[String, Any]) => Wrap(Expr(x))()
+    case Left(x: Typed) => Wrap(x)
     case Right(x: Predicate) => x()
   })
   override lazy val optargs = buildOptArgs(Map("non_atomic" -> nonAtomic, "durability" -> durability, "return_vals" -> returnValues))

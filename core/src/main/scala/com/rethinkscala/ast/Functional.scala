@@ -15,7 +15,28 @@ object Predicate {
 }
 
 object Wrap {
-  def apply(t: Typed) = new Predicate1((v: Var) => t)
+
+
+  private def scan(node: Any): Boolean = node match {
+    case node: ImplicitVar => true
+    case t: Term if (t.args.collectFirst {
+      case arg: Term if (scan(arg)) => true
+    }.getOrElse(false)) => true
+    case t: Term if (t.optargs.collectFirst {
+      case p: com.rethinkscala.AssocPair if (scan(p.token)) => true
+    }.getOrElse(false)) => true
+    case _ => false
+  }
+
+  //def apply(t: Typed) = new Predicate1((v: Var) => t)
+
+  def apply(t: Any) = {
+    val e = Expr(t).asInstanceOf[Typed]
+    val rtn = if (scan(e)) new Predicate1((v: Var) => e).apply() else e
+    rtn
+  }
+
+  // def apply(t: Typed) = new Predicate1((v: Var) => t)
 }
 
 abstract class Predicate extends {
@@ -62,7 +83,7 @@ class Predicate2(f: (Var, Var) => Typed) extends Predicate {
   val amount: Int = 2
 }
 
-trait BooleanPredicate extends Predicate
+trait BooleanPredicate extends Predicate with Binary
 
 case class BooleanPredicate1(f: (Var) => Binary) extends BooleanPredicate {
 
