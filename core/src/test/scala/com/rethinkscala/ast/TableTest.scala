@@ -16,7 +16,7 @@ class TableTest extends FunSuite with WithBase {
   test("create table with options") {
 
     val table = r.table(tableName)
-    val create = table.create(Some("a"), Some(Durability.Hard), Some(16))
+    val create = table.create(TableOptions(primaryKey=Some("a"), durability=Some(Durability.Hard), cacheSize=Some(16)))
 
     assert(create)
 
@@ -41,7 +41,10 @@ class TableTest extends FunSuite with WithBase {
 
     val table = r.table(tableName)
     assert[IS](table.indexes, {
-      i: IS => i.toSeq.contains("foo_count")
+      i: IS => {
+        val seq = i.toSeq
+        seq.contains("foo_count")
+      }
     })
   }
 

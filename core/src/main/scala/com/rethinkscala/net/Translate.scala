@@ -30,7 +30,7 @@ trait Translate[In, Out] {
 trait WithConversion[In, Out] {
 
   def convert(value: In, json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
-    term: Term
+
     val rtn = _convert(value, json)
 
     if (rtn.isInstanceOf[GeneratesKeys]) {

@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.TermMessage
+import com.rethinkscala.{TableOptions, TermMessage}
 
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.net.BinaryConversion
@@ -15,9 +15,9 @@ case class DB(name: String) extends TermMessage {
 
   def termType = TermType.DB
 
-  def tableCreate(name: String, primaryKey: Option[String] = None,
-                  durability: Option[Durability.Kind] = None, cacheSize: Option[Int] = None, dataCenter: Option[String] = None) = {
-    TableCreate(name, primaryKey, durability, cacheSize, dataCenter, Some(this))
+  def tableCreate(name:String):TableCreate = tableCreate(name,TableOptions())
+  def tableCreate(name: String, options:TableOptions):TableCreate = {
+    TableCreate(name, options, Some(this))
   }
 
   def create = DBCreate(name)

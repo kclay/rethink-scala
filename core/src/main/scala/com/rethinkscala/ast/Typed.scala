@@ -144,25 +144,25 @@ trait Stream extends Sequence
 
 trait Selection extends Sequence {
 
-  def update(attributes: Map[String, Any], durability: Option[Durability.Kind], nonAtomic: Option[Boolean]) = Update(this, Left(attributes), durability, nonAtomic)
+  def update(attributes: Map[String, Any], options:UpdateOptions) = Update(this, Left(attributes), options)
 
-  def update(attributes: Map[String, Any]): Update = update(attributes, None, None)
+  def update(attributes: Map[String, Any]): Update = update(attributes,UpdateOptions())
 
-  def update(p: Var => Typed, durability: Option[Durability.Kind], nonAtomic: Option[Boolean]) = Update(this, Right(p), durability, nonAtomic)
+  def update(p: Var => Typed, options:UpdateOptions) = Update(this, Right(p),options)
 
   def update(d: Document): Update = update((x: Var) => MakeObj2(d))
 
-  def update(t: Typed, durability: Option[Durability.Kind], nonAtomic: Option[Boolean]): Update = Update(this, Left(t), durability, nonAtomic)
+  def update(t: Typed, options:UpdateOptions): Update = Update(this, Left(t),options)
 
-  def update(t: Typed): Update = update(t, None, None)
+  def update(t: Typed): Update = update(t, UpdateOptions())
 
-  def update(p: Var => Typed): Update = update(p, None, None)
+  def update(p: Var => Typed): Update = update(p, UpdateOptions())
 
-  def replace(p: Var => Typed): Replace = Replace(this, Right(p))
+  def replace(p: Var => Typed): Replace = Replace(this, Right(p),UpdateOptions())
 
   def replace(d: Document): Replace = replace((x: Var) => MakeObj2(d))
 
-  def replace(data: Map[String, Any]): Replace = Replace(this, Left(data))
+  def replace(data: Map[String, Any]): Replace = Replace(this, Left(data),UpdateOptions())
 
   def delete: Delete = delete()
 

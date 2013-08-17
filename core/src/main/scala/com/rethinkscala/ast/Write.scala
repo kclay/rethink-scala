@@ -3,6 +3,7 @@ package com.rethinkscala.ast
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.net.{ChangeResult, Document, InsertResult}
+import com.rethinkscala.{Durability, UpdateOptions, InsertOptions}
 
 
 sealed trait Lifecycle
@@ -30,7 +31,7 @@ abstract class WithLifecycle[R](implicit mf: Manifest[R]) {
 }
 
 case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String, Any]], Seq[T]],
-                                 upsert: Option[Boolean] = None, durability: Option[Durability.Kind] = None, returnValues: Option[Boolean] = None)
+                                options:InsertOptions)
   extends WithLifecycle[Seq[String]] with ProduceDocument[InsertResult] {
 
 
@@ -40,9 +41,9 @@ case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String
 
 
   })
-  override lazy val optargs = buildOptArgs(Map("upsert" -> upsert, "durability" -> durability, "return_vals" -> returnValues))
+  override lazy val optargs = buildOptArgs(options.toMap)
 
-  def withResults = Insert[T](table, records, upsert, durability, Some(true))
+  def withResults = Insert[T](table, records, options.copy(returnValues = Some(true)))
 
   def termType = TermType.INSERT
 
@@ -63,33 +64,33 @@ case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String
 }
 
 case class Update(target: Selection, data: Either[Typed, Predicate],
-                  durability: Option[Durability.Kind] = None, nonAtomic: Option[Boolean] = None, returnValues: Option[Boolean] = None)
+                 options:UpdateOptions)
   extends ProduceDocument[ChangeResult] {
 
   override lazy val args = buildArgs(target, data match {
     case Left(x: Typed) => Wrap(x)
     case Right(x: Predicate) => x()
   })
-  override lazy val optargs = buildOptArgs(Map("non_atomic" -> nonAtomic, "durability" -> durability, "return_vals" -> returnValues))
+  override lazy val optargs = buildOptArgs(options.toMap)
 
   def termType = TermType.UPDATE
 
-  def withResults = Update(target, data, durability, nonAtomic, Some(true))
+  def withResults = Update(target, data, options.copy(returnValues = Some(true)))
 }
 
 case class Replace(target: Selection, data: Either[Map[String, Any], Predicate1],
-                   durability: Option[Durability.Kind] = None, nonAtomic: Option[Boolean] = None, returnValues: Option[Boolean] = None)
+                  options:UpdateOptions)
   extends ProduceDocument[ChangeResult] {
 
   override lazy val args = buildArgs(target, data match {
     case Left(x: Map[String, Any]) => x
     case Right(x: Predicate1) => x()
   })
-  override lazy val optargs = buildOptArgs(Map("non_atomic" -> nonAtomic, "durability" -> durability, "return_vals" -> returnValues))
+  override lazy val optargs = buildOptArgs(options.toMap)
 
   def termType = TermType.REPLACE
 
-  def withResults = Replace(target, data, durability, nonAtomic, Some(true))
+  def withResults = Replace(target, data, options.copy(returnValues = Some(true)))
 
 }
 

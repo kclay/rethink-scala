@@ -26,10 +26,8 @@ object r {
 
   def dbs = DBList()
 
-  def tableCreate(name: String, primaryKey: Option[String] = None,
-
-                  durability: Option[Durability.Kind] = None, cacheSize: Option[Int] = None, dataCenter: Option[String] = None) = {
-    TableCreate(name, primaryKey, durability, cacheSize, dataCenter)
+  def tableCreate(name: String,options:Option[TableOptions]=None) = {
+    TableCreate(name, options.getOrElse(TableOptions()))
   }
 
   def tableDrop(name: String) = TableDrop(name)

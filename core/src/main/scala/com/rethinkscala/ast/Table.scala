@@ -2,14 +2,11 @@ package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.net.{BinaryConversion, Document}
+import com.rethinkscala.{InsertOptions, TableOptions}
 
 // TODO FuncCall
 
-object Durability extends Enumeration {
-  type Kind = Value
-  val Hard = Value("hard")
-  val Soft = Value("soft")
-}
+
 
 case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = None,
                                 db: Option[DB] = None)
@@ -24,29 +21,28 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def drop = TableDrop(name, db)
 
-  def create: TableCreate = create()
+  def create: TableCreate = create(TableOptions())
 
-  def create(primaryKey: Option[String] = None,
-             durability: Option[Durability.Kind] = None, cacheSize: Option[Int] = None, dataCenter: Option[String] = None): TableCreate = {
+  def create(options:TableOptions): TableCreate = {
 
-    TableCreate(name, primaryKey, durability, cacheSize, dataCenter, db)
+    TableCreate(name, options, db)
 
   }
 
-  def insert(records: Seq[Map[String, Any]], upsert: Boolean = false, durability: Option[Durability.Kind] = None) = Insert[T](this, Left(records), Some(upsert), durability)
+  def insert(records: Seq[Map[String, Any]], options:InsertOptions) = Insert[T](this, Left(records),  options)
 
-  def insert(record: T, upsert: Boolean, durability: Option[Durability.Kind]): Insert[T] = insert(Seq(record), upsert, durability)
+  def insert(record: T, upsert: Boolean,options:InsertOptions): Insert[T] = insert(Seq(record), upsert, options)
 
   def insert(records: Seq[T], upsert: Boolean,
-             durability: Option[Durability.Kind])(implicit d: DummyImplicit) = Insert[T](this, Right(records), Some(upsert), durability)
+             options:InsertOptions)(implicit d: DummyImplicit) = Insert[T](this, Right(records),  options)
 
-  def insert[R <: T](records: Seq[R]) = Insert(this, Right(records), None, None)
+  def insert[R <: T](records: Seq[R]) = Insert(this, Right(records),InsertOptions())
 
-  def insert(record: T) = Insert(this, Right(Seq(record)), None, None)
+  def insert(record: T) = Insert(this, Right(Seq(record)),InsertOptions())
 
   def ++=(record: T) = insert(record)
 
-  def ++=(records: Seq[Map[String, Any]]) = this insert (records)
+  def ++=(records: Seq[Map[String, Any]]) = this insert (records,InsertOptions())
 
   def ++=(records: Seq[T])(implicit d: DummyImplicit) = this insert (records)
 
@@ -66,14 +62,13 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
 }
 
-case class TableCreate(name: String, primaryKey: Option[String] = None,
-                       durability: Option[Durability.Kind] = None, cacheSize: Option[Int] = None, dataCenter: Option[String] = None, db: Option[DB] = None)
+case class TableCreate(name: String, options:TableOptions, db: Option[DB] = None)
   extends ProduceBinary
   with WithDB with BinaryConversion {
   val resultField = "created"
 
   override lazy val args = buildArgs(name)
-  override lazy val optargs = buildOptArgs(Map("primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize, "durability" -> durability))
+  override lazy val optargs = buildOptArgs(options.toMap)
 
   def termType = TermType.TABLE_CREATE
 
