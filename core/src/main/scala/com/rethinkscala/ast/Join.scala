@@ -3,14 +3,15 @@ package com.rethinkscala.ast
 import com.rethinkscala.{ AssocPair, Term }
 
 import ql2.Ql2.Term.TermType
+import com.rethinkscala.net.JoinResult
 
-abstract class Join extends ProduceAnySequence {
-  val left: Sequence
-  val right: Sequence
+abstract class Join[L,R] extends ProduceSequence[JoinResult[L,R]] {
+  val left: Sequence[L]
+  val right:Sequence[R]
 
 }
 
-abstract class PredicateJoin extends Join {
+abstract class PredicateJoin[L,R] extends Join[L,R] {
 
   val func: BooleanPredicate2
   override lazy val args: Seq[Term] = buildArgs(left, right, func())
@@ -24,7 +25,7 @@ abstract class PredicateJoin extends Join {
  *  @param right
  *  @param func
  */
-case class InnerJoin(left: Sequence, right: Sequence, func: BooleanPredicate2) extends PredicateJoin {
+case class InnerJoin[L,R](left: Sequence[L], right: Sequence[R], func: BooleanPredicate2) extends PredicateJoin[L,R] {
   def termType = TermType.INNER_JOIN
 }
 
@@ -33,7 +34,7 @@ case class InnerJoin(left: Sequence, right: Sequence, func: BooleanPredicate2) e
  *  @param right
  *  @param func
  */
-case class OuterJoin(left: Sequence, right: Sequence, func: BooleanPredicate2) extends PredicateJoin {
+case class OuterJoin[L,R](left: Sequence[L], right: Sequence[R], func: BooleanPredicate2) extends PredicateJoin[L,R] {
   def termType = TermType.OUTER_JOIN
 }
 
@@ -43,7 +44,7 @@ case class OuterJoin(left: Sequence, right: Sequence, func: BooleanPredicate2) e
  *  @param attr
  *  @param index
  */
-case class EqJoin(left: Sequence, attr: String, right: Sequence, index: Option[String] = None) extends Join {
+case class EqJoin[L,R](left: Sequence[L], attr: String, right: Sequence[R], index: Option[String] = None) extends Join[L,R] {
   def termType = TermType.EQ_JOIN
 
   override lazy val args: Seq[Term] = buildArgs(left, attr, right)
@@ -53,7 +54,7 @@ case class EqJoin(left: Sequence, attr: String, right: Sequence, index: Option[S
 /** Used to 'zip' up the result of a join by merging the 'right' fields into 'left' fields of each member of the sequence.
  *  @param target
  */
-case class Zip(target: Sequence) extends ProduceAnySequence {
+case class Zip[T](target: Sequence[T]) extends ProduceSequence[T] {
 
   def termType = TermType.ZIP
 }

@@ -16,7 +16,7 @@ case class GetAll[R <: Document](target: Table[R], attr: String, index: Option[S
   def termType = TermType.GET_ALL
 }
 
-case class Between(target: StreamSelection, start: Literal, end: Literal, index: Option[String] = None) extends ProduceStreamSelection {
+case class Between[T](target: StreamSelection[T], start: Literal, end: Literal, index: Option[String] = None) extends ProduceTypedStreamSelection[T]{
   override lazy val args = buildArgs(target, start, end)
 
   override lazy val optargs = buildOptArgs(Map("index" -> index))
@@ -24,7 +24,7 @@ case class Between(target: StreamSelection, start: Literal, end: Literal, index:
   def termType = TermType.BETWEEN
 }
 
-case class Filter(target: Sequence, filter: Either[Map[String, Any], Predicate1]) extends ProduceStreamSelection {
+case class Filter[T](target: Sequence[T], filter: Either[Map[String, Any], Predicate1]) extends ProduceTypedStreamSelection[T]{
 
   override lazy val args = buildArgs(target, filter match {
     case Left(x) => x

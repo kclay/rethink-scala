@@ -63,7 +63,7 @@ case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String
   override protected def after(values: Seq[String]) = lifecycle((d, i) => d.invokeAfterInsert(values(i)))
 }
 
-case class Update(target: Selection, data: Either[Typed, Predicate],
+case class Update[T](target: Selection[T], data: Either[Typed, Predicate],
                  options:UpdateOptions)
   extends ProduceDocument[ChangeResult] {
 
@@ -78,7 +78,7 @@ case class Update(target: Selection, data: Either[Typed, Predicate],
   def withResults = Update(target, data, options.copy(returnValues = Some(true)))
 }
 
-case class Replace(target: Selection, data: Either[Map[String, Any], Predicate1],
+case class Replace[T](target: Selection[T], data: Either[Map[String, Any], Predicate1],
                   options:UpdateOptions)
   extends ProduceDocument[ChangeResult] {
 
@@ -94,7 +94,7 @@ case class Replace(target: Selection, data: Either[Map[String, Any], Predicate1]
 
 }
 
-case class Delete(target: Selection, durability: Option[Durability.Kind] = None) extends ProduceDocument[ChangeResult] {
+case class Delete[T](target: Selection[T], durability: Option[Durability.Kind] = None) extends ProduceDocument[ChangeResult] {
 
 
   override lazy val args = buildArgs(target)

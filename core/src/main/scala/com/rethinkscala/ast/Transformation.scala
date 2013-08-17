@@ -3,8 +3,8 @@ package com.rethinkscala.ast
 import com.rethinkscala.Term
 import ql2.Ql2.Term.TermType
 
-abstract class Transformation extends ProduceAnySequence {
-  val target: Sequence
+abstract class Transformation[T] extends ProduceSequence[T] {
+  val target: Sequence[T]
   val func: Predicate
 
   override lazy val args = buildArgs(target, func())
@@ -15,7 +15,7 @@ abstract class Transformation extends ProduceAnySequence {
  *  @param target
  *  @param func
  */
-case class RMap(target: Sequence, func: Predicate1) extends Transformation {
+case class RMap[T](target: Sequence[T], func: Predicate1) extends Transformation[T] {
 
   def termType = TermType.MAP
 
@@ -27,7 +27,7 @@ case class RMap(target: Sequence, func: Predicate1) extends Transformation {
  *  @param target
  *  @param func
  */
-case class ConcatMap(target: Sequence, func: Predicate1) extends Transformation {
+case class ConcatMap[T](target: Sequence[T], func: Predicate1) extends Transformation[T] {
 
   def termType = TermType.CONCATMAP
 
@@ -40,7 +40,7 @@ case class ConcatMap(target: Sequence, func: Predicate1) extends Transformation 
  *  @param target
  *  @param fields
  */
-case class WithFields(target: Sequence, fields: Seq[String]) extends ProduceAnySequence {
+case class WithFields[T](target: Sequence[T], fields: Seq[String]) extends ProduceSequence[T] {
 
   def termType = TermType.WITH_FIELDS
   override lazy val args = buildArgs(fields.+:(target): _*)
@@ -69,7 +69,7 @@ case class Desc(attr: String) extends Ordering {
  *  @param target
  *  @param values
  */
-case class OrderBy(target: Sequence, values: Seq[Ordering]) extends ProduceAnySequence {
+case class OrderBy[T](target: Sequence[T], values: Seq[Ordering]) extends ProduceSequence[T] {
 
 
   override lazy val args = buildArgs(values.+:(target):_*)
@@ -81,7 +81,7 @@ case class OrderBy(target: Sequence, values: Seq[Ordering]) extends ProduceAnySe
  *  @param target
  *  @param index
  */
-case class Skip(target: Sequence, index: Int) extends ProduceAnySequence {
+case class Skip[T](target: Sequence[T], index: Int) extends ProduceSequence[T] {
   def termType = TermType.SKIP
 }
 
@@ -89,7 +89,7 @@ case class Skip(target: Sequence, index: Int) extends ProduceAnySequence {
  *  @param target
  *  @param others
  */
-case class Union(target: Sequence, others: Sequence) extends ProduceAnySequence {
+case class Union(target: Sequence[_], others: Sequence[_]) extends ProduceAnySequence {
 
   override lazy val args: Seq[Term] = buildArgs(target, others)
 
@@ -101,7 +101,7 @@ case class Union(target: Sequence, others: Sequence) extends ProduceAnySequence 
  *  @param left
  *  @param right
  */
-case class Slice(target: Sequence, left: Int = 0, right: Int = -1) extends ProduceAnySequence {
+case class Slice[T](target: Sequence[T], left: Int = 0, right: Int = -1) extends ProduceSequence[T] {
   override lazy val args = buildArgs(target, left, right)
 
   def termType = TermType.SLICE
@@ -111,7 +111,7 @@ case class Slice(target: Sequence, left: Int = 0, right: Int = -1) extends Produ
  *  @param target
  *  @param amount
  */
-case class Limit(target: Sequence, amount: Int) extends ProduceAnySequence {
+case class Limit[T](target: Sequence[T], amount: Int) extends ProduceSequence[T] {
   override lazy val args = buildArgs(target, amount)
 
   def termType = TermType.LIMIT
@@ -120,7 +120,7 @@ case class Limit(target: Sequence, amount: Int) extends ProduceAnySequence {
 /** Test if a sequence is empty.
  *  @param target
  */
-case class IsEmpty(target: Sequence) extends ProduceBinary {
+case class IsEmpty[T](target: Sequence[T]) extends ProduceBinary {
   def termType = TermType.IS_EMPTY
 }
 
@@ -128,7 +128,7 @@ case class IsEmpty(target: Sequence) extends ProduceBinary {
  *  @param target
  *  @param filter
  */
-case class IndexesOf(target: Sequence, filter: Either[Datum, BooleanPredicate]) extends ProduceAnySequence {
+case class IndexesOf[T](target: Sequence[T], filter: Either[Datum, BooleanPredicate]) extends ProduceSequence[T] {
 
   override lazy val args = buildArgs(target, filter match {
     case Left(x)  => x
@@ -137,7 +137,7 @@ case class IndexesOf(target: Sequence, filter: Either[Datum, BooleanPredicate]) 
   def termType = TermType.INDEXES_OF
 }
 
-case class Nth(target: Sequence, index: Int) extends ProduceAny {
+case class Nth[T](target: Sequence[T], index: Int) extends Produce[T] {
   def termType = TermType.NTH
 }
 
@@ -145,6 +145,6 @@ case class Nth(target: Sequence, index: Int) extends ProduceAny {
  *  @param target
  *  @param amount
  */
-case class Sample(target: Sequence, amount: Int) extends ProduceAnySequence {
+case class Sample[T](target: Sequence[T], amount: Int) extends ProduceSequence[T] {
   def termType = TermType.SAMPLE
 }

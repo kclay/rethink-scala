@@ -10,7 +10,7 @@ import ql2.Ql2.Term.TermType
   * @param f
   * @param base
   */
-case class Reduce(target: Sequence, f: Predicate2, base: Option[Any] = None) extends ProduceAny {
+case class Reduce(target: Sequence[_], f: Predicate2, base: Option[Any] = None) extends ProduceAny {
 
   override lazy val args = buildArgs(target, f())
 
@@ -24,7 +24,7 @@ case class Reduce(target: Sequence, f: Predicate2, base: Option[Any] = None) ext
   * @param target
   * @param filter
   */
-case class Count(target: Sequence, filter: Option[Either[String, BooleanPredicate]] = None) extends ProduceNumeric {
+case class Count(target: Sequence[_], filter: Option[Either[String, BooleanPredicate]] = None) extends ProduceNumeric {
 
   override lazy val args = buildArgs(filter.map {
     a =>
@@ -41,7 +41,7 @@ case class Count(target: Sequence, filter: Option[Either[String, BooleanPredicat
 /** Remove duplicate elements from the sequence.
   * @param target
   */
-case class Distinct(target: Sequence) extends ProduceAnySequence {
+case class Distinct[T](target: Sequence[T]) extends ProduceSequence[T] {
   def termType = TermType.DISTINCT
 }
 
@@ -53,7 +53,7 @@ case class Distinct(target: Sequence) extends ProduceAnySequence {
   * @param reduce
   * @param base
   */
-case class GroupMapReduce(target: Sequence, grouping: Predicate1, mapping: Predicate1, reduce: Predicate2, base: Option[Datum] = None) extends ProduceArray {
+case class GroupMapReduce[T](target: Sequence[T], grouping: Predicate1, mapping: Predicate1, reduce: Predicate2, base: Option[Datum] = None) extends ProduceTypedArray[T] {
 
   override lazy val args = buildArgs(target, grouping(), mapping(), reduce())
   override lazy val optargs = buildOptArgs(Map("base" -> base))
@@ -67,7 +67,7 @@ case class GroupMapReduce(target: Sequence, grouping: Predicate1, mapping: Predi
   * @param method
   * @param attrs
   */
-case class GroupBy(target: Sequence, method: AggregateByMethod, attrs: Seq[String]) extends ProduceAnySequence {
+case class GroupBy[T](target: Sequence[T], method: AggregateByMethod, attrs: Seq[String]) extends ProduceSequence[T] {
 
   override lazy val args = buildArgs((Seq(target, method.underlying) ++ attrs): _*)
 
@@ -78,7 +78,7 @@ case class GroupBy(target: Sequence, method: AggregateByMethod, attrs: Seq[Strin
   * @param target
   * @param value
   */
-case class Contains(target: Sequence, value: Seq[Datum]) extends ProduceBinary {
+case class Contains(target: Sequence[_], value: Seq[Datum]) extends ProduceBinary {
   override lazy val args = buildArgs((Seq(target) ++ value): _*)
 
   def termType = TermType.CONTAINS

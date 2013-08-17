@@ -41,7 +41,7 @@ class Cursor[A](connectionId: Int, token: Token, chunk: Seq[A], completed: Boole
   lazy val _size = {
     if (completed) underlying.size
     else {
-      val seq = qt.term.asInstanceOf[Sequence]
+      val seq = qt.term.asInstanceOf[Sequence[_]]
 
       seq.count.run match {
         case Left(e: RethinkError) => underlying.size

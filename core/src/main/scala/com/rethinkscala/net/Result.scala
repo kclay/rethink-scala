@@ -83,6 +83,8 @@ trait ReturnValues {
 
 case class DBResult(name: String, @JsonProperty("type") kind: String) extends Document
 
+
+case class JoinResult[Left,Right](left:Left,right:Right) extends Document
 abstract class InfoResult(name: String, @JsonProperty("type") kind: String) extends Document
 
 

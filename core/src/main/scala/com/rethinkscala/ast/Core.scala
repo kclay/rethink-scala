@@ -73,7 +73,7 @@ object Core {
   * @param target
   * @param function
   */
-case class ForEach(target: Sequence, function: Predicate1) extends ProduceAnyDocument {
+case class ForEach(target: Sequence[_], function: Predicate1) extends ProduceAnyDocument {
 
   override lazy val args = buildArgs(target, function())
 

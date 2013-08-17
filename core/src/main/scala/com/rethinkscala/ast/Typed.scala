@@ -101,7 +101,9 @@ trait Literal extends Addition {
 
 trait MapTyped extends Typed
 
-trait ArrayTyped extends Sequence {
+trait Array extends Typed
+
+trait ArrayTyped[T] extends Sequence[T] with Array {
 
 
   def append(value: Datum) = Append(this, value)
@@ -114,11 +116,11 @@ trait ArrayTyped extends Sequence {
 
   def diff(values: Datum*) = Difference(this, Expr(values))
 
-  def diff(array: ArrayTyped) = Difference(this, array)
+  def diff(array: ArrayTyped[_]) = Difference(this, array)
 
-  def idiff(array: ArrayTyped) = Difference(array, this)
+ // def idiff[R](array: ArrayTyped[R]) = Difference(array, this)
 
-  def idiff(values: Datum*) = Difference(Expr(values), this)
+  //def idiff(values: Datum*) = Difference(Expr(values), this)
 
 
   def setInert(value: Datum) = SetInsert(this, value)
@@ -140,37 +142,37 @@ trait ArrayTyped extends Sequence {
 
 }
 
-trait Stream extends Sequence
+trait Stream[T] extends Sequence[T]
 
-trait Selection extends Sequence {
+trait Selection[T] extends Sequence[T] {
 
   def update(attributes: Map[String, Any], options:UpdateOptions) = Update(this, Left(attributes), options)
 
-  def update(attributes: Map[String, Any]): Update = update(attributes,UpdateOptions())
+  def update(attributes: Map[String, Any]): Update[T] = update(attributes,UpdateOptions())
 
   def update(p: Var => Typed, options:UpdateOptions) = Update(this, Right(p),options)
 
-  def update(d: Document): Update = update((x: Var) => MakeObj2(d))
+  def update(d: Document): Update[T] = update((x: Var) => MakeObj2(d))
 
-  def update(t: Typed, options:UpdateOptions): Update = Update(this, Left(t),options)
+  def update(t: Typed, options:UpdateOptions): Update[T] = Update(this, Left(t),options)
 
-  def update(t: Typed): Update = update(t, UpdateOptions())
+  def update(t: Typed): Update[T] = update(t, UpdateOptions())
 
-  def update(p: Var => Typed): Update = update(p, UpdateOptions())
+  def update(p: Var => Typed): Update[T] = update(p, UpdateOptions())
 
-  def replace(p: Var => Typed): Replace = Replace(this, Right(p),UpdateOptions())
+  def replace(p: Var => Typed): Replace[T] = Replace(this, Right(p),UpdateOptions())
 
-  def replace(d: Document): Replace = replace((x: Var) => MakeObj2(d))
+  def replace(d: Document): Replace[T] = replace((x: Var) => MakeObj2(d))
 
-  def replace(data: Map[String, Any]): Replace = Replace(this, Left(data),UpdateOptions())
+  def replace(data: Map[String, Any]): Replace[T] = Replace(this, Left(data),UpdateOptions())
 
-  def delete: Delete = delete()
+  def delete: Delete[T] = delete()
 
-  def delete(durability: Option[Durability.Kind] = None): Delete = Delete(this)
+  def delete(durability: Option[Durability.Kind] = None): Delete[T] = Delete(this)
 
 }
 
-trait StreamSelection extends Selection with Stream {
+trait StreamSelection[T] extends Selection[T] with Stream[T] {
 
   def between(start: Int, stop: Int) = Between(this, start, stop)
 
@@ -179,7 +181,7 @@ trait StreamSelection extends Selection with Stream {
 
 }
 
-trait SingleSelection extends Selection
+trait SingleSelection[T] extends Selection[T]
 
 trait Multiply extends Typed {
 
@@ -188,10 +190,10 @@ trait Multiply extends Typed {
   def mul(other: Numeric) = Mul(this, other)
 }
 
-trait Sequence extends Multiply with Filterable with Record {
-  self: Sequence =>
+trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
-  type SequenceType = Any
+
+
 
 
   // def field(name: String)(implicit d:DummyImplicit) = GetField(this, name)
@@ -205,7 +207,7 @@ trait Sequence extends Multiply with Filterable with Record {
   //def \(name: String) = field(name)
 
 
-  def indexesOf(value: Datum): IndexesOf = IndexesOf(this, Left(value))
+  def indexesOf(value: Datum) = IndexesOf(this, Left(value))
 
   //def indexesOf(value: Binary): IndexesOf = indexesOf((x: Var) => value)
 
@@ -223,15 +225,15 @@ trait Sequence extends Multiply with Filterable with Record {
 
   def apply(prange: SliceRange) = Slice(this, prange.start, prange.end)
 
-  def union(sequence: Sequence) = Union(this, sequence)
+  def union(sequence: Sequence[_]) = Union(this, sequence)
 
-  def ++(sequence: Sequence) = union(sequence)
+  def ++(sequence: Sequence[_]) = union(sequence)
 
-  def eqJoin(attr: String, other: Sequence, index: Option[String] = None) = EqJoin(this, attr, other, index)
+  def eqJoin[R](attr: String, other: Sequence[R], index: Option[String] = None) = EqJoin(this, attr, other, index)
 
-  def innerJoin(other: Sequence, func: BooleanPredicate2) = InnerJoin(this, other, func)
+  def innerJoin[R](other: Sequence[R], func: BooleanPredicate2) = InnerJoin(this, other, func)
 
-  def outerJoin(other: Table[_], func: BooleanPredicate2) = OuterJoin(this, other, func)
+  def outerJoin[R](other: Sequence[R], func: BooleanPredicate2) = OuterJoin(this, other, func)
 
   def map(func: Var => Typed) = RMap(this, func)
 
@@ -267,9 +269,9 @@ trait Sequence extends Multiply with Filterable with Record {
 
   def pluck(m: Map[String, Any])(implicit d: DummyImplicit) = Pluck(this, m)
 
-  def merge(other: Sequence) = Merge(this, other)
+  def merge(other: Sequence[_]) = Merge(this, other)
 
-  def +(other: Sequence) = merge(other)
+  def +(other: Sequence[_]) = merge(other)
 
   def foreach(f: Var => Typed) = ForEach(this, f)
 
@@ -353,19 +355,19 @@ trait Numeric extends Literal with Multiply with Binary {
   def mod(other: Numeric) = Mod(this, other)
 }
 
-trait Filterable extends Typed {
-  self: Sequence =>
-  def filter(value: Binary): Filter = filter((x: Var) => value)
+trait Filterable[T] extends Typed {
+  self: Sequence[T] =>
+  //def filter(value: Binary): Filter[T] = filter((x: Var) => value)
 
-  def filter(value: Map[String, Any]): Filter = Filter(this, Left(value))
+  def filter(value: Map[String, Any]):Filter[T] = Filter(this, Left(value))
 
-  def filter(f: Var => Binary): Filter = Filter(this, Right(f))
+  def filter(f: Var => Binary): Filter[T] = Filter(this, Right(f))
 
 }
 
-trait Ref extends Numeric with Binary with Record with ArrayTyped with Literal with Strings
+trait Ref extends Numeric with Binary with Record with ArrayTyped[Any] with Literal with Strings
 
-trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence {
+trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence[T]{
 
   type FieldProduce = ProduceTypedArray[T]
 
@@ -374,6 +376,7 @@ trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence {
   def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T].toResult
 
   def as[R <: T](implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R].toResult
+  def toOpt(implicit c: Connection, mf: Manifest[T], d: DummyImplicit):Option[Seq[T]] = run fold(x => None, Some(_))
 
 
 }
@@ -407,18 +410,18 @@ trait ProduceAny extends Produce[Any] with Ref {
   def field(name: String): ProduceAny = GetField(this.asInstanceOf[Typed], name)
 }
 
-trait ProduceSingleSelection extends ProduceAnyDocument with SingleSelection
+trait ProduceSingleSelection extends ProduceAnyDocument with SingleSelection[Any]
 
-trait ProduceTypedSingleSelection[T <: Document] extends ProduceDocument[T] with SingleSelection
+trait ProduceTypedSingleSelection[T <: Document] extends ProduceDocument[T] with SingleSelection[T]
 
-trait ProduceStreamSelection extends ProduceAnySequence with StreamSelection
+trait ProduceStreamSelection extends ProduceAnySequence with StreamSelection[Any]
 
-trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with StreamSelection
+trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with StreamSelection[T]
 
-trait ProduceArray extends ProduceAnySequence with ArrayTyped {
+trait ProduceArray extends ProduceAnySequence with ArrayTyped[Any] {
 
 }
 
-trait ProduceTypedArray[T] extends ProduceSequence[T] with ArrayTyped
+trait ProduceTypedArray[T] extends ProduceSequence[T] with ArrayTyped[T]
 
 sealed trait LogicSignature
