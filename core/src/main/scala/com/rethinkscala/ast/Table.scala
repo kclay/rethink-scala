@@ -1,7 +1,8 @@
 package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
-import com.rethinkscala.net.{BinaryConversion, Document}
+import com.rethinkscala.net.{BinaryConversion}
+import com.rethinkscala.Document
 import com.rethinkscala.{InsertOptions, TableOptions}
 
 // TODO FuncCall

@@ -1,7 +1,7 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
-import com.rethinkscala.net.{Connection, RethinkClientError, RethinkError, Document}
+import com.rethinkscala.net.Connection
 import java.lang.Exception
 import scala.collection.mutable.ArrayBuffer
 import com.fasterxml.jackson.module.scala.DefaultScalaModule

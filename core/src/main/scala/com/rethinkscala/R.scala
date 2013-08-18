@@ -4,7 +4,7 @@ import com.rethinkscala.ast._
 import com.rethinkscala.ast.Table
 import com.rethinkscala.ast.DBCreate
 import com.rethinkscala.ast.DB
-import com.rethinkscala.net.Document
+
 
 object r {
 

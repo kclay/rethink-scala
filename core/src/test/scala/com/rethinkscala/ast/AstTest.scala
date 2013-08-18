@@ -2,7 +2,6 @@ package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
 import com.rethinkscala.WithBase
-import com.rethinkscala.net.ChangeResult
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,9 +11,6 @@ import com.rethinkscala.net.ChangeResult
  */
 class AstTest extends FunSuite with WithBase {
 
-  import com.rethinkscala.r
-  import com.rethinkscala.utils.Helpers.toQuery
-  import com.rethinkscala.Implicits._
   /*
   test("branch") {
 

@@ -1,11 +1,10 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ AssocPair, Term }
+import com.rethinkscala.{ZipResult, AssocPair, Term, JoinResult}
 
 import ql2.Ql2.Term.TermType
-import com.rethinkscala.net.JoinResult
 
-abstract class Join[L,R] extends ProduceSequence[JoinResult[L,R]] {
+abstract class Join[L,R] extends ProduceJoin[L,R] {
   val left: Sequence[L]
   val right:Sequence[R]
 
@@ -54,7 +53,7 @@ case class EqJoin[L,R](left: Sequence[L], attr: String, right: Sequence[R], inde
 /** Used to 'zip' up the result of a join by merging the 'right' fields into 'left' fields of each member of the sequence.
  *  @param target
  */
-case class Zip[T](target: Sequence[T]) extends ProduceSequence[T] {
+case class Zip[L,R](target: JoinTyped[L,R]) extends ProduceSequence[ZipResult[L,R]] {
 
   def termType = TermType.ZIP
 }

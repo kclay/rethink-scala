@@ -1,7 +1,6 @@
 package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
-import com.rethinkscala.WithBase
 import com.rethinkscala._
 import com.rethinkscala.Implicits._
 

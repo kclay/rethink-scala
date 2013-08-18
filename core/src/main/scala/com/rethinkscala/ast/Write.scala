@@ -2,8 +2,10 @@ package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.net.{ChangeResult, Document, InsertResult}
-import com.rethinkscala.{Durability, UpdateOptions, InsertOptions}
+import com.rethinkscala._
+import com.rethinkscala.InsertOptions
+import com.rethinkscala.UpdateOptions
+import scala.Some
 
 
 sealed trait Lifecycle

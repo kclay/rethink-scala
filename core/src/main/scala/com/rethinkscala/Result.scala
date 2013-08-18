@@ -1,9 +1,7 @@
-package com.rethinkscala.net
+package com.rethinkscala
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.rethinkscala.reflect.Reflector
-import scala.collection.mutable.ArrayBuffer
-import com.rethinkscala.Schema
 
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {
@@ -32,14 +30,14 @@ case class DocPath(root: Map[String, Any], paths: List[String]) {
 trait Document {
 
 
-  private var _underlying: Map[String, Any] = Map.empty[String, Any]
+  private[rethinkscala] var underlying: Map[String, Any] = Map.empty[String, Any]
+
+  private[rethinkscala] var raw: String = _
 
 
-  private[rethinkscala] def underlying(m: Map[String, Any]) = _underlying = m
+  def \(name: String) = DocPath(underlying, List(name))
 
-  def \(name: String) = DocPath(_underlying, List(name))
-
-  def toMap = _underlying
+  def toMap = underlying
 
   private[rethinkscala] def invokeBeforeInsert = beforeInsert
 
@@ -84,7 +82,29 @@ trait ReturnValues {
 case class DBResult(name: String, @JsonProperty("type") kind: String) extends Document
 
 
-case class JoinResult[Left,Right](left:Left,right:Right) extends Document
+case class JoinResult[Left, Right](left: Left, right: Right) extends Document
+
+class ZipResult[L, R] extends Document {
+
+
+  private var _left: Option[L] = None
+  private var _right: Option[R] = None
+
+  def left(implicit mf: Manifest[L]): L = _left.getOrElse {
+    val value = Reflector.fromJson[L](raw)
+    _left = Some(value)
+    value
+
+  }
+
+  def right(implicit mf: Manifest[R]): R = _right.getOrElse {
+    val value = Reflector.fromJson[R](raw)
+    _right = Some(value)
+    value
+
+  }
+}
+
 abstract class InfoResult(name: String, @JsonProperty("type") kind: String) extends Document
 
 
@@ -103,4 +123,6 @@ case class TableInfoResult(name: String, @JsonProperty("type") kind: String, db:
 
 
 case class ChangeResult(replaced: Int, unchanged: Int, inserted: Int, deleted: Int, errors: Int, @JsonProperty("first_error") firstError: Option[String],
-                        skipped: Int, @JsonProperty("generated_keys") generatedKeys: Option[Seq[String]]) extends Document with ReturnValues with GeneratesKeys
+                        skipped: Int, @JsonProperty("generated_keys") generatedKeys: Option[Seq[String]]) extends Document
+                                                                                                                  with ReturnValues
+                                                                                                                  with GeneratesKeys
