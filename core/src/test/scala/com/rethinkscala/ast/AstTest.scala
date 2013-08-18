@@ -2,7 +2,7 @@ package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
 import com.rethinkscala.WithBase
-import com.rethinkscala.net.ChangeResult
+import com.rethinkscala.ChangeResult
 
 /**
  * Created by IntelliJ IDEA.

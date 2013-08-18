@@ -32,6 +32,7 @@ trait WithBase extends BeforeAndAfterAll {
 
   lazy val db = r.db(dbName)
   lazy val table: Table[Document] = db.table(tableName)
+  implicit val connection = new Connection(useVersion)
 
   override protected def beforeAll() {
 
@@ -69,7 +70,7 @@ trait WithBase extends BeforeAndAfterAll {
 
   type IS = Iterable[String]
   type IA = Iterable[Any]
-  implicit val connection = new Connection(useVersion)
+
 
   def assert(t: ql2.Term, tt: Term.TermType) {
     assert(t.getType == tt)

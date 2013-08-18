@@ -1,8 +1,13 @@
 package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
-import com.rethinkscala.net.{JoinResult, Document}
-import com.rethinkscala.{r, WithBase}
+import com.rethinkscala._
+import com.rethinkscala.ast.FooJ
+import com.rethinkscala.ast.BarJ
+import com.rethinkscala.ast.Table
+import com.rethinkscala.JoinResult
+import com.rethinkscala.ast.Var
+import scala.Some
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,17 +24,16 @@ class JoinTest extends FunSuite with WithBase{
 
 
 
+  type R=JoinResult[FooJ,BarJ]
+
+  val foos = Table[FooJ]("foo",db=Some(db))
+  val bars = Table[BarJ]("bar",db=Some(db))
+
 
   test("eq join should have left as Foo and right as Bar"){
 
-    val foos = Table[FooJ]("foo",db=Some(db))
-    val bars = Table[BarJ]("bar",db=Some(db))
 
-    foos.create.run
-    bars.create.run
 
-    foos.insert(FooJ(1,value=1)).run
-    bars.insert(BarJ(1,value=1)).run
 
    // println(foos.run)
 
@@ -46,5 +50,27 @@ class JoinTest extends FunSuite with WithBase{
 
   }
 
+  test("inner join"){
+     val join = foos.innerJoin(bars,(f:Var,b:Var)=> f\"value" === b\"value")
 
+    assert(join.run,{
+      f:Seq[R]=> f.size == 1 && f.head.left == FooJ(1,1)
+    })
+  }
+
+  test("zip join"){
+    val join = foos.innerJoin(bars,(f:Var,b:Var)=> f\"value" === b\"value")
+    assert(join.zip.run,{
+      rs:Seq[ZipResult[FooJ,BarJ]]=> rs.size == 1 && rs.head.left.isInstanceOf[FooJ] && rs.head.right.isInstanceOf[BarJ]
+    })
+  }
+
+  override protected def beforeAll() {
+    super.beforeAll()
+    foos.create.run
+    bars.create.run
+
+    foos.insert(FooJ(1,value=1)).run
+    bars.insert(BarJ(1,value=1)).run
+  }
 }

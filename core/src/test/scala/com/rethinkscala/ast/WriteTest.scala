@@ -5,7 +5,7 @@ import com.rethinkscala._
 import com.rethinkscala.Implicits._
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.rethinkscala.net.{Document, ChangeResult, InsertResult}
+import com.rethinkscala.{Document, ChangeResult, InsertResult}
 
 /** Created with IntelliJ IDEA.
   * User: keyston

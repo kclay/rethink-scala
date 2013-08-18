@@ -1,7 +1,6 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.net.DocPath
 
 /**
  * Created with IntelliJ IDEA.

@@ -48,6 +48,7 @@ sealed trait Typed {
   implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
 
   implicit def toBooleanPredicate1(f: (Var) => Binary) = new BooleanPredicate1(f)
+  implicit def toBooleanPredicate2(f: (Var,Var) => Binary) = new BooleanPredicate2(f)
 
   def info = Info(this)
 
@@ -56,6 +57,9 @@ sealed trait Typed {
   def coerceTo(dataType: DataType) = CoerceTo(this, dataType)
 }
 
+trait JoinTyped[L,R] extends Typed{
+  def zip = Zip(this)
+}
 
 trait TableTyped extends Typed
 
@@ -69,9 +73,9 @@ trait Addition extends Typed {
 }
 
 trait Literal extends Addition {
-  def ~(other: Term) = not(other)
+  def unary_~ = not
 
-  def not(other: Term) = Not(this)
+  def not = Not(this)
 
   def ===(other: Literal) = eq(other)
 
@@ -231,9 +235,9 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def eqJoin[R](attr: String, other: Sequence[R], index: Option[String] = None) = EqJoin(this, attr, other, index)
 
-  def innerJoin[R](other: Sequence[R], func: BooleanPredicate2) = InnerJoin(this, other, func)
+  def innerJoin[R](other: Sequence[R], func: (Var,Var)=>Binary) = InnerJoin(this, other, func)
 
-  def outerJoin[R](other: Sequence[R], func: BooleanPredicate2) = OuterJoin(this, other, func)
+  def outerJoin[R](other: Sequence[R], func: (Var,Var)=>Binary) = OuterJoin(this, other, func)
 
   def map(func: Var => Typed) = RMap(this, func)
 
@@ -321,7 +325,7 @@ trait Binary extends Typed {
   def &>(other: Binary) = rand(other)
 
   // or
-  def |(other: Binary) = or(other)
+  def ||(other: Binary) = or(other)
 
   def or(other: Binary) = Or(this, other)
 
@@ -333,9 +337,10 @@ trait Binary extends Typed {
 
 trait Strings extends Literal {
 
-  // def ===(regexp: Regex) = find(regexp.toString())
+  //
 
   // def ===(regexp: String) = find(regexp)
+  def find(regexp: Regex) = find(regexp.toString())
 
   def find(regex: String) = Match(this, regex)
 }
@@ -418,10 +423,9 @@ trait ProduceStreamSelection extends ProduceAnySequence with StreamSelection[Any
 
 trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with StreamSelection[T]
 
-trait ProduceArray extends ProduceAnySequence with ArrayTyped[Any] {
-
-}
-
+trait ProduceArray extends ProduceAnySequence with ArrayTyped[Any]
 trait ProduceTypedArray[T] extends ProduceSequence[T] with ArrayTyped[T]
+
+trait ProduceJoin[L,R] extends ProduceSequence[JoinResult[L,R]] with JoinTyped[L,R]
 
 sealed trait LogicSignature

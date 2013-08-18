@@ -4,7 +4,7 @@ import com.rethinkscala.{TableOptions, TermMessage}
 
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.net.BinaryConversion
-import com.rethinkscala.net.Document
+import com.rethinkscala.Document
 
 trait WithDB {
   val db: Option[DB]

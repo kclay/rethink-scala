@@ -4,7 +4,7 @@ import com.rethinkscala.Term
 
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.net.{InfoResult, Document}
+import com.rethinkscala.{InfoResult, Document}
 
 case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
   override lazy val args = buildArgs(array: _*)

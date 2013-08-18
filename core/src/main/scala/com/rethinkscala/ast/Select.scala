@@ -1,7 +1,7 @@
 package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
-import com.rethinkscala.net.Document
+import com.rethinkscala.Document
 
 case class Get[R <: Document](target: Table[R], attribute: Any) extends ProduceTypedSingleSelection[R] {
 
