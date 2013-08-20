@@ -340,7 +340,7 @@ trait Strings extends Literal {
   //
 
   // def ===(regexp: String) = find(regexp)
-  def find(regexp: Regex):Match = find(regexp.toString())
+  def find(regexp: Regex) = find(regexp.toString())
 
   def find(regex: String) = Match(this, regex)
 }
