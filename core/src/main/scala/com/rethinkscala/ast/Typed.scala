@@ -123,9 +123,9 @@ trait ArrayTyped[T] extends Sequence[T] with Array {
 
   def diff(array: ArrayTyped[_]) = Difference(this, array)
 
-  // def idiff[R](array: ArrayTyped[R]) = Difference(array, this)
+  def idiff(array: ArrayTyped[_]) = Difference(array, this)
 
-  //def idiff(values: Datum*) = Difference(Expr(values), this)
+  def idiff(values: Datum*) = Difference(Expr(values), this)
 
 
   def setInert(value: Datum) = SetInsert(this, value)

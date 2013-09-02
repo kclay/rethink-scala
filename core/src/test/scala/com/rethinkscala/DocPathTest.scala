@@ -1,6 +1,7 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
+import com.rethinkscala.reflect.Reflector
 
 /**
  * Created with IntelliJ IDEA.
@@ -9,12 +10,17 @@ import org.scalatest.FunSuite
  * Time: 12:08 PM
  *
  */
-class DocPathTest extends FunSuite{
+case class D(id: String)
 
-  test("level 1"){
-    val m =Map("foo"->1)
+class DocPathTest extends FunSuite {
 
-    val path = DocPath(m,List("foo"))
+  test("level 1") {
+    val m = Map("foo" -> 1)
+
+
+    println(Reflector.toMap(D("foo")))
+
+    val path = DocPath(m, List("foo"))
     assert(path.as[Int] == Some(1))
 
 

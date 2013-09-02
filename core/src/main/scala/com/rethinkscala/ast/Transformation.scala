@@ -128,7 +128,7 @@ case class IsEmpty[T](target: Sequence[T]) extends ProduceBinary {
  *  @param target
  *  @param filter
  */
-case class IndexesOf[T](target: Sequence[T], filter: Either[Datum, BooleanPredicate]) extends ProduceSequence[Numeric] {
+case class IndexesOf[T](target: Sequence[T], filter: Either[Datum, BooleanPredicate]) extends ProduceSequence[Long] {
 
   override lazy val args = buildArgs(target, filter match {
     case Left(x)  => x

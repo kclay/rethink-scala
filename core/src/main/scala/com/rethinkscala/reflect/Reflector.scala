@@ -25,7 +25,7 @@ object Reflector {
   mapper.registerModule(DefaultScalaModule)
   mapper.setSerializationInclusion(Include.NON_NULL);
   mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-  mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
+  mapper.setVisibility(PropertyAccessor.FIELD, Visibility.PUBLIC_ONLY)
 
   def fields(a: AnyRef): Seq[Field] = fields(a.getClass)
 

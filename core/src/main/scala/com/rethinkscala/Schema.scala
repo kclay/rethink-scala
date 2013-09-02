@@ -46,9 +46,9 @@ class Schema {
     val mapper = new ObjectMapper()
     mapper.registerModule(DefaultScalaModule)
 
-    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
     mapper.setSerializationInclusion(Include.NON_NULL)
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    mapper.setVisibility(PropertyAccessor.FIELD, Visibility.PUBLIC_ONLY)
 
     mapper
   }
@@ -85,7 +85,10 @@ class Schema {
      * Same as {{{table.update(a)}}}
      */
     def replace =
-      _performAction(_.get(o.asInstanceOf[ {val id: Option[Int]}].id.get).replace(o))
+      _performAction(_.get(o.asInstanceOf[ {val id: Any}].id match {
+        case Some(v: Any) => v
+        case v: Any => v
+      }).replace(o))
 
     // def save: Option[T]
   }

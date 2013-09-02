@@ -4,6 +4,7 @@ package com.rethinkscala.net
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{GeneratesKeys, Term, Document}
 import com.rethinkscala.ast.{After, WithLifecycle}
+
 object Translate {
   def translate[In, Out](implicit ct: Manifest[Out]): Translate[In, Out] = new BaseTranslate[In, Out] {}
 
@@ -15,8 +16,8 @@ trait Translate[In, Out] {
     protected def _convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]) = {
       val out = Reflector.fromJson[Out](json)
       val doc = out.asInstanceOf[Document]
-      doc.underlying = value
-      doc.raw = json
+      doc._underlying = value
+      doc._raw = json
       out
     }
   }
@@ -58,7 +59,7 @@ trait WithIterableConversion[Out] extends WithConversion[Iterable[Map[String, _]
     if (isDocument) {
       val seq = value.toSeq
       out.zipWithIndex foreach {
-        case (o: Document, i) => o.underlying = seq(i)
+        case (o: Document, i) => o._underlying = seq(i)
       }
     }
     out
@@ -77,8 +78,8 @@ trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
   protected def _convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]): Out = {
     val out = Reflector.fromJson[Out](json)
-    out.underlying=value
-    out.raw = json
+    out._underlying = value
+    out._raw = json
     out
   }
 

@@ -39,6 +39,8 @@ trait Document {
 
   def toMap = underlying
 
+  //def toJson = _raw
+
   private[rethinkscala] def invokeBeforeInsert = beforeInsert
 
 
@@ -124,5 +126,5 @@ case class TableInfoResult(name: String, @JsonProperty("type") kind: String, db:
 
 case class ChangeResult(replaced: Int, unchanged: Int, inserted: Int, deleted: Int, errors: Int, @JsonProperty("first_error") firstError: Option[String],
                         skipped: Int, @JsonProperty("generated_keys") generatedKeys: Option[Seq[String]]) extends Document
-                                                                                                                  with ReturnValues
-                                                                                                                  with GeneratesKeys
+with ReturnValues
+with GeneratesKeys
