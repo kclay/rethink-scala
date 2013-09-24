@@ -30,7 +30,7 @@ case class Version1(host: String = "localhost", port: Int = 28015, db: Option[St
 
 case class Version2(host: String = "localhost", port: Int = 28015, db: Option[String] = None, maxConnections: Int = 5, authKey: String = "") extends Version {
   def configure(c: Channel) {
-    c.write(VersionDummy.Version.V0_1)
+    c.write(VersionDummy.Version.V0_2)
     c.write(authKey).await()
   }
 }

@@ -5,21 +5,23 @@ import com.rethinkscala._
 import com.rethinkscala.Implicits._
 
 /** Created with IntelliJ IDEA.
- *  User: keyston
- *  Date: 6/27/13
- *  Time: 4:33 PM
- *  To change this template use File | Settings | File Templates.
- */
+  * User: keyston
+  * Date: 6/27/13
+  * Time: 4:33 PM
+  * To change this template use File | Settings | File Templates.
+  */
 class TableTest extends FunSuite with WithBase {
   test("create table with options") {
 
-    val table = r.table(tableName)
-    val create = table.create(TableOptions(primaryKey=Some("a"), durability=Some(Durability.Hard), cacheSize=Some(16)))
+    val table = r.db("test").table(tableName)
+    val create = table.create(TableOptions(primaryKey = Some("a"), durability = Some(Durability.Hard), cacheSize = Some(16)))
 
+    val ast = create.ast
     assert(create)
 
   }
   test("list tables") {
+
 
     assert[IS](r.tables, {
       t: IS => t.toSeq.contains(tableName)

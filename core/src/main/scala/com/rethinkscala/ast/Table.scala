@@ -8,7 +8,6 @@ import com.rethinkscala.{InsertOptions, TableOptions}
 // TODO FuncCall
 
 
-
 case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = None,
                                 db: Option[DB] = None)
 
@@ -24,26 +23,22 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def create: TableCreate = create(TableOptions())
 
-  def create(options:TableOptions): TableCreate = {
+  def create(options: TableOptions): TableCreate = TableCreate(name, options, db)
 
-    TableCreate(name, options, db)
+  def insert(records: Seq[Map[String, Any]], options: InsertOptions) = Insert[T](this, Left(records), options)
 
-  }
-
-  def insert(records: Seq[Map[String, Any]], options:InsertOptions) = Insert[T](this, Left(records),  options)
-
-  def insert(record: T, upsert: Boolean,options:InsertOptions): Insert[T] = insert(Seq(record), upsert, options)
+  def insert(record: T, upsert: Boolean, options: InsertOptions): Insert[T] = insert(Seq(record), upsert, options)
 
   def insert(records: Seq[T], upsert: Boolean,
-             options:InsertOptions)(implicit d: DummyImplicit) = Insert[T](this, Right(records),  options)
+             options: InsertOptions)(implicit d: DummyImplicit) = Insert[T](this, Right(records), options)
 
-  def insert[R <: T](records: Seq[R]) = Insert(this, Right(records),InsertOptions())
+  def insert[R <: T](records: Seq[R]) = Insert(this, Right(records), InsertOptions())
 
-  def insert(record: T) = Insert(this, Right(Seq(record)),InsertOptions())
+  def insert(record: T) = Insert(this, Right(Seq(record)), InsertOptions())
 
   def ++=(record: T) = insert(record)
 
-  def ++=(records: Seq[Map[String, Any]]) = this insert (records,InsertOptions())
+  def ++=(records: Seq[Map[String, Any]]) = this insert(records, InsertOptions())
 
   def ++=(records: Seq[T])(implicit d: DummyImplicit) = this insert (records)
 
@@ -63,29 +58,31 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
 }
 
-case class TableCreate(name: String, options:TableOptions, db: Option[DB] = None)
+case class TableCreate(name: String, options: TableOptions, db: Option[DB] = None)
   extends ProduceBinary
-  with WithDB with BinaryConversion {
+  with BinaryConversion {
   val resultField = "created"
 
-  override lazy val args = buildArgs(name)
+  override lazy val args = buildArgs(db.map(Seq(_, name)).getOrElse(Seq(name)): _*)
+
   override lazy val optargs = buildOptArgs(options.toMap)
 
   def termType = TermType.TABLE_CREATE
 
 }
 
-case class TableDrop(name: String, db: Option[DB] = None) extends ProduceBinary with BinaryConversion with WithDB {
+case class TableDrop(name: String, db: Option[DB] = None) extends ProduceBinary with BinaryConversion {
   val resultField = "dropped"
-  override lazy val args = buildArgs(name)
+  override lazy val args = buildArgs(db.map(Seq(_, name)).getOrElse(Seq(name)): _*)
 
   def termType = TermType.TABLE_DROP
 
 }
 
-case class TableList(db: Option[DB] = None) extends ProduceSequence[String] with WithDB {
+case class TableList(db: Option[DB] = None) extends ProduceSequence[String] {
 
   override protected val extractArgs: Boolean = false
+  override lazy val args = buildArgs(db.map(Seq(_)).getOrElse(Seq()): _*)
 
   def termType = TermType.TABLE_LIST
 }

@@ -66,7 +66,7 @@ trait WithBase extends BeforeAndAfterAll {
   def randomAlphanumericString(n: Int) =
     randomString("abcdefghijklmnopqrstuvwxyz0123456789")(n)
 
-  def useVersion = version2
+  def useVersion = version1
 
   type IS = Iterable[String]
   type IA = Iterable[Any]
