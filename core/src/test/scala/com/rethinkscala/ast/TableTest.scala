@@ -11,7 +11,6 @@ import com.rethinkscala.Implicits._
  *  To change this template use File | Settings | File Templates.
  */
 class TableTest extends FunSuite with WithBase {
-
   test("create table with options") {
 
     val table = r.table(tableName)

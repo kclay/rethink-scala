@@ -15,10 +15,13 @@ case class DB(name: String) extends TermMessage {
 
   def termType = TermType.DB
 
-  def tableCreate(name:String):TableCreate = tableCreate(name,TableOptions())
-  def tableCreate(name: String, options:TableOptions):TableCreate = {
+  def tableCreate(name: String): TableCreate = tableCreate(name, TableOptions())
+
+  def tableCreate(name: String, options: TableOptions): TableCreate = {
     TableCreate(name, options, Some(this))
   }
+
+  def tables = TableList(Some(this))
 
   def create = DBCreate(name)
 

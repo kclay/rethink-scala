@@ -15,12 +15,12 @@ case class D(id: String)
 class DocPathTest extends FunSuite {
 
   test("level 1") {
-    val m = Map("foo" -> 1)
+    val m = Map("foo" -> 1, "bar" -> Map("foo" -> 1))
 
 
     println(Reflector.toMap(D("foo")))
 
-    val path = DocPath(m, List("foo"))
+    val path = DocPath(m, List("bar", "foo"))
     assert(path.as[Int] == Some(1))
 
 
