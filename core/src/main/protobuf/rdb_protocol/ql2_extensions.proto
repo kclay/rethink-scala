@@ -4,4 +4,4 @@ import "rdb_protocol/ql2.proto";
 
 extend Term {
     required Backtrace backtrace = 10000;
-}
+};

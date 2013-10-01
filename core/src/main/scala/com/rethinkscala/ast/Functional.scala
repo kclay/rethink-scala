@@ -39,7 +39,7 @@ object Wrap {
   // def apply(t: Typed) = new Predicate1((v: Var) => t)
 }
 
-abstract class Predicate extends {
+abstract class Predicate  {
 
   val amount: Int
 
@@ -84,6 +84,9 @@ class Predicate2(f: (Var, Var) => Typed) extends Predicate {
 }
 
 trait BooleanPredicate extends Predicate with Binary
+
+
+
 
 case class BooleanPredicate1(f: (Var) => Binary) extends BooleanPredicate {
 

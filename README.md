@@ -99,6 +99,7 @@ Installation
 ```sh
 
 Checkout Main repo
+sudo apt-get install protobuf-compiler
 git clone git@github.com:kclay/rethink-scala.git
 cd rethink-scala
 sbt compile

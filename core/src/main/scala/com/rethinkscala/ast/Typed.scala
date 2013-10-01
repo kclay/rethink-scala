@@ -65,9 +65,14 @@ trait JoinTyped[L, R] extends Typed {
 trait TableTyped extends Typed
 
 trait Addition extends Typed {
+
   def +(other: Addition) = add(other)
 
-
+  /*
+  def add(other:String) = add(other)
+  def add(other:Integer) = add(other)
+  def add(other:Double)=  add(other)
+  def add(other:Float)  = add(other)  */
   def add(other: Addition) = Add(this, other)
 
   def +=(other: Addition) = Add(this, other)

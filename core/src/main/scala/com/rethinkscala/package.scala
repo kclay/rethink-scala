@@ -8,4 +8,5 @@ package com
  */
 package object rethinkscala {
 
+
 }

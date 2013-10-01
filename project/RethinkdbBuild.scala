@@ -11,6 +11,7 @@ import sbtrelease._
 import ReleasePlugin._
 import sbtrelease.ReleasePlugin.ReleaseKeys._
 import ReleaseStateTransformations._
+import sbtprotobuf.{ProtobufPlugin=>PB}
 
 
 object BuildSettings {
@@ -87,7 +88,7 @@ object RethinkdbBuild extends Build {
   lazy val core = Project(
     id = "core",
     base = file("core"),
-    settings = buildWithRelease ++ Seq(
+    settings = buildWithRelease ++ PB.protobufSettings++ Seq(
 
 
       // scalabuffVersion := scalaBuffVersion,
