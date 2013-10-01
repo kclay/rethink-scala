@@ -12,7 +12,7 @@ import com.rethinkscala.ast._
  */
 
 
-object r {
+object r extends TimeNames{
 
   def getInstance = this
   private lazy val _row = new ImplicitVar
@@ -75,4 +75,36 @@ object r {
   def error(msg: String) = UserError(msg)
 
   def js(code: String, timeout: Option[Int] = None) = JavaScript(code, timeout)
+
+
+}
+
+trait TimeNames{
+  import ql2.Ql2.Term.TermType
+  import com.rethinkscala.ast.TimeName
+
+  private def apply(tt:TermType) = TimeName(tt)
+  val monday =this(TermType.MONDAY)
+  val tuesday = this(TermType.TUESDAY)
+  val wednesday = this(TermType.WEDNESDAY)
+  val thursday = this(TermType.THURSDAY)
+  val friday = this(TermType.FRIDAY)
+  val saturday = this(TermType.SATURDAY)
+  val sunday = this(TermType.SUNDAY)
+
+  val january = this(TermType.JANUARY)
+  val february = this(TermType.FEBRUARY)
+  val march = this(TermType.MARCH)
+  val april =this(TermType.APRIL)
+  val may = this(TermType.MAY)
+  val june = this(TermType.JUNE)
+  val july = this(TermType.JULY)
+  val august = this(TermType.AUGUST)
+  val september = this(TermType.SEPTEMBER)
+
+  val october = this(TermType.OCTOBER)
+  val november = this(TermType.NOVEMBER)
+  val december = this(TermType.DECEMBER)
+
+  def now = new Now()
 }

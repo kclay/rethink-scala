@@ -50,6 +50,8 @@ case class UpdateOptions(
 }
 
 
+//case class DuringOptions
+
 object Durability extends Enumeration {
   type Kind = Value
   val Hard = Value("hard")

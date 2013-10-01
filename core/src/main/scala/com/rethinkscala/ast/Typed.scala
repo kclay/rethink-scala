@@ -373,6 +373,10 @@ trait Filterable[T] extends Typed {
 
 }
 
+trait TimeTyped extends Typed with Produce[TimeTyped]{
+
+}
+
 trait Ref extends Numeric with Binary with Record with ArrayTyped[Any] with Literal with Strings
 
 trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence[T] {
@@ -432,5 +436,7 @@ trait ProduceArray extends ProduceAnySequence with ArrayTyped[Any]
 trait ProduceTypedArray[T] extends ProduceSequence[T] with ArrayTyped[T]
 
 trait ProduceJoin[L, R] extends ProduceSequence[JoinResult[L, R]] with JoinTyped[L, R]
+
+trait ProduceTime extends TimeTyped
 
 sealed trait LogicSignature

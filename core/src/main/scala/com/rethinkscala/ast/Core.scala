@@ -5,6 +5,7 @@ import com.rethinkscala.Term
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{InfoResult, Document}
+import org.joda.time.DateTime
 
 case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
   override lazy val args = buildArgs(array: _*)
@@ -112,19 +113,18 @@ object Expr {
 
   def apply(f: Float): NumberDatum = NumberDatum(f)
 
-  def apply(d: Document) = MakeObj(Reflector.toMap(d))
+  def apply(d: Document) = MakeObj2(d)
+  def apply(date:DateTime) = Time(date)
 
-  def apply(a: Any): Term = {
-    val b = a
-    a match {
-      case p: BooleanPredicate => p()
-      case t: Term => t
-      case s: Seq[_] => MakeArray(s)
-      case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
-      case d: Document => apply(d)
-      case a: Any => Datum(a)
+  def apply(a: Any): Term = a match {
+    case p: BooleanPredicate => p()
+    case t: Term => t
+    case s: Seq[_] => MakeArray(s)
+    case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
+    case d: Document => MakeObj2(d)
+    case a: Any => Datum(a)
 
-    }
+
   }
 
 }
