@@ -6,6 +6,7 @@ import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{InfoResult, Document}
 import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
 
 case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
   override lazy val args = buildArgs(array: _*)
@@ -114,7 +115,8 @@ object Expr {
   def apply(f: Float): NumberDatum = NumberDatum(f)
 
   def apply(d: Document) = MakeObj2(d)
-  def apply(date:DateTime) = Time(date)
+  ;
+  def apply(date:DateTime) = ISO8601(ISODateTimeFormat.dateTime().print(date))
 
   def apply(a: Any): Term = a match {
     case p: BooleanPredicate => p()

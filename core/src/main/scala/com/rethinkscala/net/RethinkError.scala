@@ -18,13 +18,9 @@ case object UnknownFrame extends FrameType
 
 case object PositionFrame extends FrameType
 
-abstract class RethinkError(message: String) extends Exception(message) {
+abstract class RethinkError(message: String) extends Exception(message)
 
-  val term: Term
-  val frames: Iterable[Frame]
-}
-
-
+case class RethinkDriverError(message:String) extends RethinkError(message)
 case class RethinkClientError(message: String, term: Term, frames: Iterable[Frame] = Iterable.empty[Frame]) extends RethinkError(message)
 
 case class Frame(frameType: Option[FrameType], pos: Option[Long], opt: Option[String])

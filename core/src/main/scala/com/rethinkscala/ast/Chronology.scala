@@ -2,6 +2,7 @@ package com.rethinkscala.ast
 
 import org.joda.time.DateTime
 import ql2.Ql2.Term.TermType
+import com.rethinkscala.BoundOptions
 
 /**
  * Created with IntelliJ IDEA.
@@ -46,17 +47,31 @@ class Now extends ProduceTime{
   def termType = TermType.NOW
 }
 
-case class InTimeZone(value:Either[TimeTyped,String]) extends ProduceTime{
+case class InTimeZone(value:TimeTyped,zone:Either[TimeTyped,String]) extends ProduceTime{
 
-  override lazy val args = buildArgs(value.fold(identity,identity))
+  override lazy val args = buildArgs(value,zone.fold(identity,identity))
 
   def termType = TermType.IN_TIMEZONE
 }
 
-/*
-case class During(value:DuringOptions) extends ProduceBinary{
 
-} */
+case class During(value:TimeTyped,start:TimeTyped,end:TimeTyped,bounds:Option[BoundOptions]=None) extends ProduceBinary{
+
+  override lazy val args = buildArgs(value,start,end)
+  override lazy val optargs = buildOptArgs(bounds.map(_.toMap).getOrElse(Map()))
+
+  def termType = TermType.DURING
+}
+
+case class Date(value:TimeTyped) extends ProduceTime{
+  def termType = TermType.DATE
+}
+case class TimeOfDay(value:TimeTyped) extends ProduceNumeric{
+  def termType = TermType.TIME_OF_DAY
+}
+case class Timezone(value:TimeTyped) extends ProduceString{
+  def termType = TermType.TIMEZONE
+}
 case class Year(value:TimeTyped) extends TimeExtractor(TermType.YEAR)
 
 

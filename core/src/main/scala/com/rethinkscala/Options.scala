@@ -50,6 +50,20 @@ case class UpdateOptions(
 }
 
 
+
+
+case class BoundOptions(
+leftBound:Option[Bound.Value] = None,
+rightBound:Option[Bound.Value] = None
+                         ) extends Options{
+  def toMap = Map("left_bound"->leftBound,"right_bound"->rightBound)
+}
+
+object Bound extends Enumeration{
+  type Kind = Value
+  val Open = Value("open")
+  val Closed = Value("closed")
+}
 //case class DuringOptions
 
 object Durability extends Enumeration {

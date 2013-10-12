@@ -36,7 +36,7 @@ object ConvertFrom {
       b =>
         b.getFramesList.map {
           f =>
-            Frame(Some(f match {
+            Frame(Some(f.getType match {
               case QFrame.FrameType.POS => PositionFrame
               case QFrame.FrameType.OPT => OptionalFrame
               case _ => UnknownFrame
@@ -91,5 +91,7 @@ object ConvertTo {
   implicit def int2Option(value: Int): Option[Int] = Some(value)
 
   implicit def string2DB(name: String): DB = DB(name)
+
+
 
 }

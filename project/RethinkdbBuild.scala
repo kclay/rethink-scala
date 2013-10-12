@@ -109,6 +109,7 @@ object RethinkdbBuild extends Build {
         "io.netty" % "netty" % "3.6.6.Final",
         "com.google.protobuf" % "protobuf-java" % "2.4.1",
         "joda-time" % "joda-time" % "2.3",
+        "org.joda" % "joda-convert" % "1.5",
         "org.scala-lang" % "scala-reflect" % sv
 
         // "net.sandrogrzicic" %% "scalabuff-runtime" % scalaBuffVersion

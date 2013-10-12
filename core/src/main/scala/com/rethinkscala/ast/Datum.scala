@@ -3,6 +3,8 @@ package com.rethinkscala.ast
 import com.rethinkscala.{DatumAssocPair, DatumMessage, AssocPair}
 import ql2.{Ql2 => ql2}
 import ql2.Datum.DatumType
+import com.rethinkscala.net.RethinkDriverError
+import org.joda.time.{DateTimeZone, DateTime}
 
 
 sealed trait Datum extends DatumMessage {
@@ -15,14 +17,27 @@ object Datum {
 
   import ql2.Datum.DatumType.{R_NULL, R_BOOL, R_NUM, R_STR, R_ARRAY, R_OBJECT}
 
-  import com.rethinkscala.Implicits.Quick._
 
+  private val KEY_REQL_TYPE = "$reql_type$"
+  private val REQL_TYPE_TIME = "TIME"
 
   def wrap(datum: ql2.Datum): (Any, String) = {
     val buf = new StringBuilder
     (wrap(datum, buf), buf.toString())
 
   }
+
+
+  def toDateTime(m: Map[String, Any]): DateTime = {
+    m.get("epoch_time").map(_.asInstanceOf[Long] * 1000).map{
+      epoch => m.get("timezone")
+        .map(t => new DateTime(epoch, DateTimeZone.forID(t.asInstanceOf[String]))).getOrElse(new DateTime(epoch))
+
+    }.getOrElse(throw RethinkDriverError(
+      "psudo-type TIME object %s does not have expected field \"epoch_time\"".format(m)
+    ))
+  }
+
 
   def wrap(datum: ql2.Datum, buf: StringBuilder): Any = {
     import scala.collection.JavaConverters._
@@ -77,7 +92,16 @@ object Datum {
 
           }
         buf ++= "}"
-        unwrapped.toMap
+        val m = unwrapped.toMap
+
+        m.get(KEY_REQL_TYPE) match {
+          case Some(x) => x match {
+            case REQL_TYPE_TIME => toDateTime(m)
+            case _ => throw RethinkDriverError(s"Unknown psudo-type $x")
+          }
+          case _ => m
+
+        }
 
       }
       case _ => None

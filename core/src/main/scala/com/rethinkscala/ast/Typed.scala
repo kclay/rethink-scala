@@ -6,6 +6,7 @@ import com.rethinkscala.Implicits._
 import com.rethinkscala.net._
 import scala.Some
 import com.rethinkscala.net.BlockingQuery
+import org.joda.time.DateTime
 
 trait Produce[ResultType] extends Term {
 
@@ -43,13 +44,10 @@ case object ArrayData extends DataType {
   def name = "array"
 }
 
-sealed trait Typed {
+sealed trait Typed extends ImplicitConversions{
 
-  implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
 
-  implicit def toBooleanPredicate1(f: (Var) => Binary) = new BooleanPredicate1(f)
 
-  implicit def toBooleanPredicate2(f: (Var, Var) => Binary) = new BooleanPredicate2(f)
 
   def info = Info(this)
 
@@ -195,9 +193,11 @@ trait SingleSelection[T] extends Selection[T]
 
 trait Multiply extends Typed {
 
-  def *(other: Numeric) = mul(other)
+  def *(other: Numeric):Mul  = mul(other)
+  def *(other: Double):Mul  = mul(other)
 
-  def mul(other: Numeric) = Mul(this, other)
+  def mul(other: Numeric):Mul = Mul(this, other)
+  def mul(other: Double):Mul  = Mul(this, other)
 }
 
 trait Sequence[T] extends Multiply with Filterable[T] with Record {
@@ -351,16 +351,22 @@ trait Strings extends Literal {
 trait Numeric extends Literal with Multiply with Binary {
 
   def -(other: Numeric) = sub(other)
+  def -(other:Double) = sub(other)
 
-  def sub(other: Numeric) = Sub(this, other)
+  def sub(other: Numeric):Sub = Sub(this, other)
+  def sub(other: Double):Sub = Sub(this, other)
 
   def /(other: Numeric) = div(other)
+  def /(other: Double) = div(other)
 
-  def div(other: Numeric) = Div(this, other)
+  def div(other: Numeric):Div = Div(this, other)
+  def div(other: Double):Div = Div(this, other)
 
   def %(other: Numeric) = mod(other)
+  def %(other: Double) = mod(other)
 
   def mod(other: Numeric) = Mod(this, other)
+  def mod(other: Double) = Mod(this, other)
 }
 
 trait Filterable[T] extends Typed {
@@ -373,7 +379,33 @@ trait Filterable[T] extends Typed {
 
 }
 
-trait TimeTyped extends Typed with Produce[TimeTyped]{
+trait TimeTyped extends Literal with Produce[DateTime] {
+  implicit def dateTimeToTimeTyped(dt: DateTime) = Expr(dt)
+
+  def inTimeZone(timezone: String): InTimeZone = InTimeZone(this, Right(timezone))
+
+  def inTimeZone(time: TimeTyped): InTimeZone = InTimeZone(this, Left(time))
+
+  def timezone = Timezone(this)
+
+  def during(start: DateTime, end: DateTime, bounds: Option[BoundOptions] = None): During = During(this, start, end, bounds)
+
+  //def during(start: TimeTyped, end: TimeTyped, bounds: Option[BoundOptions] = None):During = During(this, start, end, bounds)
+  def date = Date(this)
+  def timeOfDay = TimeOfDay(this)
+  def year = Year(this)
+  def month = Month(this)
+  def dayOfWeek= DayOfWeek(this)
+  def dayOfYear = DayOfYear(this)
+  def hours = Hours(this)
+  def minutes = Minutes(this)
+  def seconds = Seconds(this)
+  def toISO8601 = ToISO8601(this)
+  def toEpochTime = ToEpochTime(this)
+
+
+
+  //def inTimeZone(timezone:DateTimeZone)= inTimeZone(timezone.)
 
 }
 

@@ -12,15 +12,15 @@ public class ApiTest {
 
 
     public void test(){
-
+          /*
           BooleanFunction f = new BooleanFunction(){
 
               @Override
               public Binary apply(Var param) throws Exception {
                   return null;  //To change body of implemented methods use File | Settings | File Templates.
               }
-          };
+          };*/
 
-        r.branch(f)
+      //  r.branch(f)
     }
 }

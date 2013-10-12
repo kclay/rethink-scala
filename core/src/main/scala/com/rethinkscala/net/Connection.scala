@@ -70,6 +70,7 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
   def toResult(response: Response) = {
     val (data: Any, json: String) = Datum.wrap(response.getResponse(0))
+
     val rtn = data match {
       case None => None
       case _ => cast(data, json)

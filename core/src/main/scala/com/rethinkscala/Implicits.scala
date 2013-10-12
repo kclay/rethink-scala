@@ -11,8 +11,11 @@ import com.rethinkscala.ast.Var
   * Date: 5/30/13
   * Time: 6:49 PM
   * To change this template use File | Settings | File Templates.
+  *
+  *
   */
-object Implicits {
+
+private[rethinkscala] trait ImplicitConversions{
 
   implicit def boolToDataNum(b: Boolean): Binary = BooleanDatum(b)
 
@@ -22,6 +25,7 @@ object Implicits {
   implicit def longToDatNum(l: Long) = NumberDatum(l)
 
   implicit def floatToDatNum(f: Float) = NumberDatum(f)
+  implicit def doubleToDatNum(d: Double) = NumberDatum(d)
 
   implicit def string2DatNum(s: String) = StringDatum(s)
 
@@ -37,6 +41,11 @@ object Implicits {
   implicit def map2Typed(m: Map[String, Any]): Typed = Expr(m)
 
   implicit def untypedPredicateToTyped(f: Var => Map[String, Any]): Predicate1 = (v: Var) => Expr(f(v))
+
+
+  implicit def toBooleanPredicate1(f: (Var) => Binary) = new BooleanPredicate1(f)
+
+  implicit def toBooleanPredicate2(f: (Var, Var) => Binary) = new BooleanPredicate2(f)
 
 
   //implicit def seq2Datum(s:Seq[Datum]) = MakeArray(s)
@@ -74,6 +83,9 @@ object Implicits {
   implicit def intWithTildyArrow(i: Int) = new {
     def ~>(j: Int) = SliceRange(i, j)
   }
+
+}
+object Implicits extends ImplicitConversions{
 
 
   object Quick {
