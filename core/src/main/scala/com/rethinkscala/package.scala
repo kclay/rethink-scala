@@ -6,7 +6,7 @@ package com
  *  Date: 3/19/13
  *  Time: 7:32 PM
  */
-package object rethinkscala {
+package object rethinkscala extends ImplicitConversions{
 
 
 }

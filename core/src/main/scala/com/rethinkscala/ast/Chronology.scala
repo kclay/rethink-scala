@@ -24,6 +24,9 @@ case class Time(value:DateTime) extends ProduceTime{
 
 abstract class TimeExtractor(tt:TermType) extends ProduceNumeric{
   val value:TimeTyped
+
+  override lazy val args = buildArgs(value)
+
   def termType =  tt
 }
 
@@ -86,6 +89,9 @@ case class Minutes(value:TimeTyped) extends TimeExtractor(TermType.MINUTES)
 case class Seconds(value:TimeTyped) extends TimeExtractor(TermType.SECONDS)
 
 case class TimeName(tt:TermType) extends ProduceNumeric{
+
+  override protected val extractArgs = false
+
   def termType = tt
 }
 

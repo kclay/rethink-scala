@@ -80,7 +80,7 @@ trait Literal extends Addition {
   def unary_~ = not
 
   def not = Not(this)
-
+ /*
   def ===(other: Literal) = eq(other)
 
   def eq(other: Literal) = Eq(this, other)
@@ -103,9 +103,36 @@ trait Literal extends Addition {
 
   def >=(other: Literal) = gte(other)
 
-  def gte(other: Literal) = Ge(this, other)
+  def gte(other: Literal) = Ge(this, other)  */
+
+  def ===[T<% Literal](other: T) = eq(other)
+
+  def eq[T<% Literal](other: T) = Eq(this, other)
+
+  def !=[T<% Literal](other: T) = ne(other)
+
+  def ne[T<% Literal](other: T) = Ne(this, other)
+
+  def <[T<% Literal](other: T) = lt(other)
+
+  def lt[T<% Literal](other: T) = Lt(this, other)
+
+  def <=[T<% Literal](other: T) = lte(other)
+
+  def lte[T<% Literal](other: T) = Le(this, other)
+
+  def >[T<% Literal](other: T) = gt(other)
+
+  def gt[T<% Literal](other: T) = Gt(this, other)
+
+  def >=[T<% Literal](other: T) = gte(other)
+
+  def gte[T<% Literal](other: T) = Ge(this, other)
+
 
 }
+
+
 
 trait MapTyped extends Typed
 
@@ -392,6 +419,7 @@ trait TimeTyped extends Literal with Produce[DateTime] {
 
   //def during(start: TimeTyped, end: TimeTyped, bounds: Option[BoundOptions] = None):During = During(this, start, end, bounds)
   def date = Date(this)
+  def day = Day(this)
   def timeOfDay = TimeOfDay(this)
   def year = Year(this)
   def month = Month(this)

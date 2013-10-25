@@ -30,8 +30,9 @@ object Datum {
 
   def toDateTime(m: Map[String, Any]): DateTime = {
     m.get("epoch_time").map(_.asInstanceOf[Long] * 1000).map{
-      epoch => m.get("timezone")
-        .map(t => new DateTime(epoch, DateTimeZone.forID(t.asInstanceOf[String]))).getOrElse(new DateTime(epoch))
+      epoch =>
+        val tz = m.get("timezone").map(t=>DateTimeZone.forID(t.asInstanceOf[String])).getOrElse(DateTimeZone.getDefault)
+        new DateTime(epoch,tz)
 
     }.getOrElse(throw RethinkDriverError(
       "psudo-type TIME object %s does not have expected field \"epoch_time\"".format(m)

@@ -7,11 +7,14 @@
 import com.rethinkscala.ast.Binary;
 import com.rethinkscala.ast.Var;
 import com.rethinkscala.japi.BooleanFunction;
+import com.rethinkscala.ast.Expr;
 import  com.rethinkscala.r;
 public class ApiTest {
 
 
     public void test(){
+
+        Expr.apply("hello");
           /*
           BooleanFunction f = new BooleanFunction(){
 

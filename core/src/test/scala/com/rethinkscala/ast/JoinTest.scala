@@ -2,11 +2,7 @@ package com.rethinkscala.ast
 
 import org.scalatest.FunSuite
 import com.rethinkscala._
-import com.rethinkscala.ast.FooJ
-import com.rethinkscala.ast.BarJ
-import com.rethinkscala.ast.Table
 import com.rethinkscala.JoinResult
-import com.rethinkscala.ast.Var
 import scala.Some
 
 /**

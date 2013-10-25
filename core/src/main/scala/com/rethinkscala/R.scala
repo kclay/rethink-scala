@@ -18,6 +18,8 @@ object r extends TimeNames{
   private lazy val _row = new ImplicitVar
 
 
+  def expr(v:Any) = Expr(v)
+
   // TODO Fix me, clashes with Sequence and Hash
   def row(name: String) = (_row: ProduceAny) field name
 
@@ -91,6 +93,7 @@ trait TimeNames{
   val friday = this(TermType.FRIDAY)
   val saturday = this(TermType.SATURDAY)
   val sunday = this(TermType.SUNDAY)
+  val weekdays = Seq(monday,tuesday,wednesday,thursday,friday,saturday,sunday)
 
   val january = this(TermType.JANUARY)
   val february = this(TermType.FEBRUARY)

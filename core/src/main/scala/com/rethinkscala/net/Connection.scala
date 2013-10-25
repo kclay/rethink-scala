@@ -166,7 +166,7 @@ private class RethinkDBEncoder extends OneToOneEncoder {
       case s: String => {
         val b = buffer(ByteOrder.LITTLE_ENDIAN, s.length + 4)
         b.writeInt(s.length)
-        b.writeBytes(s.getBytes("UTF-8"))
+        b.writeBytes(s.getBytes("ascii"))
         b
       }
       case q: ql2.Query => {
@@ -201,12 +201,7 @@ private class PipelineFactory extends ChannelPipelineFactory {
   }
 }
 
-object Connection {
 
-  lazy val defaultConnection = Connection
-
-
-}
 
 case class Connection(version: Version, timeoutDuration: Duration = Duration(30, "seconds")) {
 
