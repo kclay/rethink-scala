@@ -1,6 +1,7 @@
 package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
+import com.rethinkscala.DatumOrFunction
 
 /** Produce a single value from a sequence through repeated application of a reduction function.
   * The reduce function gets invoked repeatedly not only for the input values but also for results of
@@ -78,8 +79,8 @@ case class GroupBy[T](target: Sequence[T], method: AggregateByMethod, attrs: Seq
   * @param target
   * @param value
   */
-case class Contains(target: Sequence[_], value: Seq[Datum]) extends ProduceBinary {
-  override lazy val args = buildArgs((Seq(target) ++ value): _*)
+case class Contains(target: Sequence[_], value: Seq[DatumOrFunction]) extends ProduceBinary {
+  override lazy val args = buildArgs((Seq(target) ++ value.map(FuncWrap(_))): _*)
 
   def termType = TermType.CONTAINS
 }

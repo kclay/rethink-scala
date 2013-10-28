@@ -11,7 +11,7 @@ import sbtrelease._
 import ReleasePlugin._
 import sbtrelease.ReleasePlugin.ReleaseKeys._
 import ReleaseStateTransformations._
-import sbtprotobuf.{ProtobufPlugin=>PB}
+import sbtprotobuf.{ProtobufPlugin => PB}
 
 
 object BuildSettings {
@@ -79,6 +79,13 @@ object RethinkdbBuild extends Build {
   )
 
 
+  def protobuf = {
+    import PB._
+    Option(file("bin/protoc.exe")).filter(_.exists()).map(f => Seq(
+      protoc in protobufConfig := f.absolutePath
+    )).getOrElse(Seq())
+  }
+
 
   lazy val root = Project(
     "root",
@@ -88,7 +95,7 @@ object RethinkdbBuild extends Build {
   lazy val core = Project(
     id = "core",
     base = file("core"),
-    settings = buildWithRelease ++ PB.protobufSettings++ Seq(
+    settings = buildWithRelease ++ PB.protobufSettings ++ Seq(
 
 
       // scalabuffVersion := scalaBuffVersion,
@@ -123,7 +130,7 @@ object RethinkdbBuild extends Build {
         .setPreference(DoubleIndentClassDeclaration, true)
         .setPreference(MultilineScaladocCommentsStartOnFirstLine, true)
         .setPreference(PreserveDanglingCloseParenthesis, true)
-    )
+    ) ++ protobuf
 
 
   ) //.configs(ScalaBuff)

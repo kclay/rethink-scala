@@ -1,13 +1,13 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{DatumAssocPair, DatumMessage, AssocPair}
+import com.rethinkscala.{DatumOrFunction, DatumAssocPair, DatumMessage, AssocPair}
 import ql2.{Ql2 => ql2}
 import ql2.Datum.DatumType
 import com.rethinkscala.net.RethinkDriverError
 import org.joda.time.{DateTimeZone, DateTime}
 
 
-sealed trait Datum extends DatumMessage {
+sealed trait Datum extends DatumMessage with DatumOrFunction {
 
   override def optArgsBuilder(key: String, value: Any): AssocPair = DatumAssocPair(key, value)
 
@@ -29,10 +29,10 @@ object Datum {
 
 
   def toDateTime(m: Map[String, Any]): DateTime = {
-    m.get("epoch_time").map(_.asInstanceOf[Long] * 1000).map{
+    m.get("epoch_time").map(_.asInstanceOf[Long] * 1000).map {
       epoch =>
-        val tz = m.get("timezone").map(t=>DateTimeZone.forID(t.asInstanceOf[String])).getOrElse(DateTimeZone.getDefault)
-        new DateTime(epoch,tz)
+        val tz = m.get("timezone").map(t => DateTimeZone.forID(t.asInstanceOf[String])).getOrElse(DateTimeZone.getDefault)
+        new DateTime(epoch, tz)
 
     }.getOrElse(throw RethinkDriverError(
       "psudo-type TIME object %s does not have expected field \"epoch_time\"".format(m)
@@ -128,7 +128,7 @@ object NoneDatum {
   def apply() = new NoneDatum()
 }
 
-class NoneDatum extends Datum {
+class NoneDatum extends Datum with Produce[Null] {
 
   def datumType = DatumType.R_NULL
 

@@ -17,6 +17,30 @@ case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
 }
 
 
+object FuncWrap {
+
+}
+
+case class FuncWrap(value: Any) {
+
+  private def scan(node: Any): Boolean = node match {
+    case node: ImplicitVar => true
+    case t: Term if (t.args.collectFirst {
+      case arg: Term if (scan(arg)) => true
+    }.getOrElse(false)) => true
+    case t: Term if (t.optargs.collectFirst {
+      case p: com.rethinkscala.AssocPair if (scan(p.token)) => true
+    }.getOrElse(false)) => true
+    case _ => false
+  }
+
+  def apply(): Term = {
+    val e = Expr(value)
+    val rtn = if (scan(value)) new Predicate1((v: Var) => e.asInstanceOf[Typed]).apply() else e
+    rtn
+  }
+}
+
 private[rethinkscala] case class MakeObj2(data: Document) extends Term with MapTyped {
 
   override protected val extractArgs = false
@@ -77,7 +101,7 @@ object Core {
   */
 case class ForEach(target: Sequence[_], function: Predicate1) extends ProduceAnyDocument {
 
-  override lazy val args = buildArgs(target, function())
+  override lazy val args = buildArgs(target, FuncWrap(function))
 
   def termType = TermType.FOREACH
 }
@@ -114,12 +138,14 @@ object Expr {
 
   def apply(f: Float): NumberDatum = NumberDatum(f)
 
-  def apply(d: Document) = MakeObj2(d)
-  ;
-  def apply(date:DateTime) = ISO8601(ISODateTimeFormat.dateTime().print(date))
+  def apply(f: Double): NumberDatum = NumberDatum(f)
+
+  def apply(d: Document) = MakeObj2(d);
+
+  def apply(date: DateTime) = ISO8601(ISODateTimeFormat.dateTime().print(date))
 
   def apply(a: Any): Term = a match {
-    case p: BooleanPredicate => p()
+    case w: FuncWrap => w()
     case t: Term => t
     case s: Seq[_] => MakeArray(s)
     case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])

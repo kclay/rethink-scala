@@ -15,19 +15,20 @@ import com.rethinkscala.ast.Var
   *
   */
 
-private[rethinkscala] trait ImplicitConversions{
+private[rethinkscala] trait ImplicitConversions {
 
   implicit def boolToDataNum(b: Boolean): Binary = BooleanDatum(b)
 
 
-  implicit def intToDatNum(i: Int) = NumberDatum(i)
+  implicit def intToDatNum(i: Int): Numeric = NumberDatum(i)
 
-  implicit def longToDatNum(l: Long) = NumberDatum(l)
+  implicit def longToDatNum(l: Long): Numeric = NumberDatum(l)
 
-  implicit def floatToDatNum(f: Float) = NumberDatum(f)
-  implicit def doubleToDatNum(d: Double) = NumberDatum(d)
+  implicit def floatToDatNum(f: Float): Numeric = NumberDatum(f)
 
-  implicit def string2DatNum(s: String) = StringDatum(s)
+  implicit def doubleToDatNum(d: Double): Numeric = NumberDatum(d)
+
+  implicit def string2DatNum(s: String): Strings = StringDatum(s)
 
   implicit def toPredicate1Opt(f: (Var) => Typed) = Some(new Predicate1(f))
 
@@ -85,7 +86,8 @@ private[rethinkscala] trait ImplicitConversions{
   }
 
 }
-object Implicits extends ImplicitConversions{
+
+object Implicits extends ImplicitConversions {
 
 
   object Quick {

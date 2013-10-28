@@ -27,6 +27,7 @@ trait Produce[ResultType] extends Term {
 
 }
 
+
 sealed trait DataType {
 
   def name: String
@@ -44,9 +45,7 @@ case object ArrayData extends DataType {
   def name = "array"
 }
 
-sealed trait Typed extends ImplicitConversions{
-
-
+sealed trait Typed extends ImplicitConversions {
 
 
   def info = Info(this)
@@ -76,62 +75,63 @@ trait Addition extends Typed {
   def +=(other: Addition) = Add(this, other)
 }
 
+
 trait Literal extends Addition {
   def unary_~ = not
 
   def not = Not(this)
- /*
-  def ===(other: Literal) = eq(other)
 
-  def eq(other: Literal) = Eq(this, other)
+  /*
+   def ===(other: Literal) = eq(other)
 
-  def !=(other: Literal) = ne(other)
+   def eq(other: Literal) = Eq(this, other)
 
-  def ne(other: Literal) = Ne(this, other)
+   def !=(other: Literal) = ne(other)
 
-  def <(other: Literal) = lt(other)
+   def ne(other: Literal) = Ne(this, other)
 
-  def lt(other: Literal) = Lt(this, other)
+   def <(other: Literal) = lt(other)
 
-  def <=(other: Literal) = lte(other)
+   def lt(other: Literal) = Lt(this, other)
 
-  def lte(other: Literal) = Le(this, other)
+   def <=(other: Literal) = lte(other)
 
-  def >(other: Literal) = gt(other)
+   def lte(other: Literal) = Le(this, other)
 
-  def gt(other: Literal) = Gt(this, other)
+   def >(other: Literal) = gt(other)
 
-  def >=(other: Literal) = gte(other)
+   def gt(other: Literal) = Gt(this, other)
 
-  def gte(other: Literal) = Ge(this, other)  */
+   def >=(other: Literal) = gte(other)
 
-  def ===[T<% Literal](other: T) = eq(other)
+   def gte(other: Literal) = Ge(this, other)  */
 
-  def eq[T<% Literal](other: T) = Eq(this, other)
+  def ===[T <% Literal](other: T) = eq(other)
 
-  def !=[T<% Literal](other: T) = ne(other)
+  def eq[T <% Literal](other: T) = Eq(this, other)
 
-  def ne[T<% Literal](other: T) = Ne(this, other)
+  def !=[T <% Literal](other: T) = ne(other)
 
-  def <[T<% Literal](other: T) = lt(other)
+  def ne[T <% Literal](other: T) = Ne(this, other)
 
-  def lt[T<% Literal](other: T) = Lt(this, other)
+  def <[T <% Literal](other: T) = lt(other)
 
-  def <=[T<% Literal](other: T) = lte(other)
+  def lt[T <% Literal](other: T) = Lt(this, other)
 
-  def lte[T<% Literal](other: T) = Le(this, other)
+  def <=[T <% Literal](other: T) = lte(other)
 
-  def >[T<% Literal](other: T) = gt(other)
+  def lte[T <% Literal](other: T) = Le(this, other)
 
-  def gt[T<% Literal](other: T) = Gt(this, other)
+  def >[T <% Literal](other: T) = gt(other)
 
-  def >=[T<% Literal](other: T) = gte(other)
+  def gt[T <% Literal](other: T) = Gt(this, other)
 
-  def gte[T<% Literal](other: T) = Ge(this, other)
+  def >=[T <% Literal](other: T) = gte(other)
+
+  def gte[T <% Literal](other: T) = Ge(this, other)
 
 
 }
-
 
 
 trait MapTyped extends Typed
@@ -220,11 +220,13 @@ trait SingleSelection[T] extends Selection[T]
 
 trait Multiply extends Typed {
 
-  def *(other: Numeric):Mul  = mul(other)
-  def *(other: Double):Mul  = mul(other)
+  def *(other: Numeric): Mul = mul(other)
 
-  def mul(other: Numeric):Mul = Mul(this, other)
-  def mul(other: Double):Mul  = Mul(this, other)
+  def *(other: Double): Mul = mul(other)
+
+  def mul(other: Numeric): Mul = Mul(this, other)
+
+  def mul(other: Double): Mul = Mul(this, other)
 }
 
 trait Sequence[T] extends Multiply with Filterable[T] with Record {
@@ -292,7 +294,10 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def groupBy(method: AggregateByMethod, attrs: String*) = GroupBy(this, method, attrs)
 
-  def contains(attrs: Datum*) = Contains(this, attrs)
+
+  //def contains(attrs: Datum*) = Contains(this, attrs)
+
+  def contains[T <: DatumOrFunction](attrs: T*) = Contains(this, attrs)
 
   def ?(attr: Datum) = contains(attr)
 
@@ -378,21 +383,27 @@ trait Strings extends Literal {
 trait Numeric extends Literal with Multiply with Binary {
 
   def -(other: Numeric) = sub(other)
-  def -(other:Double) = sub(other)
 
-  def sub(other: Numeric):Sub = Sub(this, other)
-  def sub(other: Double):Sub = Sub(this, other)
+  def -(other: Double) = sub(other)
+
+  def sub(other: Numeric): Sub = Sub(this, other)
+
+  def sub(other: Double): Sub = Sub(this, other)
 
   def /(other: Numeric) = div(other)
+
   def /(other: Double) = div(other)
 
-  def div(other: Numeric):Div = Div(this, other)
-  def div(other: Double):Div = Div(this, other)
+  def div(other: Numeric): Div = Div(this, other)
+
+  def div(other: Double): Div = Div(this, other)
 
   def %(other: Numeric) = mod(other)
+
   def %(other: Double) = mod(other)
 
   def mod(other: Numeric) = Mod(this, other)
+
   def mod(other: Double) = Mod(this, other)
 }
 
@@ -419,18 +430,28 @@ trait TimeTyped extends Literal with Produce[DateTime] {
 
   //def during(start: TimeTyped, end: TimeTyped, bounds: Option[BoundOptions] = None):During = During(this, start, end, bounds)
   def date = Date(this)
-  def day = Day(this)
-  def timeOfDay = TimeOfDay(this)
-  def year = Year(this)
-  def month = Month(this)
-  def dayOfWeek= DayOfWeek(this)
-  def dayOfYear = DayOfYear(this)
-  def hours = Hours(this)
-  def minutes = Minutes(this)
-  def seconds = Seconds(this)
-  def toISO8601 = ToISO8601(this)
-  def toEpochTime = ToEpochTime(this)
 
+  def day = Day(this)
+
+  def timeOfDay = TimeOfDay(this)
+
+  def year = Year(this)
+
+  def month = Month(this)
+
+  def dayOfWeek = DayOfWeek(this)
+
+  def dayOfYear = DayOfYear(this)
+
+  def hours = Hours(this)
+
+  def minutes = Minutes(this)
+
+  def seconds = Seconds(this)
+
+  def toISO8601 = ToISO8601(this)
+
+  def toEpochTime = ToEpochTime(this)
 
 
   //def inTimeZone(timezone:DateTimeZone)= inTimeZone(timezone.)
