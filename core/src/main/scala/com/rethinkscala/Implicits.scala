@@ -1,10 +1,21 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
-import com.rethinkscala.ast.Desc
+import com.rethinkscala.ast.StringDatum
 import com.rethinkscala.ast.SliceRange
-import com.rethinkscala.ast.Asc
 import com.rethinkscala.ast.Var
+import com.rethinkscala.ast.BooleanPredicate2
+import com.rethinkscala.ast.DB
+import com.rethinkscala.ast.Asc
+import com.rethinkscala.ast.Strings
+import scala.Some
+import com.rethinkscala.ast.Desc
+import com.rethinkscala.ast.BooleanDatum
+import com.rethinkscala.ast.BooleanPredicate1
+
+import com.rethinkscala.ast.NumberDatum
+import com.rethinkscala.utils.{Applicator1, Applicator2}
+
 
 /** Created with IntelliJ IDEA.
   * User: keyston
@@ -15,7 +26,27 @@ import com.rethinkscala.ast.Var
   *
   */
 
+class ToAst[A] {
+
+  type TypeMember >: Var
+
+  def apply2[R](f: ((Var, Var) => Typed) => R) = new Applicator2[TypeMember, R] {
+    def apply = f(this)
+  }
+
+  def wrap2[R](f: FuncWrap => R) = apply2(o => f(FuncWrap(o)))
+
+  def wrap[R](f: FuncWrap => R) = apply(o => f(FuncWrap(o)))
+
+  def apply[R](f: (Var => Typed) => R) = new Applicator1[TypeMember, R] {
+    def apply = f(this)
+  }
+
+
+}
+
 private[rethinkscala] trait ImplicitConversions {
+
 
   implicit def boolToDataNum(b: Boolean): Binary = BooleanDatum(b)
 
@@ -30,13 +61,18 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def string2DatNum(s: String): Strings = StringDatum(s)
 
+
+  implicit def toOptLiteral[T <% Literal](v: T): Option[T] = Some(v)
+
+  implicit def toOpt[T <% Datum](v: T): Option[T] = Some(v)
+
   implicit def toPredicate1Opt(f: (Var) => Typed) = Some(new Predicate1(f))
 
   implicit def toPredicate2Opt(f: (Var, Var) => Typed) = Some(new Predicate2(f))
 
   implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
 
-  implicit def toPredicate2(f: (Var, Var) => Typed) = new Predicate2(f)
+  implicit def toPredicate2(f: (Var, Var) => Typed): Predicate2 = new Predicate2(f)
 
   //implicit def map2Typed(m:Map[String,Any]):Typed = MakeObj(m)
   implicit def map2Typed(m: Map[String, Any]): Typed = Expr(m)
@@ -45,6 +81,7 @@ private[rethinkscala] trait ImplicitConversions {
 
 
   implicit def toBooleanPredicate1(f: (Var) => Binary) = new BooleanPredicate1(f)
+
 
   implicit def toBooleanPredicate2(f: (Var, Var) => Binary) = new BooleanPredicate2(f)
 

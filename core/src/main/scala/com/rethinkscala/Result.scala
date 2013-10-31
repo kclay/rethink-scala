@@ -128,3 +128,7 @@ case class ChangeResult(replaced: Int, unchanged: Int, inserted: Int, deleted: I
                         skipped: Int, @JsonProperty("generated_keys") generatedKeys: Option[Seq[String]]) extends Document
 with ReturnValues
 with GeneratesKeys
+
+case class MatchResult(start:Int,end:Int,str:String,groups:Seq[MatchGroupResult]) extends Document
+
+case class MatchGroupResult(start:Int,end:Int,str:String)

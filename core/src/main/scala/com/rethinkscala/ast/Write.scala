@@ -33,7 +33,7 @@ abstract class WithLifecycle[R](implicit mf: Manifest[R]) {
 }
 
 case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String, Any]], Seq[T]],
-                                options:InsertOptions)
+                                 options: InsertOptions)
   extends WithLifecycle[Seq[String]] with ProduceDocument[InsertResult] {
 
 
@@ -66,11 +66,11 @@ case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String
 }
 
 case class Update[T](target: Selection[T], data: Either[Typed, Predicate],
-                 options:UpdateOptions)
+                     options: UpdateOptions)
   extends ProduceDocument[ChangeResult] {
 
   override lazy val args = buildArgs(target, data match {
-    case Left(x: Typed) => Wrap(x)
+    case Left(x: Typed) => FuncWrap(x)
     case Right(x: Predicate) => x()
   })
   override lazy val optargs = buildOptArgs(options.toMap)
@@ -81,7 +81,7 @@ case class Update[T](target: Selection[T], data: Either[Typed, Predicate],
 }
 
 case class Replace[T](target: Selection[T], data: Either[Map[String, Any], Predicate1],
-                  options:UpdateOptions)
+                      options: UpdateOptions)
   extends ProduceDocument[ChangeResult] {
 
   override lazy val args = buildArgs(target, data match {

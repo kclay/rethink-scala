@@ -2,18 +2,24 @@ package com.rethinkscala.ast
 
 import com.rethinkscala._
 import scala.util.matching.Regex
-import com.rethinkscala.Implicits._
 import com.rethinkscala.net._
-import scala.Some
-import com.rethinkscala.net.BlockingQuery
 import org.joda.time.DateTime
+import scala.Some
+import com.rethinkscala.BoundOptions
+import com.rethinkscala.net.Connection
+import com.rethinkscala.UpdateOptions
+import com.rethinkscala.JoinResult
+import com.rethinkscala.net.BlockingQuery
+import com.rethinkscala.utils.Applicator2
 
 trait Produce[ResultType] extends Term {
 
   type resultType = ResultType
 
 
-  def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](this, c, tt)
+  protected val underlyingTerm: Term = this
+
+  def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](underlyingTerm, c, tt)
 
   //http://stackoverflow.com/a/3461734
   def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery.toResult
@@ -45,90 +51,76 @@ case object ArrayData extends DataType {
   def name = "array"
 }
 
+
 sealed trait Typed extends ImplicitConversions {
 
+  // TODO : Fix me
+  def term = this.asInstanceOf[Term]
 
-  def info = Info(this)
+  val underlying = this
 
-  def typeOf = TypeOf(this)
+  def info = Info(underlying)
 
-  def coerceTo(dataType: DataType) = CoerceTo(this, dataType)
+  def typeOf = TypeOf(underlying)
+
+  def coerceTo(dataType: DataType) = CoerceTo(underlying, dataType)
 }
 
 trait JoinTyped[L, R] extends Typed {
-  def zip = Zip(this)
+  override val underlying = this
+
+  def zip = Zip(underlying)
 }
 
 trait TableTyped extends Typed
 
+
 trait Addition extends Typed {
+
+  override val underlying = this
 
   def +(other: Addition) = add(other)
 
-  /*
-  def add(other:String) = add(other)
-  def add(other:Integer) = add(other)
-  def add(other:Double)=  add(other)
-  def add(other:Float)  = add(other)  */
-  def add(other: Addition) = Add(this, other)
+  def add(other: Addition) = Add(underlying, other)
 
-  def +=(other: Addition) = Add(this, other)
+  def +=(other: Addition) = Add(underlying, other)
 }
 
 
 trait Literal extends Addition {
   def unary_~ = not
 
-  def not = Not(this)
+  override val underlying = this
 
-  /*
-   def ===(other: Literal) = eq(other)
+  def not = Not(underlying)
 
-   def eq(other: Literal) = Eq(this, other)
 
-   def !=(other: Literal) = ne(other)
+  def ===(other: Literal) = eq(other)
 
-   def ne(other: Literal) = Ne(this, other)
+  def eq(other: Literal) = Eq(underlying, other)
 
-   def <(other: Literal) = lt(other)
+  def !=(other: Literal) = ne(other)
 
-   def lt(other: Literal) = Lt(this, other)
+  def =!=(other: Literal) = ne(other)
 
-   def <=(other: Literal) = lte(other)
 
-   def lte(other: Literal) = Le(this, other)
+  def ne(other: Literal) = Ne(underlying, other)
 
-   def >(other: Literal) = gt(other)
+  def <(other: Literal) = lt(other)
 
-   def gt(other: Literal) = Gt(this, other)
+  def lt(other: Literal) = Lt(underlying, other)
 
-   def >=(other: Literal) = gte(other)
+  def <=(other: Literal) = lte(other)
 
-   def gte(other: Literal) = Ge(this, other)  */
+  def lte(other: Literal) = Le(underlying, other)
 
-  def ===[T <% Literal](other: T) = eq(other)
+  def >(other: Literal) = gt(other)
 
-  def eq[T <% Literal](other: T) = Eq(this, other)
+  def gt(other: Literal) = Gt(underlying, other)
 
-  def !=[T <% Literal](other: T) = ne(other)
+  def >=(other: Literal) = gte(other)
 
-  def ne[T <% Literal](other: T) = Ne(this, other)
-
-  def <[T <% Literal](other: T) = lt(other)
-
-  def lt[T <% Literal](other: T) = Lt(this, other)
-
-  def <=[T <% Literal](other: T) = lte(other)
-
-  def lte[T <% Literal](other: T) = Le(this, other)
-
-  def >[T <% Literal](other: T) = gt(other)
-
-  def gt[T <% Literal](other: T) = Gt(this, other)
-
-  def >=[T <% Literal](other: T) = gte(other)
-
-  def gte[T <% Literal](other: T) = Ge(this, other)
+  def gte(other: Literal) = Ge(underlying, other)
 
 
 }
@@ -141,39 +133,41 @@ trait Array extends Typed
 trait ArrayTyped[T] extends Sequence[T] with Array {
 
 
-  def append(value: Datum) = Append(this, value)
+  override val underlying = this
+
+  def append(value: Datum) = Append(underlying, value)
 
   def :+(value: Datum) = append(value)
 
-  def prepend(value: Datum) = Prepend(this, value)
+  def prepend(value: Datum) = Prepend(underlying, value)
 
   def +:(value: Datum) = prepend(value)
 
-  def diff(values: Datum*) = Difference(this, Expr(values))
+  def diff(values: Datum*) = Difference(underlying, Expr(values))
 
-  def diff(array: ArrayTyped[_]) = Difference(this, array)
+  def diff(array: ArrayTyped[_]) = Difference(underlying, array)
 
-  def idiff(array: ArrayTyped[_]) = Difference(array, this)
+  def idiff(array: ArrayTyped[_]) = Difference(array, underlying)
 
-  def idiff(values: Datum*) = Difference(Expr(values), this)
-
-
-  def setInert(value: Datum) = SetInsert(this, value)
-
-  def setUnion(values: Datum*) = SetUnion(this, values)
-
-  def setIntersection(values: Datum*) = SetIntersection(this, values)
+  def idiff(values: Datum*) = Difference(Expr(values), underlying)
 
 
-  def setDifference(values: Datum*) = SetDifference(this, values)
+  def setInert(value: Datum) = SetInsert(underlying, value)
 
-  def insertAt(index: Int, value: Datum) = InsertAt(this, index, value)
+  def setUnion(values: Datum*) = SetUnion(underlying, values)
 
-  def spliceAt(index: Int, values: Datum*) = SpliceAt(this, index, values)
+  def setIntersection(values: Datum*) = SetIntersection(underlying, values)
 
-  def deleteAt(start: Int, end: Option[Int] = None) = DeleteAt(this, start, end)
 
-  def changeAt(index: Int, value: Datum) = ChangeAt(this, index, value)
+  def setDifference(values: Datum*) = SetDifference(underlying, values)
+
+  def insertAt(index: Int, value: Datum) = InsertAt(underlying, index, value)
+
+  def spliceAt(index: Int, values: Datum*) = SpliceAt(underlying, index, values)
+
+  def deleteAt(start: Int, end: Option[Int] = None) = DeleteAt(underlying, start, end)
+
+  def changeAt(index: Int, value: Datum) = ChangeAt(underlying, index, value)
 
 }
 
@@ -181,37 +175,40 @@ trait Stream[T] extends Sequence[T]
 
 trait Selection[T] extends Sequence[T] {
 
-  def update(attributes: Map[String, Any], options: UpdateOptions) = Update(this, Left(attributes), options)
+  override val underlying = this
+
+  def update(attributes: Map[String, Any], options: UpdateOptions) = Update(underlying, Left(attributes), options)
 
   def update(attributes: Map[String, Any]): Update[T] = update(attributes, UpdateOptions())
 
-  def update(p: Var => Typed, options: UpdateOptions) = Update(this, Right(p), options)
+  def update(p: Var => Typed, options: UpdateOptions) = Update(underlying, Right(p), options)
 
   def update(d: Document): Update[T] = update((x: Var) => MakeObj2(d))
 
-  def update(t: Typed, options: UpdateOptions): Update[T] = Update(this, Left(t), options)
+  def update(t: Typed, options: UpdateOptions): Update[T] = Update(underlying, Left(t), options)
 
   def update(t: Typed): Update[T] = update(t, UpdateOptions())
 
   def update(p: Var => Typed): Update[T] = update(p, UpdateOptions())
 
-  def replace(p: Var => Typed): Replace[T] = Replace(this, Right(p), UpdateOptions())
+  def replace(p: Var => Typed): Replace[T] = Replace(underlying, Right(p), UpdateOptions())
 
   def replace(d: Document): Replace[T] = replace((x: Var) => MakeObj2(d))
 
-  def replace(data: Map[String, Any]): Replace[T] = Replace(this, Left(data), UpdateOptions())
+  def replace(data: Map[String, Any]): Replace[T] = Replace(underlying, Left(data), UpdateOptions())
 
   def delete: Delete[T] = delete()
 
-  def delete(durability: Option[Durability.Kind] = None): Delete[T] = Delete(this)
+  def delete(durability: Option[Durability.Kind] = None): Delete[T] = Delete(underlying)
 
 }
 
 trait StreamSelection[T] extends Selection[T] with Stream[T] {
+  override val underlying = this
 
-  def between(start: Int, stop: Int) = Between(this, start, stop)
+  def between(start: Int, stop: Int) = Between(underlying, start, stop)
 
-  def between(start: String, stop: String) = Between(this, start, stop)
+  def between(start: String, stop: String) = Between(underlying, start, stop)
 
 
 }
@@ -220,17 +217,25 @@ trait SingleSelection[T] extends Selection[T]
 
 trait Multiply extends Typed {
 
+  override val underlying = this
+
   def *(other: Numeric): Mul = mul(other)
 
   def *(other: Double): Mul = mul(other)
 
-  def mul(other: Numeric): Mul = Mul(this, other)
+  def mul(other: Numeric): Mul = Mul(underlying, other)
 
-  def mul(other: Double): Mul = Mul(this, other)
+  def mul(other: Double): Mul = Mul(underlying, other)
 }
+
+
+trait LiteralSequence[T] extends Sequence[T]
+
 
 trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
+
+  override val underlying = this
 
   // def field(name: String)(implicit d:DummyImplicit) = GetField(this, name)
 
@@ -243,76 +248,95 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
   //def \(name: String) = field(name)
 
 
-  def indexesOf(value: Datum) = IndexesOf(this, Left(value))
+  def indexesOf(value: Datum) = IndexesOf(underlying, Left(value))
 
   //def indexesOf(value: Binary): IndexesOf = indexesOf((x: Var) => value)
 
-  def isEmpty = IsEmpty(this)
+  def isEmpty = IsEmpty(underlying)
 
-  def sample(amount: Int) = Sample(this, amount)
+  def sample(amount: Int) = Sample(underlying, amount)
 
-  def indexesOf(p: Var => Binary) = IndexesOf(this, Right(p))
+  def indexesOf(p: Var => Binary) = IndexesOf(underlying, Right(p))
 
-  def apply(index: Int) = Nth(this, index)
+  def apply(index: Int) = Nth(underlying, index)
 
-  def skip(amount: Int) = Skip(this, amount)
+  def skip(amount: Int) = Skip(underlying, amount)
 
-  def slice(start: Int = 0, end: Int = -1) = Slice(this, start, end)
+  def slice(start: Int = 0, end: Int = -1) = Slice(underlying, start, end)
 
-  def apply(prange: SliceRange) = Slice(this, prange.start, prange.end)
+  def apply(range: SliceRange) = Slice(underlying, range.start, range.end)
 
-  def union(sequence: Sequence[_]) = Union(this, sequence)
+  def union(sequence: Sequence[_]) = Union(underlying, sequence)
 
   def ++(sequence: Sequence[_]) = union(sequence)
 
-  def eqJoin[R](attr: String, other: Sequence[R], index: Option[String] = None) = EqJoin(this, attr, other, index)
+  def eqJoin[R](attr: String, other: Sequence[R], index: Option[String] = None) = EqJoin(underlying, attr, other, index)
 
-  def innerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = InnerJoin(this, other, func)
+  def innerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = InnerJoin(underlying, other, func)
 
-  def outerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = OuterJoin(this, other, func)
+  def outerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = OuterJoin(underlying, other, func)
 
-  def map(func: Var => Typed) = RMap(this, func)
+  def map[R](func: Produce[R]) = RMap[R](underlying, FuncWrap(func))
 
-  def concatMap(func: Var => Typed) = ConcatMap(this, func)
+  //def map(func: Var => Typed) =
+  def map(implicit ev: ToAst[T]) = ev.wrap(RMap[T](underlying, _))
 
-  def order(keys: Ordering*) = OrderBy(this, keys)
 
-  def withFields(keys: String*) = WithFields(this, keys)
+  def reduce(base: T)(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, Some(base)))
+
+  def reduce(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, None))
+
+
+  /*def reduce(base: Option[Any] = None)(i):
+
+  def reduce(op: (ev.TypeMember, ev.TypeMember) => Typed, base: Option[Any] = None): Reduce[T] = Reduce[T](underlying, op, base)*/
+
+
+  //Reduce(underlying, toPredicate2(op), base)
+
+
+  def concatMap(func: Var => Typed) = ConcatMap(underlying, FuncWrap(func))
+
+  def concatMap(func: Typed) = ConcatMap(underlying, FuncWrap(func))
+
+  def order(keys: Ordering*) = OrderBy(underlying, keys)
+
+  def withFields(keys: String*) = WithFields(underlying, keys)
 
   def size = count
 
-  def count = Count(this)
+  def count = Count(underlying)
 
-  def count(value: String) = Count(this, Some(Left(value)))
+  def count(value: String) = Count(underlying, Some(Left(value)))
 
-  def count(filter: Var => Binary) = Count(this, Some(Right(filter)))
+  def count(filter: Var => Binary) = Count(underlying, Some(Right(filter)))
 
-  def count(value: Binary) = Count(this, Some(Right((x: Var) => value)))
+  def count(value: Binary) = Count(underlying, Some(Right((x: Var) => value)))
 
   def mapReduce(grouping: Predicate1, mapping: Predicate1,
-                reduction: Predicate2, base: Option[Datum] = None) = GroupMapReduce(this, grouping, mapping, reduction, base)
+                reduction: Predicate2, base: Option[Datum] = None) = GroupMapReduce(underlying, grouping, mapping, reduction, base)
 
-  def groupBy(method: AggregateByMethod, attrs: String*) = GroupBy(this, method, attrs)
+  def groupBy(method: AggregateByMethod, attrs: String*) = GroupBy(underlying, method, attrs)
 
 
-  //def contains(attrs: Datum*) = Contains(this, attrs)
+  //def contains(attrs: Datum*) = Contains(underlying, attrs)
 
-  def contains[T <: DatumOrFunction](attrs: T*) = Contains(this, attrs)
+  def contains[T <: DatumOrFunction](attrs: T*) = Contains(underlying, attrs)
 
   def ?(attr: Datum) = contains(attr)
 
   // add dummy implicit to allow methods for Ref
-  def pluck(attrs: String*)(implicit d: DummyImplicit) = Pluck(this, attrs)
+  def pluck(attrs: String*)(implicit d: DummyImplicit) = Pluck(underlying, attrs)
 
-  def without(attrs: String*)(implicit d: DummyImplicit) = Without(this, attrs)
+  def without(attrs: String*)(implicit d: DummyImplicit) = Without(underlying, attrs)
 
-  def pluck(m: Map[String, Any])(implicit d: DummyImplicit) = Pluck(this, m)
+  def pluck(m: Map[String, Any])(implicit d: DummyImplicit) = Pluck(underlying, m)
 
-  def merge(other: Sequence[_]) = Merge(this, other)
+  def merge(other: Sequence[_]) = Merge(underlying, other)
 
   def +(other: Sequence[_]) = merge(other)
 
-  def foreach(f: Var => Typed) = ForEach(this, f)
+  def foreach(f: Var => Typed) = ForEach(underlying, f)
 
 }
 
@@ -321,146 +345,169 @@ trait Hash {
   self: Typed =>
   type FieldProduce
 
+  override val underlying = this
+
   def field(name: String): FieldProduce
 
-  def apply[T <: Typed](name: String): T = GetField(this, name).asInstanceOf[T]
+  def apply[T <: Typed](name: String): T = GetField(underlying, name).asInstanceOf[T]
 
   def \(name: String) = field(name)
 }
 
 trait Record extends Typed with Hash {
 
-  def pluck(attrs: String*) = Pluck(this, attrs)
+  override val underlying = this
 
-  def pluck(m: Map[String, Any]) = Pluck(this, m)
+  def pluck(attrs: String*) = Pluck(underlying, attrs)
 
-  def without(attrs: String*) = Without(this, attrs)
+  def pluck(m: Map[String, Any]) = Pluck(underlying, m)
+
+  def without(attrs: String*) = Without(underlying, attrs)
 
 
-  def merge(other: Record) = Merge(this, other)
+  def merge(other: Record) = Merge(underlying, other)
 
-  def merge(other: Map[String, Any]) = Merge(this, other)
+  def merge(other: Map[String, Any]) = Merge(underlying, other)
 
   def +(other: Record) = merge(other)
 
-  def hasFields(values: String*) = HasFields(this, values)
+  def hasFields(values: String*) = HasFields(underlying, values)
 
-  def keys = Keys(this)
+  def keys = Keys(underlying)
 
 }
 
 trait Binary extends Typed {
 
+  override val underlying = this
+
   def &(other: Binary) = and(other)
 
-  def and(other: Binary) = All(this, other)
+  def and(other: Binary) = All(underlying, other)
 
-  def rand(other: Binary) = All(other, this)
+  def rand(other: Binary) = All(other, underlying)
 
   def &>(other: Binary) = rand(other)
 
   // or
   def ||(other: Binary) = or(other)
 
-  def or(other: Binary) = Or(this, other)
+  def or(other: Binary) = Or(underlying, other)
 
   // right or
   def >|(other: Binary) = ror(other)
 
-  def ror(other: Binary) = Or(other, this)
+  def ror(other: Binary) = Or(other, underlying)
 }
 
 trait Strings extends Literal {
 
+
+  override val underlying = this
   //
 
   // def ===(regexp: String) = find(regexp)
   def find(regexp: Regex): Match = find(regexp.toString())
 
-  def find(regex: String): Match = Match(this, regex)
+  def find(regex: String): Match = Match(underlying, regex)
 }
 
 trait Numeric extends Literal with Multiply with Binary {
+
+
+  override val underlying = this
 
   def -(other: Numeric) = sub(other)
 
   def -(other: Double) = sub(other)
 
-  def sub(other: Numeric): Sub = Sub(this, other)
+  def sub(other: Numeric): Sub = Sub(underlying, other)
 
-  def sub(other: Double): Sub = Sub(this, other)
+  def sub(other: Double): Sub = Sub(underlying, other)
 
   def /(other: Numeric) = div(other)
 
   def /(other: Double) = div(other)
 
-  def div(other: Numeric): Div = Div(this, other)
+  def div(other: Numeric): Div = Div(underlying, other)
 
-  def div(other: Double): Div = Div(this, other)
+  def div(other: Double): Div = Div(underlying, other)
 
   def %(other: Numeric) = mod(other)
 
   def %(other: Double) = mod(other)
 
-  def mod(other: Numeric) = Mod(this, other)
+  def mod(other: Numeric) = Mod(underlying, other)
 
-  def mod(other: Double) = Mod(this, other)
+  def mod(other: Double) = Mod(underlying, other)
 }
 
 trait Filterable[T] extends Typed {
   self: Sequence[T] =>
   //def filter(value: Binary): Filter[T] = filter((x: Var) => value)
 
-  def filter(value: Map[String, Any]): Filter[T] = Filter(this, Left(value))
+  def filter(value: Map[String, Any]): Filter[T] = filter(value, false)
 
-  def filter(f: Var => Binary): Filter[T] = Filter(this, Right(f))
+  def filter(value: Map[String, Any], default: Boolean): Filter[T] = Filter(underlying, FuncWrap(value), default)
+
+  // def filter(value: Typed): Filter[T] = filter(value, false)
+
+  // def filter(value: Typed, default: Boolean): Filter[T] = Filter(this, FuncWrap(value), default)
+
+  def filter(f: Var => Binary): Filter[T] = filter(f, false)
+
+  def filter(f: Var => Binary, default: Boolean): Filter[T] = Filter[T](underlying, FuncWrap(f: BooleanPredicate1), default)
 
 }
 
 trait TimeTyped extends Literal with Produce[DateTime] {
   implicit def dateTimeToTimeTyped(dt: DateTime) = Expr(dt)
 
-  def inTimeZone(timezone: String): InTimeZone = InTimeZone(this, Right(timezone))
+  override val underlying = this
 
-  def inTimeZone(time: TimeTyped): InTimeZone = InTimeZone(this, Left(time))
+  def inTimeZone(timezone: String): InTimeZone = InTimeZone(underlying, Right(timezone))
 
-  def timezone = Timezone(this)
+  def inTimeZone(time: TimeTyped): InTimeZone = InTimeZone(underlying, Left(time))
 
-  def during(start: DateTime, end: DateTime, bounds: Option[BoundOptions] = None): During = During(this, start, end, bounds)
+  def timezone = Timezone(underlying)
 
-  //def during(start: TimeTyped, end: TimeTyped, bounds: Option[BoundOptions] = None):During = During(this, start, end, bounds)
-  def date = Date(this)
+  def during(start: DateTime, end: DateTime, bounds: Option[BoundOptions] = None): During = During(underlying, start, end, bounds)
 
-  def day = Day(this)
+  //def during(start: TimeTyped, end: TimeTyped, bounds: Option[BoundOptions] = None):During = During(underlying, start, end, bounds)
+  def date = Date(underlying)
 
-  def timeOfDay = TimeOfDay(this)
+  def day = Day(underlying)
 
-  def year = Year(this)
+  def timeOfDay = TimeOfDay(underlying)
 
-  def month = Month(this)
+  def year = Year(underlying)
 
-  def dayOfWeek = DayOfWeek(this)
+  def month = Month(underlying)
 
-  def dayOfYear = DayOfYear(this)
+  def dayOfWeek = DayOfWeek(underlying)
 
-  def hours = Hours(this)
+  def dayOfYear = DayOfYear(underlying)
 
-  def minutes = Minutes(this)
+  def hours = Hours(underlying)
 
-  def seconds = Seconds(this)
+  def minutes = Minutes(underlying)
 
-  def toISO8601 = ToISO8601(this)
+  def seconds = Seconds(underlying)
 
-  def toEpochTime = ToEpochTime(this)
+  def toISO8601 = ToISO8601(underlying)
+
+  def toEpochTime = ToEpochTime(underlying)
 
 
   //def inTimeZone(timezone:DateTimeZone)= inTimeZone(timezone.)
 
 }
 
-trait Ref extends Numeric with Binary with Record with ArrayTyped[Any] with Literal with Strings
+trait Ref extends ArrayTyped[Any] with Numeric with Binary with Record with Literal with Strings {
+  override val underlying = this
+}
 
-trait ProduceSequence[T] extends Produce[Iterable[T]] with Sequence[T] {
+trait ProduceSequence[T] extends Sequence[T] with Produce[Iterable[T]] {
 
   type FieldProduce = ProduceTypedArray[T]
 
@@ -497,16 +544,62 @@ trait ProduceNumeric extends Produce[Double] with Numeric
 
 trait ProduceString extends Produce[String] with Strings
 
+trait ForwardTyped {
+  self: Produce[_] with Typed =>
+  override lazy val args = underlyingTerm.args
+  override lazy val optargs = underlyingTerm.optargs
+
+  override def ast = underlyingTerm.ast
+
+  override protected val underlyingTerm: Term = underlying.asInstanceOf[Term]
+
+  def termType = underlying.term
+}
+
 trait ProduceAny extends Produce[Any] with Ref {
+
+
+  // def numeric: ProduceNumeric =
+  private[this] val any = this
+
+  def numeric = new ProduceNumeric {
+    override val underlying = any
+    override lazy val args = underlyingTerm.args
+    override lazy val optargs = underlyingTerm.optargs
+
+    override def ast = underlyingTerm.ast
+
+    override protected val underlyingTerm: Term = any
+
+    def termType = underlyingTerm.termType
+  }
+
+  def string: ProduceString = new ProduceString {
+    override val underlying = any
+    override lazy val args = underlyingTerm.args
+    override lazy val optargs = underlyingTerm.optargs
+
+    override def ast = underlyingTerm.ast
+
+    override protected val underlyingTerm: Term = any
+
+    def termType = underlyingTerm.termType
+  }
+
+
+  def record: Record = this
+
+  def array[T]: ArrayTyped[T] = this.asInstanceOf[ArrayTyped[T]]
+
 
   type FieldProduce = ProduceAny
 
-  def field(name: String): ProduceAny = GetField(this.asInstanceOf[Typed], name)
+  def field(name: String) = GetField(this.asInstanceOf[Typed], name)
 }
 
 trait ProduceSingleSelection extends ProduceAnyDocument with SingleSelection[Any]
 
-trait ProduceTypedSingleSelection[T <: Document] extends ProduceDocument[T] with SingleSelection[T]
+trait ProduceTypedSingleSelection[T <: Document] extends SingleSelection[T] with ProduceDocument[T]
 
 trait ProduceStreamSelection extends ProduceAnySequence with StreamSelection[Any]
 
@@ -516,7 +609,9 @@ trait ProduceArray extends ProduceAnySequence with ArrayTyped[Any]
 
 trait ProduceTypedArray[T] extends ProduceSequence[T] with ArrayTyped[T]
 
-trait ProduceJoin[L, R] extends ProduceSequence[JoinResult[L, R]] with JoinTyped[L, R]
+trait ProduceJoin[L, R] extends ProduceSequence[JoinResult[L, R]] with JoinTyped[L, R] {
+  override val underlying = this
+}
 
 trait ProduceTime extends TimeTyped
 

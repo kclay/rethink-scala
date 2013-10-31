@@ -11,7 +11,7 @@ import com.rethinkscala.DatumOrFunction
   * @param f
   * @param base
   */
-case class Reduce(target: Sequence[_], f: Predicate2, base: Option[Any] = None) extends ProduceAny {
+case class Reduce[T](target: Sequence[T], f: Predicate2, base: Option[Any] = None) extends Produce[T] {
 
   override lazy val args = buildArgs(target, f())
 

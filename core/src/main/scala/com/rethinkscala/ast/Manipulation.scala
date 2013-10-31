@@ -2,6 +2,7 @@ package com.rethinkscala.ast
 
 import com.rethinkscala.Term
 import ql2.Ql2.Term.TermType
+import com.rethinkscala.MatchResult
 
 /** Append a value to an array.
   * @param target
@@ -30,6 +31,9 @@ abstract class GetField(target: Typed, name: String) extends Term {
   override lazy val args = buildArgs(target, name)
 
   def termType = TermType.GET_FIELD
+
+
+
 }
 
 
@@ -42,6 +46,7 @@ object GetField {
   def apply[T](target: Sequence[_], name: String) = new GetField(target, name) with ProduceTypedArray[T]
 
   // def apply(target: Record, name: String) = new GetField(target, name) with ProduceAnyDocument
+
   def apply(target: Typed, name: String) = new GetField(target, name) with ProduceAny
 }
 
@@ -129,7 +134,7 @@ object Merge {
   * @param target
   * @param array
   */
-case class Difference[T](target: ArrayTyped[T], array:ArrayTyped[_]) extends ProduceArray {
+case class Difference[T](target: ArrayTyped[T], array: ArrayTyped[_]) extends ProduceArray {
   override lazy val args = buildArgs(target, array)
 
   def termType = TermType.DIFFERENCE
@@ -240,7 +245,7 @@ case class ChangeAt[T](target: ArrayTyped[T], index: Int, value: Datum) extends 
   * @param target
   * @param regexp
   */
-case class Match(target: Strings, regexp: String) extends ProduceAnyDocument with Binary {
+case class Match(target: Strings, regexp: String) extends ProduceDocument[MatchResult] {
   def termType = TermType.MATCH
 }
 

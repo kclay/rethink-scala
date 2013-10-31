@@ -69,7 +69,7 @@ trait WithIterableConversion[Out] extends WithConversion[Iterable[Map[String, _]
 trait MapConversion[Out] extends WithConversion[Map[String, Any], Out]
 
 trait BinaryConversion extends MapConversion[Boolean] {
-  val resultField: String
+  private[rethinkscala] val resultField: String
 
   protected def _convert(value: Map[String, Any], json: String)(implicit mf: Manifest[Boolean]): Boolean = value.get(resultField).getOrElse(0) == 1
 }

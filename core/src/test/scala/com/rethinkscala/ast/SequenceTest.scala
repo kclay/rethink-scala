@@ -11,11 +11,33 @@ import com.rethinkscala._
  */
 class SequenceTest extends FunSuite with WithBase {
 
-  test("contains") {
+  test("mapping from ProduceAny with casting to String") {
 
 
-    table.contains("2", {
-      v: Var => 1
+    val rows = Expr(Seq(Map("hello" -> "1"), Map("hello" -> "2"), Map("hello" -> "3")))
+
+
+    val a = rows.map(r.row("hello").string).filter(_ =!= "1")
+
+
+
+
+
+
+
+    val ast = a.ast
+
+    assert(a.run, {
+      x: Seq[String] => x.size == 2
     })
+
+
+
+    val composed = a.reduce ! ((x, y) => x add y)
+
+
+
+
+    // assert(composed, "23")
   }
 }

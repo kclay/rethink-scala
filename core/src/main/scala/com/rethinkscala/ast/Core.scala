@@ -17,13 +17,11 @@ case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
 }
 
 
-object FuncWrap {
-
-}
-
 case class FuncWrap(value: Any) {
 
+
   private def scan(node: Any): Boolean = node match {
+
     case node: ImplicitVar => true
     case t: Term if (t.args.collectFirst {
       case arg: Term if (scan(arg)) => true
@@ -79,6 +77,8 @@ case class UserError(error: String) extends Term {
 class ImplicitVar extends Term with ProduceAny {
 
   def termType = TermType.IMPLICIT_VAR
+
+  def apply(name: String) = this field name
 }
 
 case class Info(target: Typed) extends ProduceDocument[InfoResult] {
@@ -144,8 +144,12 @@ object Expr {
 
   def apply(date: DateTime) = ISO8601(ISODateTimeFormat.dateTime().print(date))
 
+
   def apply(a: Any): Term = a match {
     case w: FuncWrap => w()
+
+
+    case p: Predicate => p()
     case t: Term => t
     case s: Seq[_] => MakeArray(s)
     case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
