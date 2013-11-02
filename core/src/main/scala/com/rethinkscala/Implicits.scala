@@ -26,6 +26,7 @@ import com.rethinkscala.utils.{Applicator1, Applicator2}
   *
   */
 
+
 class ToAst[A] {
 
   type TypeMember >: Var

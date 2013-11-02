@@ -12,6 +12,7 @@ package object rethinkscala extends ImplicitConversions {
 
   private[rethinkscala] trait DatumOrFunction
 
+
   implicit val stringToStrings = new ToAst[String] {
     type TypeMember = Strings
   }

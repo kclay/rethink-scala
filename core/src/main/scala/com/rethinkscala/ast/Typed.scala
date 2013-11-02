@@ -282,10 +282,12 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
   def map(implicit ev: ToAst[T]) = ev.wrap(RMap[T](underlying, _))
 
 
-  def reduce(base: T)(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, Some(base)))
+  //def reduce(base: T)(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, Some(base)))
 
   def reduce(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, None))
 
+
+  def reduce0[A1](op: (A1, A1) => Typed)(implicit ev: CanConvert[T, A1]) = ???
 
   /*def reduce(base: Option[Any] = None)(i):
 

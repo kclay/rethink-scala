@@ -24,7 +24,6 @@ class SequenceTest extends FunSuite with WithBase {
 
 
 
-
     val ast = a.ast
 
     assert(a.run, {
@@ -38,6 +37,6 @@ class SequenceTest extends FunSuite with WithBase {
 
 
 
-    // assert(composed, "23")
+    assert(composed, "23")
   }
 }
