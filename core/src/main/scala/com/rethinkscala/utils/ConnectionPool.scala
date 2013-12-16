@@ -3,7 +3,7 @@ package com.rethinkscala.utils
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
-import scala.concurrent.{future, Future}
+import scala.concurrent.{ExecutionContext, future, Future}
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -17,6 +17,8 @@ trait ConnectionFactory[Connection] {
   def create(): Connection
 
   def validate(connection: Connection): Boolean
+
+  def configure(connection: Connection): Unit
 
   def destroy(connection: Connection): Unit
 }
@@ -48,7 +50,7 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   private val pool = new ArrayBlockingQueue[Conn](max)
 
   def apply[A]()(f: Conn => A): A = {
-    val connection = borrow
+    val connection = borrow()
 
     try {
       val result = f(connection)
@@ -61,25 +63,33 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
     }
   }
 
-  def take(f: (Conn, Conn => Unit) => Unit): Unit = {
+  def take(block: (Conn, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Unit] = {
 
-    val connection = borrow
+    val connection = borrow()
 
-    try {
-      f(connection, giveBack)
+    val f = future {
 
-    } catch {
+      connectionFactory.configure(connection)
+      block(connection, giveBack)
+
+
+    }
+
+    f onFailure {
       case t: Throwable =>
         invalidate(connection)
-        throw t
+
     }
+
+    f
+
   }
 
   def nonEmpty = size.get() > 0
 
   def isEmpty = size.get() == 1
 
-  def borrow: Conn = Option(pool.poll()).getOrElse(createOrBlock)
+  def borrow(): Conn = Option(pool.poll()).getOrElse(createOrBlock)
 
 
   def giveBack(connection: Conn): Unit = {
@@ -100,21 +110,19 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
 
   private def create: Conn = {
     size.incrementAndGet match {
-      case e: Int if e > max => {
+      case e: Int if e > max =>
 
         size.decrementAndGet
         borrow()
-      }
-      case e: Int => {
+      case e: Int => connectionFactory.create()
 
-        connectionFactory.create
-      }
+
     }
   }
 
   private def block: Conn = {
-    Option(pool.poll(timeout, TimeUnit.NANOSECONDS)) getOrElse ({
+    Option(pool.poll(timeout, TimeUnit.NANOSECONDS)) getOrElse {
       throw new TimeoutError("Couldn't acquire a connection in %d nanoseconds.".format(timeout))
-    })
+    }
   }
 }

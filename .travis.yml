@@ -13,6 +13,7 @@ before_install:
   - sudo apt-get install -qq protobuf-compiler
 before_script:
   - rethinkdb --daemon
+  - rethinkdb admin set auth foobar
 branches:
   only:
     - master

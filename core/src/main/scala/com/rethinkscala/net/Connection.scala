@@ -23,13 +23,12 @@ import org.jboss.netty.channel.Channel
 import ql2.Response.ResponseType
 import com.rethinkscala.ast.Datum
 import org.jboss.netty.handler.codec.frame.FrameDecoder
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 import com.rethinkscala.utils.Helpers._
 import scala.Some
 import Translate._
 import com.rethinkscala.Term
 import scala.concurrent.duration.Duration
-import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder
 
 
 /** Created by IntelliJ IDEA.
@@ -137,6 +136,9 @@ private class RethinkDBFrameDecoder extends FrameDecoder {
   def decode(ctx: ChannelHandlerContext, channel: Channel, buffer: ChannelBuffer): AnyRef = {
     buffer.markReaderIndex
 
+
+
+
     if (!buffer.readable() || buffer.readableBytes() < 4) {
       buffer.resetReaderIndex()
       return null
@@ -186,8 +188,10 @@ private class PipelineFactory extends ChannelPipelineFactory {
   // stateless
   val defaultHandler = new RethinkDBHandler()
 
+
   def getPipeline: ChannelPipeline = {
     val p = pipeline()
+
 
     p.addLast("frameDecoder", new RethinkDBFrameDecoder())
     p.addLast("protobufDecoder", new ProtobufDecoder2(Response.getDefaultInstance))
@@ -202,11 +206,12 @@ private class PipelineFactory extends ChannelPipelineFactory {
 }
 
 
-
 case class Connection(version: Version, timeoutDuration: Duration = Duration(30, "seconds")) {
 
   private val defaultDB = Some(version.db.getOrElse("test"))
-  private[this] val connectionId = new AtomicInteger();
+  private[this] val connectionId = new AtomicInteger()
+
+  implicit val exc = version.executionContext
   lazy val bootstrap = {
 
     val factory =
@@ -218,35 +223,38 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
     b.setPipelineFactory(new PipelineFactory())
     b.setOption("tcpNoDelay", true)
     b.setOption("keepAlive", true)
-    b.setOption("bufferFactory", new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN));
+    b.setOption("bufferFactory", new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN))
     b
 
   }
 
-  case class ChannelWrapper(val cf: ChannelFuture) {
+  case class ChannelWrapper(cf: ChannelFuture) {
     val id = connectionId.incrementAndGet()
-    val token: AtomicInteger = new AtomicInteger();
+    val token: AtomicInteger = new AtomicInteger()
+    @volatile
+    var configured: Boolean = false
     lazy val channel = cf.getChannel
   }
 
 
-  protected val channel = new SimpleConnectionPool(new ConnectionFactory[ChannelWrapper] {
+  protected[rethinkscala] val channel = new SimpleConnectionPool(new ConnectionFactory[ChannelWrapper] {
 
     def create(): ChannelWrapper = {
 
       val c = bootstrap.connect(new InetSocketAddress(version.host, version.port))
-      c.addListener(new ChannelFutureListener {
-        def operationComplete(future: ChannelFuture) {
-          version.configure(future.getChannel)
-          future.removeListener(this)
-        }
-      })
-
 
       new ChannelWrapper(c)
     }
 
+    def configure(wrapper: ChannelWrapper) = {
+      if (!wrapper.configured) {
+        version.configure(wrapper.channel)
+        wrapper.configured = true
+      }
+    }
+
     def validate(wrapper: ChannelWrapper): Boolean = {
+
       wrapper.channel.isOpen
     }
 
@@ -255,13 +263,12 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
     }
   }, max = version.maxConnections)
 
-  import scala.concurrent.ExecutionContext.Implicits._
 
   protected[rethinkscala] def write[T](term: Term)(implicit mf: Manifest[T]): Promise[T] = {
-    val p = promise[T]
+    val p = promise[T]()
     val f = p.future
     channel take {
-      case (c, restore) => {
+      case (c, restore) =>
 
         val con = this
         // add a channel future to ensure that all setup has been done
@@ -285,7 +292,8 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
         f onComplete {
           case _ => restore(c)
         }
-      }
+    } onFailure {
+      case e: Exception => p.failure(e)
     }
 
     p
