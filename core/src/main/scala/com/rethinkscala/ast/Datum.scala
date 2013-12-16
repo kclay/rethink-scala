@@ -21,7 +21,7 @@ object Datum {
   private val KEY_REQL_TYPE = "$reql_type$"
   private val REQL_TYPE_TIME = "TIME"
 
-  def wrap(datum: ql2.Datum): (Any, String) = {
+  def unwrap(datum: ql2.Datum): (Any, String) = {
     val buf = new StringBuilder
     (wrap(datum, buf), buf.toString())
 
@@ -93,21 +93,23 @@ object Datum {
 
           }
         buf ++= "}"
-        val m = unwrapped.toMap
+        checkMap(unwrapped.toMap)
 
-        m.get(KEY_REQL_TYPE) match {
-          case Some(x) => x match {
-            case REQL_TYPE_TIME => toDateTime(m)
-            case _ => throw RethinkDriverError(s"Unknown psudo-type $x")
-          }
-          case _ => m
-
-        }
 
       }
       case _ => None
     }
   }
+
+  private def checkMap(m: Map[String, Any]) = m.get(KEY_REQL_TYPE) match {
+    case Some(x) => x match {
+      case REQL_TYPE_TIME => toDateTime(m)
+      case _ => throw RethinkDriverError(s"Unknown psudo-type $x")
+    }
+    case _ => m
+
+  }
+
 
   def apply(a: Any): Datum = a match {
 

@@ -15,21 +15,30 @@ import com.rethinkscala.utils.Applicator2
 trait Produce[ResultType] extends Term {
 
   type resultType = ResultType
+  type Options = Map[String, Any]
 
 
   protected val underlyingTerm: Term = this
 
-  def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](underlyingTerm, c, tt)
+  def toQuery[R](opts: Options)(implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](underlyingTerm, c, tt, opts)
 
   //http://stackoverflow.com/a/3461734
-  def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery.toResult
+  def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = run(Map())
 
-  def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery.toResult
+  def run(opts: Options)(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery(opts).toResult
+
+  def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = as[R](Map())
+
+  def as[R <: ResultType](opts: Options)(implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery(opts).toResult
 
 
   def toOpt(implicit c: Connection, mf: Manifest[ResultType]) = run fold(x => None, Some(_))
 
+  def toOpt(opts: Options)(implicit c: Connection, mf: Manifest[ResultType]) = run(opts) fold(x => None, Some(_))
+
   def asOpt[R <: ResultType](implicit c: Connection, tt: Manifest[R], d: DummyImplicit) = as[R] fold(x => None, Some(_))
+
+  def asOpt[R <: ResultType](opts: Options)(implicit c: Connection, tt: Manifest[R], d: DummyImplicit) = as[R](opts) fold(x => None, Some(_))
 
 }
 
@@ -450,7 +459,7 @@ trait Filterable[T] extends Typed {
 
   def filter(value: Map[String, Any]): Filter[T] = filter(value, false)
 
-  def filter(value: Map[String, Any], default: Boolean): Filter[T] = Filter(underlying, FuncWrap(value), default)
+  def filter(value: Map[String, Any], default: Boolean): Filter[T] = Filter[T](underlying, FuncWrap(value), default)
 
   // def filter(value: Typed): Filter[T] = filter(value, false)
 
@@ -515,11 +524,17 @@ trait ProduceSequence[T] extends Sequence[T] with Produce[Iterable[T]] {
 
   def field(name: String): ProduceTypedArray[T] = GetField[T](this, name)
 
-  def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T].toResult
+  def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T](Map()).toResult
 
-  def as[R <: T](implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R].toResult
+  def run(opts: Options)(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T](opts).toResult
+
+  def as[R <: T](implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R](Map()).toResult
+
+  def as[R <: T](opts: Options)(implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R](opts).toResult
 
   def toOpt(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Option[Seq[T]] = run fold(x => None, Some(_))
+
+  def toOpt(opts: Options)(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Option[Seq[T]] = run(opts) fold(x => None, Some(_))
 
 
 }

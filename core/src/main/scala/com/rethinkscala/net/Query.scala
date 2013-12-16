@@ -16,7 +16,7 @@ abstract class Query[R] {
 
 }
 
-case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R]) extends Query[R] {
+case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R], opts: Map[String, Any]) extends Query[R] {
   def iterator: Iterator[R] = ???
 
   lazy val ast: ql2.Term = term.ast
@@ -25,7 +25,7 @@ case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R])
 
   def toResult[R](atMost: Duration): Either[RethinkError, R] = {
 
-    val p = connection.write(term)(mf)
+    val p = connection.write(term, opts)(mf)
 
 
     try {

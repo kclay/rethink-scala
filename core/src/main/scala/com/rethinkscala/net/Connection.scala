@@ -68,7 +68,7 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
 
   def toResult(response: Response) = {
-    val (data: Any, json: String) = Datum.wrap(response.getResponse(0))
+    val (data: Any, json: String) = Datum.unwrap(response.getResponse(0))
 
     val rtn = data match {
       case None => None
@@ -99,7 +99,7 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
     //val seqManifest = implicitly[Manifest[Seq[R]]]
 
-    val seq = for (d <- response.getResponseList.asScala) yield (Datum.wrap(d) match {
+    val seq = for (d <- response.getResponseList.asScala) yield (Datum.unwrap(d) match {
       case (a: Any, json: String) => cast(a, json)
     })
 
@@ -264,7 +264,7 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
   }, max = version.maxConnections)
 
 
-  protected[rethinkscala] def write[T](term: Term)(implicit mf: Manifest[T]): Promise[T] = {
+  protected[rethinkscala] def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T] = {
     val p = promise[T]()
     val f = p.future
     channel take {
@@ -275,7 +275,7 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
         c.cf.addListener(new ChannelFutureListener {
           def operationComplete(future: ChannelFuture) {
 
-            val query = toQuery(term, c.token.getAndIncrement, defaultDB)
+            val query = toQuery(term, c.token.getAndIncrement, defaultDB, opts)
 
 
             val token = QueryToken[T](con, query, term, p, mf)
