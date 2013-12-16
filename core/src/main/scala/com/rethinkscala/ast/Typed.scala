@@ -18,27 +18,31 @@ trait Produce[ResultType] extends Term {
   type Options = Map[String, Any]
 
 
+  protected var underlyingOptions: Options = Map()
+
   protected val underlyingTerm: Term = this
 
-  def toQuery[R](opts: Options)(implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](underlyingTerm, c, tt, opts)
+  def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](underlyingTerm, c, tt, underlyingOptions)
 
   //http://stackoverflow.com/a/3461734
-  def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = run(Map())
 
-  def run(opts: Options)(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery(opts).toResult
 
-  def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = as[R](Map())
+  def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery.toResult
 
-  def as[R <: ResultType](opts: Options)(implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery(opts).toResult
+  def withOptions(opts: Options): this.type = {
+    underlyingOptions = opts
+    this
+  }
+
+
+  def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery.toResult
 
 
   def toOpt(implicit c: Connection, mf: Manifest[ResultType]) = run fold(x => None, Some(_))
 
-  def toOpt(opts: Options)(implicit c: Connection, mf: Manifest[ResultType]) = run(opts) fold(x => None, Some(_))
 
   def asOpt[R <: ResultType](implicit c: Connection, tt: Manifest[R], d: DummyImplicit) = as[R] fold(x => None, Some(_))
 
-  def asOpt[R <: ResultType](opts: Options)(implicit c: Connection, tt: Manifest[R], d: DummyImplicit) = as[R](opts) fold(x => None, Some(_))
 
 }
 
@@ -64,7 +68,7 @@ case object ArrayData extends DataType {
 sealed trait Typed extends ImplicitConversions {
 
   // TODO : Fix me
-  def term = this.asInstanceOf[Term]
+  def term: Term = this.asInstanceOf[Term]
 
   val underlying = this
 
@@ -271,9 +275,14 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def skip(amount: Int) = Skip(underlying, amount)
 
-  def slice(start: Int = 0, end: Int = -1) = Slice(underlying, start, end)
+  def slice(start: Int = 0, end: Int = -1) = Slice(underlying, start, end, BoundOptions())
 
-  def apply(range: SliceRange) = Slice(underlying, range.start, range.end)
+  def slice(start: Int, end: Int, bounds: BoundOptions) = if (end > 0) Slice(underlying, start, end, bounds)
+  else
+    Slice(underlying, List(start, end).max, -1, BoundOptions(rightBound = Some(Bound.Closed)))
+
+
+  def apply(range: SliceRange) = slice(range.start, range.end)
 
   def union(sequence: Sequence[_]) = Union(underlying, sequence)
 
@@ -310,7 +319,8 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def concatMap(func: Typed) = ConcatMap(underlying, FuncWrap(func))
 
-  def order(keys: Ordering*) = OrderBy(underlying, keys)
+  // TODO : Add function support
+  def orderBy(keys: Ordering*) = OrderBy(underlying, keys)
 
   def withFields(keys: String*) = WithFields(underlying, keys)
 
@@ -482,7 +492,9 @@ trait TimeTyped extends Literal with Produce[DateTime] {
 
   def timezone = Timezone(underlying)
 
-  def during(start: DateTime, end: DateTime, bounds: Option[BoundOptions] = None): During = During(underlying, start, end, bounds)
+  def during(start: DateTime, end: DateTime): During = During(underlying, start, end, BoundOptions())
+
+  def during(start: DateTime, end: DateTime, bounds: BoundOptions): During = During(underlying, start, end, bounds)
 
   //def during(start: TimeTyped, end: TimeTyped, bounds: Option[BoundOptions] = None):During = During(underlying, start, end, bounds)
   def date = Date(underlying)
@@ -524,17 +536,13 @@ trait ProduceSequence[T] extends Sequence[T] with Produce[Iterable[T]] {
 
   def field(name: String): ProduceTypedArray[T] = GetField[T](this, name)
 
-  def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T](Map()).toResult
 
-  def run(opts: Options)(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T](opts).toResult
+  def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T].toResult
 
-  def as[R <: T](implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R](Map()).toResult
 
-  def as[R <: T](opts: Options)(implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R](opts).toResult
+  def as[R <: T](implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R].toResult
 
   def toOpt(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Option[Seq[T]] = run fold(x => None, Some(_))
-
-  def toOpt(opts: Options)(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Option[Seq[T]] = run(opts) fold(x => None, Some(_))
 
 
 }

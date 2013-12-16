@@ -39,4 +39,9 @@ class SequenceTest extends FunSuite with WithBase {
 
     assert(composed, "23")
   }
+
+  test("ordering") {
+
+    table.orderBy(doc: Var) => doc.record \ "foo")
+  }
 }

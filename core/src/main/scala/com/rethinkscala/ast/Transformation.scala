@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.Term
+import com.rethinkscala.{BoundOptions, Term}
 import ql2.Ql2.Term.TermType
 
 abstract class Transformation[T] extends ProduceSequence[T] {
@@ -49,7 +49,10 @@ case class WithFields[T](target: Sequence[T], fields: Seq[String]) extends Produ
 
 case class SliceRange(start: Int = 0, end: Int = -1)
 
-abstract class Ordering extends Term {
+
+trait ProvidesOrdering
+
+abstract class Ordering extends Term with ProvidesOrdering {
   val attr: String
 
   def flip: Ordering
@@ -75,12 +78,14 @@ case class Desc(attr: String) extends Ordering {
   * @param target
   * @param values
   */
-case class OrderBy[T](target: Sequence[T], values: Seq[Ordering]) extends ProduceSequence[T] {
+case class OrderBy[T](target: Sequence[T], values: Seq[ProvidesOrdering], index: Option[ProvidesOrdering] = None) extends ProduceSequence[T] {
 
 
   override lazy val args = buildArgs(values.+:(target): _*)
 
   def termType = TermType.ORDERBY
+
+  def index(i: ProvidesOrdering) = OrderBy(target, values, Some(i))
 }
 
 /** Skip a number of elements from the head of the sequence.
@@ -107,8 +112,10 @@ case class Union(target: Sequence[_], others: Sequence[_]) extends ProduceAnySeq
   * @param left
   * @param right
   */
-case class Slice[T](target: Sequence[T], left: Int = 0, right: Int = -1) extends ProduceSequence[T] {
+case class Slice[T](target: Sequence[T], left: Int = 0, right: Int = -1, bounds: BoundOptions) extends ProduceSequence[T] {
   override lazy val args = buildArgs(target, left, right)
+
+  override lazy val optargs = buildOptArgs(bounds.toMap)
 
   def termType = TermType.SLICE
 }

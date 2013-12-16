@@ -1,20 +1,22 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
+import scala.Some
+
+import com.rethinkscala.utils.{Applicator1, Applicator2}
 import com.rethinkscala.ast.StringDatum
 import com.rethinkscala.ast.SliceRange
 import com.rethinkscala.ast.Var
 import com.rethinkscala.ast.BooleanPredicate2
 import com.rethinkscala.ast.DB
 import com.rethinkscala.ast.Asc
-import com.rethinkscala.ast.Strings
 import scala.Some
+import com.rethinkscala.ast.FuncWrap
 import com.rethinkscala.ast.Desc
 import com.rethinkscala.ast.BooleanDatum
 import com.rethinkscala.ast.BooleanPredicate1
 
 import com.rethinkscala.ast.NumberDatum
-import com.rethinkscala.utils.{Applicator1, Applicator2}
 
 
 /** Created with IntelliJ IDEA.
@@ -119,9 +121,12 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def string2Ordering(name: String) = name asc
 
-  implicit def intWithTildyArrow(i: Int) = new {
-    def ~>(j: Int) = SliceRange(i, j)
+  implicit def intWithTildyArrow(start: Int) = new {
+    def ~>(end: Int) = SliceRange(start, end)
   }
+
+  implicit def func2ProvidesOrdering(f: Var => Typed): ProvidesOrdering = new FuncWrap(f) with ProvidesOrdering
+
 
 }
 

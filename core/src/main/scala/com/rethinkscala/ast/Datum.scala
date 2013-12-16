@@ -23,7 +23,7 @@ object Datum {
 
   def unwrap(datum: ql2.Datum): (Any, String) = {
     val buf = new StringBuilder
-    (wrap(datum, buf), buf.toString())
+    (unwrap(datum, buf), buf.toString())
 
   }
 
@@ -40,7 +40,7 @@ object Datum {
   }
 
 
-  def wrap(datum: ql2.Datum, buf: StringBuilder): Any = {
+  def unwrap(datum: ql2.Datum, buf: StringBuilder): Any = {
     import scala.collection.JavaConverters._
     datum.getType match {
       case R_NULL => {
@@ -66,7 +66,7 @@ object Datum {
         val len = array.size
         val unwraped = array.zipWithIndex map {
           case (value: ql2.Datum, index: Int) => {
-            val rtn = wrap(value, buf)
+            val rtn = unwrap(value, buf)
             if (index < len - 1) buf ++= ","
             rtn
           }
@@ -84,7 +84,7 @@ object Datum {
         val unwrapped = obj.map {
             ap => {
               buf ++= "\"" + ap.getKey + "\":"
-              val rtn = (ap.getKey, wrap(ap.getVal, buf))
+              val rtn = (ap.getKey, unwrap(ap.getVal, buf))
               index += 1
               if (index < len) buf ++= ","
 
