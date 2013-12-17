@@ -42,6 +42,12 @@ class SequenceTest extends FunSuite with WithBase {
 
   test("ordering") {
 
-    table.orderBy(doc: Var) => doc.record \ "foo")
+
+    val ast = table.orderBy((doc: Var) => doc \ "foo").ast
+    // TODO add asert
+
+    System.out.println(ast)
+
+    // assert(ast)
   }
 }

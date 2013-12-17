@@ -320,7 +320,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
   def concatMap(func: Typed) = ConcatMap(underlying, FuncWrap(func))
 
   // TODO : Add function support
-  def orderBy(keys: Ordering*) = OrderBy(underlying, keys)
+  def orderBy(keys: Order*) = OrderBy(underlying, keys)
 
   def withFields(keys: String*) = WithFields(underlying, keys)
 

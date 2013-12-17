@@ -73,8 +73,11 @@ class Predicate1(f: (Var) => Typed) extends Predicate {
 
   protected def _invoke(vars: Seq[Var]) = f(vars(0))
 
+  def order: Order = new FuncWrap(this) with Order
+
   val amount: Int = 1
 }
+
 
 class Predicate2(f: (Var, Var) => Typed) extends Predicate {
 

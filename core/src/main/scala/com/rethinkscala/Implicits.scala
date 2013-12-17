@@ -125,7 +125,7 @@ private[rethinkscala] trait ImplicitConversions {
     def ~>(end: Int) = SliceRange(start, end)
   }
 
-  implicit def func2ProvidesOrdering(f: Var => Typed): ProvidesOrdering = new FuncWrap(f) with ProvidesOrdering
+  implicit def func2Order(f: Var => Typed): Order = new FuncWrap(new Predicate1(f)) with Order
 
 
 }

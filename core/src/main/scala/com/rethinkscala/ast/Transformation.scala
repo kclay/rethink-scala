@@ -50,9 +50,9 @@ case class WithFields[T](target: Sequence[T], fields: Seq[String]) extends Produ
 case class SliceRange(start: Int = 0, end: Int = -1)
 
 
-trait ProvidesOrdering
+trait Order
 
-abstract class Ordering extends Term with ProvidesOrdering {
+abstract class Ordering extends Term with Order {
   val attr: String
 
   def flip: Ordering
@@ -78,14 +78,14 @@ case class Desc(attr: String) extends Ordering {
   * @param target
   * @param values
   */
-case class OrderBy[T](target: Sequence[T], values: Seq[ProvidesOrdering], index: Option[ProvidesOrdering] = None) extends ProduceSequence[T] {
+case class OrderBy[T](target: Sequence[T], values: Seq[Order], index: Option[Order] = None) extends ProduceSequence[T] {
 
 
   override lazy val args = buildArgs(values.+:(target): _*)
 
   def termType = TermType.ORDERBY
 
-  def index(i: ProvidesOrdering) = OrderBy(target, values, Some(i))
+  def index(i: Order) = OrderBy(target, values, Some(i))
 }
 
 /** Skip a number of elements from the head of the sequence.
