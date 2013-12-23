@@ -1,4 +1,4 @@
-package com.rethinkdscala.ast
+package com.rethinkscala
 
 import org.scalatest.FunSuite
 

@@ -1,7 +1,8 @@
-package com.rethinkscala.ast
+package com.rethinkscala
 
 import org.scalatest.FunSuite
 import com.rethinkscala._
+import com.rethinkscala.ast.{Var, Expr}
 
 /**
  * Created by IntelliJ IDEA.

@@ -1,9 +1,10 @@
-package com.rethinkscala.ast
+package com.rethinkscala
 
 import org.scalatest.FunSuite
 
 import com.rethinkscala._
 import com.rethinkscala.Implicits._
+import com.rethinkscala.ast.Var
 
 class TransformationTest extends FunSuite {
 
