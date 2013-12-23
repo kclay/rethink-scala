@@ -13,8 +13,9 @@ import com.rethinkscala.ChangeResult
 class AstTest extends FunSuite with WithBase {
 
   import com.rethinkscala.r
-  import com.rethinkscala.utils.Helpers.toQuery
+
   import com.rethinkscala.Implicits._
+
   /*
   test("branch") {
 

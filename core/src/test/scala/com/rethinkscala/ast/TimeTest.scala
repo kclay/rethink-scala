@@ -18,6 +18,7 @@ class TimeTest  extends FunSuite with WithBase{
 
   test("r.now"){
     val now = new DateTime()
+    val result = r.now.run
     assert(r.now,{
       dt:DateTime =>{
 

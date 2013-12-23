@@ -119,7 +119,7 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def string2Ast(name: String) = String2Ast(name)
 
-  implicit def string2Ordering(name: String) = name asc
+  implicit def string2Ordering(name: String) = name.asc
 
   implicit def intWithTildyArrow(start: Int) = new {
     def ~>(end: Int) = SliceRange(start, end)

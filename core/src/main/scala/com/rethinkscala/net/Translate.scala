@@ -6,17 +6,17 @@ import com.rethinkscala.{GeneratesKeys, Term, Document}
 import com.rethinkscala.ast.{After, WithLifecycle}
 
 object Translate {
-  def translate[In, Out](implicit ct: Manifest[Out]): Translate[In, Out] = new BaseTranslate[In, Out] {}
+  def translate[Out](implicit ct: Manifest[Out]): Translate[Out] = new BaseTranslate[Out] {}
 
 
 }
 
-trait Translate[In, Out] {
+trait Translate[Out] {
   lazy val fromMap = new MapConversion[Out] {
-    protected def _convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]) = {
+    protected def _convert(json: String)(implicit ct: Manifest[Out]) = {
       val out = Reflector.fromJson[Out](json)
       val doc = out.asInstanceOf[Document]
-      doc.underlying = value
+      doc.underlying = Reflector.fromJson[Map[String, Any]](json)
       doc.raw = json
       out
     }
@@ -24,15 +24,15 @@ trait Translate[In, Out] {
 
   def write(value: Out): Any
 
-  def read(value: In, json: String, term: Term)(implicit ct: Manifest[Out]): Out
+  def read(json: String, term: Term)(implicit ct: Manifest[Out]): Out
 
 }
 
-trait WithConversion[In, Out] {
+trait WithConversion[Out] {
 
-  def convert(value: In, json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
+  def convert(json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
 
-    val rtn = _convert(value, json)
+    val rtn = _convert(json)
 
     if (rtn.isInstanceOf[GeneratesKeys]) {
       val gks = rtn.asInstanceOf[GeneratesKeys]
@@ -48,10 +48,10 @@ trait WithConversion[In, Out] {
 
   }
 
-  protected def _convert(value: In, json: String)(implicit ct: Manifest[Out]): Out
+  protected def _convert(json: String)(implicit ct: Manifest[Out]): Out
 }
 
-trait WithIterableConversion[Out] extends WithConversion[Iterable[Map[String, _]], Iterable[Out]] {
+trait WithIterableConversion[Out] extends WithConversion[Iterable[Out]] {
   protected def _convert(value: Iterable[Map[String, _]], json: String)(implicit ct: Manifest[Out]) = {
     val isDocument = classOf[Document] isAssignableFrom ct.runtimeClass
     val out = Reflector.fromJson[Iterable[Out]](json)
@@ -66,38 +66,42 @@ trait WithIterableConversion[Out] extends WithConversion[Iterable[Map[String, _]
   }
 }
 
-trait MapConversion[Out] extends WithConversion[Map[String, Any], Out]
+trait MapConversion[Out] extends WithConversion[Out] {
+  def asMap(json: String) = Reflector.fromJson[Map[String, Any]](json)
+}
+
 
 trait BinaryConversion extends MapConversion[Boolean] {
   private[rethinkscala] val resultField: String
 
-  protected def _convert(value: Map[String, Any], json: String)(implicit mf: Manifest[Boolean]): Boolean = value.get(resultField).getOrElse(0) == 1
+
+  protected def _convert(json: String)(implicit mf: Manifest[Boolean]): Boolean = asMap(json).get(resultField).getOrElse(0) == 1
 }
 
 trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
-  protected def _convert(value: Map[String, Any], json: String)(implicit ct: Manifest[Out]): Out = {
+  protected def _convert(json: String)(implicit ct: Manifest[Out]): Out = {
     val out = Reflector.fromJson[Out](json)
-    out.underlying = value
+    out.underlying = Reflector.fromJson[Map[String, Any]](json)
     out.raw = json
     out
   }
 
 }
 
-trait BaseTranslate[In, Out] extends Translate[In, Out] {
+trait BaseTranslate[Out] extends Translate[Out] {
 
-  type Conversion = WithConversion[In, Out]
+  type Conversion = WithConversion[Out]
 
   def write(value: Out): Any = value
 
-  def read(value: In, json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
+  def read(json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
 
     val isDocument = classOf[Document] isAssignableFrom ct.runtimeClass
     term match {
-      case c: Conversion => c.convert(value, json, term)
+      case c: Conversion => c.convert(json, term)
 
-      case _ => if (isDocument) fromMap.convert(value.asInstanceOf[Map[String, Any]], json, term) else value.asInstanceOf[Out]
+      case _ => if (isDocument) fromMap.convert(json, term) else Reflector.fromJson[Out](json)
 
     }
 

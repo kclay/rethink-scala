@@ -5,14 +5,24 @@ import com.rethinkscala.Term
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{InfoResult, Document}
-import org.joda.time.DateTime
+import org.joda.time.{ReadableInstant, ReadableDateTime, DateTime}
 import org.joda.time.format.ISODateTimeFormat
+import com.rethinkscala.net.RethinkDriverError
+import scala.collection.Iterable
 
 case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
   override lazy val args = buildArgs(array: _*)
 
   // def datumTermType:TermType.EnumVal=ql2.Datum
   def termType = TermType.MAKE_ARRAY
+
+}
+
+private[this] object MakeArray {
+
+  def asJson(list: Iterable[Any], depth: Int): MakeArray = new MakeArray(list.toSeq) {
+    override lazy val args = buildArgs(exprJson(array, depth): _*)
+  }
 
 }
 
@@ -45,6 +55,14 @@ private[rethinkscala] case class MakeObj2(data: Document) extends Term with MapT
   override lazy val optargs = buildOptArgs2(Reflector.toMap(data))
 
   def termType = TermType.MAKE_OBJ
+}
+
+
+private[this] object MakeObj {
+
+  def asJson(data: Map[String, Any], depth: Int): MakeObj = new MakeObj(data) {
+    override lazy val optargs = buildOptArgs2(data.mapValues(v => exprJson(v, depth)))
+  }
 }
 
 case class MakeObj(data: Map[String, Any]) extends Term with MapTyped {
@@ -140,7 +158,7 @@ object Expr {
 
   def apply(f: Double): NumberDatum = NumberDatum(f)
 
-  def apply(d: Document) = MakeObj2(d);
+  def apply(d: Document) = MakeObj2(d)
 
   def apply(date: DateTime) = ISO8601(ISODateTimeFormat.dateTime().print(date))
 
@@ -159,6 +177,52 @@ object Expr {
 
   }
 
+}
+
+
+object isJson {
+
+
+  private[this] val DocumentClass = classOf[Document]
+
+  private[this] val ReadableInstantClass = classOf[ReadableInstant]
+
+  private[this] def apply[T <: Document](d: T, depth: Int): Boolean = {
+    Reflector.fields(d).find(f =>
+      if (DocumentClass isAssignableFrom f.getType) apply(f.getType, depth - 1)
+      else ReadableInstantClass isAssignableFrom f.getType).isEmpty
+
+  }
+
+  def apply(v: Any, depth: Int = 20): Boolean = {
+    if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
+
+    v match {
+      case t: Term => false
+      case m: Map[String, Any] => m.find {
+        case (a, b) => !isJson(b, depth - 1)
+      }.isEmpty
+      case d: Document => apply(d.getClass, depth)
+      case l: Iterable[Any] => l.find(r => !isJson(r, depth - 1)).isEmpty
+      case String | Int | Float | Boolean | Double => true
+      case _ => false
+
+    }
+  }
+}
+
+object exprJson {
+  def apply(v: Any, depth: Int = 20): Any = {
+    if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
+    v match {
+      case t: Term => t
+      case d: Map[String, Any] => MakeObj.asJson(d, depth)
+      case l: Iterable[Any] => MakeArray.asJson(l, depth)
+      case a: Any => Expr(a)
+    }
+
+
+  }
 }
 
 case class Json(value: String) extends Produce[Datum] {

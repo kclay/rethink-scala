@@ -48,6 +48,9 @@ case class ToEpochTime(value: TimeTyped) extends ProduceNumeric {
 }
 
 class Now extends ProduceTime {
+
+  override protected val extractArgs = false
+
   def termType = TermType.NOW
 }
 

@@ -27,12 +27,16 @@ trait Produce[ResultType] extends Term {
   //http://stackoverflow.com/a/3461734
 
 
+  //def asJson(implicit c: Connection) = toQuery[String].toResult
+
   def run(implicit c: Connection, mf: Manifest[ResultType]): Either[RethinkError, ResultType] = toQuery.toResult
 
   def withOptions(opts: Options): this.type = {
     underlyingOptions = opts
     this
   }
+
+  //def profile(implicit c: Connection) = withOptions(underlyingOptions ++ Map("profile" -> true)).toQuery[QueryProfile[ResultType]].toResult
 
 
   def as[R <: ResultType](implicit c: Connection, tt: Manifest[R]): Either[RethinkError, R] = toQuery.toResult

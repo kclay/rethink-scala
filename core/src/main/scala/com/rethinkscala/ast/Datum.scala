@@ -5,6 +5,7 @@ import ql2.{Ql2 => ql2}
 import ql2.Datum.DatumType
 import com.rethinkscala.net.RethinkDriverError
 import org.joda.time.{DateTimeZone, DateTime}
+import com.rethinkscala.reflect.Reflector
 
 
 sealed trait Datum extends DatumMessage with DatumOrFunction {
@@ -15,16 +16,22 @@ sealed trait Datum extends DatumMessage with DatumOrFunction {
 
 object Datum {
 
-  import ql2.Datum.DatumType.{R_NULL, R_BOOL, R_NUM, R_STR, R_ARRAY, R_OBJECT}
+  import ql2.Datum.DatumType.{R_NULL, R_BOOL, R_NUM, R_STR, R_ARRAY, R_OBJECT, R_JSON}
 
 
   private val KEY_REQL_TYPE = "$reql_type$"
   private val REQL_TYPE_TIME = "TIME"
 
-  def unwrap(datum: ql2.Datum): (Any, String) = {
+  /*def unwrap(datum: ql2.Datum): (Any, String) = {
     val buf = new StringBuilder
     (unwrap(datum, buf), buf.toString())
 
+  } */
+
+  def unwrap(datum: ql2.Datum): String = {
+    val buf = new StringBuilder
+    unwrap(datum, buf)
+    buf.toString()
   }
 
 
@@ -97,6 +104,7 @@ object Datum {
 
 
       }
+      case R_JSON => buf ++= datum.getRStr
       case _ => None
     }
   }

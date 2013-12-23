@@ -22,7 +22,7 @@ object Reflector {
   private[this] val classFields = new Memo[Class[_], Seq[Field]]
   private[rethinkscala] var mapper = new ObjectMapper()
 
-  mapper.registerModule(DefaultScalaModule)
+  mapper.registerModule(RethinkModule)
   mapper.setSerializationInclusion(Include.NON_NULL);
   mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   mapper.setVisibility(PropertyAccessor.FIELD, Visibility.PUBLIC_ONLY)

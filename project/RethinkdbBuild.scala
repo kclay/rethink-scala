@@ -73,7 +73,7 @@ object RethinkdbBuild extends Build {
     "com.fasterxml.jackson.core" % "jackson-core" % v,
     "com.fasterxml.jackson.core" % "jackson-annotations" % v,
     "com.fasterxml.jackson.core" % "jackson-databind" % v,
-    //"com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % ("[2.2,"+v+"]") % "test",
+    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % ("[2.2,"+v+"]"),
 
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % v
   )

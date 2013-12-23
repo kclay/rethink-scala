@@ -120,6 +120,7 @@ case class InsertResult(inserted: Int = 0, replaced: Int = 0, unchanged: Int = 0
 
 }
 
+case class IndexStatusResult(index:String,ready:Boolean) extends Document
 
 case class TableInfoResult(name: String, @JsonProperty("type") kind: String, db: DBResult) extends InfoResult(name, kind)
 
@@ -129,6 +130,10 @@ case class ChangeResult(replaced: Int, unchanged: Int, inserted: Int, deleted: I
 with ReturnValues
 with GeneratesKeys
 
-case class MatchResult(start:Int,end:Int,str:String,groups:Seq[MatchGroupResult]) extends Document
+case class MatchResult(start: Int, end: Int, str: String, groups: Seq[MatchGroupResult]) extends Document
 
-case class MatchGroupResult(start:Int,end:Int,str:String)
+case class MatchGroupResult(start: Int, end: Int, str: String)
+
+case class Profile(description: String, @JsonProperty("duration(ms)") duration: Double, @JsonProperty("sub_task") subTask: List[Profile], parallelTasks: Option[Profile])
+
+case class QueryProfile[T](value: T, profile: Profile)

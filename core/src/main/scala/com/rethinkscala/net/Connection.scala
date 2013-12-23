@@ -1,5 +1,6 @@
 package com.rethinkscala.net
 
+
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
 import java.util.concurrent.Executors
 import org.jboss.netty.bootstrap.ClientBootstrap
@@ -8,7 +9,7 @@ import java.net.InetSocketAddress
 import org.jboss.netty.channel._
 
 import ql2.{Ql2 => ql2}
-import ql2.{Response, VersionDummy}
+import ql2.{Query, Response, VersionDummy}
 
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.buffer.ChannelBuffers._
@@ -21,10 +22,10 @@ import com.rethinkscala.ConvertFrom._
 
 import org.jboss.netty.channel.Channel
 import ql2.Response.ResponseType
-import com.rethinkscala.ast.Datum
+import com.rethinkscala.ast.{WithDB, DB, Datum}
 import org.jboss.netty.handler.codec.frame.FrameDecoder
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
-import com.rethinkscala.utils.Helpers._
+
 import scala.Some
 import Translate._
 import com.rethinkscala.Term
@@ -59,20 +60,23 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
   type MapType = Map[String, _]
   type IterableType = Iterable[MapType]
 
-  def cast(value: Any, json: String): ResultType = value match {
+  /*def cast(value: Any, json: String): ResultType = value match {
     case v: MapType => translate[MapType, ResultType].read(v.asInstanceOf[MapType], json, term)
     case a: IterableType => translate[IterableType, ResultType].read(a.asInstanceOf[IterableType], json, term)
     case x: Any => x.asInstanceOf[R]
 
-  }
+  }        */
+
+  def cast(json: String): ResultType = translate[ResultType].read(json, term)
 
 
   def toResult(response: Response) = {
-    val (data: Any, json: String) = Datum.unwrap(response.getResponse(0))
+    val json: String = Datum.unwrap(response.getResponse(0))
 
-    val rtn = data match {
-      case None => None
-      case _ => cast(data, json)
+    val rtn = json match {
+      case "" => None
+
+      case _ => cast(json)
     }
 
 
@@ -80,6 +84,21 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
 
   }
+
+  /*
+  def toResult(response: Response) = {
+    val (data: Any, json: String) = Datum.unwrap(response.getResponse(0))
+
+    val rtn = data match {
+      case None => None
+      case _ => cast(json)
+    }
+
+
+    rtn
+
+
+  }    */
 
   def handle(response: Response) = (response.getType match {
 
@@ -89,8 +108,8 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
     case _ =>
 
   }) match {
-    case e: Exception => p failure (e)
-    case e: Any => p success (e.asInstanceOf[R])
+    case e: Exception => p failure e
+    case e: Any => p success e.asInstanceOf[R]
   }
 
 
@@ -99,9 +118,9 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
     //val seqManifest = implicitly[Manifest[Seq[R]]]
 
-    val seq = for (d <- response.getResponseList.asScala) yield (Datum.unwrap(d) match {
-      case (a: Any, json: String) => cast(a, json)
-    })
+    val seq = for (d <- response.getResponseList.asScala) yield Datum.unwrap(d) match {
+      case json: String => cast(json)
+    }
 
     new Cursor[R](id, this, seq, response.getType match {
       case ResponseType.SUCCESS_SEQUENCE => true
@@ -262,6 +281,37 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
       wrapper.channel.close()
     }
   }, max = version.maxConnections)
+
+  private def toQuery(term: Term, token: Int, db: Option[String] = None, opts: Map[String, Any] = Map()) = {
+
+    def scopeDB(q: Query.Builder, db: DB) = q.addGlobalOptargs(Query.AssocPair.newBuilder.setKey("db").setVal(db.ast))
+
+    val query = Some(
+      Query.newBuilder().setType(Query.QueryType.START)
+        .setQuery(term.ast).setToken(token).setAcceptsRJson(true)
+
+    ).map(q => {
+
+      opts.get("db").map {
+        case name: String => scopeDB(q, DB(name))
+      }.getOrElse {
+        term match {
+          case d: WithDB => d.db.map(scopeDB(q, _)).getOrElse(db.map {
+            name => scopeDB(q, DB(name))
+          }.getOrElse(q))
+          case _ => db.map {
+            name => scopeDB(q, DB(name))
+          }.getOrElse(q)
+        }
+
+      }
+
+
+    }).get
+
+    query.build()
+
+  }
 
 
   protected[rethinkscala] def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T] = {

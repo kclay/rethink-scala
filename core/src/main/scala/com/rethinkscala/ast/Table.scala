@@ -1,9 +1,11 @@
 package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
-import com.rethinkscala.net.{BinaryConversion}
-import com.rethinkscala.Document
-import com.rethinkscala.{InsertOptions, TableOptions}
+import com.rethinkscala.net.BinaryConversion
+import com.rethinkscala._
+import com.rethinkscala.InsertOptions
+import com.rethinkscala.TableOptions
+import com.rethinkscala.IndexStatusResult
 
 // TODO FuncCall
 
@@ -55,6 +57,16 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
   def indexCreate(name: String, predicate: Option[Predicate] = None) = IndexCreate(this, name, predicate)
 
   def indexDrop(name: String) = IndexDrop(this, name)
+
+  def indexStatus = IndexStatus(this, Seq())
+
+  def indexStatus(indexes: String*) = IndexStatus(this, indexes)
+
+  def indexWait = IndexWait(this, Seq())
+
+  def indexWait(indexes: String*) = IndexWait(this, indexes)
+
+  def sync = Sync(this)
 
 }
 
@@ -119,4 +131,21 @@ case class IndexDrop(target: TableTyped, name: String) extends ProduceBinary wit
   */
 case class IndexList(target: TableTyped) extends ProduceSequence[String] {
   def termType = TermType.INDEX_LIST
+}
+
+case class IndexStatus(target: TableTyped, indexes: Seq[String]) extends ProduceSequence[IndexStatusResult] {
+  def termType = TermType.INDEX_STATUS
+}
+
+case class IndexWait(target: TableTyped, indexes: Seq[String]) extends ProduceSequence[IndexStatusResult] {
+  def termType = TermType.INDEX_WAIT
+}
+
+case class Sync(target: TableTyped, durability: Option[Durability.Kind] = None) extends ProduceBinary with BinaryConversion {
+
+  override lazy val args = buildArgs(target)
+  override lazy val optargs = buildOptArgs(Map("durability" -> durability))
+  val resultField = "synced"
+
+  def termType = TermType.SYNC
 }

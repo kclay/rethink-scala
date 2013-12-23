@@ -12,33 +12,5 @@ import com.rethinkscala.Term
   */
 object Helpers {
 
-  def toQuery(term: Term, token: Int, db: Option[String] = None, opts: Map[String, Any] = Map()) = {
 
-    def scopeDB(q: Query.Builder, db: DB) = q.addGlobalOptargs(Query.AssocPair.newBuilder.setKey("db").setVal(db.ast))
-
-    val query = Some(
-      Query.newBuilder().setType(Query.QueryType.START)
-        .setQuery(term.ast).setToken(token)
-
-    ).map(q => {
-
-      opts.get("db").map {
-        case name: String => scopeDB(q, DB(name))
-      }.getOrElse {
-        term match {
-          case d: WithDB => d.db.map(scopeDB(q, _)).getOrElse(db.map {
-            name => scopeDB(q, DB(name))
-          }.getOrElse(q))
-          case _ => db.map {
-            name => scopeDB(q, DB(name))
-          }.getOrElse(q)
-        }
-
-      }
-
-
-    }).get
-    query.build()
-
-  }
 }
