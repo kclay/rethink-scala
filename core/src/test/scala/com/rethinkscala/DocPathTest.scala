@@ -18,7 +18,7 @@ class DocPathTest extends FunSuite {
     val m = Map("foo" -> 1, "bar" -> Map("foo" -> 1))
 
 
-    println(Reflector.toMap(D("foo")))
+
 
     val path = DocPath(m, List("bar", "foo"))
     assert(path.as[Int] == Some(1))

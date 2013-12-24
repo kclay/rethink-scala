@@ -2,7 +2,6 @@ package com.rethinkscala
 
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty}
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.net.WithConversion
 
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {
@@ -91,6 +90,9 @@ trait GeneratesKeys {
   val generatedKeys: Option[Seq[String]]
 }
 
+
+case class ReturnValueExtractor[T](@JsonProperty("new_val") value: T)
+
 trait ReturnValues {
   self: Document =>
   private var _returnedValue: Option[Any] = None
@@ -98,10 +100,12 @@ trait ReturnValues {
   def returnedValue[T](implicit mf: Manifest[T]): Option[T] = {
 
     if (_returnedValue.isEmpty) {
-      _returnedValue = (this \ "new_val").as[Map[String, Any]] match {
-        case Some(s) => Some(Reflector.fromJson[T](Reflector.toJson(s)))
-        case _ => None
+      try {
+        _returnedValue = Some(Reflector.fromJson[ReturnValueExtractor[T]](raw).value)
+      } catch {
+        case e: Exception =>
       }
+
     }
     _returnedValue.asInstanceOf[Option[T]]
   }

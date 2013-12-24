@@ -3,7 +3,7 @@ package com.rethinkscala.utils
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
-import scala.concurrent.{ExecutionContext, future, Future}
+import scala.concurrent.{ExecutionContext, future, promise, Future}
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -67,6 +67,7 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
 
     val connection = borrow()
 
+
     val f = future {
 
       connectionFactory.configure(connection)
@@ -79,10 +80,9 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
       case t: Throwable =>
         invalidate(connection)
 
+
     }
-
     f
-
   }
 
   def nonEmpty = size.get() > 0

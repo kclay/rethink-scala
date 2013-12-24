@@ -22,7 +22,7 @@ class TableTest extends FunSuite with WithBase {
   test("list tables") {
 
 
-    assert[IS](r.tables, {
+    assert(r.tables.run, {
       t: IS => t.toSeq.contains(tableName)
     })
   }
@@ -39,7 +39,7 @@ class TableTest extends FunSuite with WithBase {
   test("list index") {
 
     val table = r.table(tableName)
-    assert[IS](table.indexes, {
+    assert(table.indexes.run, {
       i: IS => {
         val seq = i.toSeq
         seq.contains("foo_count")

@@ -27,7 +27,7 @@ class SequenceTest extends FunSuite with WithBase {
     val ast = a.ast
 
     assert(a.run, {
-      x: Seq[String] => x.size == 2
+      x: Iterable[String] => x.size == 2
     })
 
 
@@ -40,14 +40,15 @@ class SequenceTest extends FunSuite with WithBase {
     assert(composed, "23")
   }
 
+  /*
   test("ordering") {
 
 
     val ast = table.orderBy((doc: Var) => doc \ "foo").ast
     // TODO add asert
 
-    System.out.println(ast)
+   // System.out.println(ast)
 
     // assert(ast)
-  }
+  }       */
 }

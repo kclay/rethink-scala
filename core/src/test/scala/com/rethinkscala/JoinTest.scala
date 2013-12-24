@@ -34,6 +34,7 @@ class JoinTest extends FunSuite with WithBase{
 
     val join = foos.eqJoin("value",bars)
 
+
     val results = join.toOpt
     assert(results.isDefined)
 
@@ -49,14 +50,14 @@ class JoinTest extends FunSuite with WithBase{
      val join = foos.innerJoin(bars,(f:Var,b:Var)=> f\"value" === b\"value")
 
     assert(join.run,{
-      f:Seq[R]=> f.size == 1 && f.head.left == FooJ(1,1)
+      f:Iterable[R]=> f.size == 1 && f.head.left == FooJ(1,1)
     })
   }
 
   test("zip join"){
     val join = foos.innerJoin(bars,(f:Var,b:Var)=> f\"value" === b\"value")
     assert(join.zip.run,{
-      rs:Seq[ZipResult[FooJ,BarJ]]=> rs.size == 1 && rs.head.left.isInstanceOf[FooJ] && rs.head.right.isInstanceOf[BarJ]
+      rs:Iterable[ZipResult[FooJ,BarJ]]=> rs.size == 1 && rs.head.left.isInstanceOf[FooJ] && rs.head.right.isInstanceOf[BarJ]
     })
   }
 

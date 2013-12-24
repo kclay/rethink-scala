@@ -80,30 +80,45 @@ case class MakeObj(data: Map[String, Any]) extends Term with MapTyped {
   def termType = TermType.MAKE_OBJ
 }
 
-case class Var(id: Int) extends Term with ProduceAny {
+case class Var(id: Int) extends ProduceAny {
   override lazy val args = buildArgs(id)
 
   def termType = TermType.VAR
+
+  override private[rethinkscala] def print(args: Seq[String], opt: Map[String, String]) = s"var_${args(0)}"
 }
 
-case class JavaScript(code: String, timeout: Option[Int] = None) extends Term {
+case class JavaScript(code: String, timeout: Option[Int] = None) extends TopLevelQuery {
   override lazy val args = buildArgs(code)
 
   override lazy val optargs = buildOptArgs(Map("timeout" -> timeout))
 
+
+  override val stmt = "js"
+
   def termType = TermType.JAVASCRIPT
 }
 
-case class UserError(error: String) extends Term {
 
-  def termType = TermType.ERROR
+case class Default(value: Any) extends MethodQuery {
+
+  def termType = TermType.DEFAULT
 }
 
-class ImplicitVar extends Term with ProduceAny {
+case class UserError(error: String) extends TopLevelQuery {
+
+  def termType = TermType.ERROR
+
+  override val stmt = "error"
+}
+
+class ImplicitVar extends ProduceAny {
 
   def termType = TermType.IMPLICIT_VAR
 
   def apply(name: String) = this field name
+
+  override private[rethinkscala] def print(args: Seq[String], opt: Map[String, String]) = "r.row"
 }
 
 case class Info(target: Typed) extends ProduceDocument[InfoResult] {

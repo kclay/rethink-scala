@@ -4,6 +4,7 @@ package com.rethinkscala.net
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{JsonDocument, GeneratesKeys, Term, Document}
 import com.rethinkscala.ast.{After, WithLifecycle}
+import com.typesafe.scalalogging.slf4j.Logging
 
 object Translate {
   def translate[Out](implicit ct: Manifest[Out]): Translate[Out] = new BaseTranslate[Out] {}
@@ -16,6 +17,7 @@ trait Translate[Out] {
     protected def _convert(json: String)(implicit ct: Manifest[Out]) = {
       // TODO make this lazy
       val out = Reflector.fromJson[Out](json)
+
       val doc = out.asInstanceOf[Document]
       // doc.underlying = Reflector.fromJson[Map[String, Any]](json)
       doc.raw = json
@@ -29,21 +31,26 @@ trait Translate[Out] {
 
 }
 
-trait WithConversion[Out] {
+trait WithConversion[Out] extends Logging {
 
   def convert(json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
 
+    logger.debug(s"Converting json to ${ct.runtimeClass.getCanonicalName}")
     val rtn = _convert(json)
 
-    if (rtn.isInstanceOf[GeneratesKeys]) {
-      val gks = rtn.asInstanceOf[GeneratesKeys]
+    rtn match {
+      case gks: GeneratesKeys =>
+        logger.debug("Result is of GenerateKey, checking if lifecycle is found")
+        term match {
+          case wlf: WithLifecycle[_] => {
+            logger.debug("Sending generated keys thru lifecycle")
+            wlf(After(gks.generatedKeys))
+          }
 
-      term match {
-        case wlf: WithLifecycle[_] => wlf(After(gks.generatedKeys))
+          case _ =>
+        }
 
-        case _ =>
-      }
-
+      case _ =>
     }
     rtn
 
@@ -95,7 +102,7 @@ trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
 }
 
-trait BaseTranslate[Out] extends Translate[Out] {
+trait BaseTranslate[Out] extends Translate[Out] with Logging {
 
   type Conversion = WithConversion[Out]
 
@@ -104,6 +111,7 @@ trait BaseTranslate[Out] extends Translate[Out] {
   def read(json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
 
     val isDocument = classOf[Document] isAssignableFrom ct.runtimeClass
+    logger.debug(s"${ct.runtimeClass} isDocument = $isDocument")
     term match {
       case c: Conversion => c.convert(json, term)
 
@@ -112,5 +120,6 @@ trait BaseTranslate[Out] extends Translate[Out] {
     }
 
   }
+
 }
 

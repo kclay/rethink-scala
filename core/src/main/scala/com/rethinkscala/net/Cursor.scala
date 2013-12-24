@@ -3,6 +3,7 @@ package com.rethinkscala.net
 import com.rethinkscala.ast.Sequence
 
 import scala.collection.generic.SeqForwarder
+import scala.collection.mutable
 
 
 //http://stackoverflow.com/questions/14299454/create-a-custom-scala-collection-where-map-defaults-to-returning-the-custom-coll
@@ -28,7 +29,7 @@ class CustomCollectionBuilder[A] extends Builder[A, Cursor[A]] {
 class Cursor[A](connectionId: Int, token: Token, chunk: Seq[A], completed: Boolean) extends SeqForwarder[A] {
 
 
-  val _underlying =  collection.mutable.Buffer.empty[A]++=chunk
+  val _underlying =  chunk
 
 
 

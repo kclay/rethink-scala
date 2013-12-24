@@ -73,7 +73,7 @@ object RethinkdbBuild extends Build {
     "com.fasterxml.jackson.core" % "jackson-core" % v,
     "com.fasterxml.jackson.core" % "jackson-annotations" % v,
     "com.fasterxml.jackson.core" % "jackson-databind" % v,
-    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % ("[2.2,"+v+"]"),
+    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % ("[2.2," + v + "]"),
 
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % v
   )
@@ -111,7 +111,9 @@ object RethinkdbBuild extends Build {
       // it's not possible to generate both java and scala sources due to a "bug" in ScalaBuff.
       //addProtocCompatibility,
       libraryDependencies <++= (scalaVersion)(sv => Seq(
-        "org.scalatest" %% "scalatest" % "1.9.1" % "test",
+        "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
+        "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
+        "org.slf4j" % "slf4j-log4j12" % "1.7.5",
 
         "io.netty" % "netty" % "3.6.6.Final",
         "com.google.protobuf" % "protobuf-java" % "2.4.1",

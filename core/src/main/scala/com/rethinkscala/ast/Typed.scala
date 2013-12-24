@@ -9,10 +9,11 @@ import com.rethinkscala.BoundOptions
 import com.rethinkscala.net.Connection
 import com.rethinkscala.UpdateOptions
 import com.rethinkscala.JoinResult
-import com.rethinkscala.net.BlockingQuery
+import com.rethinkscala.net.BlockingResultQuery
 import com.rethinkscala.utils.Applicator2
 
-trait Produce[ResultType] extends Term {
+
+trait Produce[ResultType] extends Query {
 
   type resultType = ResultType
   type Options = Map[String, Any]
@@ -22,7 +23,7 @@ trait Produce[ResultType] extends Term {
 
   protected val underlyingTerm: Term = this
 
-  def toQuery[R](implicit c: Connection, tt: Manifest[R]): Query[R] = new BlockingQuery[R](underlyingTerm, c, tt, underlyingOptions)
+  def toQuery[R](implicit c: Connection, tt: Manifest[R]): ResultQuery[R] = new BlockingResultQuery[R](underlyingTerm, c, tt, underlyingOptions)
 
   //http://stackoverflow.com/a/3461734
 
@@ -534,7 +535,7 @@ trait Ref extends ArrayTyped[Any] with Numeric with Binary with Record with Lite
   override val underlying = this
 }
 
-trait ProduceSequence[T] extends Sequence[T] with Produce[Iterable[T]] {
+trait ProduceSequence[T] extends Sequence[T] with Produce[Seq[T]] {
 
   type FieldProduce = ProduceTypedArray[T]
 

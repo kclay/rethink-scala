@@ -64,6 +64,9 @@ case class DatumAssocPair(key: String, value: Any) extends AssocPair {
 
 trait Term extends WithAst {
 
+
+
+
   import scala.collection.JavaConversions.{seqAsJavaList, asJavaCollection}
 
   protected val extractArgs = true

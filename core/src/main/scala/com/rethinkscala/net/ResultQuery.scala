@@ -8,7 +8,7 @@ import scala.util.Success
 import scala.util.Failure
 import scala.Some
 
-abstract class Query[R] {
+abstract class ResultQuery[R] {
 
   val connection: Connection
 
@@ -16,7 +16,9 @@ abstract class Query[R] {
 
 }
 
-case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R], opts: Map[String, Any]) extends Query[R] {
+
+
+case class BlockingResultQuery[R](term: Term, connection: Connection, mf: Manifest[R], opts: Map[String, Any]) extends ResultQuery[R] {
   def iterator: Iterator[R] = ???
 
   lazy val ast: ql2.Term = term.ast
@@ -43,9 +45,9 @@ case class BlockingQuery[R](term: Term, connection: Connection, mf: Manifest[R],
 
     val r = v match {
       case Some(Failure(e: RethinkError)) => Left(e)
-      case Some(Success(r)) => r match {
+      case Some(Success(res)) => res match {
         case x: None.type => Left(RethinkNoResultsError("No results found for " + mf.runtimeClass.getSimpleName, term))
-        case _ => Right(r.asInstanceOf[R])
+        case _ => Right(res.asInstanceOf[R])
 
 
       }

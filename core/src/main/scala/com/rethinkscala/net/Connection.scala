@@ -22,7 +22,7 @@ import com.rethinkscala.ConvertFrom._
 
 import org.jboss.netty.channel.Channel
 import ql2.Response.ResponseType
-import com.rethinkscala.ast.{WithDB, DB, Datum}
+import com.rethinkscala.ast.{ProduceSequence, WithDB, DB, Datum}
 import org.jboss.netty.handler.codec.frame.FrameDecoder
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -30,6 +30,7 @@ import scala.Some
 import Translate._
 import com.rethinkscala.Term
 import scala.concurrent.duration.Duration
+import com.typesafe.scalalogging.slf4j.Logging
 
 
 /** Created by IntelliJ IDEA.
@@ -49,7 +50,7 @@ abstract class Token {
 
 }
 
-case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p: Promise[R], mf: Manifest[R]) extends Token {
+case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p: Promise[R], mf: Manifest[R]) extends Token with Logging {
 
 
   implicit val t = mf
@@ -67,19 +68,17 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
   }        */
 
-  def cast(json: String): ResultType = json(0) match {
-    case "{" => translate[ResultType].read(json, term)
-    case "[" => translate[Iterable[ResultType]].read(json, term)
-  }
+  def cast[T](json: String)(implicit mf: Manifest[T]): T = translate[T].read(json, term)
 
 
   def toResult(response: Response) = {
+    logger.debug(s"Processing result : $response")
     val json: String = Datum.unwrap(response.getResponse(0))
 
     val rtn = json match {
       case "" => None
 
-      case _ => cast(json)
+      case _ => cast[ResultType](json)
     }
 
 
@@ -107,7 +106,11 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
     case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => toError(response, term)
     case ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE => toCursor(0, response)
-    case ResponseType.SUCCESS_ATOM => toResult(response)
+    case ResponseType.SUCCESS_ATOM => term match {
+      case x: ProduceSequence[_] => toCursor(0, response)
+      case _ => toResult(response)
+    }
+    // case ResponseType.SUCCESS_ATOM => toResult(response)
     case _ =>
 
   }) match {
@@ -121,8 +124,15 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
     //val seqManifest = implicitly[Manifest[Seq[R]]]
 
-    val seq = for (d <- response.getResponseList.asScala) yield Datum.unwrap(d) match {
-      case json: String => cast(json)
+
+    val results = response.getResponseList.asScala
+    val seq = results.length match {
+      case 1 if response.getType == ResponseType.SUCCESS_ATOM => cast[Seq[ResultType]](Datum.unwrap(results(0)))
+      case _ => for (d <- results) yield Datum.unwrap(d) match {
+
+        case json: String => cast[ResultType](json)
+      }
+
     }
 
     new Cursor[R](id, this, seq, response.getType match {
@@ -228,7 +238,7 @@ private class PipelineFactory extends ChannelPipelineFactory {
 }
 
 
-case class Connection(version: Version, timeoutDuration: Duration = Duration(30, "seconds")) {
+case class Connection(version: Version, timeoutDuration: Duration = Duration(30, "seconds")) extends Logging {
 
   private val defaultDB = Some(version.db.getOrElse("test"))
   private[this] val connectionId = new AtomicInteger()
@@ -263,15 +273,19 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
 
     def create(): ChannelWrapper = {
 
-      val c = bootstrap.connect(new InetSocketAddress(version.host, version.port))
+      logger.debug("Creating new ChannelWrapper")
+      val c = bootstrap.connect(new InetSocketAddress(version.host, version.port)).await()
 
       new ChannelWrapper(c)
     }
 
     def configure(wrapper: ChannelWrapper) = {
       if (!wrapper.configured) {
+        logger.debug("Configuring ChannelWrapper")
         version.configure(wrapper.channel)
         wrapper.configured = true
+      } else {
+        logger.debug("Logger already configured")
       }
     }
 
@@ -281,6 +295,7 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
     }
 
     def destroy(wrapper: ChannelWrapper) {
+      logger.debug("Destroying Channel")
       wrapper.channel.close()
     }
   }, max = version.maxConnections)
@@ -320,9 +335,11 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
   protected[rethinkscala] def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T] = {
     val p = promise[T]()
     val f = p.future
+    logger.debug(s"Writing $term")
     channel take {
       case (c, restore) =>
 
+        logger.debug("Received connection from pool")
         val con = this
         // add a channel future to ensure that all setup has been done
         c.cf.addListener(new ChannelFutureListener {
@@ -336,6 +353,7 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
             // Or find a way so that we can store the token for the netty handler to complete
 
             c.channel.setAttachment(token)
+            logger.debug("Writing query")
             c.channel.write(query)
             future.removeListener(this)
           }

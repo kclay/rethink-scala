@@ -42,6 +42,7 @@ class WriteTest extends FunSuite with WithBase {
 
   test("insert documents with return vals") {
 
+    scala.collection.convert.Wrappers
     val insert = table.insert(Foo(None, 4, 5)).withResults
     assert(insert, {
       i: InsertResult => i.inserted == 1 && i.returnedValue[Foo].isDefined

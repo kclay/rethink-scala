@@ -32,11 +32,11 @@ class RethinkDateTimeDeserializer(cls: Class[_ <: ReadableInstant]) extends Date
   private[this] val KEY_TIMEZONE = "timezone"
 
   override def deserializeWithType(jp: JsonParser, ctxt: DeserializationContext, typeDeserializer: TypeDeserializer): AnyRef = {
-    return typeDeserializer.deserializeTypedFromAny(jp, ctxt)
+    typeDeserializer.deserializeTypedFromAny(jp, ctxt)
   }
 
   override def deserialize(jp: JsonParser, ctxt: DeserializationContext): ReadableDateTime = {
-    var t = jp.nextToken()
+    var t = jp.getCurrentToken
     if (t eq JsonToken.START_OBJECT) {
       t = jp.nextToken
       var fieldType: String = null

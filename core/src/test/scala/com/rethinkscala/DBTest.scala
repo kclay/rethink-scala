@@ -21,11 +21,8 @@ class DBTest extends FunSuite with WithBase {
   }
   test("list database") {
 
-    val tables = r.db("foo").tables
-    tables.run
-    println(table.run)
-    println(r.dbs.run)
-    assert[IS](r.dbs, {
+
+    assert(r.dbs.run, {
       x: IS => x.toSeq.contains("foo")
     })
   }

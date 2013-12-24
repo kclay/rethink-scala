@@ -10,34 +10,32 @@ import org.joda.time.DateTime
  * Time: 10:56 AM
  *
  */
-class TimeTest  extends FunSuite with WithBase{
+class TimeTest extends FunSuite with WithBase {
 
 
-
-
-  test("r.now"){
+  test("r.now") {
     val now = new DateTime()
     val result = r.now.run
-    assert(r.now,{
-      dt:DateTime =>{
+    assert(r.now.run, {
+      dt: DateTime => {
 
-        dt.dayOfMonth().get() ==now.dayOfMonth().get() && dt.dayOfWeek().get() == dt.dayOfWeek().get()
+        dt.dayOfMonth().get() == now.dayOfMonth().get() && dt.dayOfWeek().get() == dt.dayOfWeek().get()
 
       }
     })
   }
 
-  test("time.dayOfWeek"){
+  test("time.dayOfWeek") {
 
     val now = new DateTime()
 
 
-    val dayOfWeek = r.weekdays(now.dayOfWeek().get()-1)
+    val dayOfWeek = r.weekdays(now.dayOfWeek().get() - 1)
 
     assert(r.now.dayOfWeek.eq(dayOfWeek))
   }
 
-  test("time.day"){
+  test("time.day") {
 
     val now = new DateTime()
 

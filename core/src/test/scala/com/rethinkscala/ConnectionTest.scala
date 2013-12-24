@@ -1,9 +1,11 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.net.{Connection, Version2}
-import scala.actors.threadpool.LinkedBlockingQueue
-import scala.actors.threadpool.TimeUnit
+import org.scalatest.concurrent.Futures
+
+import com.rethinkscala.net.{RethinkDriverError, Connection, Version2}
+import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,7 +13,7 @@ import scala.actors.threadpool.TimeUnit
  * Date: 12/16/13
  * Time: 11:46 AM 
  */
-class ConnectionTest extends FunSuite with WithBase {
+class ConnectionTest extends FunSuite with WithBase with Futures {
 
   import scala.concurrent.ExecutionContext.Implicits._
 
@@ -39,6 +41,7 @@ class ConnectionTest extends FunSuite with WithBase {
 
     assert(queue.poll(10, TimeUnit.SECONDS))
   }
+
   /*
   test("v2 auth failed") {
 
@@ -46,18 +49,27 @@ class ConnectionTest extends FunSuite with WithBase {
     val queue = new LinkedBlockingQueue[Boolean]
 
 
-    conn.channel take {
+    val f = conn.channel take {
       case (c, restore) =>
         restore(c)
 
 
-    } onFailure {
-      case e: RethinkDriverError => queue.put(true)
     }
 
 
-    assert(queue.poll(10, TimeUnit.SECONDS))
-  } */
+    f onFailure {
+      case e: Exception =>
+        println(e)
+        queue.put(true)
+    }
+
+
+
+
+    val value = queue.poll(5, TimeUnit.SECONDS)
+    println(f.value)
+    assert(value)
+  }     */
 
 
 }
