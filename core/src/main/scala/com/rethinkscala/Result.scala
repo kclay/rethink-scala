@@ -1,7 +1,8 @@
 package com.rethinkscala
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty}
 import com.rethinkscala.reflect.Reflector
+import com.rethinkscala.net.WithConversion
 
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {
@@ -30,7 +31,8 @@ case class DocPath(root: Map[String, Any], paths: List[String]) {
 trait Document {
 
 
-  private[rethinkscala] var underlying: Map[String, Any] = Map.empty[String, Any]
+  @JsonIgnore
+  private[rethinkscala] lazy val underlying: Map[String, Any] = Reflector.fromJson[Map[String, Any]](raw)
 
   private[rethinkscala] var raw: String = _
 
@@ -53,6 +55,31 @@ trait Document {
   private[rethinkscala] def invokeAfterInsert = afterInsert
 
   private[rethinkscala] def invokeAfterInsert(id: String) = afterInsert(id)
+}
+
+
+class JsonDocument(json: String) {
+  private[rethinkscala] lazy val underlying: Either[Map[String, Any], Seq[Any]] = if (raw.startsWith("{"))
+    Left(Reflector.fromJson[Map[String, Any]](raw))
+  else
+    Right(Reflector.fromJson[Seq[Any]](raw))
+
+
+  private[rethinkscala] var raw: String = json
+
+  def \(name: String) = DocPath(toMap, List(name))
+
+  def toMap = underlying fold(a => a, b => (b.zipWithIndex map {
+    case (value: Any, index: Int) => (index.toString, value)
+
+  }).toMap)
+
+  def asRaw = raw
+
+  def toInt = Integer.parseInt(raw, 10)
+
+
+  def toList = underlying.fold(_.toList, _.toList)
 }
 
 trait KeyedDocument[K] extends Document {
@@ -120,7 +147,7 @@ case class InsertResult(inserted: Int = 0, replaced: Int = 0, unchanged: Int = 0
 
 }
 
-case class IndexStatusResult(index:String,ready:Boolean) extends Document
+case class IndexStatusResult(index: String, ready: Boolean) extends Document
 
 case class TableInfoResult(name: String, @JsonProperty("type") kind: String, db: DBResult) extends InfoResult(name, kind)
 

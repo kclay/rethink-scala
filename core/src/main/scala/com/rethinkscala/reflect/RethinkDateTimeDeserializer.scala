@@ -69,4 +69,3 @@ class RethinkDateTimeDeserializer(cls: Class[_ <: ReadableInstant]) extends Date
   }
 }
 
-class RethinkDateTimeSerializer extends

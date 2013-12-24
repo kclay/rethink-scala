@@ -31,5 +31,7 @@ class RethinkModule extends DefaultScalaModule {
 }
 
 
-object RethinkModule extends RethinkModule with JodaModule
+object RethinkModule extends RethinkModule
+
+
 

@@ -2,7 +2,7 @@ package com.rethinkscala.net
 
 
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.{GeneratesKeys, Term, Document}
+import com.rethinkscala.{JsonDocument, GeneratesKeys, Term, Document}
 import com.rethinkscala.ast.{After, WithLifecycle}
 
 object Translate {
@@ -14,9 +14,10 @@ object Translate {
 trait Translate[Out] {
   lazy val fromMap = new MapConversion[Out] {
     protected def _convert(json: String)(implicit ct: Manifest[Out]) = {
+      // TODO make this lazy
       val out = Reflector.fromJson[Out](json)
       val doc = out.asInstanceOf[Document]
-      doc.underlying = Reflector.fromJson[Map[String, Any]](json)
+      // doc.underlying = Reflector.fromJson[Map[String, Any]](json)
       doc.raw = json
       out
     }
@@ -51,17 +52,22 @@ trait WithConversion[Out] {
   protected def _convert(json: String)(implicit ct: Manifest[Out]): Out
 }
 
+trait JsonDocumentConversion extends WithConversion[JsonDocument] {
+  protected def _convert(json: String)(implicit ct: Manifest[JsonDocument]): JsonDocument = new JsonDocument(json)
+}
+
 trait WithIterableConversion[Out] extends WithConversion[Iterable[Out]] {
   protected def _convert(value: Iterable[Map[String, _]], json: String)(implicit ct: Manifest[Out]) = {
     val isDocument = classOf[Document] isAssignableFrom ct.runtimeClass
     val out = Reflector.fromJson[Iterable[Out]](json)
-
+    // TODO check into this
+    /*
     if (isDocument) {
       val seq = value.toSeq
       out.zipWithIndex foreach {
         case (o: Document, i) => o.underlying = seq(i)
       }
-    }
+    } */
     out
   }
 }
@@ -82,7 +88,7 @@ trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
   protected def _convert(json: String)(implicit ct: Manifest[Out]): Out = {
     val out = Reflector.fromJson[Out](json)
-    out.underlying = Reflector.fromJson[Map[String, Any]](json)
+    // out.underlying = Reflector.fromJson[Map[String, Any]](json)
     out.raw = json
     out
   }

@@ -1,13 +1,12 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.Term
+import com.rethinkscala.{JsonDocument, Term, InfoResult, Document}
 
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.{InfoResult, Document}
 import org.joda.time.{ReadableInstant, ReadableDateTime, DateTime}
 import org.joda.time.format.ISODateTimeFormat
-import com.rethinkscala.net.RethinkDriverError
+import com.rethinkscala.net.{RethinkClientError, JsonDocumentConversion, WithConversion, RethinkDriverError}
 import scala.collection.Iterable
 
 case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
@@ -21,7 +20,7 @@ case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
 private[this] object MakeArray {
 
   def asJson(list: Iterable[Any], depth: Int): MakeArray = new MakeArray(list.toSeq) {
-    override lazy val args = buildArgs(exprJson(array, depth): _*)
+    override lazy val args = buildArgs(Expr.json(array, depth): _*)
   }
 
 }
@@ -33,12 +32,12 @@ case class FuncWrap(value: Any) {
   private def scan(node: Any): Boolean = node match {
 
     case node: ImplicitVar => true
-    case t: Term if (t.args.collectFirst {
-      case arg: Term if (scan(arg)) => true
-    }.getOrElse(false)) => true
-    case t: Term if (t.optargs.collectFirst {
-      case p: com.rethinkscala.AssocPair if (scan(p.token)) => true
-    }.getOrElse(false)) => true
+    case t: Term if t.args.collectFirst {
+      case arg: Term if scan(arg) => true
+    }.getOrElse(false) => true
+    case t: Term if t.optargs.collectFirst {
+      case p: com.rethinkscala.AssocPair if scan(p.token) => true
+    }.getOrElse(false) => true
     case _ => false
   }
 
@@ -52,7 +51,9 @@ case class FuncWrap(value: Any) {
 private[rethinkscala] case class MakeObj2(data: Document) extends Term with MapTyped {
 
   override protected val extractArgs = false
-  override lazy val optargs = buildOptArgs2(Reflector.toMap(data))
+  override lazy val optargs = buildOptArgs2(Reflector.fields(data).map(f =>
+    (f.getName, Expr(f.get(data)))
+  ).toMap)
 
   def termType = TermType.MAKE_OBJ
 }
@@ -60,8 +61,9 @@ private[rethinkscala] case class MakeObj2(data: Document) extends Term with MapT
 
 private[this] object MakeObj {
 
-  def asJson(data: Map[String, Any], depth: Int): MakeObj = new MakeObj(data) {
-    override lazy val optargs = buildOptArgs2(data.mapValues(v => exprJson(v, depth)))
+
+  def asJson(data: Map[String, Any], depth: Int = 20): MakeObj = new MakeObj(data) {
+    override lazy val optargs = buildOptArgs2(data.mapValues(v => Expr.json(v, depth)))
   }
 }
 
@@ -166,6 +168,8 @@ object Expr {
   def apply(a: Any): Term = a match {
     case w: FuncWrap => w()
 
+    case date: DateTime => apply(date)
+
 
     case p: Predicate => p()
     case t: Term => t
@@ -177,46 +181,52 @@ object Expr {
 
   }
 
-}
-
-
-object isJson {
-
 
   private[this] val DocumentClass = classOf[Document]
 
   private[this] val ReadableInstantClass = classOf[ReadableInstant]
 
-  private[this] def apply[T <: Document](d: T, depth: Int): Boolean = {
-    Reflector.fields(d).find(f =>
-      if (DocumentClass isAssignableFrom f.getType) apply(f.getType, depth - 1)
-      else ReadableInstantClass isAssignableFrom f.getType).isEmpty
+  private[this] def isJsonClass(d: Class[_], depth: Int): Boolean = {
+    val found = Reflector.fields(d).find(f =>
+      if (DocumentClass isAssignableFrom f.getType) isJsonClass(f.getType, depth - 1)
+      else ReadableInstantClass isAssignableFrom f.getType)
+
+    found.isEmpty
 
   }
 
-  def apply(v: Any, depth: Int = 20): Boolean = {
+  def isJson(v: Any, depth: Int = 20): Boolean = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
 
     v match {
       case t: Term => false
-      case m: Map[String, Any] => m.find {
+      case m: Map[String, _] => m.find {
         case (a, b) => !isJson(b, depth - 1)
       }.isEmpty
-      case d: Document => apply(d.getClass, depth)
+      case d: Document => isJsonClass(d.getClass, depth)
       case l: Iterable[Any] => l.find(r => !isJson(r, depth - 1)).isEmpty
-      case String | Int | Float | Boolean | Double => true
+      case Int | Float | Boolean | Double | Long => true
+
+      case a: Any if classOf[java.io.Serializable].isAssignableFrom(a.getClass) && a.getClass.getName.startsWith("java.lang") => true
+
+      // case d: Any if classOf[java.io.Serializable].isAssignableFrom(d.getClass) => throw RethinkDriverError("Use of classes must extend type Document")
       case _ => false
 
     }
   }
-}
 
-object exprJson {
-  def apply(v: Any, depth: Int = 20): Any = {
+  def json(array: Iterable[Any], depth: Int): Seq[Any] = {
+    if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
+    array.map(v => json(v, depth - 1)).toSeq
+  }
+
+  def json(v: Any, depth: Int = 20): Term = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
     v match {
       case t: Term => t
-      case d: Map[String, Any] => MakeObj.asJson(d, depth)
+      case a: Any if isJson(a, depth) => Json.asLazy(a)
+
+      case d: Map[String, _] => MakeObj.asJson(d, depth)
       case l: Iterable[Any] => MakeArray.asJson(l, depth)
       case a: Any => Expr(a)
     }
@@ -225,6 +235,23 @@ object exprJson {
   }
 }
 
-case class Json(value: String) extends Produce[Datum] {
+
+trait JsonLike
+
+
+case class LazyJson(value: Any) extends Produce[JsonDocument] with JsonDocumentConversion with JsonLike {
+
+
+  override lazy val args = buildArgs(Reflector.toJson(value))
+
   def termType = TermType.JSON
+}
+
+case class Json(value: String) extends Produce[JsonDocument] with JsonDocumentConversion with JsonLike {
+  def termType = TermType.JSON
+}
+
+
+object Json {
+  def asLazy(value: Any) = LazyJson(value)
 }

@@ -23,8 +23,8 @@ object r extends TimeNames {
 
   // TODO Fix me, clashes with Sequence and Hash
   def row: ImplicitVar = _row
-  def string = row.string
 
+  def string = row.string
 
 
   //def row[T<:Sequence](name: String)(implicit d:DummyImplicit) = _row.asInstanceOf[T] field name
@@ -83,6 +83,8 @@ object r extends TimeNames {
   def error(msg: String) = UserError(msg)
 
   def js(code: String, timeout: Option[Int] = None) = JavaScript(code, timeout)
+
+  def json(str: String) = Json(str)
 
 
 }
