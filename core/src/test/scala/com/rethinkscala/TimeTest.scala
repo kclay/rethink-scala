@@ -1,7 +1,6 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.{r, WithBase}
 import org.joda.time.DateTime
 
 /**

@@ -3,7 +3,6 @@ package com.rethinkscala
 import org.scalatest.FunSuite
 import com.rethinkscala.ast._
 import org.joda.time.DateTime
-import com.rethinkscala.net.RethinkDriverError
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.ast.LazyJson
 import com.rethinkscala.net.RethinkDriverError

@@ -1,10 +1,5 @@
 package com.rethinkscala
 
-import org.scalatest.FunSuite
-
-import com.rethinkscala.WithBase
-import com.rethinkscala.Implicits._
-import com.rethinkscala.Document
 
 /**
  * Created with IntelliJ IDEA.

@@ -79,6 +79,8 @@ trait Term extends WithAst {
 
   protected def buildArgs(args: Any*): Seq[Term] = for (a <- args) yield Expr(a)
 
+  protected def buildArgs2(depth: Int, args: Any*): Seq[Term] = for (a <- args) yield Expr(a, depth)
+
   lazy val optargs = Iterable.empty[AssocPair]
 
   def optArgsBuilder(key: String, value: Any): AssocPair = TermAssocPair(key, value)

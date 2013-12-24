@@ -1,7 +1,6 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.{r, WithBase}
 import ql2.Ql2.Term
 
 
@@ -22,7 +21,9 @@ class DBTest extends FunSuite with WithBase {
   }
   test("list database") {
 
-    println(r.db("foo").tables.run)
+    val tables = r.db("foo").tables
+    tables.run
+    println(table.run)
     println(r.dbs.run)
     assert[IS](r.dbs, {
       x: IS => x.toSeq.contains("foo")

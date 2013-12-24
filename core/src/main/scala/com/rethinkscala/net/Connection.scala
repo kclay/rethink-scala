@@ -24,7 +24,7 @@ import org.jboss.netty.channel.Channel
 import ql2.Response.ResponseType
 import com.rethinkscala.ast.{WithDB, DB, Datum}
 import org.jboss.netty.handler.codec.frame.FrameDecoder
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
+import java.util.concurrent.atomic.AtomicInteger
 
 import scala.Some
 import Translate._
@@ -67,7 +67,10 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
   }        */
 
-  def cast(json: String): ResultType = translate[ResultType].read(json, term)
+  def cast(json: String): ResultType = json(0) match {
+    case "{" => translate[ResultType].read(json, term)
+    case "[" => translate[Iterable[ResultType]].read(json, term)
+  }
 
 
   def toResult(response: Response) = {

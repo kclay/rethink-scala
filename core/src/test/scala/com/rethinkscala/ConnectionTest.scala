@@ -1,9 +1,8 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.net.{RethinkDriverError, Connection, Version2}
-import com.rethinkscala.ast.Table
-import scala.actors.threadpool.{LinkedBlockingQueue, BlockingQueue}
+import com.rethinkscala.net.{Connection, Version2}
+import scala.actors.threadpool.LinkedBlockingQueue
 import scala.actors.threadpool.TimeUnit
 
 /**
@@ -40,11 +39,12 @@ class ConnectionTest extends FunSuite with WithBase {
 
     assert(queue.poll(10, TimeUnit.SECONDS))
   }
-
+  /*
   test("v2 auth failed") {
 
     val conn = newConnection("foobar2")
     val queue = new LinkedBlockingQueue[Boolean]
+
 
     conn.channel take {
       case (c, restore) =>
@@ -56,8 +56,8 @@ class ConnectionTest extends FunSuite with WithBase {
     }
 
 
-    assert(queue.poll(10, TimeUnit.SECONDS) == true)
-  }
+    assert(queue.poll(10, TimeUnit.SECONDS))
+  } */
 
 
 }

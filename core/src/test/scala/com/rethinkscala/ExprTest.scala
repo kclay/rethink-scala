@@ -2,7 +2,6 @@ package com.rethinkscala
 
 import org.scalatest.FunSuite
 
-import com.rethinkscala.Implicits._
 import com.rethinkscala.Implicits.Quick._
 import com.rethinkscala.ast._
 import com.rethinkscala.ast.StringDatum

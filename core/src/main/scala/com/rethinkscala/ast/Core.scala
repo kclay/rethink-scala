@@ -17,10 +17,15 @@ case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
 
 }
 
+
 private[this] object MakeArray {
 
-  def asJson(list: Iterable[Any], depth: Int): MakeArray = new MakeArray(list.toSeq) {
+  def asJson(list: Seq[Any], depth: Int): MakeArray = new MakeArray(list) {
     override lazy val args = buildArgs(Expr.json(array, depth): _*)
+  }
+
+  def apply(array: Seq[Any], depth: Int) = new MakeArray(array) {
+    override lazy val args = buildArgs2(depth - 1, array: _*)
   }
 
 }
@@ -162,23 +167,27 @@ object Expr {
 
   def apply(d: Document) = MakeObj2(d)
 
-  def apply(date: DateTime) = ISO8601(ISODateTimeFormat.dateTime().print(date))
+  def apply(date: ReadableInstant) = ISO8601(ISODateTimeFormat.dateTime().print(date))
 
 
-  def apply(a: Any): Term = a match {
-    case w: FuncWrap => w()
+  def apply(a: Any, depth: Int = 20): Term = {
+    if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
 
-    case date: DateTime => apply(date)
+    a match {
+      case w: FuncWrap => w()
 
-
-    case p: Predicate => p()
-    case t: Term => t
-    case s: Seq[_] => MakeArray(s)
-    case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
-    case d: Document => MakeObj2(d)
-    case a: Any => Datum(a)
+      case date: ReadableInstant => apply(date)
 
 
+      case p: Predicate => p()
+      case t: Term => t
+      case s: Seq[_] => MakeArray(s, depth - 1)
+      case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
+      case d: Document => MakeObj2(d)
+      case a: Any => Datum(a)
+
+
+    }
   }
 
 
@@ -187,11 +196,10 @@ object Expr {
   private[this] val ReadableInstantClass = classOf[ReadableInstant]
 
   private[this] def isJsonClass(d: Class[_], depth: Int): Boolean = {
-    val found = Reflector.fields(d).find(f =>
+    Reflector.fields(d).find(f =>
       if (DocumentClass isAssignableFrom f.getType) isJsonClass(f.getType, depth - 1)
-      else ReadableInstantClass isAssignableFrom f.getType)
+      else ReadableInstantClass isAssignableFrom f.getType).isEmpty
 
-    found.isEmpty
 
   }
 
@@ -204,7 +212,7 @@ object Expr {
         case (a, b) => !isJson(b, depth - 1)
       }.isEmpty
       case d: Document => isJsonClass(d.getClass, depth)
-      case l: Iterable[Any] => l.find(r => !isJson(r, depth - 1)).isEmpty
+      case l: Seq[Any] => l.find(r => !isJson(r, depth - 1)).isEmpty
       case Int | Float | Boolean | Double | Long => true
 
       case a: Any if classOf[java.io.Serializable].isAssignableFrom(a.getClass) && a.getClass.getName.startsWith("java.lang") => true
@@ -215,7 +223,7 @@ object Expr {
     }
   }
 
-  def json(array: Iterable[Any], depth: Int): Seq[Any] = {
+  def json(array: Seq[Any], depth: Int): Seq[Any] = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
     array.map(v => json(v, depth - 1)).toSeq
   }
@@ -227,7 +235,7 @@ object Expr {
       case a: Any if isJson(a, depth) => Json.asLazy(a)
 
       case d: Map[String, _] => MakeObj.asJson(d, depth)
-      case l: Iterable[Any] => MakeArray.asJson(l, depth)
+      case l: Seq[Any] => MakeArray.asJson(l, depth)
       case a: Any => Expr(a)
     }
 
