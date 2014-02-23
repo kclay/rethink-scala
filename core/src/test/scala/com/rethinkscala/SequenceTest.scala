@@ -32,6 +32,10 @@ class SequenceTest extends FunSuite with WithBase {
 
 
 
+
+    a.reduce {
+      case (x, y) => x
+    }
     val composed = a.reduce ! ((x, y) => x add y)
 
 

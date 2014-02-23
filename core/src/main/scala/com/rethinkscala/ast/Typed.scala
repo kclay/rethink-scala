@@ -301,7 +301,10 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def map[R](func: Produce[R]) = RMap[R](underlying, FuncWrap(func))
 
+  // def map(func:MappingFunction[T])
+
   //def map(func: Var => Typed) =
+
   def map(implicit ev: ToAst[T]) = ev.wrap(RMap[T](underlying, _))
 
 

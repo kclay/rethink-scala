@@ -30,8 +30,9 @@ import com.rethinkscala.ast.NumberDatum
 
 
 class ToAst[A] {
-
+  self: ToAst[A] =>
   type TypeMember >: Var
+
 
   def apply2[R](f: ((Var, Var) => Typed) => R) = new Applicator2[TypeMember, R] {
     def apply = f(this)
@@ -41,7 +42,13 @@ class ToAst[A] {
 
   def wrap[R](f: FuncWrap => R) = apply(o => f(FuncWrap(o)))
 
-  def apply[R](f: (Var => Typed) => R) = new Applicator1[TypeMember, R] {
+  def wrap3[R, T](f: FuncWrap => R) = apply3[R, T](o => f(FuncWrap(o)))
+
+  def apply3[R, T](f: (Var => Typed) => R) = new Applicator1[T, R] {
+    def apply = f(this)
+  }
+
+  def apply[R](f: (Var => Typed) => R) = new Applicator1[this.type#TypeMember, R] {
     def apply = f(this)
   }
 

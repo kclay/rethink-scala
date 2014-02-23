@@ -18,7 +18,11 @@ trait Applicator[T, +R] {
   type Method
   var applicator: Method = _
 
+  type PMethod = PartialFunction[Method, R]
+
   def <~(op: Method) = apply0(op)
+
+  def apply(op: PMethod) = _
 
   def !(op: Method) = apply0(op)
 
