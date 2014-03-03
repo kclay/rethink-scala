@@ -1,7 +1,6 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
-import scala.Some
 
 import com.rethinkscala.utils.{Applicator1, Applicator2}
 import com.rethinkscala.ast.StringDatum
@@ -74,7 +73,7 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def toOptLiteral[T <% Literal](v: T): Option[T] = Some(v)
 
-  implicit def toOpt[T <% Datum](v: T): Option[T] = Some(v)
+  implicit def toOptFromDatum[T <% Datum](v: T): Option[T] = Some(v)
 
   implicit def toPredicate1Opt(f: (Var) => Typed) = Some(new Predicate1(f))
 

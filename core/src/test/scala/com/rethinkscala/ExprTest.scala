@@ -6,6 +6,7 @@ import com.rethinkscala.Implicits.Quick._
 import com.rethinkscala.ast._
 import com.rethinkscala.ast.StringDatum
 import com.rethinkscala.ast.NumberDatum
+import Blocking._
 
 class ExprTest extends FunSuite {
 

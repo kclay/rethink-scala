@@ -5,7 +5,6 @@ import ql2.{Ql2 => ql2}
 import ql2.Datum.DatumType
 import com.rethinkscala.net.RethinkDriverError
 import org.joda.time.{DateTimeZone, DateTime}
-import com.rethinkscala.reflect.Reflector
 
 
 sealed trait Datum extends DatumMessage with DatumOrFunction {

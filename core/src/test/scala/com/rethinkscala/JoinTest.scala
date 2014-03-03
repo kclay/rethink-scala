@@ -3,6 +3,7 @@ package com.rethinkscala
 import org.scalatest.FunSuite
 import scala.Some
 import com.rethinkscala.ast.{Var, Table}
+import Blocking._
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,52 +13,57 @@ import com.rethinkscala.ast.{Var, Table}
  *
  */
 
-case class FooJ(id:Int,value:Int) extends Document
-case class BarJ(id:Int,value:Int) extends Document
+case class FooJ(id: Int, value: Int) extends Document
 
-class JoinTest extends FunSuite with WithBase{
+case class BarJ(id: Int, value: Int) extends Document
 
-
-
-  type R=JoinResult[FooJ,BarJ]
-
-  val foos = Table[FooJ]("foo",db=Some(db))
-  val bars = Table[BarJ]("bar",db=Some(db))
+class JoinTest extends FunSuite with WithBase {
 
 
-  test("eq join should have left as Foo and right as Bar"){
+  type R = JoinResult[FooJ, BarJ]
+
+  val foos = Table[FooJ]("foo", db = Some(db))
+  val bars = Table[BarJ]("bar", db = Some(db))
 
 
+  test("eq join should have left as Foo and right as Bar") {
 
 
-   // println(foos.run)
+    // println(foos.run)
 
-    val join = foos.eqJoin("value",bars)
+    val join = foos.eqJoin("value", bars)
+
 
 
     val results = join.toOpt
+
+
+
+
+
     assert(results.isDefined)
 
     assert(results.get.size == 1)
     val head = results.get.head
-    assert(head.left == FooJ(1,1) && head.right==BarJ(1,1))
-
+    assert(head.left == FooJ(1, 1) && head.right == BarJ(1, 1))
 
 
   }
 
-  test("inner join"){
-     val join = foos.innerJoin(bars,(f:Var,b:Var)=> f\"value" === b\"value")
+  test("inner join") {
+    val join = foos.innerJoin(bars, (f: Var, b: Var) => f \ "value" === b \ "value")
 
-    assert(join.run,{
-      f:Iterable[R]=> f.size == 1 && f.head.left == FooJ(1,1)
+
+
+    assert(join.run, {
+      f: Iterable[R] => f.size == 1 && f.head.left == FooJ(1, 1)
     })
   }
 
-  test("zip join"){
-    val join = foos.innerJoin(bars,(f:Var,b:Var)=> f\"value" === b\"value")
-    assert(join.zip.run,{
-      rs:Iterable[ZipResult[FooJ,BarJ]]=> rs.size == 1 && rs.head.left.isInstanceOf[FooJ] && rs.head.right.isInstanceOf[BarJ]
+  test("zip join") {
+    val join = foos.innerJoin(bars, (f: Var, b: Var) => f \ "value" === b \ "value")
+    assert(join.zip.run, {
+      rs: Iterable[ZipResult[FooJ, BarJ]] => rs.size == 1 && rs.head.left.isInstanceOf[FooJ] && rs.head.right.isInstanceOf[BarJ]
     })
   }
 
@@ -66,7 +72,7 @@ class JoinTest extends FunSuite with WithBase{
     foos.create.run
     bars.create.run
 
-    foos.insert(FooJ(1,value=1)).run
-    bars.insert(BarJ(1,value=1)).run
+    foos.insert(FooJ(1, value = 1)).run
+    bars.insert(BarJ(1, value = 1)).run
   }
 }

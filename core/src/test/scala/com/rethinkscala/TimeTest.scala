@@ -1,7 +1,8 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import org.joda.time.DateTime
+import org.joda.time.{DateTimeZone, DateTime}
+import Blocking._
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,8 +15,8 @@ class TimeTest extends FunSuite with WithBase {
 
 
   test("r.now") {
-    val now = new DateTime()
-    val result = r.now.run
+    val now = new DateTime(DateTimeZone.UTC)
+
     assert(r.now.run, {
       dt: DateTime => {
 
@@ -27,17 +28,17 @@ class TimeTest extends FunSuite with WithBase {
 
   test("time.dayOfWeek") {
 
-    val now = new DateTime()
+    val now = new DateTime(DateTimeZone.UTC)
 
 
-    val dayOfWeek = r.weekdays(now.dayOfWeek().get() - 1)
+    val dayOfWeek = r.weekday(now)
 
     assert(r.now.dayOfWeek.eq(dayOfWeek))
   }
 
   test("time.day") {
 
-    val now = new DateTime()
+    val now = new DateTime(DateTimeZone.UTC)
 
     assert(r.now.day.eq(now.getDayOfMonth))
   }

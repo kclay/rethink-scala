@@ -1,8 +1,9 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
+import com.rethinkscala._
 import com.rethinkscala.ast.Var
-
+import Blocking._
 /** Created with IntelliJ IDEA.
   * User: keyston
   * Date: 6/27/13

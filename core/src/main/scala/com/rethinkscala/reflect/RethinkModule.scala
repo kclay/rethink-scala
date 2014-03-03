@@ -1,12 +1,7 @@
 package com.rethinkscala.reflect
 
-import com.fasterxml.jackson.module.scala.{JacksonModule, DefaultScalaModule}
-import com.fasterxml.jackson.datatype.joda.JodaModule
-import com.fasterxml.jackson.databind.deser.Deserializers
-import com.fasterxml.jackson.datatype.joda.deser._
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.joda.time._
-import java.lang.Object
-import com.fasterxml.jackson.databind.{BeanDescription, DeserializationConfig, JavaType}
 import com.fasterxml.jackson.databind.module.SimpleDeserializers
 
 /**

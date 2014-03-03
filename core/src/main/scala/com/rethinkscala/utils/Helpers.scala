@@ -1,8 +1,5 @@
 package com.rethinkscala.utils
 
-import ql2.Ql2.Query
-import com.rethinkscala.ast.{DB, WithDB}
-import com.rethinkscala.Term
 
 /** Created with IntelliJ IDEA.
   * User: keyston

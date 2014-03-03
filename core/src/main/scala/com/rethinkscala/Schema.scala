@@ -1,7 +1,7 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
-import com.rethinkscala.net.Connection
+import com.rethinkscala.net.{BlockingConnection, Connection}
 import java.lang.Exception
 import scala.collection.mutable.ArrayBuffer
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -71,7 +71,11 @@ class Schema {
   class ActiveRecord[T <: Document](o: T, m: Manifest[T])(implicit c: Connection) {
     private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] = (
       CurrentSchema.getOrElse(thisSchema)._tableTypes get (m.runtimeClass) map {
-        table: Table[_] => action(table.asInstanceOf[Table[T]]).run
+        table: Table[_] => block(c) {
+          implicit c: BlockingConnection =>
+            import c.delegate._
+            action(table.asInstanceOf[Table[T]]).run
+        }
 
       }) getOrElse (Left(new Exception(s"No Table found in Schema for this ${m.runtimeClass}")))
 
@@ -129,20 +133,25 @@ class Schema {
   def db(name: String) = r.db(name)
 
   def setup(implicit c: Connection) = {
-    tables.foreach {
-      t => {
+    block(c) {
+      implicit c: BlockingConnection =>
+        import c.delegate._
+        tables.foreach {
+          t => {
 
-        t.db.map(_.create.run match {
-          case Left(e) => println(e)
-          case Right(v) => println(s"Db ${t.name} created -> $v")
-        })
-        t.create.run match {
-          case Left(e) => println(e)
-          case Right(v) => println(s"Table ${t.name} created -> $v")
+            t.db.map(_.create.run match {
+              case Left(e) => println(e)
+              case Right(v) => println(s"Db ${t.name} created -> $v")
+            })
+            t.create.run match {
+              case Left(e) => println(e)
+              case Right(v) => println(s"Table ${t.name} created -> $v")
+            }
+          }
         }
-      }
+        _tableViews foreach (_.apply)
     }
-    _tableViews foreach (_.apply)
+
   }
 
 
@@ -152,8 +161,10 @@ class TableView[T <: Document](table: Table[T]) {
 
   private[rethinkscala] val _indexes = ArrayBuffer.empty[ProduceBinary]
 
-  private[rethinkscala] def apply(implicit c: Connection) = {
-    _indexes foreach (_.run)
+  private[rethinkscala] def apply(implicit c: Connection) = block(c) {
+    implicit c: BlockingConnection =>
+      import c.delegate._
+      _indexes foreach (_.run)
   }
 
   def db(name: String) = ???

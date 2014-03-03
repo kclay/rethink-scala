@@ -3,7 +3,7 @@ package com.rethinkscala.utils
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
-import scala.concurrent.{ExecutionContext, future, promise, Future}
+import scala.concurrent.{ExecutionContext, future, Future}
 
 /** Created by IntelliJ IDEA.
   * User: Keyston

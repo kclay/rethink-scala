@@ -13,7 +13,7 @@ case class DocPath(root: Map[String, Any], paths: List[String]) {
   private def find[T](value: Any, p: List[String] = paths): Option[T] = p.headOption.map {
     x => value match {
 
-      case Some(x) => find[T](x, p)
+      case Some(v) => find[T](v, p)
       case m: M => find[T](m.get(x), p.tail)
       case _ => None
     }
@@ -32,7 +32,7 @@ trait Document {
 
   @JsonIgnore
   private[rethinkscala] lazy val underlying: Map[String, Any] = Reflector.fromJson[Map[String, Any]](raw)
-
+  @JsonIgnore
   private[rethinkscala] var raw: String = _
 
 

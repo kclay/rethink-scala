@@ -39,9 +39,9 @@ case class InsertOptions(
 
 
 case class UpdateOptions(
-                          nonAtomic: Option[Boolean] = None,
-                          durability: Option[Durability.Value] = None,
-                          returnValues: Option[Boolean] = None
+                          nonAtomic: Option[Boolean]=None,
+                          durability: Option[Durability.Value]=None,
+                          returnValues: Option[Boolean]=None
                           ) extends Options {
   def toMap = Map("non_atomic" -> nonAtomic, "durability" -> durability, "return_vals" -> returnValues)
 }

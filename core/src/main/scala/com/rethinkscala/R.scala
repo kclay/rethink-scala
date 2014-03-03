@@ -1,6 +1,7 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
+import org.joda.time.DateTime
 
 
 /**
@@ -118,6 +119,12 @@ trait TimeNames {
   val october = this(TermType.OCTOBER)
   val november = this(TermType.NOVEMBER)
   val december = this(TermType.DECEMBER)
+
+  val months = Seq(january, february, march, april, june, july, august, september, october, november, december)
+
+  def weekday(dt: DateTime) = weekdays(dt.dayOfWeek().get() - 1)
+
+  def month(dt: DateTime) = months(dt.monthOfYear().get())
 
   def now = new Now()
 }

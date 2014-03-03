@@ -1,6 +1,7 @@
 package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
+
 import com.rethinkscala.DatumOrFunction
 
 /** Produce a single value from a sequence through repeated application of a reduction function.

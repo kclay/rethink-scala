@@ -1,12 +1,6 @@
 package com.rethinkscala
 
-import com.rethinkscala.ast._
-import com.rethinkscala.ast.StringDatum
-import com.rethinkscala.ast.BooleanDatum
-import com.rethinkscala.ast.NumberDatum
-import scala.Some
 import com.rethinkscala.net.{UnknownFrame, OptionalFrame, PositionFrame, RethinkError}
-import scala.collection.JavaConversions._
 import com.rethinkscala.ast.StringDatum
 import com.rethinkscala.ast.BooleanDatum
 import com.rethinkscala.ast.DB

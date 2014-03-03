@@ -7,6 +7,7 @@ import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.ast.LazyJson
 import com.rethinkscala.net.RethinkDriverError
 
+import Blocking._
 /**
  * Created by IntelliJ IDEA.
  * User: Keyston

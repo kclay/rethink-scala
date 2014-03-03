@@ -2,6 +2,7 @@ package com.rethinkscala
 
 import org.scalatest.FunSuite
 import com.rethinkscala.ast.{Var, Expr}
+import Blocking._
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,9 +34,7 @@ class SequenceTest extends FunSuite with WithBase {
 
 
 
-    a.reduce {
-      case (x, y) => x
-    }
+
     val composed = a.reduce ! ((x, y) => x add y)
 
 

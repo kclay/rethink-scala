@@ -1,9 +1,10 @@
 package com.rethinkscala.net
 
+import com.rethinkscala.Blocking._
+
 import com.rethinkscala.ast.Sequence
 
 import scala.collection.generic.SeqForwarder
-import scala.collection.mutable
 
 
 //http://stackoverflow.com/questions/14299454/create-a-custom-scala-collection-where-map-defaults-to-returning-the-custom-coll
@@ -29,8 +30,7 @@ class CustomCollectionBuilder[A] extends Builder[A, Cursor[A]] {
 class Cursor[A](connectionId: Int, token: Token, chunk: Seq[A], completed: Boolean) extends SeqForwarder[A] {
 
 
-  val _underlying =  chunk
-
+  val _underlying = chunk
 
 
   // override def companion: GenericCompanion[Cursor] = Cursor
@@ -38,11 +38,14 @@ class Cursor[A](connectionId: Int, token: Token, chunk: Seq[A], completed: Boole
 
   lazy val qt: QueryToken[A] = token.asInstanceOf[QueryToken[A]]
   // TODO need to assocate collection with the connectionid it came from
-  implicit lazy val connection = qt.connection
+  implicit lazy val connection = BlockingConnection(qt.connection)
   lazy val _size = {
     if (completed) underlying.size
     else {
       val seq = qt.term.asInstanceOf[Sequence[_]]
+
+
+
 
       seq.count.run match {
         case Left(e: RethinkError) => underlying.size

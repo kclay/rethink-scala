@@ -1,16 +1,8 @@
 package com.rethinkscala.reflect
 
-import com.fasterxml.jackson.databind.{PropertyNamingStrategy, PropertyName, AnnotationIntrospector, JavaType}
-import com.fasterxml.jackson.databind.cfg.MapperConfig
-import com.fasterxml.jackson.databind.introspect._
-
-import com.fasterxml.jackson.module.scala.util.Implicts._
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 
-import java.util
-import com.fasterxml.jackson.databind.util.BeanUtil
 import com.rethinkscala.Term
 import com.fasterxml.jackson.databind.introspect.ClassIntrospector.MixInResolver
 
@@ -22,13 +14,12 @@ import com.fasterxml.jackson.databind.introspect.ClassIntrospector.MixInResolver
   */
 
 import java.lang.reflect.{ParameterizedType, Type, Field}
-import com.fasterxml.jackson.databind.{PropertyName, AnnotationIntrospector, DeserializationFeature, ObjectMapper}
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
 import com.fasterxml.jackson.annotation.JsonInclude.Include
-import com.fasterxml.jackson.module.scala.introspect.{ScalaClassIntrospector, PropertyDescriptor, BeanIntrospector}
+import com.fasterxml.jackson.module.scala.introspect.ScalaClassIntrospector
 
 object Reflector {
 

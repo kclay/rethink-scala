@@ -1,11 +1,6 @@
 package com.rethinkscala.reflect
 
-import com.fasterxml.jackson.databind.{SerializerProvider, JsonNode, SerializationFeature}
-import org.joda.time.DateTime
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.databind.ser.std.StdSerializer
-import com.fasterxml.jackson.databind.jsontype.TypeSerializer
-import java.lang.reflect.Type
+
 
 /**
  * Created by IntelliJ IDEA.

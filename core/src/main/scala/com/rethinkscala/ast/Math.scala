@@ -1,6 +1,5 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.Term
 import ql2.Ql2.Term.TermType
 
 

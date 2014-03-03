@@ -3,8 +3,12 @@ package com.rethinkscala
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.Futures
 
-import com.rethinkscala.net.{RethinkDriverError, Connection, Version2}
+import com.rethinkscala.net._
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
+import com.rethinkscala.net.BlockingConnection
+import com.rethinkscala.net.Version2
+import com.rethinkscala.ast.Expr
+import Blocking._
 
 
 /**
@@ -19,17 +23,15 @@ class ConnectionTest extends FunSuite with WithBase with Futures {
 
   override def setupDB = false
 
-  def newConnection(authKey: String) = {
+  def blockingConnection(authKey: String) = BlockingConnection(new Version2(host, port, authKey = authKey))
 
-
-    new Connection(new Version2(host, port, authKey = authKey))
-  }
+  def asyncConnection(authKey: String) = AsyncConnection(new Version2(host, port, authKey = authKey))
 
   test("v2 auth success") {
 
 
     val queue = new LinkedBlockingQueue[Boolean]
-    val conn = newConnection("foobar")
+    val conn = blockingConnection("foobar")
     conn.channel take {
       case (c, restore) =>
         restore(c)
@@ -40,6 +42,20 @@ class ConnectionTest extends FunSuite with WithBase with Futures {
 
 
     assert(queue.poll(10, TimeUnit.SECONDS))
+  }
+
+  test("blocking query") {
+
+    implicit val connection = blockingConnection("foobar")
+    val e = Expr(1)
+
+    val results = e run
+
+    assert[Double](results, {
+      t: Double => t == 1
+    })
+
+
   }
 
   /*

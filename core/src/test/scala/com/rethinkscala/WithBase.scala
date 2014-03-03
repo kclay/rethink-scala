@@ -17,8 +17,10 @@ import com.rethinkscala.Implicits.Quick._
 import com.rethinkscala.net._
 import com.rethinkscala.ast.Table
 
+
 trait WithBase extends BeforeAndAfterAll {
   self: FunSuite =>
+
   val host = (Option(scala.util.Properties.envOrElse("TRAVIS", "empty")) map {
     case "empty" => "172.16.2.45"
     case _ => "127.0.0.1"
@@ -28,13 +30,21 @@ trait WithBase extends BeforeAndAfterAll {
   val version1 = new Version1(host, port)
   val version2 = new Version2(host, port, authKey = authKey)
 
+  def useVersion = version2
+
+  implicit val connection: BlockingConnection = BlockingConnection(useVersion)
+
+  import connection.delegate._
+
+
   def setupDB = true
 
   lazy val db = r.db(dbName)
   lazy val table: Table[Document] = db.table(tableName)
-  implicit val connection = new Connection(useVersion)
+
 
   override protected def beforeAll() {
+
 
     super.beforeAll()
     if (setupDB) {
@@ -66,7 +76,6 @@ trait WithBase extends BeforeAndAfterAll {
   def randomAlphanumericString(n: Int) =
     randomString("abcdefghijklmnopqrstuvwxyz0123456789")(n)
 
-  def useVersion = version2
 
   type IS = Iterable[String]
   type IA = Iterable[Any]

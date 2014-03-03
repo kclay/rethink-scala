@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ZipResult, AssocPair, Term, JoinResult}
+import com.rethinkscala.{ZipResult, AssocPair, Term}
 
 import ql2.Ql2.Term.TermType
 

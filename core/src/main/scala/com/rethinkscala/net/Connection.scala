@@ -22,15 +22,16 @@ import com.rethinkscala.ConvertFrom._
 
 import org.jboss.netty.channel.Channel
 import ql2.Response.ResponseType
-import com.rethinkscala.ast.{ProduceSequence, WithDB, DB, Datum}
+import com.rethinkscala.ast._
 import org.jboss.netty.handler.codec.frame.FrameDecoder
 import java.util.concurrent.atomic.AtomicInteger
 
-import scala.Some
 import Translate._
 import com.rethinkscala.Term
 import scala.concurrent.duration.Duration
 import com.typesafe.scalalogging.slf4j.Logging
+import scala.Some
+import com.rethinkscala.ast.DB
 
 
 /** Created by IntelliJ IDEA.
@@ -49,6 +50,7 @@ abstract class Token {
 
 
 }
+
 
 case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p: Promise[R], mf: Manifest[R]) extends Token with Logging {
 
@@ -127,15 +129,16 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
     val results = response.getResponseList.asScala
     val seq = results.length match {
-      case 1 if response.getType == ResponseType.SUCCESS_ATOM => cast[Seq[ResultType]](Datum.unwrap(results(0)))
+      case 1 if response.getType == ResponseType.SUCCESS_ATOM =>
+       cast[ResultType](Datum.unwrap(results(0)))
       case _ => for (d <- results) yield Datum.unwrap(d) match {
 
-        case json: String => cast[ResultType](json)
+        case json: String => if (mf.typeArguments.nonEmpty) cast(json)(mf.typeArguments(0)) else cast[ResultType](json)
       }
 
     }
 
-    new Cursor[R](id, this, seq, response.getType match {
+    new Cursor[R](id, this, seq.asInstanceOf[Seq[R]], response.getType match {
       case ResponseType.SUCCESS_SEQUENCE => true
       case _ => false
     })
@@ -238,12 +241,14 @@ private class PipelineFactory extends ChannelPipelineFactory {
 }
 
 
-case class Connection(version: Version, timeoutDuration: Duration = Duration(30, "seconds")) extends Logging {
+abstract class AbstractConnection(version: Version) extends Logging with Connection {
 
   private val defaultDB = Some(version.db.getOrElse("test"))
   private[this] val connectionId = new AtomicInteger()
 
   implicit val exc = version.executionContext
+
+
   lazy val bootstrap = {
 
     val factory =
@@ -259,6 +264,7 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
     b
 
   }
+
 
   case class ChannelWrapper(cf: ChannelFuture) {
     val id = connectionId.incrementAndGet()
@@ -332,7 +338,7 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
   }
 
 
-  protected[rethinkscala] def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T] = {
+  def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T] = {
     val p = promise[T]()
     val f = p.future
     logger.debug(s"Writing $term")
@@ -370,3 +376,71 @@ case class Connection(version: Version, timeoutDuration: Duration = Duration(30,
     p
   }
 }
+
+trait Connection {
+  val underlying: Connection
+  val version: Version
+
+  def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T]
+}
+
+trait QueryFactory {
+  def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]): ResultQuery[R]
+}
+
+trait BlockingConnection extends Connection with QueryFactory {
+
+  import com.rethinkscala.Blocking
+
+  val delegate: Blocking.type = Blocking
+  val timeoutDuration: Duration
+}
+
+trait AsyncConnection extends Connection with QueryFactory {
+
+  import com.rethinkscala.Async
+
+  val delegate: Async.type = Async
+}
+
+object AsyncConnection {
+  def apply(version: Version) = build(version, None)
+
+
+  def apply(connection: Connection) = connection match {
+    case c: AsyncConnection => c
+    case c: BlockingConnection => build(connection.version, Some(connection))
+  }
+
+
+  private def build(v: Version, under: Option[Connection]) = new AbstractConnection(v) with AsyncConnection {
+    val underlying: Connection = under.getOrElse(this)
+    val version = v
+
+    def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, mf, opts)
+
+  }
+}
+
+object BlockingConnection {
+  val defaultTimeoutDuration = Duration(30, "seconds")
+
+
+  def apply(connection: Connection) = connection match {
+    case c: BlockingConnection => c
+    case c: AsyncConnection => build(connection.version, defaultTimeoutDuration, Some(connection))
+  }
+
+  def apply(version: Version, timeoutDuration: Duration = defaultTimeoutDuration) = build(version, timeoutDuration, None)
+
+  private def build(v: Version, t: Duration, under: Option[Connection]) = new AbstractConnection(v) with BlockingConnection {
+    val timeoutDuration = t
+    val underlying: Connection = under.getOrElse(this)
+    val version = v
+
+    def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]) = BlockingResultQuery[R](term, this, mf, opts)
+  }
+}
+
+
+

@@ -2,6 +2,7 @@ package com.rethinkscala
 
 import org.scalatest.FunSuite
 
+import com.rethinkscala._
 import ast._
 
 class BiOperationTest extends FunSuite {

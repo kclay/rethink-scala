@@ -4,10 +4,9 @@ import com.rethinkscala.{JsonDocument, Term, InfoResult, Document}
 
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
-import org.joda.time.{ReadableInstant, ReadableDateTime, DateTime}
+import org.joda.time.ReadableInstant
 import org.joda.time.format.ISODateTimeFormat
-import com.rethinkscala.net.{RethinkClientError, JsonDocumentConversion, WithConversion, RethinkDriverError}
-import scala.collection.Iterable
+import com.rethinkscala.net.{JsonDocumentConversion, RethinkDriverError}
 
 case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
   override lazy val args = buildArgs(array: _*)

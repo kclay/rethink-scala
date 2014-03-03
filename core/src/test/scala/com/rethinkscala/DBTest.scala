@@ -3,6 +3,7 @@ package com.rethinkscala
 import org.scalatest.FunSuite
 import ql2.Ql2.Term
 
+import Blocking._
 
 class DBTest extends FunSuite with WithBase {
 

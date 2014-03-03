@@ -2,13 +2,10 @@ package com.rethinkscala.reflect
 
 import com.fasterxml.jackson.datatype.joda.deser.DateTimeDeserializer
 import org.joda.time.{ReadableDateTime, DateTime, DateTimeZone, ReadableInstant}
-import com.fasterxml.jackson.core.{JsonToken, JsonParser}
-import com.fasterxml.jackson.databind.{JsonDeserializer, DeserializationContext}
-import java.lang.{Object, String}
-import java.io.IOException
+import com.fasterxml.jackson.databind.JsonDeserializer
+import java.lang.String
 import com.fasterxml.jackson.core._
 import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer
 import com.fasterxml.jackson.core.JsonToken._
 

@@ -1,6 +1,5 @@
 package com.rethinkscala.ast
 
-import org.joda.time.DateTime
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.BoundOptions
 
