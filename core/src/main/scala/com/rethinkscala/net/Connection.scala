@@ -130,7 +130,7 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
     val results = response.getResponseList.asScala
     val seq = results.length match {
       case 1 if response.getType == ResponseType.SUCCESS_ATOM =>
-       cast[ResultType](Datum.unwrap(results(0)))
+        cast[ResultType](Datum.unwrap(results(0)))
       case _ => for (d <- results) yield Datum.unwrap(d) match {
 
         case json: String => if (mf.typeArguments.nonEmpty) cast(json)(mf.typeArguments(0)) else cast[ResultType](json)
@@ -420,6 +420,13 @@ object AsyncConnection {
     def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, mf, opts)
 
   }
+}
+
+private class ConnectionWithAsync(v: Version, under: Option[Connection]) extends AbstractConnection(v) with AsyncConnection {
+  val underlying: Connection = under.getOrElse(this)
+  val version = v
+
+  def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, mf, opts)
 }
 
 object BlockingConnection {

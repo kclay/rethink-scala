@@ -2,6 +2,25 @@ package com.rethinkscala
 
 import com.rethinkscala.ast._
 import org.joda.time.DateTime
+import com.rethinkscala.ast.Var
+import com.rethinkscala.ast.JavaScript
+import com.rethinkscala.ast.TableDrop
+import com.rethinkscala.ast.Branch
+import com.rethinkscala.ast.DBCreate
+import com.rethinkscala.ast.DB
+import com.rethinkscala.ast.Asc
+import scala.Some
+import com.rethinkscala.ast.FuncCall
+import com.rethinkscala.ast.DBDrop
+import com.rethinkscala.ast.TableList
+import com.rethinkscala.ast.Desc
+import com.rethinkscala.ast.BySum
+import com.rethinkscala.ast.Table
+import com.rethinkscala.ast.DBList
+import com.rethinkscala.ast.BooleanPredicate1
+import com.rethinkscala.ast.UserError
+import com.rethinkscala.ast.ByAvg
+import com.rethinkscala.ast.TableCreate
 
 
 /**
@@ -13,8 +32,7 @@ import org.joda.time.DateTime
  */
 
 
-object r extends TimeNames {
-
+trait RethinkApi extends TimeNames {
   def getInstance = this
 
   private lazy val _row = new ImplicitVar
@@ -74,7 +92,7 @@ object r extends TimeNames {
   private[this] def compute[T](v: T*)(a: (T, T) => T) = v.drop(1).foldLeft(v.head)(a)
 
   // def eq(base:Comparable,v:Comparable *) = compute[Comparable](v:_*)()
-  def add(v: Addition*) = compute[Addition](v: _*)(_ + _)
+  //def add(v: Addition*) = compute[Addition](v: _*)(_ + _)
 
 
   def sub(v: Numeric*) = compute[Numeric](v: _*)(_ - _)
@@ -86,6 +104,10 @@ object r extends TimeNames {
   def js(code: String, timeout: Option[Int] = None) = JavaScript(code, timeout)
 
   def json(str: String) = Json(str)
+}
+
+
+object r extends RethinkApi {
 
 
 }

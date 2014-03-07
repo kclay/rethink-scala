@@ -44,25 +44,8 @@ package object rethinkscala extends ImplicitConversions {
 
   }
 
-  abstract class QueryDelegate[ProduceType, ResultType, QueryType <: ResultResolver[ResultType],
-  ConnectionType <: QueryFactory](producer: Produce[ProduceType], connection: ConnectionType) {
-
-    def toQuery[R <: ProduceType](tt: Manifest[R]): QueryType
-
-    // def toQuery[R](tt: Manifest[R]): QueryType
-
-    // def run(implicit mf: Manifest[ProduceType]): ResultType = toQuery(mf).toResult
-
-    //  def as[R <: ProduceType](implicit mf: Manifest[R]) = toQuery(mf).toResult
-
-    // def toQuery[R <: ProduceType](tt: Manifest[R]): QueryType[ResultType] = connection.newQuery[R](producer.underlyingTerm, tt, producer.underlyingOptions).asInstanceOf[QueryType[ResultType]]
-
-
-  }
-
   object Blocking {
 
-    def apply = this
 
     object Connection {
       def apply(version: Version): BlockingConnection = BlockingConnection(version)
@@ -74,17 +57,23 @@ package object rethinkscala extends ImplicitConversions {
 
   }
 
+  trait BlockingContext[T] extends Function[BlockingConnection, T]
 
-  // def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T].toResult
+  trait AsyncContext[T] extends Function[AsyncConnection, Future[T]]
+
+  implicit def toBlockingContext[T](f: BlockingConnection => T) = new BlockingContext[T] {
+    def apply(v1: BlockingConnection) = f(v1)
+  }
+
+  implicit def toAsyncContext[T](f: AsyncConnection => Future[T]) = new AsyncContext[T] {
+    def apply(v1: AsyncConnection) = f(v1)
+  }
 
 
-  //def as[R <: T](implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R].toResult
 
-  //def toOpt(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Option[Seq[T]] = run fold(x => None, Some(_))
+  def block[T](c: Connection)(f: BlockingContext[T]) = f(BlockingConnection(c))
 
-  def block[T](c: Connection)(f: BlockingConnection => T) = f(BlockingConnection(c))
-
-  def async[T](c: Connection)(f: AsyncConnection => Future[T]) = f(AsyncConnection(c))
+  def async[T](c: Connection)(f: AsyncContext[T]) = f(AsyncConnection(c))
 
 
 }

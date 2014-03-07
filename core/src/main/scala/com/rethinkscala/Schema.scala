@@ -2,7 +2,7 @@ package com.rethinkscala
 
 import com.rethinkscala.ast._
 import com.rethinkscala.net.{BlockingConnection, Connection}
-import java.lang.Exception
+
 import scala.collection.mutable.ArrayBuffer
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.databind.{ObjectMapper, DeserializationFeature}

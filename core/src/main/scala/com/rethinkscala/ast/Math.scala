@@ -3,7 +3,6 @@ package com.rethinkscala.ast
 import ql2.Ql2.Term.TermType
 
 
-
 case class Eq(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.EQ
 
@@ -12,26 +11,31 @@ case class Eq(left: Literal, right: Literal) extends BiCompareOperQuery with Pro
 
 case class Ne(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.NE
+
   override val stmt = "!="
 }
 
 case class Lt(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.LT
+
   override val stmt = "<"
 }
 
 case class Le(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.LE
+
   override val stmt = "<="
 }
 
 case class Gt(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.GT
+
   override val stmt = ">"
 }
 
 case class Ge(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.GE
+
   override val stmt = ">="
 }
 
@@ -70,7 +74,15 @@ case class Or(left: Binary, right: Binary) extends BiCompareOperQuery with Produ
   def termType = TermType.ANY
 }
 
-case class Add(left: Addition, right: Addition) extends BiCompareOperQuery with ProduceNumeric {
+trait Add extends  {
+
+
   def termType = TermType.ADD
 }
 
+case class AnyAdd(left: Addition, right: Addition) extends BiCompareOperQuery with  ProduceAny with Add
+
+
+case class NumericAdd(left: Addition, right: Addition) extends BiCompareOperQuery with ProduceNumeric with Add
+
+case class StringAdd(left: Addition, right: Addition) extends BiCompareOperQuery with ProduceString with Add

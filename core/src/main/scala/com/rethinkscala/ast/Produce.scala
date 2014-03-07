@@ -16,7 +16,9 @@ import com.rethinkscala.JoinResult
 
 trait Produce[ResultType] extends Query {
 
+
   type resultType = ResultType
+
   type Options = Map[String, Any]
 
 
@@ -89,9 +91,18 @@ trait ProduceDocument[T <: Document] extends ProduceSingle[T] with Record with D
 
 trait ProduceAnyDocument extends ProduceDocument[Document] with Record
 
-trait ProduceNumeric extends ProduceSingle[Double] with Numeric
+trait ProduceNumeric extends ProduceSingle[Double] with Numeric with WithAddition[NumericAdd]{
 
-trait ProduceString extends ProduceSingle[String] with Strings
+
+
+  def add(other: Addition) = NumericAdd(underlying, other)
+}
+
+trait ProduceString extends ProduceSingle[String] with Strings with WithAddition[StringAdd] {
+
+
+  def add(other: Addition) = StringAdd(underlying, other)
+}
 
 trait ForwardTyped {
   self: Produce[_] with Typed =>
@@ -105,11 +116,15 @@ trait ForwardTyped {
   def termType = underlying.term
 }
 
-trait ProduceAny extends Produce[Any] with Ref {
+trait ProduceAny extends Produce[Any] with Ref with WithAddition[AnyAdd]{
 
 
   // def numeric: ProduceNumeric =
   private[rethinkscala] val any = this
+
+
+
+  def add(other: Addition) = AnyAdd(underlying, other)
 
   def numeric = new ProduceNumeric {
     override val underlying = any
@@ -162,4 +177,6 @@ trait ProduceJoin[L, R] extends ProduceSequence[JoinResult[L, R]] with JoinTyped
   override val underlying = this
 }
 
-trait ProduceTime extends TimeTyped
+trait ProduceTime extends TimeTyped with WithAddition[AnyAdd] {
+  def add(other: Addition) = AnyAdd(underlying, other)
+}

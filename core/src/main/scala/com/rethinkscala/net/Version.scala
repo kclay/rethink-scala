@@ -9,6 +9,7 @@ import java.io.IOException
 import java.nio.charset.Charset
 import scala.concurrent.ExecutionContext
 import com.typesafe.scalalogging.slf4j.Logging
+import scala.beans.BeanProperty
 
 
 /**
@@ -38,6 +39,40 @@ case class Version1(host: String = "localhost", port: Int = 28015, db: Option[St
   }
 
 }
+
+object Version1 {
+  val builder = new Builder {
+
+    def build = Version1(host, port, Option(db), maxConnections)
+  }
+}
+
+abstract class Builder {
+
+  @BeanProperty
+  var host: String = "localhost"
+  @BeanProperty
+  var port: Int = 2801
+  @BeanProperty
+  var maxConnections: Int = 5
+  @BeanProperty
+  var db: String = ""
+  @BeanProperty
+  var timeout: Int = 10
+
+  def build: Version
+
+}
+
+object Version2 {
+  val builder = new Builder {
+    @BeanProperty
+    val authKey = ""
+
+    def build = Version2(host, port, Option(db), maxConnections, authKey)
+  }
+}
+
 
 case class Version2(host: String = "localhost", port: Int = 28015, db: Option[String] = None, maxConnections: Int = 5, authKey: String = "") extends Version {
 

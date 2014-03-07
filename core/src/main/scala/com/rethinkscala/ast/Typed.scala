@@ -38,6 +38,7 @@ private[rethinkscala] trait Typed extends ImplicitConversions {
 
 trait Ref extends ArrayTyped[Any] with Numeric with Binary with Record with Literal with Strings {
   override val underlying = this
+
 }
 
 trait JoinTyped[L, R] extends Typed {

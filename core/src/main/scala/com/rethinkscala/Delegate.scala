@@ -29,7 +29,7 @@ class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection) 
   def as[R <: T](implicit mf: Manifest[R]) = toQuery(mf).toResult
 
 
-  def toOpt(implicit tt: Manifest[T]): Option[T] = as[T] fold(x => None, x => Some(x))
+  def toOpt(implicit tt: Manifest[T]): Option[T] = as[T].fold(x => None, x => Some(x))
 
   def asOpt[R <: T](implicit tt: Manifest[R]): Option[R] = as[R].fold(x => None, x => Option(x))
 

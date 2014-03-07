@@ -9,15 +9,24 @@ import scala.util.matching.Regex
  * Time: 8:14 AM 
  */
 
+
 trait Addition extends Typed {
+
 
   override val underlying = this
 
+  def add(other: Addition): Addition
+
+
+}
+
+trait WithAddition[T] {
+
   def +(other: Addition) = add(other)
 
-  def add(other: Addition) = Add(underlying, other)
+  def +=(other: Addition) = add(other)
 
-  def +=(other: Addition) = Add(underlying, other)
+  def add(other: Addition): T
 }
 
 
@@ -76,6 +85,7 @@ trait Numeric extends Literal with Multiply with Binary {
 
   override val underlying = this
 
+
   def -(other: Numeric) = sub(other)
 
   def -(other: Double) = sub(other)
@@ -99,6 +109,8 @@ trait Numeric extends Literal with Multiply with Binary {
   def mod(other: Numeric) = Mod(underlying, other)
 
   def mod(other: Double) = Mod(underlying, other)
+
+
 }
 
 trait LiteralSequence[T] extends Sequence[T]

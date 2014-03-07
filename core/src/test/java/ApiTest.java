@@ -4,17 +4,27 @@
  * Date: 9/12/13
  * Time: 2:59 PM
  */
-import com.rethinkscala.ast.Binary;
-import com.rethinkscala.ast.Var;
-import com.rethinkscala.japi.BooleanFunction;
-import com.rethinkscala.ast.Expr;
-import  com.rethinkscala.r;
+
+
+import com.rethinkscala.japi.Connection;
+import com.rethinkscala.japi.Result;
+import com.rethinkscala.japi.r;
+
+import com.rethinkscala.net.Version;
+import com.rethinkscala.net.Version2;
+
+
 public class ApiTest {
 
 
-    public void test(){
+    public void test() {
 
-        Expr.apply("hello");
+
+        Connection connection = new Connection(Version2.builder().build(), 5000);
+
+
+        Result<String> result = connection.run(r.expr("hello").add(r.expr(1)));
+
           /*
           BooleanFunction f = new BooleanFunction(){
 
@@ -24,6 +34,6 @@ public class ApiTest {
               }
           };*/
 
-      //  r.branch(f)
+        //  r.branch(f)
     }
 }
