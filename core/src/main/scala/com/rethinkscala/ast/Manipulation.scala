@@ -8,7 +8,7 @@ import com.rethinkscala.MatchResult
   * @param target
   * @param value
   */
-case class Append[T](target: ArrayTyped[T], value: Datum) extends ProduceTypedArray[T] {
+case class Append[T](target: ArrayTyped[T], value: Datum) extends ProduceArray[T] {
 
   def termType = TermType.APPEND
 }
@@ -17,7 +17,7 @@ case class Append[T](target: ArrayTyped[T], value: Datum) extends ProduceTypedAr
   * @param target
   * @param value
   */
-case class Prepend[T](target: ArrayTyped[T], value: Datum) extends ProduceTypedArray[T] {
+case class Prepend[T](target: ArrayTyped[T], value: Datum) extends ProduceArray[T] {
   def termType = TermType.PREPEND
 }
 
@@ -43,7 +43,7 @@ object GetField {
   //def apply(target: ArrayTyped, name: String) = new GetField(target, name) with ProduceArray
 
 
-  def apply[T](target: Sequence[_], name: String) = new GetField(target, name) with ProduceTypedArray[T]
+  def apply[T](target: Sequence[_], name: String) = new GetField(target, name) with ProduceArray[T]
 
   // def apply(target: Record, name: String) = new GetField(target, name) with ProduceAnyDocument
 
@@ -134,7 +134,7 @@ object Merge {
   * @param target
   * @param array
   */
-case class Difference[T](target: ArrayTyped[T], array: ArrayTyped[_]) extends ProduceArray {
+case class Difference[T](target: ArrayTyped[T], array: ArrayTyped[_]) extends ProduceArray[T] {
   override lazy val args = buildArgs(target, array)
 
   def termType = TermType.DIFFERENCE
@@ -144,7 +144,7 @@ case class Difference[T](target: ArrayTyped[T], array: ArrayTyped[_]) extends Pr
   * @param target
   * @param value
   */
-case class SetInsert(target: ArrayTyped[_], value: Datum) extends ProduceSet {
+case class SetInsert[T](target: ArrayTyped[T], value: T) extends ProduceSet[T] {
   override lazy val args = buildArgs(target, value)
 
   def termType = TermType.SET_INSERT
@@ -154,7 +154,7 @@ case class SetInsert(target: ArrayTyped[_], value: Datum) extends ProduceSet {
   * @param target
   * @param values
   */
-case class SetUnion(target: Array, values: Seq[Datum]) extends ProduceSet {
+case class SetUnion[T](target: ArrayTyped[T], values: Seq[T]) extends ProduceSet[T] {
 
   override lazy val args = buildArgs(target, MakeArray(values))
 
@@ -165,7 +165,7 @@ case class SetUnion(target: Array, values: Seq[Datum]) extends ProduceSet {
   * @param target
   * @param values
   */
-case class SetIntersection(target: Array, values: Seq[Datum]) extends ProduceSet {
+case class SetIntersection[T](target: ArrayTyped[T], values: Seq[T]) extends ProduceSet[T] {
 
   override lazy val args = buildArgs(target, MakeArray(values))
 
@@ -176,7 +176,7 @@ case class SetIntersection(target: Array, values: Seq[Datum]) extends ProduceSet
   * @param target
   * @param values
   */
-case class SetDifference(target: Sequence[_], values: Seq[Datum]) extends ProduceSet {
+case class SetDifference[T](target: Sequence[T], values: Seq[T]) extends ProduceSet[T] {
 
   override lazy val args = buildArgs(target, MakeArray(values))
 
@@ -200,7 +200,7 @@ case class HasFields(target: Record, fields: Seq[String]) extends ProduceBinary 
   * @param index
   * @param value
   */
-case class InsertAt[T](target: ArrayTyped[T], index: Int, value: Datum) extends ProduceTypedArray[T] {
+case class InsertAt[T](target: ArrayTyped[T], index: Int, value: T) extends ProduceArray[T] {
   def termType = TermType.INSERT_AT
 }
 
@@ -209,7 +209,7 @@ case class InsertAt[T](target: ArrayTyped[T], index: Int, value: Datum) extends 
   * @param index
   * @param values
   */
-case class SpliceAt[T](target: ArrayTyped[T], index: Int, values: Seq[Datum]) extends ProduceTypedArray[T] {
+case class SpliceAt[T](target: ArrayTyped[T], index: Int, values: Seq[T]) extends ProduceArray[T] {
 
   override lazy val args = buildArgs(target, index, MakeArray(values))
 
@@ -222,7 +222,7 @@ case class SpliceAt[T](target: ArrayTyped[T], index: Int, values: Seq[Datum]) ex
   * @param end
   */
 
-case class DeleteAt[T](target: ArrayTyped[T], start: Int, end: Option[Int] = None) extends ProduceTypedArray[T] {
+case class DeleteAt[T](target: ArrayTyped[T], start: Int, end: Option[Int] = None) extends ProduceArray[T] {
 
   override lazy val args = buildArgs(end.map(Seq(target, start, _)).getOrElse(Seq(target, start)): _*)
 
@@ -234,7 +234,7 @@ case class DeleteAt[T](target: ArrayTyped[T], start: Int, end: Option[Int] = Non
   * @param index
   * @param value
   */
-case class ChangeAt[T](target: ArrayTyped[T], index: Int, value: Datum) extends ProduceTypedArray[T] {
+case class ChangeAt[T](target: ArrayTyped[T], index: Int, value: T) extends ProduceArray[T] {
   def termType = TermType.CHANGE_AT
 }
 
@@ -256,7 +256,7 @@ case class TypeOf(target: Typed) extends ProduceString {
   def termType = TermType.TYPEOF
 }
 
-case class Keys(target: Record) extends ProduceArray {
+case class Keys(target: Record) extends ProduceArray[String] {
   def termType = TermType.KEYS
 }
 

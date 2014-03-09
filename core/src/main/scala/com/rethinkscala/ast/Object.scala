@@ -12,6 +12,7 @@ trait TableTyped extends Typed
 
 
 trait MapTyped extends Typed
+
 trait Record extends Typed with Hash {
 
   override val underlying = this
@@ -34,13 +35,14 @@ trait Record extends Typed with Hash {
   def keys = Keys(underlying)
 
 }
+
 trait Hash {
   self: Typed =>
   type FieldProduce
 
   override val underlying = this
 
-  def field(name: String): FieldProduce
+  def field(name: String): this.FieldProduce
 
   def apply[T <: Typed](name: String): T = GetField(underlying, name).asInstanceOf[T]
 

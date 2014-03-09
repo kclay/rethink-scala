@@ -34,7 +34,7 @@ class ToAst[A] {
 
 
   def apply2[R](f: ((Var, Var) => Typed) => R) = new Applicator2[TypeMember, R] {
-    def apply = f(this)
+    protected def _apply = f(this.view)
   }
 
   def wrap2[R](f: FuncWrap => R) = apply2(o => f(FuncWrap(o)))
@@ -44,11 +44,11 @@ class ToAst[A] {
   def wrap3[R, T](f: FuncWrap => R) = apply3[R, T](o => f(FuncWrap(o)))
 
   def apply3[R, T](f: (Var => Typed) => R) = new Applicator1[T, R] {
-    def apply = f(this)
+    protected def _apply = f(this.view)
   }
 
   def apply[R](f: (Var => Typed) => R) = new Applicator1[this.type#TypeMember, R] {
-    def apply = f(this)
+    protected def _apply = f(this.view)
   }
 
 
@@ -99,7 +99,7 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def bool2Option(value: Boolean): Option[Boolean] = Some(value)
 
-  implicit def string2Option(value: String): Option[String] = Some(value)
+  implicit def string2Option(value: String): Option[String] = Option(value)
 
   implicit def double2Option(value: Double): Option[Double] = Some(value)
 
@@ -115,7 +115,7 @@ private[rethinkscala] trait ImplicitConversions {
     def desc = Desc(name)
   }
 
-  private def p2t(p: Product) = Expr(p.productIterator.toSeq)
+  private def p2t(p: Product): MakeArray[Any] = Expr(p.productIterator.toSeq)
 
   implicit def tuple2Typed(t: (Typed, Typed)) = p2t(t)
 

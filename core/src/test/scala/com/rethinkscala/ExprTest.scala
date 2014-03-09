@@ -17,7 +17,7 @@ class ExprTest extends FunSuite {
     assert(Expr(1).isInstanceOf[NumberDatum])
     assert(Expr(1L).isInstanceOf[NumberDatum])
     assert(Expr("hello").isInstanceOf[StringDatum])
-    assert(Expr(Seq(1, 2, 3)).isInstanceOf[MakeArray])
+    assert(Expr(Seq(1, 2, 3)).isInstanceOf[MakeArray[Int]])
     assert(Expr(Map.empty[String, Boolean]).isInstanceOf[MakeObj])
 
   }

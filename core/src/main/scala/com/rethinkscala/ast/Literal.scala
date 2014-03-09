@@ -15,18 +15,16 @@ trait Addition extends Typed {
 
   override val underlying = this
 
-  def add(other: Addition): Addition
-
 
 }
 
-trait WithAddition[T] {
+trait WithAddition[-T, +R] extends Addition {
 
-  def +(other: Addition) = add(other)
+  def +(other: T) = add(other)
 
-  def +=(other: Addition) = add(other)
+  def +=(other: T) = add(other)
 
-  def add(other: Addition): T
+  def add(other: T): R
 }
 
 
@@ -74,6 +72,16 @@ trait Strings extends Literal {
   override val underlying = this
   //
 
+  def +(other: Strings) = add(other)
+
+  def +=(other: Strings) = add(other)
+
+  def add(other: Strings): StringAdd = StringAdd(underlying, other)
+
+  //def add(other: Numeric) = StringAdd(underlying, other)
+
+  //def add(other: Strings) = StringAdd(underlying, other)
+
   // def ===(regexp: String) = find(regexp)
   def find(regexp: Regex): Match = find(regexp.toString())
 
@@ -85,6 +93,14 @@ trait Numeric extends Literal with Multiply with Binary {
 
   override val underlying = this
 
+  def +(other: Numeric) = add(other)
+
+  def +=(other: Numeric) = add(other)
+
+  def add(other: Numeric) = NumericAdd(underlying, other)
+
+
+  //def add(other: Numeric) = NumericAdd(underlying, other)
 
   def -(other: Numeric) = sub(other)
 

@@ -118,12 +118,13 @@ trait WithBase extends BeforeAndAfterAll {
     assert[Result](() => query.run, check)
 
   }
+  /*
 
-  def assertAs[Result <: Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
+ def assertAs[Result <: Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
 
-    assert[Result](() => query.as[Result], check)
+   assert[Result](() => query.as[Result], check)
 
-  }
+ }    */
 
 
   def assert[Result](result: Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {

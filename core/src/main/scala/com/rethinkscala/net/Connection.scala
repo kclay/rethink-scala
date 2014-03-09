@@ -48,6 +48,7 @@ abstract class Token {
 
   def handle(response: Response)
 
+  def failure(e: Throwable)
 
 }
 
@@ -89,21 +90,6 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
 
   }
 
-  /*
-  def toResult(response: Response) = {
-    val (data: Any, json: String) = Datum.unwrap(response.getResponse(0))
-
-    val rtn = data match {
-      case None => None
-      case _ => cast(json)
-    }
-
-
-    rtn
-
-
-  }    */
-
   def handle(response: Response) = (response.getType match {
 
     case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => toError(response, term)
@@ -119,6 +105,8 @@ case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p
     case e: Exception => p failure e
     case e: Any => p success e.asInstanceOf[R]
   }
+
+  def failure(e: Throwable) = p failure e
 
 
   def toCursor(id: Int, response: Response) = {
@@ -163,14 +151,13 @@ class RethinkDBHandler extends SimpleChannelUpstreamHandler {
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
 
-    // ctx.map(_.failure(e.getCause))
+    ctx.map(_.failure(e.getCause))
   }
 }
 
 private class RethinkDBFrameDecoder extends FrameDecoder {
   def decode(ctx: ChannelHandlerContext, channel: Channel, buffer: ChannelBuffer): AnyRef = {
-    buffer.markReaderIndex
-
+    buffer.markReaderIndex()
 
 
 
@@ -185,7 +172,7 @@ private class RethinkDBFrameDecoder extends FrameDecoder {
       buffer.resetReaderIndex()
       return null
     }
-    return buffer.readBytes(length)
+    buffer.readBytes(length)
 
   }
 }
@@ -200,20 +187,18 @@ private class RethinkDBEncoder extends OneToOneEncoder {
         b.writeInt(v.getNumber)
         b
       }
-      case s: String => {
+      case s: String =>
         val b = buffer(ByteOrder.LITTLE_ENDIAN, s.length + 4)
         b.writeInt(s.length)
         b.writeBytes(s.getBytes("ascii"))
         b
-      }
-      case q: ql2.Query => {
+      case q: ql2.Query =>
         val size = q.getSerializedSize
         val b = buffer(ByteOrder.LITTLE_ENDIAN, size + 4)
         b.writeInt(size)
 
         b.writeBytes(q.toByteArray)
         b
-      }
     }
 
   }

@@ -23,7 +23,8 @@ public class ApiTest {
         Connection connection = new Connection(Version2.builder().build(), 5000);
 
 
-        Result<String> result = connection.run(r.expr("hello").add(r.expr(1)));
+        Result<String> result = connection.run(r.expr("hello").add(r.expr("b")));
+
 
           /*
           BooleanFunction f = new BooleanFunction(){

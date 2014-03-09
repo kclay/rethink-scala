@@ -13,7 +13,7 @@ import com.rethinkscala.IndexStatusResult
 case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = None,
                                 db: Option[DB] = None)
 
-  extends ProduceTypedStreamSelection[T]
+  extends ProduceStreamSelection[T]
   with WithDB with TableTyped {
 
   override lazy val args = buildArgs(db.map(Seq(_, name)).getOrElse(Seq(name)): _*)
@@ -42,7 +42,7 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def ++=(records: Seq[Map[String, Any]]) = this insert(records, InsertOptions())
 
-  def ++=(records: Seq[T])(implicit d: DummyImplicit) = this insert (records)
+  def ++=(records: Seq[T])(implicit d: DummyImplicit) = this insert records
 
   def \\(attribute: Any) = get(attribute)
 
@@ -50,11 +50,21 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
   def get(attribute: Any) = Get[T](this, attribute)
 
 
-  def getAll(attr: String, index: Option[String] = None) = GetAll[T](this, attr, index)
+  def getAll(attr: String, index: String): GetAll[T] = GetAll[T](this, attr, index)
+
+  def getAll(attr: String): GetAll[T] = getAll(attr, null)
 
   def indexes = IndexList(this)
 
-  def indexCreate(name: String, predicate: Option[Predicate] = None) = IndexCreate(this, name, predicate)
+
+  def indexCreate(name: String, predicate: Predicate) = IndexCreate(this, name, Option(predicate), None)
+
+  def indexCreate(name: String, multi: Boolean, predicate: Predicate) = IndexCreate(this, name, Option(predicate), Some(multi))
+
+  def indexCreate(name: String, multi: Boolean) = IndexCreate(this, name, None, Some(multi))
+
+
+  def indexCreate(name: String) = IndexCreate(this, name)
 
   def indexDrop(name: String) = IndexDrop(this, name)
 
@@ -62,7 +72,7 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def indexStatus(indexes: String*) = IndexStatus(this, indexes)
 
-  def indexWait = IndexWait(this, Seq())
+ // def indexWait = IndexWait(this, Seq())
 
   def indexWait(indexes: String*) = IndexWait(this, indexes)
 
@@ -104,11 +114,14 @@ case class TableList(db: Option[DB] = None) extends ProduceSequence[String] {
   * @param name
   * @param predicate
   */
-case class IndexCreate(target: TableTyped, name: String, predicate: Option[Predicate] = None) extends ProduceBinary with BinaryConversion {
+case class IndexCreate(target: TableTyped, name: String, predicate: Option[Predicate] = None, multi: Option[Boolean] = None) extends ProduceBinary with BinaryConversion {
 
   override lazy val args = buildArgs(predicate.map {
     f => Seq(target, name, f())
   }.getOrElse(Seq(target, name)): _*)
+
+
+  override lazy val optargs = buildOptArgs(Map("multi" -> multi))
 
   def termType = TermType.INDEX_CREATE
 

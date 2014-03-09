@@ -32,21 +32,21 @@ trait ArrayTyped[T] extends Sequence[T] with Array {
   def idiff(values: Datum*) = Difference(Expr(values), underlying)
 
 
-  def setInert(value: Datum) = SetInsert(underlying, value)
+  def setInert(value: T) = SetInsert(underlying, value)
 
-  def setUnion(values: Datum*) = SetUnion(underlying, values)
+  def setUnion(values: T*) = SetUnion(underlying, values)
 
-  def setIntersection(values: Datum*) = SetIntersection(underlying, values)
+  def setIntersection(values: T*) = SetIntersection(underlying, values)
 
 
-  def setDifference(values: Datum*) = SetDifference(underlying, values)
+  def setDifference(values: T*) = SetDifference(underlying, values)
 
-  def insertAt(index: Int, value: Datum) = InsertAt(underlying, index, value)
+  def insertAt(index: Int, value: T) = InsertAt(underlying, index, value)
 
-  def spliceAt(index: Int, values: Datum*) = SpliceAt(underlying, index, values)
+  def spliceAt(index: Int, values: T*) = SpliceAt(underlying, index, values)
 
   def deleteAt(start: Int, end: Option[Int] = None) = DeleteAt(underlying, start, end)
 
-  def changeAt(index: Int, value: Datum) = ChangeAt(underlying, index, value)
+  def changeAt(index: Int, value:T) = ChangeAt(underlying, index, value)
 
 }

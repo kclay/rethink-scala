@@ -175,7 +175,7 @@ object r extends RethinkApi {
 
   def expr(term: Term): Term = term
 
-  def expr(value: java.util.Collection[Any]): MakeArray = Expr(value.toSeq)
+  def expr[T](value: java.util.Collection[T]): MakeArray[T] = Expr(value.toSeq)
 
   def expr(value: java.util.Map[String, Any]): MakeObj = Expr(value.toMap)
 

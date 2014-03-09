@@ -42,6 +42,8 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def skip(amount: Int) = Skip(underlying, amount)
 
+  def limit(amount: Int) = Limit(underlying, amount)
+
   def slice(start: Int = 0, end: Int = -1) = Slice(underlying, start, end, BoundOptions())
 
   def slice(start: Int, end: Int, bounds: BoundOptions) = if (end > 0) Slice(underlying, start, end, bounds)
@@ -57,22 +59,24 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def eqJoin[R](attr: String, other: Sequence[R], index: Option[String] = None) = EqJoin(underlying, attr, other, index)
 
-  def innerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = InnerJoin[T,R](underlying, other, func)
+  def innerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = InnerJoin[T, R](underlying, other, func)
 
-  def outerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = OuterJoin[T,R](underlying, other, func)
+  def outerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = OuterJoin[T, R](underlying, other, func)
 
-  def map[R](func: Produce[R]) = RMap[R](underlying, FuncWrap(func))
+  //def map[R](func: Produce[R]) = RMap[R](underlying, FuncWrap(func))
 
   // def map(func:MappingFunction[T])
 
   //def map(func: Var => Typed) =
 
-  def map(implicit ev: ToAst[T]) = ev.wrap(RMap[T](underlying, _))
+  // def map(implicit ev: ToAst[T]) = ev.wrap(RMap[T](underlying, _))
 
 
-  //def reduce(base: T)(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, Some(base)))
+  // def reduce(base: T)(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, Some(base)))
 
-  def reduce(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, None))
+ // def reduce(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, None))
+
+  //def reduce(f: (B, B) => B)(implicit ev: ToAst[T, B]) = ???
 
 
   //def reduce0[A1](op: (A1, A1) => Typed)(implicit ev: To[T, A1]) = ???

@@ -1,8 +1,9 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.ast.{Var, Expr}
+import com.rethinkscala.ast._
 import Blocking._
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,30 +18,26 @@ class SequenceTest extends FunSuite with WithBase {
 
     val rows = Expr(Seq(Map("hello" -> "1"), Map("hello" -> "2"), Map("hello" -> "3")))
 
+    val a = Expr(Seq(1, 2, 3, 4, 5))
 
-    val a = rows.map(r.row("hello").string).filter(_ =!= "1")
+    assert(a.reduce(_ + _).run, {
+      b: Int => b == 15
+    })
 
 
 
-
-
-
-    val ast = a.ast
-
-    assert(a.run, {
-      x: Iterable[String] => x.size == 2
+    assert(a.map(x => x * 2), {
+      b: Seq[Int] => b == a.array.map(_ * 2)
     })
 
 
 
 
+    val b = Expr(Seq("1", "2", "3"))
 
-    val composed = a.reduce ! ((x, y) => x add y)
-
-
-
-
-    assert(composed, "23")
+    assert(b.map(x => x add "s"), {
+      c: Seq[String] => c == Seq("1s", "2s", "3s")
+    })
   }
 
   /*

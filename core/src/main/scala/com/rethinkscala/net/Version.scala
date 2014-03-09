@@ -95,16 +95,16 @@ case class Version2(host: String = "localhost", port: Int = 28015, db: Option[St
       val response = Option(authHandler.read(timeout, TimeUnit.SECONDS)).map(b => b.toString(Charset.forName("US-ASCII"))).getOrElse("")
 
       logger.debug(s"Server auth responsed with : $response")
+
       if (!response.startsWith(AUTH_RESPONSE))
         throw new RethinkDriverError(s"Server dropped connection with message: '$response'")
-
-
-      pipeline.remove(authHandler)
 
 
     } catch {
       case e: BlockingReadTimeoutException => logger.error("Timeout error", e)
       case e: IOException => logger.error("Unable to read from socket", e)
+    } finally {
+      pipeline.remove(authHandler)
     }
 
 

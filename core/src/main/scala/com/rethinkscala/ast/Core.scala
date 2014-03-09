@@ -8,7 +8,7 @@ import org.joda.time.ReadableInstant
 import org.joda.time.format.ISODateTimeFormat
 import com.rethinkscala.net.{JsonDocumentConversion, RethinkDriverError}
 
-case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
+case class MakeArray[T](array: Seq[T]) extends Term with ProduceArray[T] {
   override lazy val args = buildArgs(array: _*)
 
   // def datumTermType:TermType.EnumVal=ql2.Datum
@@ -19,11 +19,11 @@ case class MakeArray(array: Seq[Any]) extends Term with ProduceArray {
 
 private[this] object MakeArray {
 
-  def asJson(list: Seq[Any], depth: Int): MakeArray = new MakeArray(list) {
+  def asJson(list: Seq[Any], depth: Int) = new MakeArray(list) {
     override lazy val args = buildArgs(Expr.json(array, depth): _*)
   }
 
-  def apply(array: Seq[Any], depth: Int) = new MakeArray(array) {
+  def apply[T](array: Seq[T], depth: Int) = new MakeArray[T](array) {
     override lazy val args = buildArgs2(depth - 1, array: _*)
   }
 
@@ -163,7 +163,9 @@ object Expr {
 
   def apply(term: Term): Term = term
 
-  def apply(value: Seq[Any]): MakeArray = MakeArray(value)
+  def apply[T](value: Seq[T]) = MakeArray(value)
+
+  //def apply(value: Seq[Any]) = MakeArray(value)
 
   def apply(value: Map[String, Any]): MakeObj = MakeObj(value)
 

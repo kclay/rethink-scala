@@ -74,15 +74,15 @@ case class Or(left: Binary, right: Binary) extends BiCompareOperQuery with Produ
   def termType = TermType.ANY
 }
 
-trait Add extends  {
+trait Add extends BiCompareOperQuery with Literal {
 
 
   def termType = TermType.ADD
 }
 
-case class AnyAdd(left: Addition, right: Addition) extends BiCompareOperQuery with  ProduceAny with Add
+case class AnyAdd(left: Addition, right: Addition) extends Add with ProduceAny
 
 
-case class NumericAdd(left: Addition, right: Addition) extends BiCompareOperQuery with ProduceNumeric with Add
+case class NumericAdd(left: Addition, right: Addition) extends Add with ProduceNumeric
 
-case class StringAdd(left: Addition, right: Addition) extends BiCompareOperQuery with ProduceString with Add
+case class StringAdd(left: Addition, right: Addition) extends Add with ProduceString

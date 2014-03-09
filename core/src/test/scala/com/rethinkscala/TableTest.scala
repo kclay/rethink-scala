@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 import com.rethinkscala._
 import com.rethinkscala.ast.Var
 import Blocking._
+
 /** Created with IntelliJ IDEA.
   * User: keyston
   * Date: 6/27/13
@@ -46,6 +47,24 @@ class TableTest extends FunSuite with WithBase {
         seq.contains("foo_count")
       }
     })
+  }
+
+  test("index status") {
+    val table = r.table(tableName)
+
+    assert(table.indexStatus.run, {
+      i: Seq[IndexStatusResult] => {
+        i.size == 1
+      }
+    })
+  }
+
+  test("index wait") {
+    val table = r.table(tableName)
+    table.indexCreate("hello").run
+    table.indexWait("hello")
+
+
   }
 
   test("drop index") {

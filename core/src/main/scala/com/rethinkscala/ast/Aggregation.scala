@@ -55,7 +55,7 @@ case class Distinct[T](target: Sequence[T]) extends ProduceSequence[T] {
   * @param reduce
   * @param base
   */
-case class GroupMapReduce[T](target: Sequence[T], grouping: Predicate1, mapping: Predicate1, reduce: Predicate2, base: Option[Datum] = None) extends ProduceTypedArray[T] {
+case class GroupMapReduce[T](target: Sequence[T], grouping: Predicate1, mapping: Predicate1, reduce: Predicate2, base: Option[Datum] = None) extends ProduceArray[T] {
 
   override lazy val args = buildArgs(target, grouping(), mapping(), reduce())
   override lazy val optargs = buildOptArgs(Map("base" -> base))

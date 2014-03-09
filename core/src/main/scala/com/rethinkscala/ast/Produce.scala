@@ -1,9 +1,8 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala.net._
-import com.rethinkscala.{Term, Document}
+import com.rethinkscala.{ToAst, Term, Document, JoinResult}
 import com.rethinkscala.net.Connection
-import com.rethinkscala.JoinResult
 
 
 /**
@@ -58,9 +57,9 @@ trait ProduceSingle[T] extends Produce[T]
 
 trait ProduceSequence[T] extends Sequence[T] with Produce[Seq[T]] {
 
-  type FieldProduce = ProduceTypedArray[T]
+  type FieldProduce = ProduceArray[T]
 
-  def field(name: String): ProduceTypedArray[T] = GetField[T](this, name)
+  def field(name: String): ProduceArray[T] = GetField[T](this, name)
 
 
   // def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T].toResult
@@ -75,7 +74,7 @@ trait ProduceSequence[T] extends Sequence[T] with Produce[Seq[T]] {
 
 trait ProduceAnySequence extends ProduceSequence[Any]
 
-trait ProduceSet extends ProduceArray
+trait ProduceSet[T] extends ProduceArray[T]
 
 trait ProduceBinary extends Produce[Boolean] with Binary
 
@@ -91,18 +90,9 @@ trait ProduceDocument[T <: Document] extends ProduceSingle[T] with Record with D
 
 trait ProduceAnyDocument extends ProduceDocument[Document] with Record
 
-trait ProduceNumeric extends ProduceSingle[Double] with Numeric with WithAddition[NumericAdd]{
+trait ProduceNumeric extends ProduceSingle[Double] with Numeric
 
-
-
-  def add(other: Addition) = NumericAdd(underlying, other)
-}
-
-trait ProduceString extends ProduceSingle[String] with Strings with WithAddition[StringAdd] {
-
-
-  def add(other: Addition) = StringAdd(underlying, other)
-}
+trait ProduceString extends ProduceSingle[String] with Strings
 
 trait ForwardTyped {
   self: Produce[_] with Typed =>
@@ -116,15 +106,12 @@ trait ForwardTyped {
   def termType = underlying.term
 }
 
-trait ProduceAny extends Produce[Any] with Ref with WithAddition[AnyAdd]{
+trait ProduceAny extends Produce[Any] with Ref {
 
 
   // def numeric: ProduceNumeric =
   private[rethinkscala] val any = this
 
-
-
-  def add(other: Addition) = AnyAdd(underlying, other)
 
   def numeric = new ProduceNumeric {
     override val underlying = any
@@ -136,6 +123,8 @@ trait ProduceAny extends Produce[Any] with Ref with WithAddition[AnyAdd]{
     override private[rethinkscala] val underlyingTerm: Term = any
 
     def termType = underlyingTerm.termType
+
+
   }
 
   def string: ProduceString = new ProduceString {
@@ -146,6 +135,7 @@ trait ProduceAny extends Produce[Any] with Ref with WithAddition[AnyAdd]{
     override def ast = underlyingTerm.ast
 
     override private[rethinkscala] val underlyingTerm: Term = any
+
 
     def termType = underlyingTerm.termType
   }
@@ -158,25 +148,26 @@ trait ProduceAny extends Produce[Any] with Ref with WithAddition[AnyAdd]{
 
   type FieldProduce = ProduceAny
 
+  override def \(name: String): ProduceAny = field(name)
+
+  def as[T](name: String)(implicit ast: ToAst[T]): ast.TypeMember = field(name).asInstanceOf[ast.TypeMember]
+
   def field(name: String) = GetField(this.asInstanceOf[Typed], name)
 }
 
-trait ProduceSingleSelection extends ProduceAnyDocument with SingleSelection[Any]
 
-trait ProduceTypedSingleSelection[T <: Document] extends SingleSelection[T] with ProduceDocument[T]
+trait ProduceSingleSelection[T <: Document] extends SingleSelection[T] with ProduceDocument[T]
 
-trait ProduceStreamSelection extends ProduceAnySequence with StreamSelection[Any]
 
-trait ProduceTypedStreamSelection[T] extends ProduceSequence[T] with StreamSelection[T]
+trait ProduceStreamSelection[T] extends ProduceSequence[T] with StreamSelection[T]
 
-trait ProduceArray extends ProduceAnySequence with ArrayTyped[Any]
+trait ProduceArray[T] extends ProduceSequence[T] with ArrayTyped[T]
 
-trait ProduceTypedArray[T] extends ProduceSequence[T] with ArrayTyped[T]
 
 trait ProduceJoin[L, R] extends ProduceSequence[JoinResult[L, R]] with JoinTyped[L, R] {
   override val underlying = this
 }
 
-trait ProduceTime extends TimeTyped with WithAddition[AnyAdd] {
+trait ProduceTime extends TimeTyped {
   def add(other: Addition) = AnyAdd(underlying, other)
 }
