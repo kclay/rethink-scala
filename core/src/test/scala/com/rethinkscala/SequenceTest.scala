@@ -20,6 +20,8 @@ class SequenceTest extends FunSuite with WithBase {
 
     val a = Expr(Seq(1, 2, 3, 4, 5))
 
+
+
     assert(a.reduce(_ + _).run, {
       b: Int => b == 15
     })
@@ -34,6 +36,8 @@ class SequenceTest extends FunSuite with WithBase {
 
 
     val b = Expr(Seq("1", "2", "3"))
+
+
 
     assert(b.map(x => x add "s"), {
       c: Seq[String] => c == Seq("1s", "2s", "3s")

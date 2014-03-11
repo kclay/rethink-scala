@@ -173,26 +173,9 @@ object r extends RethinkApi {
 
   import scala.collection.JavaConversions._
 
-  def expr(term: Term): Term = term
-
-  def expr[T](value: java.util.Collection[T]): MakeArray[T] = Expr(value.toSeq)
 
   def expr(value: java.util.Map[String, Any]): MakeObj = Expr(value.toMap)
+  def expr[T](value: java.util.Collection[T]): MakeArray[T] = Expr(value.toSeq)
 
-  def expr(value: String): StringDatum = Expr(value)
-
-  def expr(value: Boolean): BooleanDatum = Expr(value)
-
-  def expr(value: Int): NumberDatum = Expr(value)
-
-  def expr(value: Long): NumberDatum = Expr(value)
-
-  def expr(value: Float): NumberDatum = Expr(value)
-
-  def expr(value: Double): NumberDatum = Expr(value)
-
-  def expr(value: Document) = Expr(value)
-
-  def expr(value: ReadableInstant) = Expr(value)
 }
 

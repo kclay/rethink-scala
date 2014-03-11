@@ -123,11 +123,13 @@ object Merge {
 
   def apply(target: Sequence[_], other: Sequence[_]) = new Merge(target, other) with ProduceAnySequence
 
+  def apply(target: Sequence[_], other: MakeObj) = new Merge(target, other) with ProduceAnySequence
+
   def apply(target: Record, other: Map[String, Any]) = new Merge(target, Expr(other)) with ProduceAnyDocument
 
   def apply(target: Record, other: Record) = new Merge(target, other) with ProduceAnyDocument
 
-  def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
+ // def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
 }
 
 /** Remove the elements of one array from another array.

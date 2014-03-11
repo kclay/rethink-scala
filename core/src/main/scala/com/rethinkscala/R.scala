@@ -1,13 +1,17 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
-import org.joda.time.DateTime
+import org.joda.time.{ReadableInstant, DateTime}
+import scala.Some
+import com.rethinkscala.ast.StringDatum
+import com.rethinkscala.TableOptions
 import com.rethinkscala.ast.Var
 import com.rethinkscala.ast.JavaScript
 import com.rethinkscala.ast.TableDrop
 import com.rethinkscala.ast.Branch
 import com.rethinkscala.ast.DBCreate
 import com.rethinkscala.ast.DB
+import com.rethinkscala.ast.TimeName
 import com.rethinkscala.ast.Asc
 import scala.Some
 import com.rethinkscala.ast.FuncCall
@@ -16,11 +20,13 @@ import com.rethinkscala.ast.TableList
 import com.rethinkscala.ast.Desc
 import com.rethinkscala.ast.BySum
 import com.rethinkscala.ast.Table
+import com.rethinkscala.ast.BooleanDatum
 import com.rethinkscala.ast.DBList
 import com.rethinkscala.ast.BooleanPredicate1
 import com.rethinkscala.ast.UserError
 import com.rethinkscala.ast.ByAvg
 import com.rethinkscala.ast.TableCreate
+import com.rethinkscala.ast.NumberDatum
 
 
 /**
@@ -38,6 +44,25 @@ trait RethinkApi extends TimeNames {
   private lazy val _row = new ImplicitVar
 
 
+
+
+
+  def expr(term: Term): Term = term
+  def expr(value: String): StringDatum = Expr(value)
+
+  def expr(value: Boolean): BooleanDatum = Expr(value)
+
+  def expr(value: Int): NumberDatum = Expr(value)
+
+  def expr(value: Long): NumberDatum = Expr(value)
+
+  def expr(value: Float): NumberDatum = Expr(value)
+
+  def expr(value: Double): NumberDatum = Expr(value)
+
+  def expr(value: Document) = Expr(value)
+
+  def expr(value: ReadableInstant) = Expr(value)
   def expr(v: Any) = Expr(v)
 
   // TODO Fix me, clashes with Sequence and Hash

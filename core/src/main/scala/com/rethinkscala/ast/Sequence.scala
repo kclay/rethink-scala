@@ -12,6 +12,10 @@ import scala.Some
  */
 
 
+
+object Sequence{
+  implicit def mapDocumentToSequence[T<:Document,ST,S[ST]<:Sequence[ST]]= CanMap[T,S[ST],ST]
+}
 trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
 
@@ -127,9 +131,9 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def pluck(m: Map[String, Any])(implicit d: DummyImplicit) = Pluck(underlying, m)
 
-  def merge(other: Sequence[_]) = Merge(underlying, other)
+  def merge(other: MakeObj) = Merge(underlying, other)
 
-  def +(other: Sequence[_]) = merge(other)
+  def +(other: MakeObj) = merge(other)
 
   def foreach(f: Var => Typed) = ForEach(underlying, f)
 

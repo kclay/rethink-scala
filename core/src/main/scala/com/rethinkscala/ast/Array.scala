@@ -1,5 +1,7 @@
 package com.rethinkscala.ast
 
+import com.rethinkscala.{CanMap, FromAst, Document}
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -8,9 +10,12 @@ package com.rethinkscala.ast
  * Time: 8:13 AM 
  */
 
-trait Array extends Typed
+trait Array[T] extends Typed
 
-trait ArrayTyped[T] extends Sequence[T] with Array {
+object ArrayTyped{
+  implicit def mapDocumentToSequence[T<:Document,ST>:Var,S[ST]<:Array[ST] ](implicit fa:FromAst[ST])= CanMap[T,S[ST],fa.Raw]
+}
+trait ArrayTyped[T] extends Sequence[T] with Array[T] {
 
 
   override val underlying = this

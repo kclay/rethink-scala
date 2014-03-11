@@ -16,6 +16,7 @@ import com.rethinkscala.ast.BooleanDatum
 import com.rethinkscala.ast.BooleanPredicate1
 
 import com.rethinkscala.ast.NumberDatum
+import scala.collection.Iterable
 
 
 /** Created with IntelliJ IDEA.
@@ -28,9 +29,11 @@ import com.rethinkscala.ast.NumberDatum
   */
 
 
-class ToAst[A] {
+trait ToAst[A] {
   self: ToAst[A] =>
   type TypeMember >: Var
+
+
 
 
   def apply2[R](f: ((Var, Var) => Typed) => R) = new Applicator2[TypeMember, R] {
@@ -60,6 +63,10 @@ private[rethinkscala] trait ImplicitConversions {
   implicit def boolToDataNum(b: Boolean): Binary = BooleanDatum(b)
 
 
+
+  //implicit def toTyped[T<:Typed](v:T):Typed = v
+
+  implicit def collectionToAst[T](coll:Iterable[T]):MakeArray[T] = Expr[T](coll)
   implicit def intToDatNum(i: Int): Numeric = NumberDatum(i)
 
   implicit def longToDatNum(l: Long): Numeric = NumberDatum(l)
@@ -79,7 +86,7 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def toPredicate2Opt(f: (Var, Var) => Typed) = Some(new Predicate2(f))
 
-  implicit def toPredicate1(f: (Var) => Typed) = new Predicate1(f)
+  implicit def toPredicate1(f: Var => Typed) = new Predicate1(f)
 
   implicit def toPredicate2(f: (Var, Var) => Typed): Predicate2 = new Predicate2(f)
 

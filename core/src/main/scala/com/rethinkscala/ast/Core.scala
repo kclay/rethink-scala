@@ -7,9 +7,10 @@ import com.rethinkscala.reflect.Reflector
 import org.joda.time.ReadableInstant
 import org.joda.time.format.ISODateTimeFormat
 import com.rethinkscala.net.{JsonDocumentConversion, RethinkDriverError}
+import scala.collection.Iterable
 
-case class MakeArray[T](array: Seq[T]) extends Term with ProduceArray[T] {
-  override lazy val args = buildArgs(array: _*)
+case class MakeArray[T](array: Iterable[T]) extends Term with ProduceArray[T] {
+  override lazy val args = buildArgs(array.toSeq: _*)
 
   // def datumTermType:TermType.EnumVal=ql2.Datum
   def termType = TermType.MAKE_ARRAY
@@ -19,12 +20,12 @@ case class MakeArray[T](array: Seq[T]) extends Term with ProduceArray[T] {
 
 private[this] object MakeArray {
 
-  def asJson(list: Seq[Any], depth: Int) = new MakeArray(list) {
-    override lazy val args = buildArgs(Expr.json(array, depth): _*)
+  def asJson(list: Iterable[Any], depth: Int) = new MakeArray(list) {
+    override lazy val args = buildArgs(Expr.json(array, depth))
   }
 
-  def apply[T](array: Seq[T], depth: Int) = new MakeArray[T](array) {
-    override lazy val args = buildArgs2(depth - 1, array: _*)
+  def apply[T](array: Iterable[T], depth: Int) = new MakeArray[T](array) {
+    override lazy val args = buildArgs2(depth - 1, array.toSeq: _*)
   }
 
 }
@@ -163,7 +164,7 @@ object Expr {
 
   def apply(term: Term): Term = term
 
-  def apply[T](value: Seq[T]) = MakeArray(value)
+  def apply[T](value: Iterable[T]) = MakeArray(value)
 
   //def apply(value: Seq[Any]) = MakeArray(value)
 
@@ -192,15 +193,19 @@ object Expr {
     a match {
       case w: FuncWrap => w()
 
-      case date: ReadableInstant => apply(date)
+      case date: ReadableInstant => ISO8601(ISODateTimeFormat.dateTime().print(date))
 
 
       case p: Predicate => p()
       case t: Term => t
+      case f:Function1[Var,Typed] if(!f.isInstanceOf[Iterable[_]])=> new Predicate1(f).apply()
+      case f:Function2[Var,Var,Typed] if(!f.isInstanceOf[Iterable[_]]) => new Predicate2(f).apply()
       case s: Seq[_] => MakeArray(s, depth - 1)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
       case d: Document => MakeObj2(d)
-      case a: Any => Datum(a)
+      case ri:ReadableInstant => apply(ri)
+      case a: Any=> Datum(a)
+
 
 
     }
@@ -251,7 +256,7 @@ object Expr {
       case a: Any if isJson(a, depth) => Json.asLazy(a)
 
       case d: Map[String, _] => MakeObj.asJson(d, depth)
-      case l: Seq[Any] => MakeArray.asJson(l, depth)
+      case l: Iterable[Any] => MakeArray.asJson(l, depth)
       case a: Any => Expr(a)
     }
 
