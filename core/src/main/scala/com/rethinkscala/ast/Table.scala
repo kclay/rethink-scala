@@ -27,20 +27,21 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def create(options: TableOptions): TableCreate = TableCreate(name, options, db)
 
-  def insert(records: Seq[Map[String, Any]], options: InsertOptions) = Insert[T](this, Left(records), options)
+  def insertMap(records: Seq[Map[String, Any]]) = Insert[T,T](this, Left(records), InsertOptions())
+  def insertMap(records: Seq[Map[String, Any]], options: InsertOptions) = Insert[T,T](this, Left(records), options)
 
-  def insert(record: T, upsert: Boolean, options: InsertOptions): Insert[T] = insert(Seq(record), upsert, options)
 
-  def insert(records: Seq[T], upsert: Boolean,
-             options: InsertOptions)(implicit d: DummyImplicit) = Insert[T](this, Right(records), options)
+
+  def insert[R<: T](records: Seq[R], options: InsertOptions) = Insert[T,R](this, Right(records), options)
 
   def insert[R <: T](records: Seq[R]) = Insert(this, Right(records), InsertOptions())
 
-  def insert(record: T) = Insert(this, Right(Seq(record)), InsertOptions())
+  def insert[R<:T](record: R) = Insert(this, Right(Seq(record)), InsertOptions())
+  def insert[R<:T](record: R,  options: InsertOptions): Insert[T,R] = insert[R](Seq(record), options)
 
   def ++=(record: T) = insert(record)
 
-  def ++=(records: Seq[Map[String, Any]]) = this insert(records, InsertOptions())
+  def ++=(records: Seq[Map[String, Any]]) = this insertMap(records, InsertOptions())
 
   def ++=(records: Seq[T])(implicit d: DummyImplicit) = this insert records
 
@@ -50,9 +51,9 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
   def get(attribute: Any) = Get[T](this, attribute)
 
 
-  def getAll(attr: String, index: String): GetAll[T] = GetAll[T](this, attr, index)
+  def getAll(index: String,attr: Any*): GetAll[T] = GetAll[T](this, attr, index)
 
-  def getAll(attr: String): GetAll[T] = getAll(attr, null)
+  def getAll(attr: Any*): GetAll[T] = GetAll[T](this, attr, None)
 
   def indexes = IndexList(this)
 
@@ -147,6 +148,9 @@ case class IndexList(target: TableTyped) extends ProduceSequence[String] {
 }
 
 case class IndexStatus(target: TableTyped, indexes: Seq[String]) extends ProduceSequence[IndexStatusResult] {
+
+  override lazy val args = buildArgs((if(indexes.isEmpty) Seq(target) else Seq(target,indexes)):_*)
+
   def termType = TermType.INDEX_STATUS
 }
 

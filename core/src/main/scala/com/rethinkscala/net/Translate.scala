@@ -44,7 +44,7 @@ trait WithConversion[Out] extends Logging {
         term match {
           case wlf: WithLifecycle[_] => {
             logger.debug("Sending generated keys thru lifecycle")
-            wlf(After(gks.generatedKeys))
+            wlf(After(Option(gks.generatedKeys)))
           }
 
           case _ =>

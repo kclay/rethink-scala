@@ -32,7 +32,7 @@ abstract class WithLifecycle[R](implicit mf: Manifest[R]) {
   protected def after(values: R) = {}
 }
 
-case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String, Any]], Seq[T]],
+case class Insert[T<:Document,R <: Document](table: Table[T], records: Either[Seq[Map[String, Any]], Seq[R]],
                                  options: InsertOptions)
   extends WithLifecycle[Seq[String]] with ProduceDocument[InsertResult] {
 
@@ -45,12 +45,12 @@ case class Insert[T <: Document](table: Table[T], records: Either[Seq[Map[String
   })
   override lazy val optargs = buildOptArgs(options.toMap)
 
-  def withResults = Insert[T](table, records, options.copy(returnValues = Some(true)))
+  def withResults = Insert[T,R](table, records, options.copy(returnValues = Some(true)))
 
   def termType = TermType.INSERT
 
 
-  private def lifecycle(f: (T, Int) => Unit) = records match {
+  private def lifecycle(f: (R, Int) => Unit) = records match {
     case Right(x) => x.zipWithIndex map {
 
       case (d, i) => f(d, i)

@@ -1,6 +1,6 @@
 package com.rethinkscala
 
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.{ShouldMatchers, BeforeAndAfterAll, FunSuite}
 
 import org.scalatest.exceptions.TestFailedException
 import com.rethinkscala.ast.Produce
@@ -18,7 +18,7 @@ import com.rethinkscala.net._
 import com.rethinkscala.ast.Table
 
 
-trait WithBase extends BeforeAndAfterAll {
+trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   self: FunSuite =>
 
   val host = (Option(scala.util.Properties.envOrElse("TRAVIS", "empty")) map {

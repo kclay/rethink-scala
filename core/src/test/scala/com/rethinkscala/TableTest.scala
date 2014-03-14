@@ -1,7 +1,6 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala._
 import com.rethinkscala.ast.Var
 import Blocking._
 
@@ -67,10 +66,37 @@ class TableTest extends FunSuite with WithBase {
 
   }
 
+
+
+  test("insert into table") {
+
+
+    val table = r.table(tableName)
+    val insert = table.insertMap(Seq(Map("a" -> 1, "b" -> 2)))
+    assert(insert.run, {
+      i: InsertResult => i.inserted == 1
+    })
+
+  }
+
+  test("get") {
+    val table = r.table(tableName)
+    val record = Map("a" -> 2, "b" -> 2)
+    val doc = table.insertMap(Seq(record)).toOpt.map(i => table.get(2).toOpt).flatten
+
+
+    doc.map(_.toMap) should equal(Some(record))
+
+
+
+  }
+
+
   test("drop index") {
     val table = r.table(tableName)
     assert(table.indexDrop("foo_count"))
   }
+
 
   test("drop table") {
     assert(r.table(tableName).drop)

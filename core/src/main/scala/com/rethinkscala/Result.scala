@@ -2,6 +2,7 @@ package com.rethinkscala
 
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty}
 import com.rethinkscala.reflect.Reflector
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {
@@ -26,6 +27,8 @@ case class DocPath(root: Map[String, Any], paths: List[String]) {
 
   def \(name: String) = DocPath(root, paths :+ name)
 }
+
+private[rethinkscala] class BasicDocument extends Document
 
 trait Document {
 
@@ -55,6 +58,8 @@ trait Document {
 
   private[rethinkscala] def invokeAfterInsert(id: String) = afterInsert(id)
 }
+
+
 
 
 class JsonDocument(json: String) {
@@ -87,7 +92,7 @@ trait KeyedDocument[K] extends Document {
 }
 
 trait GeneratesKeys {
-  val generatedKeys: Option[Seq[String]]
+  val generatedKeys: Seq[String]
 }
 
 
@@ -143,7 +148,7 @@ abstract class InfoResult(name: String, @JsonProperty("type") kind: String) exte
 
 case class InsertResult(inserted: Int = 0, replaced: Int = 0, unchanged: Int = 0, errors: Int = 0, @JsonProperty("first_error") firstError: Option[String] = None,
 
-                        @JsonProperty("generated_keys") generatedKeys: Option[Seq[String]],
+                        @JsonProperty("generated_keys") generatedKeys: Seq[String],
                         deleted: Int = 0, skipped: Int = 0) extends Document with ReturnValues with GeneratesKeys {
 
   //private var _returnValues = ???
@@ -157,7 +162,7 @@ case class TableInfoResult(name: String, @JsonProperty("type") kind: String, db:
 
 
 case class ChangeResult(replaced: Int, unchanged: Int, inserted: Int, deleted: Int, errors: Int, @JsonProperty("first_error") firstError: Option[String],
-                        skipped: Int, @JsonProperty("generated_keys") generatedKeys: Option[Seq[String]]) extends Document
+                        skipped: Int, @JsonProperty("generated_keys") generatedKeys: Seq[String]) extends Document
 with ReturnValues
 with GeneratesKeys
 

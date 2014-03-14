@@ -8,7 +8,7 @@ case class Get[R <: Document](target: Table[R], attribute: Any) extends ProduceS
   def termType = TermType.GET
 }
 
-case class GetAll[R <: Document](target: Table[R], attr: String, index: Option[String] = None) extends ProduceArray[R] {
+case class GetAll[R <: Document](target: Table[R], attr: Seq[Any], index: Option[String] = None) extends ProduceArray[R] {
 
   override lazy val optargs = buildOptArgs(Map("index" -> index))
   override lazy val args = buildArgs(target, attr)

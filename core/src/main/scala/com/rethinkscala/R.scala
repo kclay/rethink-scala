@@ -71,14 +71,15 @@ trait RethinkApi extends TimeNames {
   def string = row.string
 
 
+
   //def row[T<:Sequence](name: String)(implicit d:DummyImplicit) = _row.asInstanceOf[T] field name
 
 
-  def table[T <: Document](name: String): Table[T] = table[T](name, None)
+  def table[T>:Document  <: Document](name: String): Table[T] = table[T](name, None)
 
-  def table[T <: Document](name: String, useOutDated: Boolean): Table[T] = table[T](name, Some(useOutDated))
+  def table[T>:Document  <: Document](name: String, useOutDated: Boolean): Table[T] = table[T](name, Some(useOutDated))
 
-  def table[T <: Document](name: String, useOutDated: Option[Boolean] = None): Table[T] = Table[T](name, useOutDated)
+  def table[T>:Document  <: Document](name: String, useOutDated: Option[Boolean] = None): Table[T] = Table[T](name, useOutDated)
 
   def db(name: String) = DB(name)
 
