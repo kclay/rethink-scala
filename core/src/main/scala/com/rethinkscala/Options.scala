@@ -48,6 +48,12 @@ case class UpdateOptions(
 
 
 
+case class BetweenOptions(index:Option[String] = None,
+                          leftBound: Option[Bound.Value] = None,
+                          rightBound: Option[Bound.Value] = None)
+extends Options{
+  def toMap = Map("index"->index,"left_bound" -> leftBound, "right_bound" -> rightBound)
+}
 case class BoundOptions(
                          leftBound: Option[Bound.Value] = None,
                          rightBound: Option[Bound.Value] = None

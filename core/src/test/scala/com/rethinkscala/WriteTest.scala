@@ -27,6 +27,8 @@ class WriteTest extends FunSuite with WithBase {
   test("insert documents") {
 
 
+
+
     assert(table.insert(Foo("a", a = 1, b = 1)), {
       rs: InsertResult => rs.inserted == 1
     })

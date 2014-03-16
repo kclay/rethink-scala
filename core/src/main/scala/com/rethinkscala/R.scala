@@ -2,16 +2,13 @@ package com.rethinkscala
 
 import com.rethinkscala.ast._
 import org.joda.time.{ReadableInstant, DateTime}
-import scala.Some
 import com.rethinkscala.ast.StringDatum
-import com.rethinkscala.TableOptions
 import com.rethinkscala.ast.Var
 import com.rethinkscala.ast.JavaScript
 import com.rethinkscala.ast.TableDrop
 import com.rethinkscala.ast.Branch
 import com.rethinkscala.ast.DBCreate
 import com.rethinkscala.ast.DB
-import com.rethinkscala.ast.TimeName
 import com.rethinkscala.ast.Asc
 import scala.Some
 import com.rethinkscala.ast.FuncCall

@@ -30,6 +30,8 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   val version1 = new Version1(host, port)
   val version2 = new Version2(host, port, authKey = authKey)
 
+
+  type TableType = Document
   def useVersion = version2
 
   implicit val connection: BlockingConnection = BlockingConnection(useVersion)
@@ -40,7 +42,10 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   def setupDB = true
 
   lazy val db = r.db(dbName)
-  lazy val table: Table[Document] = db.table(tableName)
+  lazy val table = db.table[Document](tableName)
+
+
+
 
 
   override protected def beforeAll() {
@@ -118,13 +123,14 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
     assert[Result](() => query.run, check)
 
   }
-  /*
+
+
 
  def assertAs[Result <: Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
 
    assert[Result](() => query.as[Result], check)
 
- }    */
+ }
 
 
   def assert[Result](result: Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {

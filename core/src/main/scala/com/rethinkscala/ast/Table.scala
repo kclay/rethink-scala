@@ -69,7 +69,7 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def indexDrop(name: String) = IndexDrop(this, name)
 
-  def indexStatus = IndexStatus(this, Seq())
+ // def indexStatus = IndexStatus(this, Seq())
 
   def indexStatus(indexes: String*) = IndexStatus(this, indexes)
 

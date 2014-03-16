@@ -58,5 +58,5 @@ class Cursor[A](connectionId: Int, token: Token, chunk: Seq[A], completed: Boole
 
   override def size = _size
 
-  protected override def underlying = _underlying
+  protected override def underlying = chunk
 }

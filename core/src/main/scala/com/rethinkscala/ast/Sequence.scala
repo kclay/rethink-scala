@@ -98,7 +98,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
   def concatMap(func: Typed) = ConcatMap(underlying, FuncWrap(func))
 
   // TODO : Add function support
-  def orderBy(keys: Order*) = OrderBy(underlying, keys)
+  def orderBy(keys: Order*) = OrderBy[T](underlying, keys)
 
   def withFields(keys: String*) = WithFields(underlying, keys)
 
@@ -175,9 +175,13 @@ trait Selection[T] extends Sequence[T] {
 trait StreamSelection[T] extends Selection[T] with Stream[T] {
   override val underlying = this
 
-  def between(start: Int, stop: Int) = Between(underlying, start, stop)
+  def between(start: Int, stop: Int):Between[T] = between(start, stop,BetweenOptions())
 
-  def between(start: String, stop: String) = Between(underlying, start, stop)
+  def between(start: String, stop: String):Between[T] = between(start, stop,BetweenOptions())
+  def between(start: Int, stop: Int,options:BetweenOptions) = Between(underlying, start, stop,options)
+
+  def between(start: String, stop: String,options:BetweenOptions) = Between(underlying, start, stop,options)
+
 
 
 }
@@ -186,9 +190,10 @@ trait SingleSelection[T] extends Selection[T]
 
 
 trait Filterable[T] extends Typed {
-  self: Sequence[T] =>
+
   //def filter(value: Binary): Filter[T] = filter((x: Var) => value)
 
+  override val underlying = this
   def filter(value: Map[String, Any]): Filter[T] = filter(value, false)
 
   def filter(value: Map[String, Any], default: Boolean): Filter[T] = Filter[T](underlying, FuncWrap(value), default)

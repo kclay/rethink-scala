@@ -51,7 +51,8 @@ class TableTest extends FunSuite with WithBase {
   test("index status") {
     val table = r.table(tableName)
 
-    assert(table.indexStatus.run, {
+
+    assert(table.indexStatus(), {
       i: Seq[IndexStatusResult] => {
         i.size == 1
       }
@@ -61,7 +62,13 @@ class TableTest extends FunSuite with WithBase {
   test("index wait") {
     val table = r.table(tableName)
     table.indexCreate("hello").run
-    table.indexWait("hello")
+    assert(table.indexWait() ,{
+      i:Seq[IndexStatusResult]=> i.size == 2
+    })
+    assert(table.indexWait("hello"),{
+      i:Seq[IndexStatusResult]=> i.size == 1
+    })
+
 
 
   }
