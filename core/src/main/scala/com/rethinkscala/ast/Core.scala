@@ -193,17 +193,17 @@ object Expr {
     a match {
       case w: FuncWrap => w()
 
-      case date: ReadableInstant => ISO8601(ISODateTimeFormat.dateTime().print(date))
+      case date: ReadableInstant => apply(date)
 
 
       case p: Predicate => p()
       case t: Term => t
-      case f:Function1[Var,Typed] if(!f.isInstanceOf[Iterable[_]])=> new Predicate1(f).apply()
-      case f:Function2[Var,Var,Typed] if(!f.isInstanceOf[Iterable[_]]) => new Predicate2(f).apply()
+      case f:Function[_,_]  if(!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1])=> new Predicate1(f.asInstanceOf[OfFunction1]).apply()
+      case f:Function2[_,_,_]  if(!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2]) => new Predicate2(f.asInstanceOf[OfFunction2]).apply()
       case s: Seq[_] => MakeArray(s, depth - 1)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
       case d: Document => MakeObj2(d)
-      case ri:ReadableInstant => apply(ri)
+
       case a: Any=> Datum(a)
 
 
@@ -224,6 +224,9 @@ object Expr {
 
   }
 
+  type OfMap= Map[String,_]
+  type OfFunction1=(Var) => Typed
+  type OfFunction2 = (Var, Var) => Typed
   def isJson(v: Any, depth: Int = 20): Boolean = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
 

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 case class DocPath(root: Map[String, Any], paths: List[String]) {
 
   type M = Map[String, Any]
+  type IM =scala.collection.mutable.Map[String,Any]
 
   def as[T] = find[T](root)
 
@@ -16,6 +17,7 @@ case class DocPath(root: Map[String, Any], paths: List[String]) {
 
       case Some(v) => find[T](v, p)
       case m: M => find[T](m.get(x), p.tail)
+      case m:IM=> find[T](m.get(x),p.tail)
       case _ => None
     }
   }.getOrElse(value match {
@@ -102,6 +104,7 @@ trait ReturnValues {
   self: Document =>
   private var _returnedValue: Option[Any] = None
 
+  def returnedValue[T](clazz:Class[T]):T=returnedValue(Manifest.classType(clazz)).getOrElse(null.asInstanceOf[T])
   def returnedValue[T](implicit mf: Manifest[T]): Option[T] = {
 
     if (_returnedValue.isEmpty) {

@@ -65,34 +65,28 @@ case class Insert[T<:Document,R <: Document](table: Table[T], records: Either[Se
   override protected def after(values: Seq[String]) = lifecycle((d, i) => d.invokeAfterInsert(values(i)))
 }
 
-case class Update[T](target: Selection[T], data: Either[Typed, Predicate],
+case class Update[T](target: Selection[T], wrap:FuncWrap,
                      options: UpdateOptions)
   extends ProduceDocument[ChangeResult] {
 
-  override lazy val args = buildArgs(target, data match {
-    case Left(x: Typed) => FuncWrap(x)
-    case Right(x: Predicate) => x()
-  })
+  override lazy val args = buildArgs(target, wrap)
   override lazy val optargs = buildOptArgs(options.toMap)
 
   def termType = TermType.UPDATE
 
-  def withResults = Update(target, data, options.copy(returnValues = Some(true)))
+  def withResults = copy(options=options.copy(returnValues = Some(true)))
 }
 
-case class Replace[T](target: Selection[T], data: Either[Map[String, Any], Predicate1],
+case class Replace[T](target: Selection[T], wrap:FuncWrap,
                       options: UpdateOptions)
   extends ProduceDocument[ChangeResult] {
 
-  override lazy val args = buildArgs(target, data match {
-    case Left(x: Map[String, Any]) => x
-    case Right(x: Predicate1) => x()
-  })
+  override lazy val args = buildArgs(target, wrap)
   override lazy val optargs = buildOptArgs(options.toMap)
 
   def termType = TermType.REPLACE
 
-  def withResults = Replace(target, data, options.copy(returnValues = Some(true)))
+  def withResults =copy(options=options.copy(returnValues = Some(true)))
 
 }
 

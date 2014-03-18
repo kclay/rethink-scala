@@ -12,10 +12,10 @@ import scala.Some
  */
 
 
-
-object Sequence{
-  implicit def mapDocumentToSequence[T<:Document,ST,S[ST]<:Sequence[ST]]= CanMap[T,S[ST],ST]
+object Sequence {
+  implicit def mapDocumentToSequence[T <: Document, ST, S[ST] <: Sequence[ST]] = CanMap[T, S[ST], ST]
 }
+
 trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
 
@@ -78,7 +78,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   // def reduce(base: T)(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, Some(base)))
 
- // def reduce(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, None))
+  // def reduce(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, None))
 
   //def reduce(f: (B, B) => B)(implicit ev: ToAst[T, B]) = ???
 
@@ -100,7 +100,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
   // TODO : Add function support
   def orderBy(keys: Order*) = OrderBy[T](underlying, keys)
 
-  def withFields(keys: String*) = WithFields(underlying, keys)
+  def withFields(keys: Any*) = WithFields(underlying, keys)
 
   def size = count
 
@@ -146,25 +146,31 @@ trait Selection[T] extends Sequence[T] {
 
   override val underlying = this
 
-  def update(attributes: Map[String, Any], options: UpdateOptions) = Update[T](underlying, Left(attributes), options)
 
   def update(attributes: Map[String, Any]): Update[T] = update(attributes, UpdateOptions())
 
-  def update(p: Var => Typed, options: UpdateOptions) = Update[T](underlying, Right(p), options)
+  def update(attributes: Map[String, Any], options: UpdateOptions) = Update[T](underlying, FuncWrap(attributes), options)
+
+  def update(p: Predicate1): Update[T] = update(p, UpdateOptions())
+
+  def update(p: Predicate1, options: UpdateOptions) = Update[T](underlying, FuncWrap(p), options)
 
   def update(d: Document): Update[T] = update((x: Var) => MakeObj2(d))
 
-  def update(t: Typed, options: UpdateOptions): Update[T] = Update(underlying, Left(t), options)
+  def update(d: Document, options: UpdateOptions): Update[T] = Update[T](underlying, FuncWrap(MakeObj2(d)), options)
 
-  def update(t: Typed): Update[T] = update(t, UpdateOptions())
 
-  def update(p: Var => Typed): Update[T] = update(p, UpdateOptions())
+  def replace(p: Predicate1): Replace[T] = replace(p, UpdateOptions())
 
-  def replace(p: Var => Typed): Replace[T] = Replace(underlying, Right(p), UpdateOptions())
+  def replace(p: Predicate1, options: UpdateOptions): Replace[T] = Replace(underlying, p, options)
 
-  def replace(d: Document): Replace[T] = replace((x: Var) => MakeObj2(d))
+  def replace(d: Document): Replace[T] = replace(d, UpdateOptions())
 
-  def replace(data: Map[String, Any]): Replace[T] = Replace(underlying, Left(data), UpdateOptions())
+  def replace(d: Document, options: UpdateOptions): Replace[T] = Replace(underlying, MakeObj2(d), options)
+
+  def replace(data: Map[String, Any]): Replace[T] = replace(data, UpdateOptions())
+
+  def replace(data: Map[String, Any], options: UpdateOptions): Replace[T] = Replace(underlying, FuncWrap(data), options)
 
   def delete: Delete[T] = delete()
 
@@ -175,13 +181,13 @@ trait Selection[T] extends Sequence[T] {
 trait StreamSelection[T] extends Selection[T] with Stream[T] {
   override val underlying = this
 
-  def between(start: Int, stop: Int):Between[T] = between(start, stop,BetweenOptions())
+  def between(start: Int, stop: Int): Between[T] = between(start, stop, BetweenOptions())
 
-  def between(start: String, stop: String):Between[T] = between(start, stop,BetweenOptions())
-  def between(start: Int, stop: Int,options:BetweenOptions) = Between(underlying, start, stop,options)
+  def between(start: String, stop: String): Between[T] = between(start, stop, BetweenOptions())
 
-  def between(start: String, stop: String,options:BetweenOptions) = Between(underlying, start, stop,options)
+  def between(start: Int, stop: Int, options: BetweenOptions) = Between(underlying, start, stop, options)
 
+  def between(start: String, stop: String, options: BetweenOptions) = Between(underlying, start, stop, options)
 
 
 }
@@ -194,6 +200,7 @@ trait Filterable[T] extends Typed {
   //def filter(value: Binary): Filter[T] = filter((x: Var) => value)
 
   override val underlying = this
+
   def filter(value: Map[String, Any]): Filter[T] = filter(value, false)
 
   def filter(value: Map[String, Any], default: Boolean): Filter[T] = Filter[T](underlying, FuncWrap(value), default)

@@ -40,7 +40,7 @@ case class ConcatMap[T](target: Sequence[T], func: FuncWrap) extends Transformat
   * @param target
   * @param fields
   */
-case class WithFields[T](target: Sequence[T], fields: Seq[String]) extends ProduceSequence[T] {
+case class WithFields[T](target: Sequence[T], fields: Seq[Any]) extends ProduceSequence[T] {
 
   def termType = TermType.WITH_FIELDS
 

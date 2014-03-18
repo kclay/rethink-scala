@@ -26,7 +26,7 @@ class JoinTest extends FunSuite with WithBase {
   val bars = Table[BarJ]("bar", db = Some(db))
 
 
-  test("eq join should have left as Foo and right as Bar") {
+  test("eq join ") {
 
 
     // println(foos.run)
@@ -57,6 +57,14 @@ class JoinTest extends FunSuite with WithBase {
 
     assert(join.run, {
       f: Iterable[R] => f.size == 1 && f.head.left == FooJ(1, 1)
+    })
+  }
+
+  test("outer join"){
+    val join = foos.outerJoin(bars,(f:Var,b:Var)=> f\"value" === b\"value")
+
+    assert(join,{
+      f:Iterable[R]=> f.size ==1 && f.head.left == FooJ(1,1)
     })
   }
 

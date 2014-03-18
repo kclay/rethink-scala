@@ -64,6 +64,8 @@ private[rethinkscala] trait ImplicitConversions {
 
 
 
+  implicit def toFuncWrap(v:Any):FuncWrap = FuncWrap(v)
+
   //implicit def toTyped[T<:Typed](v:T):Typed = v
 
   implicit def collectionToAst[T](coll:Iterable[T]):MakeArray[T] = Expr[T](coll)

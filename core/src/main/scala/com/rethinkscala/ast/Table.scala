@@ -79,6 +79,8 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def sync = Sync(this)
 
+  def sync(durability:Durability.Kind)= Sync(this,Some(durability))
+
 }
 
 case class TableCreate(name: String, options: TableOptions, db: Option[DB] = None)
@@ -149,12 +151,13 @@ case class IndexList(target: TableTyped) extends ProduceSequence[String] {
 
 case class IndexStatus(target: TableTyped, indexes: Seq[String]) extends ProduceSequence[IndexStatusResult] {
 
-  override lazy val args = buildArgs((if(indexes.isEmpty) Seq(target) else Seq(target,indexes)):_*)
+  override lazy val args = buildArgs((if(indexes.isEmpty) Seq(target) else indexes.+:(target)):_*)
 
   def termType = TermType.INDEX_STATUS
 }
 
 case class IndexWait(target: TableTyped, indexes: Seq[String]) extends ProduceSequence[IndexStatusResult] {
+  override lazy val args = buildArgs((if(indexes.isEmpty) Seq(target) else indexes.+:(target)):_*)
   def termType = TermType.INDEX_WAIT
 }
 

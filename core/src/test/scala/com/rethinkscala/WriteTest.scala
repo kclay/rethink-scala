@@ -3,6 +3,7 @@ package com.rethinkscala
 import org.scalatest.FunSuite
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.rethinkscala.ast.Var
 
 /** Created with IntelliJ IDEA.
   * User: keyston
@@ -57,8 +58,22 @@ class WriteTest extends FunSuite with WithBase {
       c: ChangeResult => c.replaced == 1 && c.returnedValue[Foo].map(_.a == 10).getOrElse(false)
     })
 
+    var replace = fetch.replace(Map("id" -> "a", "b" -> 29))
+
+    assert(replace, {
+      rr: ChangeResult => rr.replaced == 1
+    })
+
+    replace = fetch.replace((v: Var) => v.merge(Map("is_fav" -> true)))
+    assert(replace, {
+      cr: ChangeResult => cr.replaced == 1
+    })
+    assertAs[Foo2](fetch, {
+      f: Foo2 => f.fav
+    })
+
   }
-  /*
+
   test("updating data") {
 
 
@@ -82,26 +97,18 @@ class WriteTest extends FunSuite with WithBase {
     assertAs[Foo](fetch, {
       f: Foo => f.a == 5
     })
+    update = fetch.update((v: Var) => Map("a" ->r.row("a").add(3)))
+
+    assertAs[Foo](fetch, {
+      f: Foo => f.a == 8
+    })
+
+
 
 
   }
 
-  test("replace data") {
 
-    var replace = fetch.replace(Map("id" -> "a", "b" -> 29))
-
-    assert(replace, {
-      rr: ChangeResult => rr.replaced == 1
-    })
-
-    replace = fetch.replace((v: Var) => v.merge(Map("is_fav" -> true)))
-    assert(replace, {
-      cr: ChangeResult => cr.replaced == 1
-    })
-    assertAs[Foo2](fetch, {
-      f: Foo2 => f.fav
-    })
-  }
 
   test("delete data") {
 
@@ -109,6 +116,6 @@ class WriteTest extends FunSuite with WithBase {
     assert(fetch.delete, {
       cr: ChangeResult => cr.deleted == 1
     })
-  }    */
+  }
 
 }
