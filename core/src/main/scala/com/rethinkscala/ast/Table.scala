@@ -23,6 +23,8 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def drop = TableDrop(name, db)
 
+  def to[R<:Document] = this.asInstanceOf[Table[R]]
+
   def create: TableCreate = create(TableOptions())
 
   def create(options: TableOptions): TableCreate = TableCreate(name, options, db)

@@ -27,7 +27,7 @@ case class RMap[T](target: Sequence[_], func: FuncWrap) extends Transformation[T
   * @param target
   * @param func
   */
-case class ConcatMap[T](target: Sequence[T], func: FuncWrap) extends Transformation[T] {
+case class ConcatMap[T](target: Sequence[_], func: FuncWrap) extends Transformation[T] {
 
   def termType = TermType.CONCATMAP
 
@@ -81,11 +81,13 @@ case class Desc(attr: String) extends Ordering {
 case class OrderBy[T](target: Sequence[T], values: Seq[Order], index: Option[Order] = None) extends ProduceSequence[T] {
 
 
-  override lazy val args = buildArgs(values.+:(target): _*)
+  override lazy val args = buildArgs((if(values.isEmpty) Seq(target) else values.+:(target)): _*)
 
+  override lazy val optargs = buildOptArgs(Map("index"->index))
   def termType = TermType.ORDERBY
 
-  def index(i: Order) = OrderBy(target, values, Some(i))
+  def withIndex(i: String) = copy(index = Some(i))
+  def withIndex(i: Order) = copy(index = Some(i))
 }
 
 /** Skip a number of elements from the head of the sequence.
@@ -141,12 +143,9 @@ case class IsEmpty[T](target: Sequence[T]) extends ProduceBinary {
   * @param target
   * @param filter
   */
-case class IndexesOf[T](target: Sequence[T], filter: Either[Datum, BooleanPredicate]) extends ProduceSequence[Long] {
+case class IndexesOf[T](target: Sequence[T], filter: FuncWrap) extends ProduceSequence[Long] {
 
-  override lazy val args = buildArgs(target, filter match {
-    case Left(x) => x
-    case Right(f) => f()
-  })
+  override lazy val args = buildArgs(target, filter)
 
   def termType = TermType.INDEXES_OF
 }

@@ -150,8 +150,8 @@ trait ProduceAny extends Produce[Any] with Ref {
 
   override def \(name: String): ProduceAny = field(name)
 
-    def as[T](name: String)(implicit ast: ToAst[T]): ast.TypeMember = field(name).asInstanceOf[ast.TypeMember]
-
+ def as[T](name: String)(implicit ast: ToAst[T]): ast.TypeMember = field(name).asInstanceOf[ast.TypeMember]
+ def asArray[T](name:String)=field(name).array[T]
   def field(name: String) = GetField(this.asInstanceOf[Typed], name)
 }
 

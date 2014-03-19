@@ -179,3 +179,9 @@ object r extends RethinkApi {
 
 }
 
+abstract class JoinPredicate extends Function2[Var, Var, Binary]
+
+abstract class MappingFunction[T<:Typed] extends Function[Var, T]
+
+abstract class ReductionFunction[T] extends Function2[Var, Var, Stream[T]]
+

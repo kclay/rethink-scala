@@ -3,6 +3,7 @@ package com.rethinkscala.ast
 import com.rethinkscala._
 import com.rethinkscala.BoundOptions
 import scala.Some
+import com.rethinkscala.japi.{ReductionFunction, MappingFunction}
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,7 +33,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
   //def \(name: String) = field(name)
 
 
-  def indexesOf(value: Datum) = IndexesOf(underlying, Left(value))
+  def indexesOf[R>:Datum](value:R) = IndexesOf(underlying, value)
 
   //def indexesOf(value: Binary): IndexesOf = indexesOf((x: Var) => value)
 
@@ -40,7 +41,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def sample(amount: Int) = Sample(underlying, amount)
 
-  def indexesOf(p: Var => Binary) = IndexesOf(underlying, Right(p))
+  def indexesOf(p: Var => Binary) = IndexesOf(underlying, p)
 
   def apply(index: Int) = Nth(underlying, index)
 
@@ -69,7 +70,10 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   //def map[R](func: Produce[R]) = RMap[R](underlying, FuncWrap(func))
 
-  // def map(func:MappingFunction[T])
+ // def map[R](func:MappingFunction[R]) = RMap[R](underlying,FuncWrap(func))
+  //def reduce[R](base: T, f: ReductionFunction[R]) = Reduce[T](underlying, f, Some(base))
+
+  //def reduce[R](f:ReductionFunction[R]) = Reduce[R](underlying, f, None)
 
   //def map(func: Var => Typed) =
 
@@ -93,11 +97,14 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
   //Reduce(underlying, toPredicate2(op), base)
 
 
-  def concatMap(func: Var => Typed) = ConcatMap(underlying, FuncWrap(func))
+  //def concatMap(func: Predicate1) = ConcatMap(underlying, FuncWrap(func))
 
-  def concatMap(func: Typed) = ConcatMap(underlying, FuncWrap(func))
 
-  // TODO : Add function support
+
+
+  def orderByIndex(index:String):OrderBy[T]=orderByIndex(index:Order)
+  def orderByIndex(index:Order):OrderBy[T] = OrderBy[T](underlying,Seq(),Some(index))
+
   def orderBy(keys: Order*) = OrderBy[T](underlying, keys)
 
   def withFields(keys: Any*) = WithFields(underlying, keys)

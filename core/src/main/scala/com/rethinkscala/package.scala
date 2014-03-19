@@ -38,13 +38,12 @@ package object rethinkscala extends ImplicitConversions {
     type TypeMember = Numeric
 
   }
- /* implicit val anyToTyped = new ToAst[Any] {
+ implicit def arrayMapToTyped[T] = new ToAst[Map[String,T]] {
     type TypeMember = Var
+  }
 
-
-  }*/
-  implicit val docToTyped = new ToAst[Document] {
-    type TypeMember = Strings
+  implicit def docToTyped[T<:Document] = new ToAst[T] {
+    type TypeMember = Var
 
   }
 
@@ -106,6 +105,8 @@ package object rethinkscala extends ImplicitConversions {
   implicit val mapStringToNumeric= CanMap[String, Numeric, Int]
   implicit def mapStringToArray[T]=CanMap[String,ArrayTyped[T],T]
 
+  implicit def mapMapToArray[T]=CanMap[Map[String,_],ArrayTyped[T],T]
+
 
   implicit val mapIntToNumeric= CanMap[Int, Numeric, Int]
   implicit val mapDoubleToNumeric= CanMap[Double, Numeric, Double]
@@ -128,19 +129,10 @@ package object rethinkscala extends ImplicitConversions {
 
 
 
-
-
-
-
-
-  /*implicit val canMapAnyArray = new CanMap[Any, ArrayTyped[Any]] {
-    type
-  } */
-
-
   class ToFunctional[T, A >: Var](seq: Sequence[T]) {
 
 
+    def concatMap[B<:Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = ConcatMap[Inner](seq.underlying, FuncWrap(f))
     def map[B<:Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = RMap[Inner](seq.underlying, FuncWrap(f))
 
     def reduce(base: T, f: (A, A) => Typed) = Reduce[T](seq.underlying, f, Some(base))
@@ -152,26 +144,9 @@ package object rethinkscala extends ImplicitConversions {
 
     implicit def docToFunctional[T<:Document](seq: Sequence[T])=  new ToFunctional[T,Var](seq)
 
-  //implicit def toFunctional[T,A <:Var](seq: Sequence[T])(implicit cf:CanFunctional[T,A]) = new ToFunctional[T, A, Typed](seq)
-  // implicit def doubleToFunctional[T <: Double](seq: Sequence[]) = new ToFunctional[T, Numeric, Numeric](seq)
-
-  // implicit def stringToFunctional(seq: Sequence[String]) = new ToFunctional[String, Strings, Strings](seq)
-
-  // implicit def anyToFunctional(seq: Sequence[Any]) = new ToFunctional[Any, Var, Typed](seq)
-
-
-    //implicit def toFunctional[T](seq: Sequence[T])(implicit ast: ToAst[T]) = new ToFunctional[T, ast.TypeMember, Typed](seq)
 
    implicit def toFunctional[T](seq: Sequence[T])(implicit ast: ToAst[T]):ToFunctional[T,ast.TypeMember] =new ToFunctional[T,ast.TypeMember](seq)
 
-
-
- // implicit def tableToFunctional[T <: Document](seq: Table[T]) = new ToFunctional[T, Var, Typed](seq)
-
-  // implicit def docToFunctional[T <: Sequence[U], U, R >: Var](seq: Sequence[U])(implicit cf: CanFunctional[U, R]) = new ToFunctional[U, R, Typed](seq)
-
-
-  //implicit def docToFunctional[T <: Document](seq: Sequence[T]) = new ToFunctional[T, Var, Typed](seq)
 
 
 }
