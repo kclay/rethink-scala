@@ -2,7 +2,7 @@ package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
 
-import com.rethinkscala.DatumOrFunction
+import com.rethinkscala.{GroupMapReduceResult, DatumOrFunction}
 
 /** Produce a single value from a sequence through repeated application of a reduction function.
   * The reduce function gets invoked repeatedly not only for the input values but also for results of
@@ -26,16 +26,9 @@ case class Reduce[T](target: Sequence[T], f: Predicate2, base: Option[Any] = Non
   * @param target
   * @param filter
   */
-case class Count(target: Sequence[_], filter: Option[Either[String, BooleanPredicate]] = None) extends ProduceNumeric {
+case class Count(target: Sequence[_], wrap:Option[FuncWrap]=None) extends ProduceNumeric {
 
-  override lazy val args = buildArgs(filter.map {
-    a =>
-      Seq(target, a match {
-
-        case Left(x) => x
-        case Right(f) => f()
-      })
-  }.getOrElse(Seq(target)): _*)
+  override lazy val args = buildArgs((wrap.map(Seq(target,_)).getOrElse(Seq(target))):_*)
 
   def termType = TermType.COUNT
 }
@@ -55,9 +48,10 @@ case class Distinct[T](target: Sequence[T]) extends ProduceSequence[T] {
   * @param reduce
   * @param base
   */
-case class GroupMapReduce[T](target: Sequence[T], grouping: Predicate1, mapping: Predicate1, reduce: Predicate2, base: Option[Datum] = None) extends ProduceArray[T] {
+case class GroupMapReduce[T](target: Sequence[T], grouping: Predicate1, mapping: Predicate1, reduce: Predicate2,
+                             base: Option[Typed]) extends ProduceArray[GroupMapReduceResult] {
 
-  override lazy val args = buildArgs(target, grouping(), mapping(), reduce())
+  override lazy val args = buildArgs(target, grouping, mapping, reduce)
   override lazy val optargs = buildOptArgs(Map("base" -> base))
 
   def termType = TermType.GROUPED_MAP_REDUCE

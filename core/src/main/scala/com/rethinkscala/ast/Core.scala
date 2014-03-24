@@ -116,7 +116,7 @@ class ImplicitVar extends ProduceAny {
 
   def termType = TermType.IMPLICIT_VAR
 
-  def apply(name: String) = this field name
+ // def apply(name: String) = this field name
 
   override private[rethinkscala] def print(args: Seq[String], opt: Map[String, String]) = "r.row"
 }

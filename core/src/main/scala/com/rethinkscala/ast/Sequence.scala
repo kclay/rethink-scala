@@ -113,17 +113,21 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def count = Count(underlying)
 
-  def count(value: String) = Count(underlying, Some(Left(value)))
+  def count(value:Datum) = Count(underlying, Some(FuncWrap(value)))
 
-  def count(filter: Var => Binary) = Count(underlying, Some(Right(filter)))
+  def count(f: Var => Binary) = Count(underlying, Some(FuncWrap(f)))
 
-  def count(value: Binary) = Count(underlying, Some(Right((x: Var) => value)))
+    /*
 
-  def mapReduce(grouping: Predicate1, mapping: Predicate1,
+  def groupedMapReduce(grouping: Predicate1, mapping: Predicate1,
                 reduction: Predicate2, base: Option[Datum] = None) = GroupMapReduce(underlying, grouping, mapping, reduction, base)
-
+      */
+  def groupedMapReduce(grouping: Var=>Typed, mapping: Var=>Typed,
+                         reduction: (Var,Var)=>Typed, base: Typed) = GroupMapReduce(underlying, grouping, mapping, reduction,
+      Some(base))
   def groupBy(method: AggregateByMethod, attrs: String*) = GroupBy(underlying, method, attrs)
 
+  def distinct = Distinct(underlying)
 
   //def contains(attrs: Datum*) = Contains(underlying, attrs)
 

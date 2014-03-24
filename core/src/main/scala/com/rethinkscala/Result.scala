@@ -42,6 +42,7 @@ trait Document {
 
 
   def \(name: String) = DocPath(underlying, List(name))
+  def apply(name:String*) =DocPath(underlying,name.toList)
 
   def toMap = underlying
 
@@ -176,3 +177,15 @@ case class MatchGroupResult(start: Int, end: Int, str: String)
 case class Profile(description: String, @JsonProperty("duration(ms)") duration: Double, @JsonProperty("sub_task") subTask: List[Profile], parallelTasks: Option[Profile])
 
 case class QueryProfile[T](value: T, profile: Profile)
+
+
+
+case class GroupMapReduceExtractor[T](reduction:T)
+
+case class  GroupMapReduceResult(group:Int,reduction:Map[String,_]) extends Document{
+
+  def as[T](implicit mf:Manifest[T]):T=Reflector.fromJson[GroupMapReduceExtractor[T]](raw).reduction
+
+  def as[T](clazz:Class[T]):T =as(Manifest.classType(clazz))
+}
+

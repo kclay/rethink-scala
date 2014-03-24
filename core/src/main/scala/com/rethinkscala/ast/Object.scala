@@ -44,7 +44,7 @@ trait Hash {
 
   def field(name: String): this.FieldProduce
 
-  def apply[T <: Typed](name: String): T = GetField(underlying, name).asInstanceOf[T]
+  def apply(name: String)= field(name)
 
   def \(name: String) = field(name)
 }

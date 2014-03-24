@@ -80,6 +80,17 @@ private[rethinkscala] trait ImplicitConversions {
   implicit def string2DatNum(s: String): Strings = StringDatum(s)
 
 
+  implicit def intToDatNum0(i: Int): Datum = NumberDatum(i)
+
+  implicit def longToDatNum0(l: Long): Datum = NumberDatum(l)
+
+  implicit def floatToDatNum0(f: Float): Datum = NumberDatum(f)
+
+  implicit def doubleToDatNum0(d: Double):Datum = NumberDatum(d)
+
+  implicit def string2DatNum0(s: String): Datum= StringDatum(s)
+
+
   implicit def toOptLiteral[T <% Literal](v: T): Option[T] = Some(v)
 
   implicit def toOptFromDatum[T <% Datum](v: T): Option[T] = Some(v)
