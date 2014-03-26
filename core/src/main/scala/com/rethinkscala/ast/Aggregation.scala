@@ -2,7 +2,7 @@ package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
 
-import com.rethinkscala.{GroupMapReduceResult, DatumOrFunction}
+import com.rethinkscala.{GroupMapReduceResult, WrapAble}
 
 /** Produce a single value from a sequence through repeated application of a reduction function.
   * The reduce function gets invoked repeatedly not only for the input values but also for results of
@@ -10,13 +10,13 @@ import com.rethinkscala.{GroupMapReduceResult, DatumOrFunction}
   * the same with the one returned from reduce.
   * @param target
   * @param f
-  * @param base
+  *
   */
-case class Reduce[T](target: Sequence[T], f: Predicate2, base: Option[Any] = None) extends Produce[T] {
+case class Reduce[T](target: Sequence[T], f: Predicate2) extends Produce[T] {
 
   override lazy val args = buildArgs(target, f())
 
-  override lazy val optargs = buildOptArgs(Map("base" -> base))
+
 
   def termType = TermType.REDUCE
 }
@@ -24,7 +24,6 @@ case class Reduce[T](target: Sequence[T], f: Predicate2, base: Option[Any] = Non
 /** Count the number of elements in the sequence. With a single argument, count the number of elements equal to it.
   * If the argument is a function, it is equivalent to calling filter before count.
   * @param target
-  * @param filter
   */
 case class Count(target: Sequence[_], wrap:Option[FuncWrap]=None) extends ProduceNumeric {
 
@@ -74,8 +73,8 @@ case class GroupBy[T](target: Sequence[T], method: AggregateByMethod, attrs: Seq
   * @param target
   * @param value
   */
-case class Contains(target: Sequence[_], value: Seq[DatumOrFunction]) extends ProduceBinary {
-  override lazy val args = buildArgs((Seq(target) ++ value.map(FuncWrap(_))): _*)
+case class Contains(target: Sequence[_], value: Seq[FuncWrap]) extends MethodQuery with ProduceBinary {
+  override lazy val args = buildArgs(value.+:(target):_*)
 
   def termType = TermType.CONTAINS
 }

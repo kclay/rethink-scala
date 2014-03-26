@@ -32,7 +32,7 @@ object Wrap {
 
   def apply(t: Any) = {
     val e = Expr(t).asInstanceOf[Typed]
-    val rtn = if (scan(e)) new Predicate1((v: Var) => e).apply() else e
+    val rtn = if (scan(e)) new ScalaPredicate1((v: Var) => e).apply() else e
     rtn
   }
 
@@ -69,7 +69,20 @@ case class Func(f: Predicate) extends Term {
 }
 
 
-class Predicate1(f: (Var) => Typed) extends Predicate {
+
+trait Predicate1 extends Predicate{
+
+
+}
+
+
+
+trait Predicate2 extends Predicate{
+
+
+
+}
+class ScalaPredicate1(f: (Var) => Typed) extends Predicate1{
 
   protected def _invoke(vars: Seq[Var]) = f(vars(0))
 
@@ -79,7 +92,7 @@ class Predicate1(f: (Var) => Typed) extends Predicate {
 }
 
 
-class Predicate2(f: (Var, Var) => Typed) extends Predicate {
+class ScalaPredicate2(f: (Var, Var) => Typed) extends  Predicate2{
 
   protected def _invoke(v: Seq[Var]) = f(v(0), v(1))
 
@@ -89,14 +102,16 @@ class Predicate2(f: (Var, Var) => Typed) extends Predicate {
 trait BooleanPredicate extends Predicate with Binary
 
 
-case class BooleanPredicate1(f: (Var) => Binary) extends BooleanPredicate {
+trait BooleanPredicate1 extends BooleanPredicate
+trait BooleanPredicate2 extends BooleanPredicate
+case class ScalaBooleanPredicate1(f: (Var) => Binary) extends  BooleanPredicate1 {
 
   protected def _invoke(vars: Seq[Var]) = f(vars(0))
 
   val amount: Int = 1
 }
 
-case class BooleanPredicate2(f: (Var, Var) => Binary) extends BooleanPredicate {
+case class ScalaBooleanPredicate2(f: (Var, Var) => Binary) extends  BooleanPredicate2 {
   protected def _invoke(v: Seq[Var]) = f(v(0), v(1))
 
   val amount: Int = 2

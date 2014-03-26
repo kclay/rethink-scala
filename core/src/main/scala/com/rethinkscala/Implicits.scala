@@ -6,14 +6,14 @@ import com.rethinkscala.utils.{Applicator1, Applicator2}
 import com.rethinkscala.ast.StringDatum
 import com.rethinkscala.ast.SliceRange
 import com.rethinkscala.ast.Var
-import com.rethinkscala.ast.BooleanPredicate2
+import com.rethinkscala.ast.ScalaBooleanPredicate2
 import com.rethinkscala.ast.DB
 import com.rethinkscala.ast.Asc
 import scala.Some
 import com.rethinkscala.ast.FuncWrap
 import com.rethinkscala.ast.Desc
 import com.rethinkscala.ast.BooleanDatum
-import com.rethinkscala.ast.BooleanPredicate1
+import com.rethinkscala.ast.ScalaBooleanPredicate1
 
 import com.rethinkscala.ast.NumberDatum
 import scala.collection.Iterable
@@ -95,13 +95,13 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def toOptFromDatum[T <% Datum](v: T): Option[T] = Some(v)
 
-  implicit def toPredicate1Opt(f: (Var) => Typed) = Some(new Predicate1(f))
+  implicit def toPredicate1Opt(f: (Var) => Typed) = Some(new ScalaPredicate1(f))
 
-  implicit def toPredicate2Opt(f: (Var, Var) => Typed) = Some(new Predicate2(f))
+  implicit def toPredicate2Opt(f: (Var, Var) => Typed) = Some(new ScalaPredicate2(f))
 
-  implicit def toPredicate1(f: Var => Typed) = new Predicate1(f)
+  implicit def toPredicate1(f: Var => Typed) = new ScalaPredicate1(f)
 
-  implicit def toPredicate2(f: (Var, Var) => Typed): Predicate2 = new Predicate2(f)
+  implicit def toPredicate2(f: (Var, Var) => Typed): ScalaPredicate2 = new ScalaPredicate2(f)
 
   //implicit def map2Typed(m:Map[String,Any]):Typed = MakeObj(m)
   implicit def map2Typed(m: Map[String, Any]): Typed = Expr(m)
@@ -109,10 +109,12 @@ private[rethinkscala] trait ImplicitConversions {
   implicit def untypedPredicateToTyped(f: Var => Map[String, Any]): Predicate1 = (v: Var) => Expr(f(v))
 
 
-  implicit def toBooleanPredicate1(f: (Var) => Binary) = new BooleanPredicate1(f)
+  implicit def toBooleanPredicate1(f: (Var) => Binary) = new ScalaBooleanPredicate1(f)
 
 
-  implicit def toBooleanPredicate2(f: (Var, Var) => Binary) = new BooleanPredicate2(f)
+  implicit def toBooleanPredicate2(f: (Var, Var) => Binary) = new ScalaBooleanPredicate2(f)
+
+
 
 
   //implicit def seq2Datum(s:Seq[Datum]) = MakeArray(s)
@@ -151,7 +153,7 @@ private[rethinkscala] trait ImplicitConversions {
     def ~>(end: Int) = SliceRange(start, end)
   }
 
-  implicit def func2Order(f: Var => Typed): Order = new FuncWrap(new Predicate1(f)) with Order
+  implicit def func2Order(f: Var => Typed): Order = new FuncWrap(new ScalaPredicate1(f)) with Order
 
 
 }

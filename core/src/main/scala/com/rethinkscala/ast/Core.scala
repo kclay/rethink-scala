@@ -48,7 +48,7 @@ case class FuncWrap(value: Any) {
 
   def apply(): Term = {
     val e = Expr(value)
-    val rtn = if (scan(value)) new Predicate1((v: Var) => e.asInstanceOf[Typed]).apply() else e
+    val rtn = if (scan(value)) new ScalaPredicate1((v: Var) => e.asInstanceOf[Typed]).apply() else e
     rtn
   }
 }
@@ -198,8 +198,8 @@ object Expr {
 
       case p: Predicate => p()
       case t: Term => t
-      case f:Function[_,_]  if(!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1])=> new Predicate1(f.asInstanceOf[OfFunction1]).apply()
-      case f:Function2[_,_,_]  if(!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2]) => new Predicate2(f.asInstanceOf[OfFunction2]).apply()
+      case f:Function[_,_]  if(!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1])=> new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
+      case f:Function2[_,_,_]  if(!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2]) => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
       case s: Seq[_] => MakeArray(s, depth - 1)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
       case d: Document => MakeObj2(d)

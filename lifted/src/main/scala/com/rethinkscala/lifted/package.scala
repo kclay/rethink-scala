@@ -55,11 +55,11 @@ package object lifted {
   private object Impl {
 
 
-    def predicate1[T: c.WeakTypeTag, R: c.WeakTypeTag](c: Context)(f: c.Expr[T => R]): c.Expr[Predicate1] = {
+    def predicate1[T: c.WeakTypeTag, R: c.WeakTypeTag](c: Context)(f: c.Expr[T => R]): c.Expr[ScalaPredicate1] = {
       val helper = new Helper[c.type](c)
       // helper.generate(f.tree)
       c.universe.reify {
-        new Predicate1((v: Var) => v)
+        new ScalaPredicate1((v: Var) => v)
       }
 
     }

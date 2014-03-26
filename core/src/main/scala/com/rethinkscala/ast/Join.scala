@@ -12,7 +12,7 @@ abstract class Join[L,R] extends ProduceJoin[L,R] {
 
 abstract class PredicateJoin[L,R] extends Join[L,R] {
 
-  val func: BooleanPredicate2
+  val func: ScalaBooleanPredicate2
   override lazy val args: Seq[Term] = buildArgs(left, right, func())
 }
 
@@ -24,7 +24,7 @@ abstract class PredicateJoin[L,R] extends Join[L,R] {
  *  @param right
  *  @param func
  */
-case class InnerJoin[L,R](left: Sequence[L], right: Sequence[R], func: BooleanPredicate2) extends PredicateJoin[L,R] {
+case class InnerJoin[L,R](left: Sequence[L], right: Sequence[R], func: ScalaBooleanPredicate2) extends PredicateJoin[L,R] {
   def termType = TermType.INNER_JOIN
 }
 
@@ -33,7 +33,7 @@ case class InnerJoin[L,R](left: Sequence[L], right: Sequence[R], func: BooleanPr
  *  @param right
  *  @param func
  */
-case class OuterJoin[L,R](left: Sequence[L], right: Sequence[R], func: BooleanPredicate2) extends PredicateJoin[L,R] {
+case class OuterJoin[L,R](left: Sequence[L], right: Sequence[R], func: ScalaBooleanPredicate2) extends PredicateJoin[L,R] {
   def termType = TermType.OUTER_JOIN
 }
 

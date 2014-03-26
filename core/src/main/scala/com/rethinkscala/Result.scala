@@ -36,9 +36,14 @@ trait Document {
 
 
   @JsonIgnore
-  private[rethinkscala] lazy val underlying: Map[String, Any] = Reflector.fromJson[Map[String, Any]](raw)
+  private[rethinkscala] lazy val underlying: Map[String, Any] = Reflector.fromJson[Map[String, Any]](_raw)
   @JsonIgnore
   private[rethinkscala] var raw: String = _
+
+  private def _raw=Option(raw).getOrElse({
+    raw = Reflector.toJson(this)
+    raw
+  })
 
 
   def \(name: String) = DocPath(underlying, List(name))
@@ -46,7 +51,7 @@ trait Document {
 
   def toMap = underlying
 
-  //def toJson = _raw
+  def toJson = _raw
 
   private[rethinkscala] def invokeBeforeInsert = beforeInsert
 

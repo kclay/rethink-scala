@@ -8,7 +8,7 @@ import com.rethinkscala.MatchResult
   * @param target
   * @param value
   */
-case class Append[T](target: ArrayTyped[T], value: Datum) extends ProduceArray[T] {
+case class Append[T](target: ArrayTyped[T], value: Datum) extends MethodQuery with ProduceArray[T] {
 
   def termType = TermType.APPEND
 }
@@ -17,7 +17,7 @@ case class Append[T](target: ArrayTyped[T], value: Datum) extends ProduceArray[T
   * @param target
   * @param value
   */
-case class Prepend[T](target: ArrayTyped[T], value: Datum) extends ProduceArray[T] {
+case class Prepend[T](target: ArrayTyped[T], value: Datum) extends MethodQuery with ProduceArray[T] {
   def termType = TermType.PREPEND
 }
 
@@ -136,7 +136,7 @@ object Merge {
   * @param target
   * @param array
   */
-case class Difference[T](target: ArrayTyped[T], array: ArrayTyped[_]) extends ProduceArray[T] {
+case class Difference[T](target: ArrayTyped[T], array: ArrayTyped[_]) extends MethodQuery with ProduceArray[T] {
   override lazy val args = buildArgs(target, array)
 
   def termType = TermType.DIFFERENCE
@@ -146,7 +146,7 @@ case class Difference[T](target: ArrayTyped[T], array: ArrayTyped[_]) extends Pr
   * @param target
   * @param value
   */
-case class SetInsert[T](target: ArrayTyped[T], value: T) extends ProduceSet[T] {
+case class SetInsert[T](target: ArrayTyped[T], value: T) extends MethodQuery with ProduceSet[T] {
   override lazy val args = buildArgs(target, value)
 
   def termType = TermType.SET_INSERT
@@ -156,7 +156,7 @@ case class SetInsert[T](target: ArrayTyped[T], value: T) extends ProduceSet[T] {
   * @param target
   * @param values
   */
-case class SetUnion[T](target: ArrayTyped[T], values: Seq[T]) extends ProduceSet[T] {
+case class SetUnion[T](target: ArrayTyped[T], values: Seq[T]) extends MethodQuery with ProduceSet[T] {
 
   override lazy val args = buildArgs(target, MakeArray(values))
 
@@ -167,7 +167,7 @@ case class SetUnion[T](target: ArrayTyped[T], values: Seq[T]) extends ProduceSet
   * @param target
   * @param values
   */
-case class SetIntersection[T](target: ArrayTyped[T], values: Seq[T]) extends ProduceSet[T] {
+case class SetIntersection[T](target: ArrayTyped[T], values: Seq[T]) extends MethodQuery with ProduceSet[T] {
 
   override lazy val args = buildArgs(target, MakeArray(values))
 
@@ -178,7 +178,7 @@ case class SetIntersection[T](target: ArrayTyped[T], values: Seq[T]) extends Pro
   * @param target
   * @param values
   */
-case class SetDifference[T](target: Sequence[T], values: Seq[T]) extends ProduceSet[T] {
+case class SetDifference[T](target: Sequence[T], values: Seq[T]) extends MethodQuery with ProduceSet[T] {
 
   override lazy val args = buildArgs(target, MakeArray(values))
 

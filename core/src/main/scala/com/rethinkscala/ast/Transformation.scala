@@ -94,7 +94,7 @@ case class OrderBy[T](target: Sequence[T], values: Seq[Order], index: Option[Ord
   * @param target
   * @param index
   */
-case class Skip[T](target: Sequence[T], index: Int) extends ProduceSequence[T] {
+case class Skip[T](target: Sequence[T], index: Int) extends MethodQuery with ProduceSequence[T] {
   def termType = TermType.SKIP
 }
 
@@ -114,7 +114,7 @@ case class Union(target: Sequence[_], others: Sequence[_]) extends ProduceAnySeq
   * @param left
   * @param right
   */
-case class Slice[T](target: Sequence[T], left: Int = 0, right: Int = -1, bounds: BoundOptions) extends ProduceSequence[T] {
+case class Slice[T](target: Sequence[T], left: Int = 0, right: Int = -1, bounds: BoundOptions) extends MethodQuery with ProduceSequence[T] {
   override lazy val args = buildArgs(target, left, right)
 
   override lazy val optargs = buildOptArgs(bounds.toMap)
@@ -126,7 +126,7 @@ case class Slice[T](target: Sequence[T], left: Int = 0, right: Int = -1, bounds:
   * @param target
   * @param amount
   */
-case class Limit[T](target: Sequence[T], amount: Int) extends ProduceSequence[T] {
+case class Limit[T](target: Sequence[T], amount: Int) extends MethodQuery with ProduceSequence[T] {
   override lazy val args = buildArgs(target, amount)
 
   def termType = TermType.LIMIT

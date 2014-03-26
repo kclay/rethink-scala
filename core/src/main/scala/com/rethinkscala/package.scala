@@ -17,7 +17,7 @@ import scala.Some
 package object rethinkscala extends ImplicitConversions {
 
 
-  private[rethinkscala] trait DatumOrFunction
+  private[rethinkscala] trait WrapAble
 
 
   implicit val stringToStrings = new ToAst[String] {
@@ -135,9 +135,9 @@ package object rethinkscala extends ImplicitConversions {
     def concatMap[B<:Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = ConcatMap[Inner](seq.underlying, FuncWrap(f))
     def map[B<:Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = RMap[Inner](seq.underlying, FuncWrap(f))
 
-    def reduce( f: (A, A) => Typed,base: T) = Reduce[T](seq.underlying, f, Some(base))
 
-    def reduce(f: (A, A) => Typed) = Reduce[T](seq.underlying, f, None)
+
+    def reduce(f: (A, A) => Typed) = Reduce[T](seq.underlying, f)
 
   }
 

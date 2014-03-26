@@ -19,7 +19,7 @@ import com.rethinkscala.ast.BySum
 import com.rethinkscala.ast.Table
 import com.rethinkscala.ast.BooleanDatum
 import com.rethinkscala.ast.DBList
-import com.rethinkscala.ast.BooleanPredicate1
+import com.rethinkscala.ast.ScalaBooleanPredicate1
 import com.rethinkscala.ast.UserError
 import com.rethinkscala.ast.ByAvg
 import com.rethinkscala.ast.TableCreate
@@ -98,7 +98,7 @@ trait RethinkApi extends TimeNames {
   def tables = TableList()
 
 
-  def branch(predicate: (Var) => Binary, passed: Typed, failed: Typed): Branch = branch(BooleanPredicate1(predicate), passed, failed)
+  def branch(predicate: (Var) => Binary, passed: Typed, failed: Typed): Branch = branch(ScalaBooleanPredicate1(predicate), passed, failed)
 
   def branch(predicate: Binary, passed: Typed, failed: Typed): Branch = Branch(predicate, passed, failed)
 

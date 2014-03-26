@@ -22,15 +22,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   override val underlying = this
 
-  // def field(name: String)(implicit d:DummyImplicit) = GetField(this, name)
 
-  //def \(name: String)(implicit d:DummyImplicit) = field(name)
-
-  //def coerceTo(dataType: DataType)=CoerceTo(this,dataType)
-
-  //def field(name: String) = GetField(this, name)
-
-  //def \(name: String) = field(name)
 
 
   def indexesOf[R>:Datum](value:R) = IndexesOf(underlying, value)
@@ -131,7 +123,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   //def contains(attrs: Datum*) = Contains(underlying, attrs)
 
-  def contains[T <: DatumOrFunction](attrs: T*) = Contains(underlying, attrs)
+  def contains[T >: WrapAble](attrs: T*) = Contains(underlying, attrs.map(FuncWrap(_)))
 
   def ?(attr: Datum) = contains(attr)
 
@@ -222,6 +214,6 @@ trait Filterable[T] extends Typed {
 
   def filter(f: Var => Binary): Filter[T] = filter(f, false)
 
-  def filter(f: Var => Binary, default: Boolean): Filter[T] = Filter[T](underlying, FuncWrap(f: BooleanPredicate1), default)
+  def filter(f: Var => Binary, default: Boolean): Filter[T] = Filter[T](underlying, FuncWrap(f: ScalaBooleanPredicate1), default)
 
 }

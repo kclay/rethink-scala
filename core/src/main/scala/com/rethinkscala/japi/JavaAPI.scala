@@ -1,6 +1,6 @@
 package com.rethinkscala.japi
 
-import com.rethinkscala.ast.{Predicate => SPredicate, BooleanPredicate => BP, _}
+import com.rethinkscala.ast.{Predicate => SPredicate,_}
 import scala.util.control.NoStackTrace
 import scala.runtime.AbstractPartialFunction
 import java.util.Collections.{emptyList, singletonList}
@@ -154,7 +154,7 @@ trait Predicate2 extends SPredicate with Function2[Var, Var, Typed] {
 }
 
 
-trait BooleanFunction extends BP with Function[Var, Binary] {
+trait BooleanFunction extends BooleanPredicate1 with Function[Var, Binary] {
   protected def _invoke(vars: Seq[Var]) = apply(vars(0))
 
   val amount: Int = 1
@@ -162,7 +162,7 @@ trait BooleanFunction extends BP with Function[Var, Binary] {
 }
 
 
-trait BooleanFunction2 extends BP with Function2[Var, Var, Binary] {
+trait BooleanFunction2 extends BooleanPredicate2 with Function2[Var, Var, Binary] {
   protected def _invoke(vars: Seq[Var]) = apply(vars(0), vars(1))
 
   val amount: Int = 2
@@ -179,9 +179,9 @@ object r extends RethinkApi {
 
 }
 
-abstract class JoinPredicate extends Function2[Var, Var, Binary]
+abstract class JoinPredicate extends Predicate2
 
-abstract class MappingFunction[T<:Typed] extends Function[Var, T]
+abstract class MappingFunction extends Predicate
 
-abstract class ReductionFunction[T] extends Function2[Var, Var, Stream[T]]
+abstract class ReductionFunction extends Predicate2
 

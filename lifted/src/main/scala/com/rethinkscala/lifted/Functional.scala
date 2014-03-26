@@ -3,7 +3,7 @@ package com.rethinkscala.lifted
 import language.experimental.macros
 import scala.reflect.macros.Context
 
-import com.rethinkscala.ast.{Var, Predicate1, Typed}
+import com.rethinkscala.ast.{Var, ScalaPredicate1, Typed}
 
 /**
  * Created by IntelliJ IDEA.

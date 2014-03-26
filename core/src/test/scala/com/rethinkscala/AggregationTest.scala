@@ -1,7 +1,7 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.ast.Expr
+import com.rethinkscala.ast.{Var, Expr}
 import Blocking._
 
 
@@ -20,9 +20,9 @@ class AggregationTest extends FunSuite with WithBase {
       v: Int => seq.reduce(_ + _) == v
     })
 
-    assert(Expr(seq).reduce(_ + _, 10), {
+    /*assert(Expr(seq).reduce(_ + _, 10), {
       v: Int => seq.foldLeft(10)(_ + _) == v
-    })
+    })*/
   }
 
   test("count") {
@@ -65,11 +65,18 @@ class AggregationTest extends FunSuite with WithBase {
     )
 
     assert(results,{
-      a:Seq[GroupMapReduceResult]=> a.head("reduction","a").as[String] =="a" && a.head("reduction","s").as[Int] == 1  &&
-        a(1)("reduction","n").as[String] =="b" && a(1)("reduction","s").as[Int] == 2
+      a:Seq[GroupMapReduceResult]=> a.head("reduction","n").as[String].get == "a" && a.head("reduction","s").as[Int].get == 1  &&
+        a(1)("reduction","n").as[String].get == "b" && a(1)("reduction","s").as[Int].get == 2
     })
 
 
+  }
+
+  test("contains"){
+
+    assert(Expr(1 to 10 by 1) contains(5))
+
+    assert(Expr(1 to 10 by 1) contains((x:Var)=> x > 5))
   }
 
 }
