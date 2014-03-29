@@ -8,7 +8,7 @@ import java.util.concurrent.{Executors, TimeUnit}
 import java.io.IOException
 import java.nio.charset.Charset
 import scala.concurrent.ExecutionContext
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import scala.beans.BeanProperty
 
 
@@ -19,7 +19,7 @@ import scala.beans.BeanProperty
  * Time: 5:22 PM
  *
  */
-abstract class Version extends Logging {
+abstract class Version extends LazyLogging {
 
   val host: String
   val port: Int

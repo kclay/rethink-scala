@@ -4,12 +4,8 @@ import com.rethinkscala.ast.{Predicate => SPredicate,_}
 import scala.util.control.NoStackTrace
 import scala.runtime.AbstractPartialFunction
 import java.util.Collections.{emptyList, singletonList}
-import com.rethinkscala.{RethinkApi, Document, Term}
-import com.rethinkscala.ast.StringDatum
+import com.rethinkscala.RethinkApi
 import com.rethinkscala.ast.Var
-import com.rethinkscala.ast.BooleanDatum
-import com.rethinkscala.ast.NumberDatum
-import org.joda.time.ReadableInstant
 
 
 /**

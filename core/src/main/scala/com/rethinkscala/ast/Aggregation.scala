@@ -2,7 +2,7 @@ package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
 
-import com.rethinkscala.{GroupMapReduceResult, WrapAble}
+import com.rethinkscala.GroupResult
 
 /** Produce a single value from a sequence through repeated application of a reduction function.
   * The reduce function gets invoked repeatedly not only for the input values but also for results of
@@ -17,7 +17,6 @@ case class Reduce[T](target: Sequence[T], f: Predicate2) extends Produce[T] {
   override lazy val args = buildArgs(target, f())
 
 
-
   def termType = TermType.REDUCE
 }
 
@@ -25,9 +24,9 @@ case class Reduce[T](target: Sequence[T], f: Predicate2) extends Produce[T] {
   * If the argument is a function, it is equivalent to calling filter before count.
   * @param target
   */
-case class Count(target: Sequence[_], wrap:Option[FuncWrap]=None) extends ProduceNumeric {
+case class Count(target: Sequence[_], wrap: Option[FuncWrap] = None) extends ProduceNumeric {
 
-  override lazy val args = buildArgs((wrap.map(Seq(target,_)).getOrElse(Seq(target))):_*)
+  override lazy val args = buildArgs((wrap.map(Seq(target, _)).getOrElse(Seq(target))): _*)
 
   def termType = TermType.COUNT
 }
@@ -39,22 +38,15 @@ case class Distinct[T](target: Sequence[T]) extends ProduceSequence[T] {
   def termType = TermType.DISTINCT
 }
 
-/** Partition the sequence into groups based on the grouping function. The elements of each group are then mapped
-  * using the mapping function and reduced using the reduction function.
-  * @param target
-  * @param grouping
-  * @param mapping
-  * @param reduce
-  * @param base
-  */
-case class GroupMapReduce[T](target: Sequence[T], grouping: Predicate1, mapping: Predicate1, reduce: Predicate2,
-                             base: Option[Typed]) extends ProduceArray[GroupMapReduceResult] {
 
-  override lazy val args = buildArgs(target, grouping, mapping, reduce)
-  override lazy val optargs = buildOptArgs(Map("base" -> base))
+case class Group[R, T](target: Sequence[T], wrap: Seq[FuncWrap]) extends ProduceSequence[GroupResult[R]] {
 
-  def termType = TermType.GROUPED_MAP_REDUCE
+
+  override lazy val args = buildArgs(wrap.+:(target): _*)
+
+  def termType = TermType.GROUP
 }
+
 
 /** Groups elements by the values of the given attributes and then applies the given reduction.
   * Though similar to grouped_map_reduce, groupby takes a standardized object
@@ -62,19 +54,20 @@ case class GroupMapReduce[T](target: Sequence[T], grouping: Predicate1, mapping:
   * @param method
   * @param attrs
   */
-case class GroupBy[T](target: Sequence[T], method: AggregateByMethod, attrs: Seq[String]) extends ProduceSequence[T] {
+/*
+case class GroupBy[T](target: Sequence[T], method: AggregateByMethod, attrs: Seq[String]) extends ProduceSequence[GroupResult] {
 
   override lazy val args = buildArgs((Seq(target, method.underlying) ++ attrs): _*)
 
   def termType = TermType.GROUPBY
 }
-
+     */
 /** Test if an object has the given attribute.
   * @param target
   * @param value
   */
 case class Contains(target: Sequence[_], value: Seq[FuncWrap]) extends MethodQuery with ProduceBinary {
-  override lazy val args = buildArgs(value.+:(target):_*)
+  override lazy val args = buildArgs(value.+:(target): _*)
 
   def termType = TermType.CONTAINS
 }

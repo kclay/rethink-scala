@@ -2,7 +2,7 @@ package com.rethinkscala
 
 import org.scalatest.FunSuite
 import scala.Some
-import com.rethinkscala.ast.{Var, Table}
+import com.rethinkscala.ast.Table
 import Blocking._
 
 /**
@@ -60,11 +60,11 @@ class JoinTest extends FunSuite with WithBase {
     })
   }
 
-  test("outer join"){
-    val join = foos.outerJoin(bars,(f:Var,b:Var)=> f\"value" === b\"value")
+  test("outer join") {
+    val join = foos.outerJoin(bars, (f: Var, b: Var) => f \ "value" === b \ "value")
 
-    assert(join,{
-      f:Iterable[R]=> f.size ==1 && f.head.left == FooJ(1,1)
+    assert(join, {
+      f: Iterable[R] => f.size == 1 && f.head.left == FooJ(1, 1)
     })
   }
 

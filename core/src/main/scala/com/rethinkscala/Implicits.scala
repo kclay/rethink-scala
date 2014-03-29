@@ -5,7 +5,7 @@ import com.rethinkscala.ast._
 import com.rethinkscala.utils.{Applicator1, Applicator2}
 import com.rethinkscala.ast.StringDatum
 import com.rethinkscala.ast.SliceRange
-import com.rethinkscala.ast.Var
+
 import com.rethinkscala.ast.ScalaBooleanPredicate2
 import com.rethinkscala.ast.DB
 import com.rethinkscala.ast.Asc

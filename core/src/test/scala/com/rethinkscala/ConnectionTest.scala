@@ -7,7 +7,7 @@ import com.rethinkscala.net._
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
 import com.rethinkscala.net.BlockingConnection
 import com.rethinkscala.net.Version2
-import com.rethinkscala.ast.Expr
+
 import Blocking._
 
 

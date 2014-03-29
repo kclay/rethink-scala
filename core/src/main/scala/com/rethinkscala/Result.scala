@@ -2,13 +2,12 @@ package com.rethinkscala
 
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty}
 import com.rethinkscala.reflect.Reflector
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {
 
-  type M = Map[String, Any]
-  type IM =scala.collection.mutable.Map[String,Any]
+  type M = Map[String,_]
+  type IM = scala.collection.mutable.Map[String,_]
 
   def as[T] = find[T](root)
 
@@ -17,7 +16,7 @@ case class DocPath(root: Map[String, Any], paths: List[String]) {
 
       case Some(v) => find[T](v, p)
       case m: M => find[T](m.get(x), p.tail)
-      case m:IM=> find[T](m.get(x),p.tail)
+      case m: IM => find[T](m.get(x), p.tail)
       case _ => None
     }
   }.getOrElse(value match {
@@ -40,14 +39,15 @@ trait Document {
   @JsonIgnore
   private[rethinkscala] var raw: String = _
 
-  private def _raw=Option(raw).getOrElse({
+  private def _raw = Option(raw).getOrElse({
     raw = Reflector.toJson(this)
     raw
   })
 
 
   def \(name: String) = DocPath(underlying, List(name))
-  def apply(name:String*) =DocPath(underlying,name.toList)
+
+  def apply(name: String*) = DocPath(underlying, name.toList)
 
   def toMap = underlying
 
@@ -66,8 +66,6 @@ trait Document {
 
   private[rethinkscala] def invokeAfterInsert(id: String) = afterInsert(id)
 }
-
-
 
 
 class JsonDocument(json: String) {
@@ -110,7 +108,8 @@ trait ReturnValues {
   self: Document =>
   private var _returnedValue: Option[Any] = None
 
-  def returnedValue[T](clazz:Class[T]):T=returnedValue(Manifest.classType(clazz)).getOrElse(null.asInstanceOf[T])
+  def returnedValue[T](clazz: Class[T]): T = returnedValue(Manifest.classType(clazz)).getOrElse(null.asInstanceOf[T])
+
   def returnedValue[T](implicit mf: Manifest[T]): Option[T] = {
 
     if (_returnedValue.isEmpty) {
@@ -184,13 +183,21 @@ case class Profile(description: String, @JsonProperty("duration(ms)") duration: 
 case class QueryProfile[T](value: T, profile: Profile)
 
 
+case class GroupMapReduceExtractor[T](reduction: T)
 
-case class GroupMapReduceExtractor[T](reduction:T)
 
-case class  GroupMapReduceResult(group:Int,reduction:Map[String,_]) extends Document{
+class GroupResult[R](group: R, reduction: Seq[Map[String, Any]]) extends Document {
 
-  def as[T](implicit mf:Manifest[T]):T=Reflector.fromJson[GroupMapReduceExtractor[T]](raw).reduction
 
-  def as[T](clazz:Class[T]):T =as(Manifest.classType(clazz))
+  //def eachAs[T]=underlying.map((k,v)=>GroupResultSet(k,Reflector.fromJson()))
+}
+
+case class GroupResultSet[T](name: String, items: Seq[T])
+
+case class GroupMapReduceResult(group: Int, reduction: Map[String, _]) extends Document {
+
+  def as[T](implicit mf: Manifest[T]): T = Reflector.fromJson[GroupMapReduceExtractor[T]](raw).reduction
+
+  def as[T](clazz: Class[T]): T = as(Manifest.classType(clazz))
 }
 

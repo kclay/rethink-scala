@@ -1,7 +1,7 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.ast.Var
+
 import Blocking._
 
 /** Created with IntelliJ IDEA.
@@ -62,13 +62,12 @@ class TableTest extends FunSuite with WithBase {
   test("index wait") {
     val table = r.table(tableName)
     table.indexCreate("hello").run
-    assert(table.indexWait() ,{
-      i:Seq[IndexStatusResult]=> i.size == 2
+    assert(table.indexWait(), {
+      i: Seq[IndexStatusResult] => i.size == 2
     })
-    assert(table.indexWait("hello"),{
-      i:Seq[IndexStatusResult]=> i.size == 1
+    assert(table.indexWait("hello"), {
+      i: Seq[IndexStatusResult] => i.size == 1
     })
-
 
 
   }
@@ -93,7 +92,6 @@ class TableTest extends FunSuite with WithBase {
 
 
     doc.map(_.toMap) should equal(Some(record))
-
 
 
   }

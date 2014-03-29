@@ -1,10 +1,5 @@
 package com.rethinkscala
 
-import com.rethinkscala.ast._
-import com.rethinkscala.ast.StringDatum
-import com.rethinkscala.ast.NumberDatum
-import com.rethinkscala.ast.BooleanDatum
-import org.joda.time.ReadableInstant
 
 /**
  * Created by IntelliJ IDEA.

@@ -1,8 +1,11 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.ast.{Var, Expr}
+
 import Blocking._
+import com.rethinkscala.magnets._
+import com.rethinkscala.reflect.Reflector
+import com.rethinkscala.magnets.FieldFilterReceptacle
 
 
 /**
@@ -12,6 +15,19 @@ import Blocking._
  * Time: 3:06 PM
  *
  */
+
+object CompletionMagnet {
+
+
+}
+
+trait CompletionMagnet {
+  type Result
+  type P = Seq[FilterTyped]
+
+  def apply(): P
+}
+
 class AggregationTest extends FunSuite with WithBase {
 
   test("reduce") {
@@ -41,16 +57,16 @@ class AggregationTest extends FunSuite with WithBase {
 
 
   }
-  test("distinct"){
+  test("distinct") {
 
-    val seq = Seq(1,2,2,2,43,4,5,5,6,6,6,7,7,1,1,1)
+    val seq = Seq(1, 2, 2, 2, 43, 4, 5, 5, 6, 6, 6, 7, 7, 1, 1, 1)
 
-    assert(Expr(seq).distinct,{
-      v:Seq[Int]=> v == seq.distinct.sorted
+    assert(Expr(seq).distinct, {
+      v: Seq[Int] => v == seq.distinct.sorted
     })
 
   }
-
+  /*
   test("groupedMapReduce"){
 
     val records = Seq(Map("w"->1,"s"->1,"n"->"a"),Map("w"->2,"s"->2,"n"->"b"),Map("w"->3,"s"->3,"n"->"c"))
@@ -70,13 +86,47 @@ class AggregationTest extends FunSuite with WithBase {
     })
 
 
+  }   */
+
+  test("group") {
+
+
+    val json = """[
+                 |    {"id": 2, "player": "Bob", "points": 15, "type": "ranked"},
+                 |    {"id": 5, "player": "Alice", "points": 7, "type": "free"},
+                 |    {"id": 11, "player": "Bob", "points": 10, "type": "free"},
+                 |    {"id": 12, "player": "Alice", "points": 2, "type": "free"}
+                 |]""".stripMargin
+
+    val seq = Expr(Reflector.fromJson[Seq[Map[String, Any]]](json))
+
+
+    def foo(c: CompletionMagnet): c.P = c.apply()
+
+    //val out = foo("foo", "bar")
+
+    //val mag: GroupFilterMagnet = new FieldFilterReceptacle[String]("foo")
+
+    implicit def fromT[ F1[T1] <% FilterReceptacle[_], F2[T2] <% FilterReceptacle[_], T1, T2](tuple: (F1, F2)) = new GroupFilterMagnet[(T1, T2)] {
+
+
+      def apply() = Seq(tuple._1.apply, tuple._2.apply)
+    }
+
+
+    val results = seq.group("player".as[Int], "points").run
+
+
+    // System.out.println(results)
+
+
   }
 
-  test("contains"){
+  test("contains") {
 
-    assert(Expr(1 to 10 by 1) contains(5))
+    assert(Expr(1 to 10 by 1) contains 5)
 
-    assert(Expr(1 to 10 by 1) contains((x:Var)=> x > 5))
+    assert(Expr(1 to 10 by 1) contains ((x: Var) => x > 5))
   }
 
 }

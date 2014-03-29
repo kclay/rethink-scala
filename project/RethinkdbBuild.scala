@@ -1,6 +1,8 @@
 
 import sbt._
 import Keys._
+import spray.boilerplate.BoilerplatePlugin.Boilerplate
+import org.sbtidea.SbtIdeaPlugin._
 
 //import scalabuff.ScalaBuffPlugin._
 
@@ -29,16 +31,17 @@ object BuildSettings {
     commitNextVersion, // : ReleaseStep
     pushChanges // : ReleaseStep, also checks that an upstream branch is properly configured
   )
-  val buildSettings = Project.defaultSettings ++ defaultScalariformSettings ++ Seq(
+  val buildSettings = Project.defaultSettings ++ Boilerplate.settings ++ defaultScalariformSettings ++ Seq(
     organization := "com.rethinkscala",
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     version := "0.4.3-SNAPSHOT",
-    scalaVersion := "2.10.2",
+    scalaVersion := "2.11.0-RC3",
 
     scalacOptions ++= Seq(),
 
     scalaOrganization := "org.scala-lang",
-    resolvers += Resolver.sonatypeRepo("snapshots")
+    resolvers += Resolver.sonatypeRepo("snapshots"),
+    ideaExcludeFolders := ".idea" :: ".idea_modules" :: Nil
 
 
   )
@@ -65,17 +68,17 @@ object RethinkdbBuild extends Build {
     "Local Maven Repository" at "file:///" + Path.userHome + "/.m2/repository",
     "Mandubian repository snapshots" at "https://github.com/mandubian/mandubian-mvn/raw/master/snapshots/",
     "Mandubian repository releases" at "https://github.com/mandubian/mandubian-mvn/raw/master/releases/",
-    "Sonatype OSS Repository" at "https://oss.sonatype.org/content/groups/public/"
-    //"Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+    "Sonatype OSS Repository" at "https://oss.sonatype.org/content/groups/public/",
+    "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
   )
 
-  def jackson(v: String) = Seq(
-    "com.fasterxml.jackson.core" % "jackson-core" % v,
-    "com.fasterxml.jackson.core" % "jackson-annotations" % v,
-    "com.fasterxml.jackson.core" % "jackson-databind" % v,
-    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % ("[2.2," + v + "]"),
+  def jackson = Seq(
+    "com.fasterxml.jackson.core" % "jackson-core" % "2.2.2",
+    "com.fasterxml.jackson.core" % "jackson-annotations" % "2.2.2",
+    "com.fasterxml.jackson.core" % "jackson-databind" % "2.2.2",
+    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.3.1",
 
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % v
+    "com.fasterxml.jackson.module" % "jackson-module-scala_2.11.0-RC3" % "2.4.0-SNAPSHOT"
   )
 
 
@@ -97,7 +100,7 @@ object RethinkdbBuild extends Build {
     base = file("core"),
     settings = buildWithRelease ++ PB.protobufSettings ++ Seq(
 
-
+      javaSource in PB.protobufConfig <<= sourceManaged in Compile,
       // scalabuffVersion := scalaBuffVersion,
       resolvers ++= repos,
       //scalabuffArgs := Seq("--verbose", "--verbose"),
@@ -112,8 +115,9 @@ object RethinkdbBuild extends Build {
       //addProtocCompatibility,
       libraryDependencies <++= (scalaVersion)(sv => Seq(
         "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
-        "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
-        "org.slf4j" % "slf4j-log4j12" % "1.7.5",
+        //"com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
+        "com.typesafe.scala-logging" % "scala-logging-slf4j_2.11.0-RC3" % "2.0.0",
+        "org.slf4j" % "slf4j-log4j12" % "1.7.6",
 
         "io.netty" % "netty" % "3.6.6.Final",
         "com.google.protobuf" % "protobuf-java" % "2.4.1",
@@ -123,7 +127,7 @@ object RethinkdbBuild extends Build {
 
         // "net.sandrogrzicic" %% "scalabuff-runtime" % scalaBuffVersion
 
-      ) ++ jackson("2.2.2")),
+      ) ++ jackson),
 
 
       ScalariformKeys.preferences := FormattingPreferences()

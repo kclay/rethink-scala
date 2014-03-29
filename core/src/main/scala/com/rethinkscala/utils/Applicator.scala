@@ -1,10 +1,7 @@
 package com.rethinkscala.utils
 
 import com.rethinkscala.ast._
-import com.rethinkscala.ToAst
-import com.rethinkscala.ast.Reduce
 import com.rethinkscala.ast.Var
-import scala.Some
 
 /**
  * Created by IntelliJ IDEA.

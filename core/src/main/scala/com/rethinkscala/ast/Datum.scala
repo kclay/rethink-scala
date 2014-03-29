@@ -1,14 +1,14 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{WrapAble, DatumAssocPair, DatumMessage, AssocPair}
+import com.rethinkscala.{FilterTyped, DatumAssocPair, DatumMessage, AssocPair}
 import ql2.{Ql2 => ql2}
 import ql2.Datum.DatumType
 import com.rethinkscala.net.RethinkDriverError
 import org.joda.time.{DateTimeZone, DateTime}
 
 
-sealed trait Datum extends DatumMessage with WrapAble {
-   self:WrapAble=>
+sealed trait Datum extends DatumMessage with FilterTyped {
+   self:FilterTyped=>
   override def optArgsBuilder(key: String, value: Any): AssocPair = DatumAssocPair(key, value)
 
 }

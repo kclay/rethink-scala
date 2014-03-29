@@ -116,7 +116,7 @@ class ImplicitVar extends ProduceAny {
 
   def termType = TermType.IMPLICIT_VAR
 
- // def apply(name: String) = this field name
+  // def apply(name: String) = this field name
 
   override private[rethinkscala] def print(args: Seq[String], opt: Map[String, String]) = "r.row"
 }
@@ -160,8 +160,8 @@ case class FuncCall(function: Predicate, values: Seq[Typed]) extends ProduceAny 
   def termType = TermType.FUNCALL
 }
 
-object Expr {
 
+trait Expr {
   def apply(term: Term): Term = term
 
   def apply[T](value: Iterable[T]) = MakeArray(value)
@@ -198,14 +198,13 @@ object Expr {
 
       case p: Predicate => p()
       case t: Term => t
-      case f:Function[_,_]  if(!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1])=> new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
-      case f:Function2[_,_,_]  if(!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2]) => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
+      case f: Function[_, _] if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1]) => new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
+      case f: Function2[_, _, _] if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2]) => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
       case s: Seq[_] => MakeArray(s, depth - 1)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
       case d: Document => MakeObj2(d)
 
-      case a: Any=> Datum(a)
-
+      case a: Any => Datum(a)
 
 
     }
@@ -224,9 +223,10 @@ object Expr {
 
   }
 
-  type OfMap= Map[String,_]
-  type OfFunction1=(Var) => Typed
+  type OfMap = Map[String, _]
+  type OfFunction1 = (Var) => Typed
   type OfFunction2 = (Var, Var) => Typed
+
   def isJson(v: Any, depth: Int = 20): Boolean = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
 
@@ -265,6 +265,11 @@ object Expr {
 
 
   }
+}
+
+object Expr extends Expr {
+
+
 }
 
 

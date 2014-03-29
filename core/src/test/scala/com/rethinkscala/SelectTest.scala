@@ -1,7 +1,7 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.ast.{Var, Table}
+import com.rethinkscala.ast.Table
 
 
 /**

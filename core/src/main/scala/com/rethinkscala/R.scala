@@ -3,7 +3,7 @@ package com.rethinkscala
 import com.rethinkscala.ast._
 import org.joda.time.{ReadableInstant, DateTime}
 import com.rethinkscala.ast.StringDatum
-import com.rethinkscala.ast.Var
+
 import com.rethinkscala.ast.JavaScript
 import com.rethinkscala.ast.TableDrop
 import com.rethinkscala.ast.Branch

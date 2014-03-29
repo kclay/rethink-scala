@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.Term
+import com.rethinkscala.{FilterTyped, Term}
 
 import ql2.Ql2.Term.TermType
 import java.util.concurrent.atomic.AtomicInteger
@@ -39,7 +39,7 @@ object Wrap {
   // def apply(t: Typed) = new Predicate1((v: Var) => t)
 }
 
-abstract class Predicate {
+abstract class Predicate extends FilterTyped {
 
   val amount: Int
 
@@ -69,20 +69,18 @@ case class Func(f: Predicate) extends Term {
 }
 
 
+trait Predicate1 extends Predicate {
 
-trait Predicate1 extends Predicate{
+
+}
+
+
+trait Predicate2 extends Predicate {
 
 
 }
 
-
-
-trait Predicate2 extends Predicate{
-
-
-
-}
-class ScalaPredicate1(f: (Var) => Typed) extends Predicate1{
+class ScalaPredicate1(f: (Var) => Typed) extends Predicate1 {
 
   protected def _invoke(vars: Seq[Var]) = f(vars(0))
 
@@ -92,7 +90,7 @@ class ScalaPredicate1(f: (Var) => Typed) extends Predicate1{
 }
 
 
-class ScalaPredicate2(f: (Var, Var) => Typed) extends  Predicate2{
+class ScalaPredicate2(f: (Var, Var) => Typed) extends Predicate2 {
 
   protected def _invoke(v: Seq[Var]) = f(v(0), v(1))
 
@@ -103,15 +101,17 @@ trait BooleanPredicate extends Predicate with Binary
 
 
 trait BooleanPredicate1 extends BooleanPredicate
+
 trait BooleanPredicate2 extends BooleanPredicate
-case class ScalaBooleanPredicate1(f: (Var) => Binary) extends  BooleanPredicate1 {
+
+case class ScalaBooleanPredicate1(f: (Var) => Binary) extends BooleanPredicate1 {
 
   protected def _invoke(vars: Seq[Var]) = f(vars(0))
 
   val amount: Int = 1
 }
 
-case class ScalaBooleanPredicate2(f: (Var, Var) => Binary) extends  BooleanPredicate2 {
+case class ScalaBooleanPredicate2(f: (Var, Var) => Binary) extends BooleanPredicate2 {
   protected def _invoke(v: Seq[Var]) = f(v(0), v(1))
 
   val amount: Int = 2

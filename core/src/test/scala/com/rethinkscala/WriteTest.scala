@@ -3,7 +3,7 @@ package com.rethinkscala
 import org.scalatest.FunSuite
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.rethinkscala.ast.Var
+
 
 /** Created with IntelliJ IDEA.
   * User: keyston

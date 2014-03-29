@@ -4,7 +4,6 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.joda.time._
 import com.fasterxml.jackson.databind.module.{SimpleAbstractTypeResolver, SimpleDeserializers}
 import com.rethinkscala.{BasicDocument, Document}
-import com.fasterxml.jackson.databind.Module.SetupContext
 
 /**
  * Created by IntelliJ IDEA.

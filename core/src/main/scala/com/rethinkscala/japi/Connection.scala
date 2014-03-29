@@ -2,7 +2,7 @@ package com.rethinkscala.japi
 
 ;
 
-import com.rethinkscala.net.{RethinkError, BlockingConnection, AsyncConnection, Version}
+import com.rethinkscala.net.{RethinkError, BlockingConnection, Version}
 import com.rethinkscala.ast.Produce
 import scala.concurrent.duration.Duration
 import com.rethinkscala.Delegate

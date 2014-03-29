@@ -3,7 +3,8 @@ package com.rethinkscala.ast
 import com.rethinkscala._
 import com.rethinkscala.BoundOptions
 import scala.Some
-import com.rethinkscala.japi.{ReductionFunction, MappingFunction}
+import com.rethinkscala.japi.ReductionFunction
+import com.rethinkscala.magnets.GroupFilterMagnet
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,9 +24,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
   override val underlying = this
 
 
-
-
-  def indexesOf[R>:Datum](value:R) = IndexesOf(underlying, value)
+  def indexesOf[R >: Datum](value: R) = IndexesOf(underlying, value)
 
   //def indexesOf(value: Binary): IndexesOf = indexesOf((x: Var) => value)
 
@@ -62,7 +61,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   //def map[R](func: Produce[R]) = RMap[R](underlying, FuncWrap(func))
 
- // def map[R](func:MappingFunction[R]) = RMap[R](underlying,FuncWrap(func))
+  // def map[R](func:MappingFunction[R]) = RMap[R](underlying,FuncWrap(func))
   //def reduce[R](base: T, f: ReductionFunction[R]) = Reduce[T](underlying, f, Some(base))
 
   //def reduce[R](f:ReductionFunction[R]) = Reduce[R](underlying, f, None)
@@ -92,10 +91,9 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
   //def concatMap(func: Predicate1) = ConcatMap(underlying, FuncWrap(func))
 
 
+  def orderByIndex(index: String): OrderBy[T] = orderByIndex(index: Order)
 
-
-  def orderByIndex(index:String):OrderBy[T]=orderByIndex(index:Order)
-  def orderByIndex(index:Order):OrderBy[T] = OrderBy[T](underlying,Seq(),Some(index))
+  def orderByIndex(index: Order): OrderBy[T] = OrderBy[T](underlying, Seq(), Some(index))
 
   def orderBy(keys: Order*) = OrderBy[T](underlying, keys)
 
@@ -105,25 +103,27 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def count = Count(underlying)
 
-  def count(value:Datum) = Count(underlying, Some(FuncWrap(value)))
+  def count(value: Datum) = Count(underlying, Some(FuncWrap(value)))
 
   def count(f: Var => Binary) = Count(underlying, Some(FuncWrap(f)))
 
-    /*
+  /*
 
-  def groupedMapReduce(grouping: Predicate1, mapping: Predicate1,
-                reduction: Predicate2, base: Option[Datum] = None) = GroupMapReduce(underlying, grouping, mapping, reduction, base)
-      */
-  def groupedMapReduce(grouping: Var=>Typed, mapping: Var=>Typed,
-                         reduction: (Var,Var)=>Typed, base: Typed) = GroupMapReduce(underlying, grouping, mapping, reduction,
-      Some(base))
-  def groupBy(method: AggregateByMethod, attrs: String*) = GroupBy(underlying, method, attrs)
+def groupedMapReduce(grouping: Predicate1, mapping: Predicate1,
+              reduction: Predicate2, base: Option[Datum] = None) = GroupMapReduce(underlying, grouping, mapping, reduction, base)
+    */
+  def group[R](magnet: GroupFilterMagnet[R]): Group[R, T] = Group(underlying, magnet().map(FuncWrap(_)))
+
+  ///
+
+
+ // def groupBy(method: AggregateByMethod, attrs: String*) = GroupBy(underlying, method, attrs)
 
   def distinct = Distinct(underlying)
 
   //def contains(attrs: Datum*) = Contains(underlying, attrs)
 
-  def contains[T >: WrapAble](attrs: T*) = Contains(underlying, attrs.map(FuncWrap(_)))
+  def contains[R >: FilterTyped](attrs: R*) = Contains(underlying, attrs.map(FuncWrap(_)))
 
   def ?(attr: Datum) = contains(attr)
 

@@ -4,7 +4,7 @@ package com.rethinkscala.net
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{JsonDocument, GeneratesKeys, Term, Document}
 import com.rethinkscala.ast.{After, WithLifecycle}
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 object Translate {
   def translate[Out](implicit ct: Manifest[Out]): Translate[Out] = new BaseTranslate[Out] {}
@@ -31,7 +31,7 @@ trait Translate[Out] {
 
 }
 
-trait WithConversion[Out] extends Logging {
+trait WithConversion[Out] extends LazyLogging {
 
   def convert(json: String, term: Term)(implicit ct: Manifest[Out]): Out = {
 
@@ -102,7 +102,7 @@ trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
 
 }
 
-trait BaseTranslate[Out] extends Translate[Out] with Logging {
+trait BaseTranslate[Out] extends Translate[Out] with LazyLogging {
 
   type Conversion = WithConversion[Out]
 

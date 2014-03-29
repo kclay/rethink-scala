@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import Translate._
 import com.rethinkscala.Term
 import scala.concurrent.duration.Duration
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import scala.Some
 import com.rethinkscala.ast.DB
 
@@ -53,7 +53,7 @@ abstract class Token {
 }
 
 
-case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p: Promise[R], mf: Manifest[R]) extends Token with Logging {
+case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p: Promise[R], mf: Manifest[R]) extends Token with LazyLogging {
 
 
   implicit val t = mf
@@ -226,7 +226,7 @@ private class PipelineFactory extends ChannelPipelineFactory {
 }
 
 
-abstract class AbstractConnection(version: Version) extends Logging with Connection {
+abstract class AbstractConnection(version: Version) extends LazyLogging with Connection {
 
   private val defaultDB = Some(version.db.getOrElse("test"))
   private[this] val connectionId = new AtomicInteger()
