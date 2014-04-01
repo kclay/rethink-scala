@@ -73,12 +73,12 @@ object RethinkdbBuild extends Build {
   )
 
   def jackson = Seq(
-    "com.fasterxml.jackson.core" % "jackson-core" % "2.2.2",
-    "com.fasterxml.jackson.core" % "jackson-annotations" % "2.2.2",
-    "com.fasterxml.jackson.core" % "jackson-databind" % "2.2.2",
+    "com.fasterxml.jackson.core" % "jackson-core" % "2.4.0-SNAPSHOT",
+    "com.fasterxml.jackson.core" % "jackson-annotations" % "2.4-SNAPSHOT",
+    "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.0-SNAPSHOT",
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.3.1",
 
-    "com.fasterxml.jackson.module" % "jackson-module-scala_2.11.0-RC3" % "2.4.0-SNAPSHOT"
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.4.0-SNAPSHOT"
   )
 
 
@@ -103,24 +103,16 @@ object RethinkdbBuild extends Build {
       javaSource in PB.protobufConfig <<= sourceManaged in Compile,
       // scalabuffVersion := scalaBuffVersion,
       resolvers ++= repos,
-      //scalabuffArgs := Seq("--verbose", "--verbose"),
 
-
-      //   scalabuffArgs := Seq("--stdout"),
-      // set the directory for generated scala sources to src/main/generated_scala
-      //generatedSource in scalaBuffConfig <<= (sourceDirectory in Compile)(_ / "generated_scala"),
-      // generatedSource in protobufConfig <<= (sourceDirectory in Compile)(_ / "generated_java"),
-
-      // it's not possible to generate both java and scala sources due to a "bug" in ScalaBuff.
-      //addProtocCompatibility,
       libraryDependencies <++= (scalaVersion)(sv => Seq(
-        "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
+
+        "org.scalatest" %% "scalatest" % "2.1.2" % "test",
         //"com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
-        "com.typesafe.scala-logging" % "scala-logging-slf4j_2.11.0-RC3" % "2.0.0",
+        "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.0.0",
         "org.slf4j" % "slf4j-log4j12" % "1.7.6",
 
         "io.netty" % "netty" % "3.6.6.Final",
-        "com.google.protobuf" % "protobuf-java" % "2.4.1",
+        "com.google.protobuf" % "protobuf-java" % "2.5.0",
         "joda-time" % "joda-time" % "2.3",
         "org.joda" % "joda-convert" % "1.5",
         "org.scala-lang" % "scala-reflect" % sv

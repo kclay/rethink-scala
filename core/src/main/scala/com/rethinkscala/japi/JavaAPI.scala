@@ -1,6 +1,6 @@
 package com.rethinkscala.japi
 
-import com.rethinkscala.ast.{Predicate => SPredicate,_}
+import com.rethinkscala.ast.{Predicate1 => SPredicate1,Predicate2=>SPredicate2,BooleanPredicate1=>SBooleanPredicate1,BooleanPredicate2=>SBooleanPredicate2,_}
 import scala.util.control.NoStackTrace
 import scala.runtime.AbstractPartialFunction
 import java.util.Collections.{emptyList, singletonList}
@@ -137,20 +137,20 @@ object Option {
   implicit def scala2JavaOption[A](o: scala.Option[A]): Option[A] = if (o.isDefined) some(o.get) else none
 }
 
-trait Predicate extends SPredicate with Function[Var, Typed] {
+trait Predicate extends SPredicate1 with Function[Var, Typed] {
   protected def _invoke(vars: Seq[Var]) = apply(vars(0))
 
   val amount: Int = 1
 }
 
-trait Predicate2 extends SPredicate with Function2[Var, Var, Typed] {
+trait Predicate2 extends SPredicate2 with Function2[Var, Var, Typed] {
   protected def _invoke(vars: Seq[Var]) = apply(vars(0), vars(1))
 
   val amount: Int = 2
 }
 
 
-trait BooleanFunction extends BooleanPredicate1 with Function[Var, Binary] {
+trait BooleanPredicate extends SBooleanPredicate1 with Function[Var, Binary] {
   protected def _invoke(vars: Seq[Var]) = apply(vars(0))
 
   val amount: Int = 1
@@ -158,7 +158,7 @@ trait BooleanFunction extends BooleanPredicate1 with Function[Var, Binary] {
 }
 
 
-trait BooleanFunction2 extends BooleanPredicate2 with Function2[Var, Var, Binary] {
+trait BooleanPredicate2 extends SBooleanPredicate2 with Function2[Var, Var, Binary] {
   protected def _invoke(vars: Seq[Var]) = apply(vars(0), vars(1))
 
   val amount: Int = 2

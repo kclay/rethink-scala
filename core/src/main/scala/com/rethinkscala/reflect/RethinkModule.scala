@@ -1,9 +1,11 @@
 package com.rethinkscala.reflect
 
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala._
 import org.joda.time._
 import com.fasterxml.jackson.databind.module.{SimpleAbstractTypeResolver, SimpleDeserializers}
 import com.rethinkscala.{BasicDocument, Document}
+import com.rethinkscala.GroupResult
+import com.fasterxml.jackson.module.scala.deser.UntypedObjectDeserializerModule
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,12 +19,17 @@ class RethinkModule extends DefaultScalaModule {
   _deserializers.addDeserializer(classOf[DateTime], RethinkDateTimeDeserializer.forType(classOf[DateTime]))
   _deserializers.addDeserializer(classOf[ReadableDateTime], RethinkDateTimeDeserializer.forType(classOf[ReadableDateTime]))
   _deserializers.addDeserializer(classOf[ReadableInstant], RethinkDateTimeDeserializer.forType(classOf[ReadableInstant]))
+  _deserializers.addDeserializer(classOf[GroupResult[_]],new GroupResultDeserializer)
+
+
 
 
 
 
   private val _resolver = new SimpleAbstractTypeResolver
   _resolver.addMapping(classOf[Document],classOf[BasicDocument])
+
+
   //dd//
   // this += { _.addDeserializers(Date) }
   this += (_ addDeserializers _deserializers)

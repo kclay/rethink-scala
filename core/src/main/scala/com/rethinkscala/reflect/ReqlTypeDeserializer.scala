@@ -1,10 +1,8 @@
 package com.rethinkscala.reflect
 
 import com.fasterxml.jackson.core.{JsonToken, JsonParser}
-import com.fasterxml.jackson.databind.{JsonMappingException, DeserializationContext}
-import org.joda.time.{DateTime, DateTimeZone, ReadableDateTime}
+import com.fasterxml.jackson.databind.{JsonDeserializer, DeserializationContext}
 import com.fasterxml.jackson.core.JsonToken._
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,45 +12,48 @@ import scala.collection.mutable.ArrayBuffer
  */
 trait ReqlTypeDeserializer[T] {
 
-  private[this] val KEY_REQL_TYPE = "$reql_type$"
+  val KEY_REQL_TYPE = "$reql_type$"
 
-  type Matcher = PartialFunction[(String, JsonParser), Unit]
-  val matchers: ArrayBuffer[Matcher] = ArrayBuffer.empty[Matcher]
+  val reqlTypeValue:String
 
-  def step(m: Matcher): Unit = matchers += m
+  val dataStartKey:String
 
-  def constructType: T
+
+
 
   def deserialize(jp: JsonParser, ctxt: DeserializationContext): T = {
-    var t = jp.getCurrentToken
-    if (t eq JsonToken.START_OBJECT) {
-      t = jp.nextToken
-      var fieldType: String = null
 
-      var bundle: (String, JsonParser) = null
-      do {
-        if (t eq VALUE_STRING) {
-          if (jp.getCurrentName eq KEY_REQL_TYPE) {
-            fieldType = jp.getValueAsString
-          }
-          else {
-            bundle = (jp.getCurrentName, jp)
-            matchers.map(f => if (f.isDefinedAt(bundle)) f.apply(bundle))
-          }
-
-        }
+    implicit val p = jp
+    implicit val ctx = ctxt
+    if (jp.getCurrentToken eq JsonToken.START_OBJECT) {
 
 
-        t = jp.nextToken
-      } while (t ne JsonToken.END_OBJECT)
-
-      return constructType
+      return resolveType(next).asInstanceOf[T]
     }
 
 
-    throw mappingException(ctxt)
+    throw ctxt.mappingException("Error")
   }
 
-  def mappingException(ctxt: DeserializationContext): JsonMappingException
+  def resolveType(token: JsonToken)(implicit ctx: DeserializationContext, jp: JsonParser): Any = {
+    token match {
+
+      case FIELD_NAME => jp.getCurrentName match {
+        case x:String if(x == dataStartKey) =>resolve(next)
+        case x:String if(x == KEY_REQL_TYPE) => {
+          next
+          if (jp.getValueAsString != reqlTypeValue) throw ctx.mappingException(s"Invalid $KEY_REQL_TYPE of ${jp.getValueAsString}")
+          resolveType(next)
+        }
+      }
+      case _=> throw ctx.mappingException(s"Expected token FIELD_NAME")
+    }
+  }
+
+  def resolve(token: JsonToken)(implicit ctx: DeserializationContext, jp: JsonParser): Any
+
+  def next(implicit jp: JsonParser) = jp.nextToken()
+
+
 
 }

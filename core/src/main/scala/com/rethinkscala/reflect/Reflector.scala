@@ -32,6 +32,9 @@ object Reflector {
   mapper.setSerializationInclusion(Include.NON_NULL);
   mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   mapper.setVisibility(PropertyAccessor.FIELD, Visibility.PUBLIC_ONLY)
+  mapper.setDefaultTyping(new RethinkTypeResolverBuilder)
+
+  //mapper.setAnnotationIntrospector()
 
   def fields(a: AnyRef): Seq[Field] = fields(a.getClass)
 
@@ -105,13 +108,13 @@ object Reflector {
     override def getType = typeFromManifest(manifest[T])
   }
 
-  private[this] def typeFromManifest(m: Manifest[_]): Type = {
+  private[rethinkscala] def typeFromManifest(m: Manifest[_]): Type = {
     if (m.typeArguments.isEmpty) {
       m.runtimeClass
     } else new ParameterizedType {
       def getRawType = m.runtimeClass
 
-      def getActualTypeArguments = m.typeArguments.map(typeFromManifest).toArray
+      def getActualTypeArguments = m.typeArguments.map(typeFromManifest(_)).toArray
 
       def getOwnerType = null
     }

@@ -32,6 +32,7 @@ import scala.collection.Iterable
 trait ToAst[A] {
   self: ToAst[A] =>
   type TypeMember >: Var
+  type Producer <:Produce[_]
 
 
 

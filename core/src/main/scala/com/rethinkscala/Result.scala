@@ -1,7 +1,8 @@
 package com.rethinkscala
 
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty}
-import com.rethinkscala.reflect.Reflector
+import com.rethinkscala.reflect.{RethinkTypeResolverBuilder, Reflector}
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {
@@ -186,13 +187,14 @@ case class QueryProfile[T](value: T, profile: Profile)
 case class GroupMapReduceExtractor[T](reduction: T)
 
 
-class GroupResult[R](group: R, reduction: Seq[Map[String, Any]]) extends Document {
+case class GroupResult[T](records:Seq[GroupResultRecord[T]]) extends Document
 
 
-  //def eachAs[T]=underlying.map((k,v)=>GroupResultSet(k,Reflector.fromJson()))
-}
 
-case class GroupResultSet[T](name: String, items: Seq[T])
+@JsonTypeResolver(value = classOf[RethinkTypeResolverBuilder])
+case class GroupResultRecord[R](group: R, values: Seq[Map[String, Any]]) extends Document
+
+
 
 case class GroupMapReduceResult(group: Int, reduction: Map[String, _]) extends Document {
 

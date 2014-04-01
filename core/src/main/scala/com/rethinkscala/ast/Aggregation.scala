@@ -20,6 +20,8 @@ case class Reduce[T](target: Sequence[T], f: Predicate2) extends Produce[T] {
   def termType = TermType.REDUCE
 }
 
+
+
 /** Count the number of elements in the sequence. With a single argument, count the number of elements equal to it.
   * If the argument is a function, it is equivalent to calling filter before count.
   * @param target
@@ -39,7 +41,7 @@ case class Distinct[T](target: Sequence[T]) extends ProduceSequence[T] {
 }
 
 
-case class Group[R, T](target: Sequence[T], wrap: Seq[FuncWrap]) extends ProduceSequence[GroupResult[R]] {
+case class Group[R, T](target: Sequence[T], wrap: Seq[FuncWrap]) extends ProduceDocument[GroupResult[R]] {
 
 
   override lazy val args = buildArgs(wrap.+:(target): _*)
@@ -70,4 +72,10 @@ case class Contains(target: Sequence[_], value: Seq[FuncWrap]) extends MethodQue
   override lazy val args = buildArgs(value.+:(target): _*)
 
   def termType = TermType.CONTAINS
+}
+
+
+case class Max(target:Typed,fieldOrFunction:FuncWrap) extends MethodQuery with ProduceAny{
+
+  def termType = TermType.MAX
 }

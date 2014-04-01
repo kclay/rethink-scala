@@ -8,15 +8,26 @@ object GroupFilterMagnet {
 
 
 
-     [#def lift[[#T1#]](tuple: ([#FilterReceptacle[T1]#])) = new GroupFilterMagnet[([#T1#])]{
-          override def apply() = Seq([#tuple._1.apply#])
-        }#]
+  implicit def magnetGF(value:String):GroupFilterMagnet[String] = new GroupFilterMagnet[String]{
+    val fr = new FieldFilterReceptacle[String](value)
+    override def apply() = Seq(fr.apply)
+  }
+
+  implicit def magnetGF[T,F <% FilterReceptacle[T]](fr:F):GroupFilterMagnet[T] = new GroupFilterMagnet[T]{
+                                                                                                       override def apply() = Seq(fr.apply)
+                                                                                               }
+
 
 
     [#implicit def magnetGF[[#T1, F1 <% FilterReceptacle[T1]#]](tuple: Tuple1[[#F1#]]): GroupFilterMagnet[([#T1#])] = {
-      val input: ([#FilterReceptacle[T1]#]) = ([#tuple._1#])
-      lift(input)
-    } #]
+      val input:Tuple1[[#FilterReceptacle[T1]#]] = Tuple1([#tuple._1#])
+
+       new GroupFilterMagnet[([#T1#])]{
+                override def apply() = Seq([#input._1.apply#])
+        }
+    }#
+    ]
+
 
 
 }

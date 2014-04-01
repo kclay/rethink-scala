@@ -16,18 +16,6 @@ import com.rethinkscala.magnets.FieldFilterReceptacle
  *
  */
 
-object CompletionMagnet {
-
-
-}
-
-trait CompletionMagnet {
-  type Result
-  type P = Seq[FilterTyped]
-
-  def apply(): P
-}
-
 class AggregationTest extends FunSuite with WithBase {
 
   test("reduce") {
@@ -66,30 +54,8 @@ class AggregationTest extends FunSuite with WithBase {
     })
 
   }
-  /*
-  test("groupedMapReduce"){
 
-    val records = Seq(Map("w"->1,"s"->1,"n"->"a"),Map("w"->2,"s"->2,"n"->"b"),Map("w"->3,"s"->3,"n"->"c"))
-
-
-    PartialFunction
-    val results  = Expr(records).groupedMapReduce(
-      x=> x("w"),
-      x=> x.pluck("n","s"),
-      (a,b)=> r.branch(a("s")< b("s"),b,a)
-      ,Map("n"->"none","s"->0)
-    )
-
-    assert(results,{
-      a:Seq[GroupMapReduceResult]=> a.head("reduction","n").as[String].get == "a" && a.head("reduction","s").as[Int].get == 1  &&
-        a(1)("reduction","n").as[String].get == "b" && a(1)("reduction","s").as[Int].get == 2
-    })
-
-
-  }   */
-
-  test("group") {
-
+  lazy val testSeq={
 
     val json = """[
                  |    {"id": 2, "player": "Bob", "points": 15, "type": "ranked"},
@@ -98,28 +64,47 @@ class AggregationTest extends FunSuite with WithBase {
                  |    {"id": 12, "player": "Alice", "points": 2, "type": "free"}
                  |]""".stripMargin
 
-    val seq = Expr(Reflector.fromJson[Seq[Map[String, Any]]](json))
+    Expr(Reflector.fromJson[Seq[Map[String, Any]]](json))
+
+  }
+
+  test("group") {
 
 
-    def foo(c: CompletionMagnet): c.P = c.apply()
 
-    //val out = foo("foo", "bar")
-
-    //val mag: GroupFilterMagnet = new FieldFilterReceptacle[String]("foo")
-
-    implicit def fromT[ F1[T1] <% FilterReceptacle[_], F2[T2] <% FilterReceptacle[_], T1, T2](tuple: (F1, F2)) = new GroupFilterMagnet[(T1, T2)] {
-
-
-      def apply() = Seq(tuple._1.apply, tuple._2.apply)
+    val seq = testSeq
+    val check = {
+      g:GroupResult[String]=> g.records.size == 2 && g.records.head.group == "Alice" && g.records.head.values.head.get("id") == Some(5)
     }
+    assert(seq.group("player"),check)
 
 
-    val results = seq.group("player".as[Int], "points").run
+    val res = seq.group({
+      v:Var=> v.pluck("player")
+    }.as[String],"id")
+
+    def mf[T](v:T)(implicit m:Manifest[T]) = m
+
+    println(mf(res))
+
+    res.run
 
 
-    // System.out.println(results)
 
 
+
+
+
+
+  }
+
+  test("max"){
+
+    val res = testSeq.max("points").as[Int]("points")
+
+   assert(res,{
+    p:Int=> p == 15
+   })
   }
 
   test("contains") {

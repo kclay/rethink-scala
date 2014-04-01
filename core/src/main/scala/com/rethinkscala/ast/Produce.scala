@@ -53,13 +53,21 @@ trait Produce[ResultType] extends Query {
 
 }
 
-trait ProduceSingle[T] extends Produce[T]
+sealed trait Produce0[T] extends Typed
+trait ProduceSingle[T] extends Produce[T] with Produce0[T]
 
-trait ProduceSequence[T] extends Sequence[T] with Produce[Seq[T]] {
+
+
+
+
+trait ProduceSequence[T] extends Sequence[T] with Produce0[T] with Produce[Seq[T]] with CanManipulate[SPluck,Merge,Without] {
 
   type FieldProduce = ProduceArray[T]
 
+
   def field(name: String): ProduceArray[T] = GetField[T](this, name)
+
+
 
 
   // def run(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Either[RethinkError, Seq[T]] = toQuery[T].toResult
@@ -67,7 +75,21 @@ trait ProduceSequence[T] extends Sequence[T] with Produce[Seq[T]] {
 
   //def as[R <: T](implicit c: Connection, mf: Manifest[R], d: DummyImplicit): Either[RethinkError, Seq[R]] = toQuery[R].toResult
 
-  //def toOpt(implicit c: Connection, mf: Manifest[T], d: DummyImplicit): Option[Seq[T]] = run fold(x => None, Some(_))
+
+
+  override def merge(other: Map[String, Any]) = Merge(underlying,other)
+
+
+  // TODO : Fix this
+  override def merge(other: CM) = Merge(underlying.asInstanceOf[CM],other)
+
+  def pluck(attrs: String*) = Pluck(underlying, attrs)
+
+  def without(attrs: String*) = Without(underlying, attrs)
+
+  def pluck(m: Map[String, Any]) = Pluck(underlying, m)
+
+  def merge(other: MakeObj) = Merge(underlying, other)
 
 
 }
@@ -76,23 +98,39 @@ trait ProduceAnySequence extends ProduceSequence[Any]
 
 trait ProduceSet[T] extends ProduceArray[T]
 
-trait ProduceBinary extends Produce[Boolean] with Binary
+trait ProduceBinary extends Produce[Boolean] with Binary with Produce0[Boolean]
 
 //trait ProduceLiteral extends ProduceLiteral with Literal
 
 
-trait ProduceDocument[T <: Document] extends ProduceSingle[T] with Record with DocumentConversion[T] {
+trait ProduceDocument[T <: Document] extends ProduceSingle[T] with Record with DocumentConversion[T] with CanManipulate[OPluck,Merge,Without] {
 
   type FieldProduce = ProduceAny
 
   def field(name: String): ProduceAny = GetField(this, name)
+
+
+
+  override def merge(other: Map[String, Any]) = Merge(underlying,other)
+
+
+  // TODO : Fix this
+  override def merge(other: CM) = Merge(underlying.asInstanceOf[CM],other)
+
+  def pluck(attrs: String*) = Pluck(underlying, attrs)
+
+  def without(attrs: String*) = Without(underlying, attrs)
+
+  def pluck(m: Map[String, Any]) = Pluck(underlying, m)
+
+
 }
 
 trait ProduceAnyDocument extends ProduceDocument[Document] with Record
 
-trait ProduceNumeric extends ProduceSingle[Double] with Numeric
+trait ProduceNumeric extends ProduceSingle[Double] with Numeric with Produce0[Double]
 
-trait ProduceString extends ProduceSingle[String] with Strings
+trait ProduceString extends ProduceSingle[String] with Strings   with Produce0[String]
 
 trait ForwardTyped {
   self: Produce[_] with Typed =>
@@ -106,7 +144,7 @@ trait ForwardTyped {
   def termType = underlying.term
 }
 
-trait ProduceAny extends Produce[Any] with Ref {
+trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] {
 
 
   // def numeric: ProduceNumeric =
@@ -150,7 +188,7 @@ trait ProduceAny extends Produce[Any] with Ref {
 
   override def \(name: String): ProduceAny = field(name)
 
- def as[T](name: String)(implicit ast: ToAst[T]): ast.TypeMember = field(name).asInstanceOf[ast.TypeMember]
+ def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
  def asArray[T](name:String)=field(name).array[T]
   def field(name: String) = GetField(this.asInstanceOf[Typed], name)
 }

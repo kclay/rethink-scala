@@ -69,16 +69,10 @@ case class Func(f: Predicate) extends Term {
 }
 
 
-trait Predicate1 extends Predicate {
+trait Predicate1 extends Predicate
 
 
-}
-
-
-trait Predicate2 extends Predicate {
-
-
-}
+trait Predicate2 extends Predicate
 
 class ScalaPredicate1(f: (Var) => Typed) extends Predicate1 {
 

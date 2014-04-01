@@ -127,7 +127,7 @@ object Merge {
 
   def apply(target: Record, other: Map[String, Any]) = new Merge(target, Expr(other)) with ProduceAnyDocument
 
-  def apply(target: Record, other: Record) = new Merge(target, other) with ProduceAnyDocument
+  def apply[P1<:Pluck,M1<:Merge,W1<:Without,P2<:Pluck,M2<:Merge,W2<:Without](target: CanManipulate[P1,M1,W1], other: CanManipulate[P1,M1,W1]) = new Merge(target, other) with ProduceAnyDocument
 
  // def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
 }

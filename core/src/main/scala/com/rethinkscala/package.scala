@@ -19,29 +19,35 @@ package object rethinkscala extends ImplicitConversions with ToNameReceptaclePim
 
   implicit val stringToStrings = new ToAst[String] {
     type TypeMember = Strings
+    type Producer = ProduceString
 
 
   }
   implicit val doubleToNumeric = new ToAst[Double] {
     type TypeMember = Numeric
+    type Producer = ProduceNumeric
 
 
   }
   implicit val intToNumeric = new ToAst[Int] {
     type TypeMember = Numeric
+    type Producer = ProduceNumeric
 
   }
   implicit val floatToNumeric = new ToAst[Float] {
     type TypeMember = Numeric
+    type Producer = ProduceNumeric
 
   }
 
   implicit def arrayMapToTyped[T] = new ToAst[Map[String, T]] {
     type TypeMember = Var
+    type Producer = ProduceAny
   }
 
   implicit def docToTyped[T <: Document] = new ToAst[T] {
     type TypeMember = Var
+    type Producer = ProduceAny
 
   }
 
@@ -121,7 +127,7 @@ package object rethinkscala extends ImplicitConversions with ToNameReceptaclePim
   implicit def mapDocumentToAny[T <: Document] = CanMap[T, Ref, Any]
 
 
-  trait FromAst[T >: Var] {
+  trait FromAst[T] {
     type Raw
   }
 
@@ -132,13 +138,18 @@ package object rethinkscala extends ImplicitConversions with ToNameReceptaclePim
     type Raw = String
   }
 
-  implicit def arrayToSeq[T] = new FromAst[ArrayTyped[_]] {
+  implicit def arrayToSeq[T](seq:ProduceSequence[T]) = new FromAst[ProduceSequence[T]] {
     type Raw = Seq[T]
   }
+
+
+
+
 
   implicit def binaryToBoolean = new FromAst[Binary] {
     type Raw = Boolean
   }
+
 
 
   class ToFunctional[T, A >: Var](seq: Sequence[T]) {

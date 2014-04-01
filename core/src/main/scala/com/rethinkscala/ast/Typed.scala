@@ -1,6 +1,7 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala._
+import com.rethinkscala.ast.Merge
 
 
 sealed trait DataType {
@@ -8,6 +9,25 @@ sealed trait DataType {
   def name: String
 }
 
+
+trait CanManipulate[P<:Pluck,M<:Merge,W<:Without] extends Typed{
+
+
+  type CM = CanManipulate[P,M,W]
+
+  def pluck(attrs: String*):P
+
+  def pluck(m: Map[String, Any]):P
+
+  def without(attrs: String*):W
+
+
+  def merge(other: CM):M
+
+  def merge(other: Map[String, Any]):M
+
+  def +(other: CM) = merge(other)
+}
 case object ObjectData extends DataType {
   def name = "object"
 }
@@ -36,12 +56,26 @@ private[rethinkscala] trait Typed extends ImplicitConversions {
 }
 
 
-trait Ref extends ArrayTyped[Any] with Numeric with Binary with Record with Literal with Strings {
+trait Ref extends ArrayTyped[Any] with Numeric with Binary with Record with Literal with Strings  with CanManipulate[Pluck,Merge,Without]{
   override val underlying = this
 
   //override def add(other: Addition): Add = AnyAdd(underlying, other)
 
   def add(other: Ref): Add = AnyAdd(underlying, other)
+
+
+
+
+  def merge(other: Map[String, Any]) = Merge(underlying,other)
+
+
+ def merge(other: CM) = Merge(underlying,other)
+
+  def pluck(attrs: String*) = Pluck(underlying, attrs)
+
+  def without(attrs: String*) = Without(underlying, attrs)
+
+  def pluck(m: Map[String, Any]) = Pluck(underlying, m)
 }
 
 trait JoinTyped[L, R] extends Typed {

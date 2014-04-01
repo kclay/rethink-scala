@@ -21,9 +21,14 @@ object Delegate {
 class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection) {
 
 
-  def toQuery[R <: T](tt: Manifest[R]) = BlockingResultQuery[R](producer.underlyingTerm, connection, tt, producer.underlyingOptions)
+
+  private[this] def toQuery[R](tt: Manifest[R]) = BlockingResultQuery[R](producer.underlyingTerm, connection, tt, producer.underlyingOptions)
 
   def run(implicit mf: Manifest[T]) = toQuery(mf).toResult
+
+  def toDoc=toQuery[Document](Manifest.classType(classOf[Document])).toResult
+
+  def optDoc=toDoc.fold(x=>None,x=>Some(x))
 
 
   def as[R <: T](implicit mf: Manifest[R]) = toQuery(mf).toResult

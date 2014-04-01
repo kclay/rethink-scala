@@ -16,9 +16,11 @@ import com.rethinkscala.magnets.GroupFilterMagnet
 
 object Sequence {
   implicit def mapDocumentToSequence[T <: Document, ST, S[ST] <: Sequence[ST]] = CanMap[T, S[ST], ST]
+
+
 }
 
-trait Sequence[T] extends Multiply with Filterable[T] with Record {
+trait Sequence[T] extends Multiply with Filterable[T] with Record  {
 
 
   override val underlying = this
@@ -107,11 +109,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record {
 
   def count(f: Var => Binary) = Count(underlying, Some(FuncWrap(f)))
 
-  /*
 
-def groupedMapReduce(grouping: Predicate1, mapping: Predicate1,
-              reduction: Predicate2, base: Option[Datum] = None) = GroupMapReduce(underlying, grouping, mapping, reduction, base)
-    */
   def group[R](magnet: GroupFilterMagnet[R]): Group[R, T] = Group(underlying, magnet().map(FuncWrap(_)))
 
   ///
@@ -128,17 +126,15 @@ def groupedMapReduce(grouping: Predicate1, mapping: Predicate1,
   def ?(attr: Datum) = contains(attr)
 
   // add dummy implicit to allow methods for Ref
-  def pluck(attrs: String*)(implicit d: DummyImplicit) = Pluck(underlying, attrs)
 
-  def without(attrs: String*)(implicit d: DummyImplicit) = Without(underlying, attrs)
 
-  def pluck(m: Map[String, Any])(implicit d: DummyImplicit) = Pluck(underlying, m)
 
-  def merge(other: MakeObj) = Merge(underlying, other)
-
-  def +(other: MakeObj) = merge(other)
 
   def foreach(f: Var => Typed) = ForEach(underlying, f)
+
+  def max(field:String) = Max(underlying,field)
+
+  def max(f:Predicate1) = Max(underlying,f)
 
 }
 
