@@ -81,7 +81,7 @@ case class Desc(attr: String) extends Ordering {
 case class OrderBy[T](target: Sequence[T], values: Seq[Order], index: Option[Order] = None) extends ProduceSequence[T] {
 
 
-  override lazy val args = buildArgs((if(values.isEmpty) Seq(target) else values.+:(target)): _*)
+  override lazy val args = buildArgs( values.+:(target): _*)
 
   override lazy val optargs = buildOptArgs(Map("index"->index))
   def termType = TermType.ORDERBY

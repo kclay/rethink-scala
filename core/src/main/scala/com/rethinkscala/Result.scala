@@ -1,8 +1,11 @@
 package com.rethinkscala
 
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty}
-import com.rethinkscala.reflect.{RethinkTypeResolverBuilder, Reflector}
-import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
+import com.rethinkscala.reflect.{GroupResultDeserializer, RethinkTypeResolverBuilder, Reflector}
+import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonTypeResolver}
+import scala.collection.generic.CanBuildFrom
+import scala.collection.{IndexedSeqLike, SeqLike}
+import scala.collection.mutable.{ArrayBuffer,Builder}
 
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {
@@ -186,13 +189,54 @@ case class QueryProfile[T](value: T, profile: Profile)
 
 case class GroupMapReduceExtractor[T](reduction: T)
 
+object GroupResult {
 
-case class GroupResult[T](records:Seq[GroupResultRecord[T]]) extends Document
+  def apply[Base](bases: GroupResultRecord[Base]*) = fromSeq(bases)
 
+  def fromSeq[Base](buf: Seq[GroupResultRecord[Base]]): GroupResult[Base] = {
+    var array = new ArrayBuffer[GroupResultRecord[Base]](buf.size)
+    for (i <- 0 until buf.size) array += buf(i)
+    new GroupResult[Base](array)
+  }
+
+  def newBuilder[Base]: Builder[GroupResultRecord[Base], GroupResult[Base]] = new ArrayBuffer mapResult fromSeq
+
+
+  implicit def canBuildFrom[Base,From]: CanBuildFrom[GroupResult[_], GroupResultRecord[Base], GroupResult[Base]] =
+    new CanBuildFrom[GroupResult[_], GroupResultRecord[Base], GroupResult[Base]] {
+      def apply(): Builder[GroupResultRecord[Base], GroupResult[Base]] = newBuilder
+      def apply(from: GroupResult[_]): Builder[GroupResultRecord[Base], GroupResult[Base]] = newBuilder
+    }
+}
+
+
+@JsonDeserialize(using = classOf[GroupResultDeserializer])
+class GroupResult[Base] protected (buffer: ArrayBuffer[GroupResultRecord[Base]])
+  extends IndexedSeq[GroupResultRecord[Base]]
+          with IndexedSeqLike[GroupResultRecord[Base], GroupResult[Base]] with Document with HasGroupRecords   {
+
+  override protected[this] def newBuilder: Builder[GroupResultRecord[Base], GroupResult[Base]] =
+    GroupResult.newBuilder
+
+  def apply(idx: Int): GroupResultRecord[Base] = {
+    if (idx < 0 || length <= idx) throw new IndexOutOfBoundsException
+    buffer(idx)
+  }
+
+  def length = buffer.length
+
+}
+
+trait HasGroupRecords{
+
+
+}
 
 
 @JsonTypeResolver(value = classOf[RethinkTypeResolverBuilder])
 case class GroupResultRecord[R](group: R, values: Seq[Map[String, Any]]) extends Document
+
+
 
 
 

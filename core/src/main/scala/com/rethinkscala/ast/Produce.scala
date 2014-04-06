@@ -1,8 +1,10 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala.net._
-import com.rethinkscala.{ToAst, Term, Document, JoinResult}
+import com.rethinkscala._
 import com.rethinkscala.net.Connection
+import com.rethinkscala.JoinResult
+import com.rethinkscala.net.BlockingResultQuery
 
 
 /**
@@ -59,9 +61,7 @@ trait ProduceSingle[T] extends Produce[T] with Produce0[T]
 
 
 
-
-trait ProduceSequence[T] extends Sequence[T] with Produce0[T] with Produce[Seq[T]] with CanManipulate[SPluck,Merge,Without] {
-
+trait ProduceSequenceLike[T]  extends Sequence[T] with Produce0[T]    with CanManipulate[SPluck,Merge,Without]{
   type FieldProduce = ProduceArray[T]
 
 
@@ -91,8 +91,9 @@ trait ProduceSequence[T] extends Sequence[T] with Produce0[T] with Produce[Seq[T
 
   def merge(other: MakeObj) = Merge(underlying, other)
 
-
 }
+
+trait ProduceSequence[T]  extends ProduceSequenceLike[T]  with Produce[Seq[T]]
 
 trait ProduceAnySequence extends ProduceSequence[Any]
 
@@ -102,6 +103,8 @@ trait ProduceBinary extends Produce[Boolean] with Binary with Produce0[Boolean]
 
 //trait ProduceLiteral extends ProduceLiteral with Literal
 
+
+trait ProduceGroup[T] extends Produce[GroupResult[T]] with ProduceSequenceLike[GroupResult[T]]
 
 trait ProduceDocument[T <: Document] extends ProduceSingle[T] with Record with DocumentConversion[T] with CanManipulate[OPluck,Merge,Without] {
 

@@ -5,7 +5,7 @@ import java.util
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As
 import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.`type`.SimpleType
+import com.fasterxml.jackson.databind.`type`.{CollectionLikeType, CollectionType, SimpleType}
 import com.rethinkscala.{GroupResult, GroupResultRecord}
 
 /**
@@ -26,7 +26,7 @@ class RethinkTypeResolverBuilder extends StdTypeResolverBuilder{
     if (_idType == JsonTypeInfo.Id.NONE) { return null; }
 
     baseType match {
-      case st:SimpleType if(classGroupRecord.isAssignableFrom(st.getRawClass))=> GroupResultTypeDeserializer(baseType,null,_typeProperty,_typeIdVisible,_defaultImpl)
+      case ct:CollectionLikeType if(classGroupRecord.isAssignableFrom(ct.getRawClass))=> GroupResultTypeDeserializer(baseType,null,_typeProperty,_typeIdVisible,_defaultImpl)
       case _=> null
     }
 

@@ -41,7 +41,7 @@ case class Distinct[T](target: Sequence[T]) extends ProduceSequence[T] {
 }
 
 
-case class Group[R, T](target: Sequence[T], wrap: Seq[FuncWrap]) extends ProduceDocument[GroupResult[R]] {
+case class Group[R, T](target: Sequence[T], wrap: Seq[FuncWrap]) extends ProduceGroup[R] {
 
 
   override lazy val args = buildArgs(wrap.+:(target): _*)
@@ -75,7 +75,12 @@ case class Contains(target: Sequence[_], value: Seq[FuncWrap]) extends MethodQue
 }
 
 
-case class Max(target:Typed,fieldOrFunction:FuncWrap) extends MethodQuery with ProduceAny{
-
+case class Max(target:Typed,fieldOrFunction:Option[FuncWrap]=None) extends MethodQuery with ProduceAny{
+  override lazy val args = buildArgs(fieldOrFunction.map(Seq(target,_)).getOrElse(Seq(target)):_*)
   def termType = TermType.MAX
+}
+
+case class Min(target:Typed,fieldOrFunction:Option[FuncWrap]=None) extends MethodQuery with ProduceAny{
+  override lazy val args = buildArgs(fieldOrFunction.map(Seq(target,_)).getOrElse(Seq(target)):_*)
+  def termType = TermType.MIN
 }

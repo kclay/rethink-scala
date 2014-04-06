@@ -10,6 +10,7 @@ import com.rethinkscala.GroupResultRecord
 import com.rethinkscala.GroupResult
 import scala.collection.mutable.Builder
 import scala.collection.Seq
+import scala.util.Try
 
 
 /**
@@ -61,10 +62,13 @@ ReqlTypeDeserializer[GroupResult[_]] {
 
   override def resolve(token: JsonToken)(implicit ctx: DeserializationContext, jp: JsonParser): Any = {
 
+
     token match {
       case START_ARRAY => {
 
         val t1 = next
+
+
 
         var results:Option[Any] = None
 
@@ -94,23 +98,25 @@ ReqlTypeDeserializer[GroupResult[_]] {
     }
   }
 
-  val builder: Builder[_, Seq[_]] = Seq.newBuilder[GroupResultRecord[_]]
 
+
+  val builder= GroupResult.newBuilder[Any]
   def add[T](record: GroupResultRecord[T])(implicit jp: JsonParser) = {
 
-    val b = builder.asInstanceOf[Builder[GroupResultRecord[T], Seq[GroupResultRecord[T]]]]
-    b += record
-    if (next == END_ARRAY) Some(buildResult(b.result())) else None
+
   }
 
-  def buildResult[T](records: Seq[GroupResultRecord[T]]) = new GroupResult[T](records)
+
 
 
   def buildGroupRecord[T](groupValue: T)(implicit ctx: DeserializationContext, jp: JsonParser) = {
     next
     val reduction: ReductionType = ctx.readValue(jp, ctx.getTypeFactory.constructType(reductionType))
 
-    add(new GroupResultRecord[T](groupValue, reduction))
+    val b= builder.asInstanceOf[Builder[GroupResultRecord[T],GroupResult[T]]]
+    b += new GroupResultRecord[T](groupValue, reduction)
+    if (next == END_ARRAY) Some(b.result()) else None
+
   }
 
 }

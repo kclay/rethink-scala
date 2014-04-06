@@ -74,8 +74,12 @@ class AggregationTest extends FunSuite with WithBase {
 
     val seq = testSeq
     val check = {
-      g:GroupResult[String]=> g.records.size == 2 && g.records.head.group == "Alice" && g.records.head.values.head.get("id") == Some(5)
+      g:GroupResult[String]=> g.size == 2 && g.head.group == "Alice" && g.head.values.head.get("id") == Some(5)
     }
+
+
+   val s =Seq(GroupResultRecord[Int](1,Seq(Map.empty)))
+
     assert(seq.group("player"),check)
 
 
@@ -95,6 +99,13 @@ class AggregationTest extends FunSuite with WithBase {
 
 
 
+
+  }
+
+  test("ungroup"){
+    val seq = testSeq
+
+    seq.group("player").max("points")("points")
 
   }
 

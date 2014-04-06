@@ -61,36 +61,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record  {
 
   def outerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = OuterJoin[T, R](underlying, other, func)
 
-  //def map[R](func: Produce[R]) = RMap[R](underlying, FuncWrap(func))
 
-  // def map[R](func:MappingFunction[R]) = RMap[R](underlying,FuncWrap(func))
-  //def reduce[R](base: T, f: ReductionFunction[R]) = Reduce[T](underlying, f, Some(base))
-
-  //def reduce[R](f:ReductionFunction[R]) = Reduce[R](underlying, f, None)
-
-  //def map(func: Var => Typed) =
-
-  // def map(implicit ev: ToAst[T]) = ev.wrap(RMap[T](underlying, _))
-
-
-  // def reduce(base: T)(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, Some(base)))
-
-  // def reduce(implicit ev: ToAst[T]) = ev.apply2(Reduce[T](underlying, _, None))
-
-  //def reduce(f: (B, B) => B)(implicit ev: ToAst[T, B]) = ???
-
-
-  //def reduce0[A1](op: (A1, A1) => Typed)(implicit ev: To[T, A1]) = ???
-
-  /*def reduce(base: Option[Any] = None)(i):
-
-  def reduce(op: (ev.TypeMember, ev.TypeMember) => Typed, base: Option[Any] = None): Reduce[T] = Reduce[T](underlying, op, base)*/
-
-
-  //Reduce(underlying, toPredicate2(op), base)
-
-
-  //def concatMap(func: Predicate1) = ConcatMap(underlying, FuncWrap(func))
 
 
   def orderByIndex(index: String): OrderBy[T] = orderByIndex(index: Order)
@@ -132,9 +103,15 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record  {
 
   def foreach(f: Var => Typed) = ForEach(underlying, f)
 
-  def max(field:String) = Max(underlying,field)
+  def max()=Max(underlying)
+  def max(field:String) = Max(underlying,Some(field))
 
-  def max(f:Predicate1) = Max(underlying,f)
+  def max(f:Predicate1) = Max(underlying,Some(f))
+
+  def min()=Max(underlying)
+  def min(field:String) = Min(underlying,Some(field))
+
+  def min(f:Predicate1) = Min(underlying,Some(f))
 
 }
 

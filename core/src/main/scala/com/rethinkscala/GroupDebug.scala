@@ -47,6 +47,8 @@ object GroupDebug {
 
 
 
+
+
     System.out.println(results.fold(e=>e.getCause,x=>x))
     System.exit(0)
 
