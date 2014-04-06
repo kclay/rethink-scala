@@ -12,7 +12,7 @@ import com.rethinkscala.GroupResult
   * @param f
   *
   */
-case class Reduce[T](target: Sequence[T], f: Predicate2) extends Produce[T] {
+case class Reduce[T](target: Aggregation[T], f: Predicate2) extends Produce[T] {
 
   override lazy val args = buildArgs(target, f())
 
@@ -26,7 +26,7 @@ case class Reduce[T](target: Sequence[T], f: Predicate2) extends Produce[T] {
   * If the argument is a function, it is equivalent to calling filter before count.
   * @param target
   */
-case class Count(target: Sequence[_], wrap: Option[FuncWrap] = None) extends ProduceNumeric {
+case class Count(target: Aggregation[_], wrap: Option[FuncWrap] = None) extends ProduceNumeric {
 
   override lazy val args = buildArgs((wrap.map(Seq(target, _)).getOrElse(Seq(target))): _*)
 
@@ -41,7 +41,7 @@ case class Distinct[T](target: Sequence[T]) extends ProduceSequence[T] {
 }
 
 
-case class Group[R, T](target: Sequence[T], wrap: Seq[FuncWrap]) extends ProduceGroup[R] {
+case class Group[R, T](target: Aggregation[T], wrap: Seq[FuncWrap]) extends ProduceGroup[R] {
 
 
   override lazy val args = buildArgs(wrap.+:(target): _*)
@@ -75,16 +75,28 @@ case class Contains(target: Sequence[_], value: Seq[FuncWrap]) extends MethodQue
 }
 
 
-case class Max[T](target:Sequence[T],fieldOrFunction:Option[FuncWrap]=None) extends MethodQuery with ProduceSingle[T]{
+trait MethodAggregation[T]  extends MethodQuery{
+  val target:Aggregation[T]
+  val fieldOrFunction:Option[FuncWrap]
+
   override lazy val args = buildArgs(fieldOrFunction.map(Seq(target,_)).getOrElse(Seq(target)):_*)
+}
+
+case class Max[T](target:Aggregation[T],fieldOrFunction:Option[FuncWrap]=None) extends  MethodAggregation[T] with ProduceSingle[T]{
+
   def termType = TermType.MAX
 }
 
-case class Min[T](target:Sequence[T],fieldOrFunction:Option[FuncWrap]=None) extends MethodQuery with ProduceSingle[T]{
-  override lazy val args = buildArgs(fieldOrFunction.map(Seq(target,_)).getOrElse(Seq(target)):_*)
+case class Min[T](target:Aggregation[T],fieldOrFunction:Option[FuncWrap]=None) extends MethodAggregation[T] with ProduceSingle[T]{
+
   def termType = TermType.MIN
 }
-case class Sum[T](target:Sequence[T],fieldOrFunction:Option[FuncWrap] = None) extends MethodQuery with ProduceNumeric{
-  override lazy val args = buildArgs(fieldOrFunction.map(Seq(target,_)).getOrElse(Seq(target)):_*)
+case class Sum[T](target:Aggregation[T],fieldOrFunction:Option[FuncWrap] = None) extends MethodAggregation[T] with ProduceNumeric{
+
   def termType = TermType.SUM
+}
+
+case class Avg[T](target:Aggregation[T],fieldOrFunction:Option[FuncWrap] = None) extends MethodAggregation[T] with ProduceNumeric{
+
+  def termType = TermType.AVG
 }

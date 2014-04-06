@@ -3,7 +3,6 @@ package com.rethinkscala.ast
 import com.rethinkscala._
 import com.rethinkscala.BoundOptions
 import scala.Some
-import com.rethinkscala.japi.ReductionFunction
 import com.rethinkscala.magnets.GroupFilterMagnet
 
 /**
@@ -20,7 +19,63 @@ object Sequence {
 
 }
 
-trait Sequence[T] extends Multiply with Filterable[T] with Record  {
+trait Aggregation[T] {
+
+
+  val underlying = this
+
+  def count() = Count(underlying)
+
+  def count(value: String): Count = count(value: Datum)
+
+  def count(value: Double): Count = count(value: Datum)
+
+  def count(value: Boolean): Count = count(value: Datum)
+
+  def count(value: Datum) = Count(underlying, value)
+
+  def count(f: Var => Binary) = Count(underlying, f)
+
+  def count(f: japi.BooleanPredicate) = Count(underlying, f)
+
+  def sum() = Sum(underlying)
+
+  def sum(value: String) = Sum(underlying, value)
+
+  def sum(f: Var => Numeric) = Sum(underlying, f)
+
+  def sum(f: japi.NumericPredicate) = Sum(underlying, f)
+
+
+  def group[R](magnet: GroupFilterMagnet[R]): Group[R, T] = Group[R, T](underlying, magnet().map(FuncWrap(_)))
+
+  def max() = Max(underlying)
+
+  def max(field: String) = Max(underlying, field)
+
+  def max(f: Var => Typed) = Max(underlying, f)
+
+  def max(f: japi.Predicate) = Max(underlying, f)
+
+  def min() = Max(underlying)
+
+  def min(field: String) = Min(underlying, field)
+
+  def min(f: japi.Predicate) = Min(underlying, f)
+
+  def min(f: Var => Typed) = Min(underlying, f)
+
+  def avg() = Avg(underlying)
+
+  def avg(field: String) = Avg(underlying, field)
+
+  def avg(f: japi.NumericPredicate) = Avg(underlying, f)
+
+  def avg(f: Var => Numeric) = Avg(underlying, f)
+
+}
+
+trait Sequence[T] extends Multiply with Filterable[T] with Record with Aggregation[T] {
 
 
   override val underlying = this
@@ -62,8 +117,6 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record  {
   def outerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = OuterJoin[T, R](underlying, other, func)
 
 
-
-
   def orderByIndex(index: String): OrderBy[T] = orderByIndex(index: Order)
 
   def orderByIndex(index: Order): OrderBy[T] = OrderBy[T](underlying, Seq(), Some(index))
@@ -73,32 +126,10 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record  {
   def withFields(keys: Any*) = WithFields(underlying, keys)
 
 
-
-  def count() = Count(underlying)
-
-  def count(value:String):Count = count(value:Datum)
-  def count(value:Double):Count = count(value:Datum)
-  def count(value:Boolean):Count = count(value:Datum)
-
-  def count(value: Datum) = Count(underlying, Some(FuncWrap(value)))
-
-  def count(f:Var=> Binary ) = Count(underlying, Some(FuncWrap(f)))
-
-  def count(f:japi.BooleanPredicate) = Count(underlying,Some(FuncWrap(f)))
-
-  def sum() = Sum(underlying)
-  def sum(value:String)  = Sum(underlying,Some(FuncWrap(value)))
-  def sum(f:Var=> Numeric) = Sum(underlying,Some(FuncWrap(f)))
-
-
-
-
-  def group[R](magnet: GroupFilterMagnet[R]): Group[R, T] = Group(underlying, magnet().map(FuncWrap(_)))
-
   ///
 
 
- // def groupBy(method: AggregateByMethod, attrs: String*) = GroupBy(underlying, method, attrs)
+  // def groupBy(method: AggregateByMethod, attrs: String*) = GroupBy(underlying, method, attrs)
 
   def distinct = Distinct(underlying)
 
@@ -111,19 +142,8 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record  {
   // add dummy implicit to allow methods for Ref
 
 
-
-
   def foreach(f: Var => Typed) = ForEach(underlying, f)
 
-  def max()=Max(underlying)
-  def max(field:String) = Max(underlying,Some(field))
-
-  def max(f:Predicate1) = Max(underlying,Some(f))
-
-  def min()=Max(underlying)
-  def min(field:String) = Min(underlying,Some(field))
-
-  def min(f:Predicate1) = Min(underlying,Some(f))
 
 }
 

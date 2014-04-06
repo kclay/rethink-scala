@@ -65,6 +65,9 @@ private[rethinkscala] trait ImplicitConversions {
 
 
 
+  @inline
+  implicit def toOptionFuncWrap(v:Any):Option[FuncWrap] = Some(FuncWrap(v))
+  @inline
   implicit def toFuncWrap(v:Any):FuncWrap = FuncWrap(v)
 
   //implicit def toTyped[T<:Typed](v:T):Typed = v

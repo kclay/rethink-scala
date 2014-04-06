@@ -121,7 +121,10 @@ class AggregationTest extends FunSuite with WithBase {
 
    assert(res,{
     p:Int=> p == 15
+
    })
+
+    assert(testSeq.max(x=> x("points")).as[Int]("points").toOpt == Some(15))
   }
 
 
@@ -135,6 +138,12 @@ class AggregationTest extends FunSuite with WithBase {
 
     assert(testSeq.sum(v=> v("id") + v("points")).toOpt ==  Some(64))
 
+  }
+  test("avg"){
+
+    assert((1 to 10 by 1).avg.toOpt == Some(5.5))
+    assert( testSeq.avg("points").toOpt == Some(8.5))
+    assert(testSeq.avg(v=> v \ "points" + v\"id").toOpt == Some(16))
   }
   test("contains") {
 

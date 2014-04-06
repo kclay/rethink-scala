@@ -157,6 +157,12 @@ trait BooleanPredicate extends SBooleanPredicate1 with Function[Var, Binary] {
 
 }
 
+trait NumericPredicate extends SPredicate1 with Function[Var,Numeric]{
+  protected def _invoke(vars: Seq[Var]) = apply(vars(0))
+
+  val amount: Int = 1
+}
+
 
 trait BooleanPredicate2 extends SBooleanPredicate2 with Function2[Var, Var, Binary] {
   protected def _invoke(vars: Seq[Var]) = apply(vars(0), vars(1))
