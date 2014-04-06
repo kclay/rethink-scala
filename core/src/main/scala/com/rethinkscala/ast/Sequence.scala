@@ -72,13 +72,19 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record  {
 
   def withFields(keys: Any*) = WithFields(underlying, keys)
 
-  def size = count
 
-  def count = Count(underlying)
+
+  def count() = Count(underlying)
+
+  def count(value:String):Count = count(value:Datum)
+  def count(value:Double):Count = count(value:Datum)
+  def count(value:Boolean):Count = count(value:Datum)
 
   def count(value: Datum) = Count(underlying, Some(FuncWrap(value)))
 
-  def count(f: Var => Binary) = Count(underlying, Some(FuncWrap(f)))
+  def count(f:Var=> Binary ) = Count(underlying, Some(FuncWrap(f)))
+
+
 
 
   def group[R](magnet: GroupFilterMagnet[R]): Group[R, T] = Group(underlying, magnet().map(FuncWrap(_)))

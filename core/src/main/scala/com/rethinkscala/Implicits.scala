@@ -80,6 +80,8 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def string2DatNum(s: String): Strings = StringDatum(s)
 
+  implicit def boolean2Datum(b:Boolean) =  BooleanDatum(b)
+
 
   implicit def intToDatNum0(i: Int): Datum = NumberDatum(i)
 
