@@ -84,6 +84,12 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record  {
 
   def count(f:Var=> Binary ) = Count(underlying, Some(FuncWrap(f)))
 
+  def count(f:japi.BooleanPredicate) = Count(underlying,Some(FuncWrap(f)))
+
+  def sum() = Sum(underlying)
+  def sum(value:String)  = Sum(underlying,Some(FuncWrap(value)))
+  def sum(f:Var=> Numeric) = Sum(underlying,Some(FuncWrap(f)))
+
 
 
 

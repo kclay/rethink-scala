@@ -112,7 +112,7 @@ private[rethinkscala] trait ImplicitConversions {
   implicit def untypedPredicateToTyped(f: Var => Map[String, Any]): Predicate1 = (v: Var) => Expr(f(v))
 
 
-  implicit def toBooleanPredicate1(f: (Var) => Binary) = new ScalaBooleanPredicate1(f)
+  implicit def toBooleanPredicate1(f: Var => Binary) = new ScalaBooleanPredicate1(f)
 
 
   implicit def toBooleanPredicate2(f: (Var, Var) => Binary) = new ScalaBooleanPredicate2(f)

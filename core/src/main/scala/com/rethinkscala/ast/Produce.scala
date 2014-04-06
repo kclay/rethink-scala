@@ -56,7 +56,13 @@ trait Produce[ResultType] extends Query {
 }
 
 sealed trait Produce0[T] extends Typed
-trait ProduceSingle[T] extends Produce[T] with Produce0[T]
+trait ProduceSingle[T] extends Produce[T] with Produce0[T]{
+  type FieldProduce = ProduceAny
+
+  def apply(name:String) = field(name)
+  def field(name: String): ProduceAny = GetField(this, name)
+  def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
+}
 
 
 
@@ -108,14 +114,13 @@ trait ProduceGroup[T] extends Produce[GroupResult[T]] with ProduceSequenceLike[G
 
 trait ProduceDocument[T <: Document] extends ProduceSingle[T] with Record with DocumentConversion[T] with CanManipulate[OPluck,Merge,Without] {
 
-  type FieldProduce = ProduceAny
 
-  def field(name: String): ProduceAny = GetField(this, name)
 
 
 
   override def merge(other: Map[String, Any]) = Merge(underlying,other)
 
+  override def apply(name: String)= field(name)
 
   // TODO : Fix this
   override def merge(other: CM) = Merge(underlying.asInstanceOf[CM],other)
@@ -191,7 +196,8 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] {
 
   override def \(name: String): ProduceAny = field(name)
 
- def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
+
+  def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
  def asArray[T](name:String)=field(name).array[T]
   def field(name: String) = GetField(this.asInstanceOf[Typed], name)
 }

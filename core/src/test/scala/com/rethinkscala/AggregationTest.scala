@@ -90,7 +90,8 @@ class AggregationTest extends FunSuite with WithBase {
   test("ungroup"){
     val seq = testSeq
 
-    seq.group("player").max("points")("points")
+    val m = seq.group("player").max("points")
+
 
   }
 
@@ -98,7 +99,7 @@ class AggregationTest extends FunSuite with WithBase {
 
     assert(testSeq.count().toOpt == Some(4))
     assert(testSeq("points").count(15).toOpt == Some(1))
-    assert(testSeq("points").count((p:Var)=>p >=10 ).toOpt == Some(2))
+    assert(testSeq("points").count(p=>p >=10 ).toOpt == Some(2))
     assert(testSeq.count((p:Var)=> p("points") >=10).toOpt == Some(2))
     val seq = Expr(Seq(1, 2, 3, 3, 3, 4, 5, 6, 7))
 
@@ -123,6 +124,18 @@ class AggregationTest extends FunSuite with WithBase {
    })
   }
 
+
+  test("sum"){
+    val seq = 1 to 10 by 1
+    val sum = seq.sum
+
+    assert(Expr(seq).sum().toOpt == Some(sum))
+
+    assert(testSeq.sum("points").toOpt == Some(34))
+
+    assert(testSeq.sum(v=> v("id") + v("points")).toOpt ==  Some(64))
+
+  }
   test("contains") {
 
     assert(Expr(1 to 10 by 1) contains 5)

@@ -75,12 +75,16 @@ case class Contains(target: Sequence[_], value: Seq[FuncWrap]) extends MethodQue
 }
 
 
-case class Max(target:Typed,fieldOrFunction:Option[FuncWrap]=None) extends MethodQuery with ProduceAny{
+case class Max[T](target:Sequence[T],fieldOrFunction:Option[FuncWrap]=None) extends MethodQuery with ProduceSingle[T]{
   override lazy val args = buildArgs(fieldOrFunction.map(Seq(target,_)).getOrElse(Seq(target)):_*)
   def termType = TermType.MAX
 }
 
-case class Min(target:Typed,fieldOrFunction:Option[FuncWrap]=None) extends MethodQuery with ProduceAny{
+case class Min[T](target:Sequence[T],fieldOrFunction:Option[FuncWrap]=None) extends MethodQuery with ProduceSingle[T]{
   override lazy val args = buildArgs(fieldOrFunction.map(Seq(target,_)).getOrElse(Seq(target)):_*)
   def termType = TermType.MIN
+}
+case class Sum[T](target:Sequence[T],fieldOrFunction:Option[FuncWrap] = None) extends MethodQuery with ProduceNumeric{
+  override lazy val args = buildArgs(fieldOrFunction.map(Seq(target,_)).getOrElse(Seq(target)):_*)
+  def termType = TermType.SUM
 }

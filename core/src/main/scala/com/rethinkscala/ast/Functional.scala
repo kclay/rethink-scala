@@ -69,6 +69,10 @@ case class Func(f: Predicate) extends Term {
 }
 
 
+
+
+
+
 trait Predicate1 extends Predicate
 
 

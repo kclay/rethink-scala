@@ -1,7 +1,6 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala._
-import com.rethinkscala.ast.Merge
 
 
 sealed trait DataType {
@@ -26,7 +25,6 @@ trait CanManipulate[P<:Pluck,M<:Merge,W<:Without] extends Typed{
 
   def merge(other: Map[String, Any]):M
 
-  def +(other: CM) = merge(other)
 }
 case object ObjectData extends DataType {
   def name = "object"
@@ -62,6 +60,11 @@ trait Ref extends ArrayTyped[Any] with Numeric with Binary with Record with Lite
   //override def add(other: Addition): Add = AnyAdd(underlying, other)
 
   def add(other: Ref): Add = AnyAdd(underlying, other)
+  override def +(other: Numeric) = add(other)
+
+  override def +=(other: Numeric) = add(other)
+
+
 
 
 
