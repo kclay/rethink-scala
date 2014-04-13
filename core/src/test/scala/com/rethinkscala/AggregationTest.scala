@@ -5,7 +5,7 @@ import org.scalatest.FunSuite
 import Blocking._
 import com.rethinkscala.magnets._
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.magnets.FieldFilterReceptacle
+import com.rethinkscala.magnets.FieldReceptacle
 
 
 /**
@@ -40,18 +40,7 @@ class AggregationTest extends FunSuite with WithBase {
 
   }
 
-  lazy val testSeq={
 
-    val json = """[
-                 |    {"id": 2, "player": "Bob", "points": 15, "type": "ranked"},
-                 |    {"id": 5, "player": "Alice", "points": 7, "type": "free"},
-                 |    {"id": 11, "player": "Bob", "points": 10, "type": "free"},
-                 |    {"id": 12, "player": "Alice", "points": 2, "type": "free"}
-                 |]""".stripMargin
-
-    Expr(Reflector.fromJson[Seq[Map[String, Any]]](json))
-
-  }
 
   test("group") {
 
@@ -149,7 +138,11 @@ class AggregationTest extends FunSuite with WithBase {
 
     assert(Expr(1 to 10 by 1) contains 5)
 
-    assert(Expr(1 to 10 by 1) contains ((x: Var) => x > 5))
+    assert(Expr(1 to 10 by 1) contains (x=> x > 5))
+
+    assert(Expr('a' to 'd') contains "b")
+
+
   }
 
 }

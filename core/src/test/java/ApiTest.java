@@ -13,6 +13,10 @@ import com.rethinkscala.japi.r;
 import com.rethinkscala.net.Version;
 import com.rethinkscala.net.Version2;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class ApiTest {
 
@@ -26,6 +30,11 @@ public class ApiTest {
         Result<String> result = connection.run(r.expr("hello").add(r.expr("b")));
 
 
+
+        Map<String,Object> hm = new HashMap<String,Object>();
+        hm.put("foo",1);
+        hm.put("bar",1);
+      //  r.expr(Arrays.asList(hm)).pluck(Arrays.asList("a","b"));
           /*
           BooleanFunction f = new BooleanFunction(){
 

@@ -22,6 +22,8 @@ trait ArrayTyped[T] extends Sequence[T] with Array[T] {
 
   def append(value: Datum) = Append(underlying, value)
 
+  //def append(value:T) = Append(underlying,value)
+
   def :+(value: Datum) = append(value)
 
   def prepend(value: Datum) = Prepend(underlying, value)

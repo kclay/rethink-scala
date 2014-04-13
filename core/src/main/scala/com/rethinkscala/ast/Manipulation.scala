@@ -69,9 +69,9 @@ abstract class Pluck extends Term {
 object Pluck {
 
 
-  def apply(target: Sequence[_], attrs: Seq[String]) = SPluck(target, Left(attrs))
+  def apply[T](target: Sequence[T], attrs: Seq[String]) = SPluck(target, Left(attrs))
 
-  def apply(target: Sequence[_], m: Map[String, Any]) = SPluck(target, Right(m))
+  def apply[T](target: Sequence[T], m: Map[String, Any]) = SPluck(target, Right(m))
 
 
   def apply(target: Record, attrs: Seq[String]) = OPluck(target, Left(attrs))
@@ -84,15 +84,15 @@ object Pluck {
   * @param target
   * @param data
   */
-case class SPluck(target: Sequence[_], data: Either[Seq[String], Map[String, Any]]) extends Pluck
-with ProduceAnySequence
+case class SPluck[T](target: Sequence[T], data: Either[Seq[String], Map[String, Any]]) extends Pluck
+with ProduceSequence[Map[String,Any]]
 
 /** Plucks out one or more attributes from either an object or a sequence of objects (projection).
   * @param target
   * @param data
   */
-case class OPluck(target: Record, data: Either[Seq[String], Map[String, Any]]) extends Pluck
-with ProduceAnyDocument
+case class OPluck[T](target: Record, data: Either[Seq[String], Map[String, Any]]) extends Pluck
+with ProduceSingle[T]
 
 abstract class Without(target: Typed, attributes: Seq[String]) extends Term {
 
@@ -103,7 +103,7 @@ abstract class Without(target: Typed, attributes: Seq[String]) extends Term {
 
 object Without {
 
-  def apply(target: Sequence[_], attrs: Seq[String]) = new Without(target, attrs) with ProduceAnySequence
+  def apply(target: Sequence[_], attrs: Seq[String]) = new Without(target, attrs) with ProduceSequence[Map[String,Any]]
 
   def apply(target: Record, attrs: Seq[String]) = new Without(target, attrs) with ProduceAnyDocument
 }

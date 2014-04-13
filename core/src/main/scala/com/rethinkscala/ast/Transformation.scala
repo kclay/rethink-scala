@@ -150,7 +150,7 @@ case class IndexesOf[T](target: Sequence[T], filter: FuncWrap) extends ProduceSe
   def termType = TermType.INDEXES_OF
 }
 
-case class Nth[T](target: Sequence[T], index: Int) extends Produce[T] {
+case class Nth[T](target: Sequence[T], index: Int) extends ProduceSingleSelection[T] {
   def termType = TermType.NTH
 }
 

@@ -35,7 +35,7 @@ case class DocPath(root: Map[String, Any], paths: List[String]) {
 
 private[rethinkscala] class BasicDocument extends Document
 
-trait Document {
+trait Document  {
 
 
   @JsonIgnore

@@ -1,15 +1,18 @@
 package com.rethinkscala.magnets
 
 import com.rethinkscala.FilterTyped
+import com.rethinkscala.Var
 
 
+
+trait GroupFilterImplicits{
+
+
+}
 object GroupFilterMagnet {
 
-
-
-
   implicit def magnetGF(value:String):GroupFilterMagnet[String] = new GroupFilterMagnet[String]{
-    val fr = new FieldFilterReceptacle[String](value)
+    val fr = new FieldReceptacle[String](value)
     override def apply() = Seq(fr.apply)
   }
 
@@ -33,8 +36,8 @@ object GroupFilterMagnet {
 }
 
 sealed trait GroupFilterMagnet[T] {
-  type Result
 
 
-  def apply(): Seq[FilterTyped]
+
+  def apply(): Seq[Any]
 }

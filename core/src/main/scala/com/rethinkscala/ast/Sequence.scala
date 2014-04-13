@@ -73,6 +73,22 @@ trait Aggregation[T] {
 
   def avg(f: Var => Numeric) = Avg(underlying, f)
 
+
+  def distinct = Distinct(underlying)
+
+  //def contains(attrs: Datum*) = Contains(underlying, attrs)
+  def contains(field:String,fields:String*) = Contains(underlying,fields.+:(field).map(FuncWrap(_)))
+  def contains(field:Double,fields:Double*) = Contains(underlying,fields.+:(field).map(FuncWrap(_)))
+  def contains(fields:Datum*) = Contains(underlying,fields.map(FuncWrap(_)))
+
+
+  def contains(f:japi.BooleanPredicate) = Contains(underlying,Seq(f))
+
+  //def contains[R >: FilterTyped](attrs: R*)(implicit d:DummyImplicit) = Contains(underlying, attrs.map(FuncWrap(_)))
+  def contains(f: Var=>Binary) = Contains(underlying, Seq(f))
+
+  def ?(attr: Datum) = contains(attr)
+
 }
 
 trait Sequence[T] extends Multiply with Filterable[T] with Record with Aggregation[T] {
@@ -82,6 +98,8 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record with Aggregati
 
 
   def indexesOf[R >: Datum](value: R) = IndexesOf(underlying, value)
+
+
 
   //def indexesOf(value: Binary): IndexesOf = indexesOf((x: Var) => value)
 
@@ -131,13 +149,6 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record with Aggregati
 
   // def groupBy(method: AggregateByMethod, attrs: String*) = GroupBy(underlying, method, attrs)
 
-  def distinct = Distinct(underlying)
-
-  //def contains(attrs: Datum*) = Contains(underlying, attrs)
-
-  def contains[R >: FilterTyped](attrs: R*) = Contains(underlying, attrs.map(FuncWrap(_)))
-
-  def ?(attr: Datum) = contains(attr)
 
   // add dummy implicit to allow methods for Ref
 
@@ -150,9 +161,12 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record with Aggregati
 
 trait Stream[T] extends Sequence[T]
 
-trait Selection[T] extends Sequence[T] {
 
-  override val underlying = this
+
+trait Selection[T] extends Typed{
+
+
+   override   val underlying = this
 
 
   def update(attributes: Map[String, Any]): Update[T] = update(attributes, UpdateOptions())
@@ -200,7 +214,9 @@ trait StreamSelection[T] extends Selection[T] with Stream[T] {
 
 }
 
-trait SingleSelection[T] extends Selection[T]
+trait SingleSelection[T] extends Selection[T]{
+  def merge(value:Any) =  new Merge(underlying.asInstanceOf[Typed], Expr(value).asInstanceOf[Typed]) with ProduceAnyDocument
+}
 
 
 trait Filterable[T] extends Typed {

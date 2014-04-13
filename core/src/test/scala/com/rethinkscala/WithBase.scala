@@ -5,6 +5,8 @@ import org.scalatest.{ShouldMatchers, BeforeAndAfterAll, FunSuite}
 import org.scalatest.exceptions.TestFailedException
 import com.rethinkscala.ast.Produce
 import ql2.{Ql2 => ql2}
+import com.rethinkscala._
+import com.rethinkscala.reflect.Reflector
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -18,6 +20,8 @@ import com.rethinkscala.net._
 import com.rethinkscala.ast.Table
 
 
+case class Player(id:Int,player:String,points:Int,`type`:String) extends Document
+
 trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   self: FunSuite =>
 
@@ -30,6 +34,18 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   val version1 = new Version1(host, port)
   val version2 = new Version2(host, port, authKey = authKey)
 
+  lazy val testSeq={
+
+    val json = """[
+                 |    {"id": 2, "player": "Bob", "points": 15, "type": "ranked"},
+                 |    {"id": 5, "player": "Alice", "points": 7, "type": "free"},
+                 |    {"id": 11, "player": "Bob", "points": 10, "type": "free"},
+                 |    {"id": 12, "player": "Alice", "points": 2, "type": "free"}
+                 |]""".stripMargin
+
+    Expr(Reflector.fromJson[Seq[Map[String, Any]]](json))
+
+  }
 
   type TableType = Document
   def useVersion = version2

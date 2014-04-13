@@ -7,6 +7,7 @@ import com.rethinkscala.ast.Produce
 import scala.concurrent.duration.Duration
 import com.rethinkscala.Delegate
 import java.lang.reflect.ParameterizedType
+import java.util.{Map => JMap, List => JList}
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,6 +20,12 @@ case class Connection(version: Version, timeoutInMilliseconds: Long = 5000) {
 
 
   private[this] val underlying = BlockingConnection(version, Duration(timeoutInMilliseconds / 1000, "seconds"))
+
+  type JavaMap[V] = JMap[String, V]
+  type JavaSeq[E] = JList[E]
+
+
+
 
   def run[T <: AnyRef](producer: Produce[T]): Result[T] = {
     val clazz = {

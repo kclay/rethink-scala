@@ -36,7 +36,7 @@ case class Count(target: Aggregation[_], wrap: Option[FuncWrap] = None) extends 
 /** Remove duplicate elements from the sequence.
   * @param target
   */
-case class Distinct[T](target: Sequence[T]) extends ProduceSequence[T] {
+case class Distinct[T](target: Aggregation[T]) extends ProduceSequence[T] {
   def termType = TermType.DISTINCT
 }
 
@@ -68,7 +68,7 @@ case class GroupBy[T](target: Sequence[T], method: AggregateByMethod, attrs: Seq
   * @param target
   * @param value
   */
-case class Contains(target: Sequence[_], value: Seq[FuncWrap]) extends MethodQuery with ProduceBinary {
+case class Contains[T](target: Aggregation[T], value: Seq[FuncWrap]) extends MethodQuery with ProduceBinary {
   override lazy val args = buildArgs(value.+:(target): _*)
 
   def termType = TermType.CONTAINS

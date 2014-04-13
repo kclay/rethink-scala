@@ -3,7 +3,7 @@ package com
 import com.rethinkscala.ast._
 import com.rethinkscala.net._
 import scala.concurrent.Future
-import com.rethinkscala.magnets.ToNameReceptaclePimps
+import com.rethinkscala.magnets.ReceptacleImplicits
 
 
 /** Created by IntelliJ IDEA.
@@ -11,7 +11,9 @@ import com.rethinkscala.magnets.ToNameReceptaclePimps
   * Date: 3/19/13
   * Time: 7:32 PM
   */
-package object rethinkscala extends ImplicitConversions with ToNameReceptaclePimps {
+package object rethinkscala extends ImplicitConversions with ReceptacleImplicits {
+
+
 
 
   private[rethinkscala] trait FilterTyped

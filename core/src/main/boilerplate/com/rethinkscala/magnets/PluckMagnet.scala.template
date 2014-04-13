@@ -1,0 +1,40 @@
+package com.rethinkscala.magnets
+
+import com.rethinkscala.FilterTyped
+
+
+object PluckMagnet {
+
+
+
+
+  implicit def magnetPluck(value:String):PluckMagnet[String] = new PluckMagnet[String]{
+    val fr = new FieldReceptacle[String](value)
+    override def apply() = Seq(fr.name)
+  }
+
+  implicit def magnetPluck[T,F <% FieldReceptacle[T]](fr:F):PluckMagnet[T] = new PluckMagnet[T]{
+                                                                                                       override def apply() = Seq(fr.name)
+                                                                                               }
+
+
+
+    [#implicit def magnetPluck[[#T1, F1 <% FieldReceptacle[T1]#]](tuple: Tuple1[[#F1#]]): PluckMagnet[([#T1#])] = {
+      val input:Tuple1[[#FieldReceptacle[T1]#]] = Tuple1([#tuple._1#])
+
+       new PluckMagnet[([#T1#])]{
+                override def apply() = Seq([#input._1.name#])
+        }
+    }#
+    ]
+
+
+
+}
+
+sealed trait PluckMagnet[T] {
+
+
+
+  def apply(): Seq[String]
+}

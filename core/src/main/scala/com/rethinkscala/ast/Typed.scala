@@ -14,7 +14,7 @@ trait CanManipulate[P<:Pluck,M<:Merge,W<:Without] extends Typed{
 
   type CM = CanManipulate[P,M,W]
 
-  def pluck(attrs: String*):P
+  //def pluck(attrs: String*):P
 
   def pluck(m: Map[String, Any]):P
 
