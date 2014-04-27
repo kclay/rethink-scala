@@ -44,7 +44,7 @@ class ManipulateTest extends FunSuite with WithBase{
 
 
    assert(f.mapTo[Player].run,{
-      p:Player=> p.id == 2
+      p:Player=> p.id == 5
     })
 
   }

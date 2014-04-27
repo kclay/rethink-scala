@@ -43,7 +43,7 @@ import com.rethinkscala.ast.DB
 
 abstract class Token {
   type ResultType
-  val query: ql2.Query
+  val query: CompiledQuery
   val term: Term
 
   def handle(response: Response)
@@ -53,7 +53,7 @@ abstract class Token {
 }
 
 
-case class QueryToken[R](connection: Connection, query: ql2.Query, term: Term, p: Promise[R], mf: Manifest[R]) extends Token with LazyLogging {
+case class QueryToken[R](connection: Connection, query:CompiledQuery, term: Term, p: Promise[R], mf: Manifest[R]) extends Token with LazyLogging {
 
 
   implicit val t = mf
@@ -187,6 +187,7 @@ private class RethinkDBEncoder extends OneToOneEncoder {
         b.writeInt(v.getNumber)
         b
       }
+      case q:CompiledQuery=> q.encode
       case s: String =>
         val b = buffer(ByteOrder.LITTLE_ENDIAN, s.length + 4)
         b.writeInt(s.length)
@@ -336,7 +337,7 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
         c.cf.addListener(new ChannelFutureListener {
           def operationComplete(future: ChannelFuture) {
 
-            val query = toQuery(term, c.token.getAndIncrement, defaultDB, opts)
+            val query = version.toQuery(term, c.token.getAndIncrement, defaultDB, opts)
 
 
             val token = QueryToken[T](con, query, term, p, mf)
