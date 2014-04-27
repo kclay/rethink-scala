@@ -7,19 +7,15 @@ import org.jboss.netty.buffer.ChannelBuffer
 import java.util.concurrent.{Executors, TimeUnit}
 import java.io.IOException
 import java.nio.charset.Charset
+import ql2.{Ql2 => ql2}
 import scala.concurrent.ExecutionContext
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scala.beans.BeanProperty
-import com.rethinkscala.Term
-import com.rethinkscala.ast.{WithDB, DB}
+import com.rethinkscala.{DatumAssocPair, TermAssocPair, Term}
+import com.rethinkscala.ast.{Datum, WithDB, DB}
 import org.jboss.netty.buffer.ChannelBuffers._
-import com.rethinkscala.ast.DB
-import scala.Some
-import com.rethinkscala.net.RethinkDriverError
 import java.nio.ByteOrder
-import com.rethinkscala.ast.DB
 import scala.Some
-import com.rethinkscala.net.RethinkDriverError
 
 
 /**
@@ -30,25 +26,32 @@ import com.rethinkscala.net.RethinkDriverError
  *
  */
 
-trait CompiledQuery{
+trait CompiledAst
 
-  protected final def newBuffer(size:Int) = buffer(ByteOrder.LITTLE_ENDIAN,size)
+case class ProtoBufCompiledAst(underlying: ql2.Term) extends CompiledAst
+
+trait CompiledQuery {
+
+  protected final def newBuffer(size: Int) = buffer(ByteOrder.LITTLE_ENDIAN, size)
 
   def encode: ChannelBuffer
 }
-class ProtoBufCompiledQuery(underlying:Query) extends CompiledQuery{
+
+class ProtoBufCompiledQuery(underlying: Query) extends CompiledQuery {
   override def encode = {
     val size = underlying.getSerializedSize
-    val b = newBuffer(size+4)
+    val b = newBuffer(size + 4)
     b.writeInt(size)
 
     b.writeBytes(underlying.toByteArray)
     b
   }
 }
-class JsonCompiledQuery(underlying:String) extends CompiledQuery{
+
+class JsonCompiledQuery(underlying: String) extends CompiledQuery {
   override def encode = ???
 }
+
 abstract class Version extends LazyLogging {
 
   val host: String
@@ -58,24 +61,47 @@ abstract class Version extends LazyLogging {
   val timeout: Int = 10
 
 
-
   val executionContext: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(5))
 
   def configure(c: Channel)
-  def toQuery(term: Term, token: Int, db: Option[String] = None, opts: Map[String, Any] = Map()):CompiledQuery
+
+  def toAst(term: Term): CompiledAst
+
+  def toQuery(term: Term, token: Int, db: Option[String] = None, opts: Map[String, Any] = Map()): CompiledQuery
 }
 
 
-trait ProvidesProtoBufQuery{
+trait ProvidesProtoBufQuery {
+
+  import scala.collection.JavaConversions.{seqAsJavaList, asJavaCollection}
+
+  def toAst(term: Term): CompiledAst = ProtoBufCompiledAst(ast(term))
+
+  def build(ta: TermAssocPair) = ql2.Term.AssocPair.newBuilder.setKey(ta.key).setVal(ast(ta.token)).build()
+
+  def build(da: DatumAssocPair) = ql2.Datum.AssocPair.newBuilder.setKey(da.key).setVal(da.token.asInstanceOf[Datum].toMessage).build()
+
+  private[this] def ast(term: Term): ql2.Term = {
+
+    val opts = term.optargs.map {
+      case ta: TermAssocPair => build(ta)
+      // case da:DatumAssocPair=> build(da)
+    }
+
+
+    term.newBuilder.setType(term.termType)
+      .addAllArgs(term.args.map(ast))
+      .addAllOptargs(opts).build()
+  }
 
 
   def toQuery(term: Term, token: Int, db: Option[String], opts: Map[String, Any]) = {
 
-    def scopeDB(q: Query.Builder, db: DB) = q.addGlobalOptargs(Query.AssocPair.newBuilder.setKey("db").setVal(db.ast))
+    def scopeDB(q: Query.Builder, db: DB) = q.addGlobalOptargs(Query.AssocPair.newBuilder.setKey("db").setVal(ast(db)))
 
     val query = Some(
       Query.newBuilder().setType(Query.QueryType.START)
-        .setQuery(term.ast).setToken(token).setAcceptsRJson(true)
+        .setQuery(ast(term)).setToken(token).setAcceptsRJson(true)
 
     ).map(q => {
 
@@ -100,10 +126,11 @@ trait ProvidesProtoBufQuery{
 
   }
 }
+
 case class Version1(host: String = "localhost", port: Int = 28015, db: Option[String] = None, maxConnections: Int = 5)
   extends Version with ProvidesProtoBufQuery {
 
-  type CompiledQuery = Query
+
   def configure(c: Channel) {
     c.write(VersionDummy.Version.V0_1).await()
   }
@@ -145,14 +172,14 @@ object Version2 {
 }
 
 
-case class Version2( host: String = "localhost",  port: Int = 28015,
-                     db: Option[String] = None,  maxConnections: Int = 5,
+case class Version2(host: String = "localhost", port: Int = 28015,
+                    db: Option[String] = None, maxConnections: Int = 5,
                     authKey: String = "") extends Version with ProvidesProtoBufQuery {
 
 
   private[this] val AUTH_RESPONSE = "SUCCESS"
 
-   def configure(c: Channel) {
+  def configure(c: Channel) {
 
     logger.debug("Configuring channel")
     val pipeline = c.getPipeline

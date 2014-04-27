@@ -7,8 +7,10 @@ import com.rethinkscala.ast._
 import com.rethinkscala.ast.StringDatum
 import com.rethinkscala.ast.NumberDatum
 import Blocking._
+import com.rethinkscala.net.ProtoBufCompiledAst
 
-class ExprTest extends FunSuite {
+class ExprTest extends FunSuite with WithBase {
+
 
   import scala.collection.JavaConverters._
 
@@ -25,7 +27,7 @@ class ExprTest extends FunSuite {
   test("map conversion") {
     val map = Seq(("foo", "bar"), ("bar", 1), ("you", Seq(1, 2, 3))).toMap
 
-    val objTerm = Expr(map).ast
+    val ProtoBufCompiledAst(objTerm) = Expr(map).ast
 
     val optargs = objTerm.getOptargsList asScala
 
@@ -43,4 +45,6 @@ class ExprTest extends FunSuite {
       e => assert(e._1.num.get == e._2 + 1)
     }
   }
+
+  override def setupDB = false
 }

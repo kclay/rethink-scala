@@ -5,9 +5,11 @@ import com.rethinkscala.ast._
 import org.joda.time.DateTime
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.ast.LazyJson
-import com.rethinkscala.net.RethinkDriverError
+import com.rethinkscala.net.{ProtoBufCompiledAst, RethinkDriverError}
 
 import Blocking._
+import com.rethinkscala.net.ProtoBufCompiledAst
+
 /**
  * Created by IntelliJ IDEA.
  * User: Keyston
@@ -66,12 +68,15 @@ class JsonTest extends FunSuite with WithBase {
     val map = Map("foo" -> "bar", "1" -> Map("1" -> 2))
     val json = Expr.json(map)
     assert(json.isInstanceOf[LazyJson], "Returned Json term")
-    assert(json.ast.getArgs(0).getDatum.getRStr == Reflector.toJson(map), "Map serialization good")
+    val ProtoBufCompiledAst(ast)=json.ast
+    assert(ast.getArgs(0).getDatum.getRStr == Reflector.toJson(map), "Map serialization good")
 
-    assert(Expr.json(Seq(1, 2, 3)).ast.getArgs(0).getDatum.getRStr == "[1,2,3]", "List serialization good")
+    val ProtoBufCompiledAst(ast2) = Expr.json(Seq(1, 2, 3)).ast
+    assert(ast2.getArgs(0).getDatum.getRStr == "[1,2,3]", "List serialization good")
 
     val doc = IsJsonDocument(a = true, "foo", 1)
-    assert(Expr.json(doc).ast.getArgs(0).datum.str == Reflector.toJson(doc), "Document serialization good")
+    val ProtoBufCompiledAst(ast3)=Expr.json(doc).ast
+    assert(ast3.getArgs(0).datum.str == Reflector.toJson(doc), "Document serialization good")
 
     val doc2 = Expr.json(NonJsonDocument(DateTime.now()))
     assert(doc2.isInstanceOf[MakeObj2], "Non json document make MakeObj2 Term")

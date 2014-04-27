@@ -291,7 +291,7 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
       wrapper.channel.close()
     }
   }, max = version.maxConnections)
-
+ /*
   private def toQuery(term: Term, token: Int, db: Option[String] = None, opts: Map[String, Any] = Map()) = {
 
     def scopeDB(q: Query.Builder, db: DB) = q.addGlobalOptargs(Query.AssocPair.newBuilder.setKey("db").setVal(db.ast))
@@ -322,7 +322,7 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
     query.build()
 
   }
-
+   */
 
   def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T] = {
     val p = promise[T]()

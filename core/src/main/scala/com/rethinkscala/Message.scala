@@ -6,6 +6,7 @@ import ql2.{Ql2 => ql2}
 import ql2.Term.TermType
 import ql2.Datum.DatumType
 import com.rethinkscala.reflect.Reflector
+import com.rethinkscala.net.Connection
 
 trait AssocPair {
 
@@ -14,25 +15,20 @@ trait AssocPair {
   val value: Any
   lazy val token = Expr(value)
 
-  def pair: T
+ // def pair: T
 
 }
 
 trait ExprWrap
 
 trait WithAst {
-  def ast: ql2.Term
+
 }
 
 trait Message[T] {
 
   def toMessage: T
 
-}
-
-trait TermMessage extends Message[ql2.Term] with Term {
-
-  def toMessage: ql2.Term = ast
 }
 
 trait DatumMessage extends Message[ql2.Datum] with Term {
@@ -43,7 +39,7 @@ trait DatumMessage extends Message[ql2.Datum] with Term {
   def build(d: ql2.Datum.Builder): ql2.Datum.Builder
 
 
-  override protected def newBuilder = super.newBuilder.setDatum(toMessage)
+  override private[rethinkscala] def newBuilder = super.newBuilder.setDatum(toMessage)
 
   def toMessage: ql2.Datum = build(ql2.Datum.newBuilder.setType(datumType)).build()
 }
@@ -51,13 +47,13 @@ trait DatumMessage extends Message[ql2.Datum] with Term {
 case class TermAssocPair(key: String, value: Any) extends AssocPair {
   type T = ql2.Term.AssocPair
 
-  def pair = ql2.Term.AssocPair.newBuilder.setKey(key).setVal(token.ast).build()
+ // def pair = ql2.Term.AssocPair.newBuilder.setKey(key).setVal(token.ast).build()
 }
 
 case class DatumAssocPair(key: String, value: Any) extends AssocPair {
   type T = ql2.Datum.AssocPair
 
-  def pair = ql2.Datum.AssocPair.newBuilder.setKey(key).setVal(token.asInstanceOf[Datum].toMessage).build()
+ // def pair = ql2.Datum.AssocPair.newBuilder.setKey(key).setVal(token.asInstanceOf[Datum].toMessage).build()
 
 
 }
@@ -66,18 +62,20 @@ trait Term extends WithAst {
 
 
 
-
+  private[rethinkscala] val underlyingTerm: Term = this
   import scala.collection.JavaConversions.{seqAsJavaList, asJavaCollection}
 
   protected val extractArgs = true
 
-  protected def newBuilder = ql2.Term.newBuilder()
+  private[rethinkscala] def newBuilder = ql2.Term.newBuilder()
 
+  /*
   def ast = newBuilder.setType(termType)
     .addAllArgs(args.map(_.ast))
     .addAllOptargs(optargs.map(_.pair.asInstanceOf[ql2.Term.AssocPair])).build()
 
-
+  */
+  def ast(implicit connection:Connection)  = connection.version.toAst(underlyingTerm)
   lazy val args: Seq[Term] = if (extractArgs) buildArgs(Reflector.fields(this).map(_.get(this)): _*) else Seq.empty[Term]
 
   protected def buildArgs(args: Any*): Seq[Term] = for (a <- args) yield Expr(a)

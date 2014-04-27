@@ -17,7 +17,7 @@ trait ResultResolver[Result] {
 trait ResultQuery[T] {
 
 
-  lazy val ast: ql2.Term = term.ast
+ // lazy val ast: ql2.Term = term.ast
 
   type ResolveType = Either[RethinkError, T]
 

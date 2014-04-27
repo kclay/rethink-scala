@@ -26,7 +26,7 @@ trait Produce[ResultType] extends Query {
 
   private[rethinkscala] var underlyingOptions: Options = Map()
 
-  private[rethinkscala] val underlyingTerm: Term = this
+
 
   def toQuery[R](implicit c: Connection, tt: Manifest[R]): BlockingResultQuery[R] = new BlockingResultQuery[R](underlyingTerm, c.asInstanceOf[BlockingConnection], tt, underlyingOptions)
 
@@ -140,7 +140,7 @@ trait ForwardTyped {
   override lazy val args = underlyingTerm.args
   override lazy val optargs = underlyingTerm.optargs
 
-  override def ast = underlyingTerm.ast
+  //override def ast(implicit connection:Connection) = connection.version.toAst(underlyingTerm)
 
   override protected val underlyingTerm: Term = underlying.asInstanceOf[Term]
 
@@ -159,7 +159,7 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] {
     override lazy val args = underlyingTerm.args
     override lazy val optargs = underlyingTerm.optargs
 
-    override def ast = underlyingTerm.ast
+  //  override def ast = underlyingTerm.ast
 
     override private[rethinkscala] val underlyingTerm: Term = any
 
@@ -173,7 +173,7 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] {
     override lazy val args = underlyingTerm.args
     override lazy val optargs = underlyingTerm.optargs
 
-    override def ast = underlyingTerm.ast
+   // override def ast = underlyingTerm.ast
 
     override private[rethinkscala] val underlyingTerm: Term = any
 
@@ -216,7 +216,7 @@ class MapToDocument[T<:Document](from:Record) extends ProduceTypedDocument[T]{
   override lazy val args = underlyingTerm.args
   override lazy val optargs = underlyingTerm.optargs
 
-  override def ast = underlyingTerm.ast
+ // override def ast = underlyingTerm.ast
 
   override private[rethinkscala] val underlyingTerm: Term = from.underlying.asInstanceOf[Term]
 

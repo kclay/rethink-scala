@@ -1,8 +1,9 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{TableOptions, TermMessage}
+import com.rethinkscala.{TableOptions, Term}
 
 import ql2.Ql2.Term.TermType
+
 import com.rethinkscala.net.BinaryConversion
 import com.rethinkscala.Document
 
@@ -10,7 +11,7 @@ trait WithDB {
   val db: Option[DB]
 }
 
-case class DB(name: String) extends TermMessage {
+case class DB(name: String) extends Term {
   override lazy val args = buildArgs(name)
 
   def termType = TermType.DB
@@ -48,7 +49,7 @@ case class DBCreate(name: String)
   def termType = TermType.DB_CREATE
 }
 
-case class DBDrop(name: String) extends TermMessage with ProduceBinary with BinaryConversion {
+case class DBDrop(name: String) extends Term with ProduceBinary with BinaryConversion {
   override lazy val args = buildArgs(name)
   val resultField = "dropped"
 
