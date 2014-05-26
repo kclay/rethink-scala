@@ -54,15 +54,20 @@ private[rethinkscala] trait Typed extends ImplicitConversions {
 }
 
 
+object Ref{
+  implicit class ScalaRef(underlying:Ref){
+     def +(other: Numeric) = underlying.add(other)
+
+     def +=(other: Numeric) = underlying.add(other)
+  }
+}
 trait Ref extends ArrayTyped[Any] with Numeric with Binary with Record with Literal with Strings  with CanManipulate[Pluck,Merge,Without]{
   override val underlying = this
 
   //override def add(other: Addition): Add = AnyAdd(underlying, other)
 
   def add(other: Ref): Add = AnyAdd(underlying, other)
-  override def +(other: Numeric) = add(other)
 
-  override def +=(other: Numeric) = add(other)
 
 
 
@@ -101,12 +106,17 @@ trait Multiply extends Typed {
   def mul(other: Double): Mul = Mul(underlying, other)
 }
 
+object Binary{
+  implicit class ScalaBinary(underlying:Binary){
+    def &(other: Binary) = underlying.and(other)
+  }
+}
 
 trait Binary extends Typed {
 
   override val underlying = this
 
-  def &(other: Binary) = and(other)
+
 
   def and(other: Binary) = All(underlying, other)
 

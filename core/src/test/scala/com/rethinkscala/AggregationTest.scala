@@ -20,13 +20,11 @@ class AggregationTest extends FunSuite with WithBase {
 
   test("reduce") {
     val seq = 1 to 10 by 1
-    assert(Expr(seq).reduce(_ + _), {
-      v: Int => seq.reduce(_ + _) == v
+    assert(Expr(seq).reduce(_ + _).run, {
+      v: Double => seq.reduce(_ + _) == v
     })
 
-    /*assert(Expr(seq).reduce(_ + _, 10), {
-      v: Int => seq.foldLeft(10)(_ + _) == v
-    })*/
+
   }
 
 
@@ -57,15 +55,19 @@ class AggregationTest extends FunSuite with WithBase {
     assert(seq.group("player"),check)
 
 
-    val res = seq.group({
+   /* val func = {
       v:Var=> v.pluck("player")
-    }.as[String],"id")
+    }.as[String]
+
+
+    val res = seq.group(func,"id")
 
     def mf[T](v:T)(implicit m:Manifest[T]) = m
 
+
     println(mf(res))
 
-    res.run
+    res.run*/
 
 
 

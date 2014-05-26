@@ -49,4 +49,52 @@ class ManipulateTest extends FunSuite with WithBase{
 
   }
 
+  test("append"){
+
+    val res =(1 to 10) append 11
+
+
+    assert(res.run,{
+      a:Seq[Int]=> a == (1 to 11)
+    })
+  }
+
+  test("prepend"){
+    assert((1 to 10) prepend 0 run,{
+      a:Seq[Int] => a == (0 to 10)
+    })
+  }
+
+  test("difference"){
+    var a = 1 to 10
+    val b = 5 to 15
+    val d = a diff b
+
+    assert(Expr(a) diff b run,{
+      c:Seq[Int]=> c == d
+    })
+  }
+
+  test("setInsert"){
+
+    val a = 1 to 10
+
+    assert(a setInsert 5,{
+      b:Seq[Int]=> b == a
+    })
+    assert(a setInsert 11,{
+      b:Seq[Int]=> b == (1 to 11)
+    })
+  }
+
+  test("setUnion"){
+    val a = 1 to 10
+    assert(a setUnion a,{
+      b:Seq[Int]=> b == a
+    })
+  }
+  test("setIntersection") {
+
+  }
+
 }

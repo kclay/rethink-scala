@@ -56,19 +56,34 @@ trait Produce[ResultType] extends Query {
 
 }
 
-sealed trait Produce0[T] extends Typed
-trait ProduceSingle[T] extends Produce[T] with Produce0[T]{
+trait Produce0[T] extends Typed{
+  type T0 = T
+}
+trait ProduceSingle[T] extends Produce[T] with Produce0[T] with CastTo{
   type FieldProduce = ProduceAny
 
   def apply(name:String) = field(name)
   def field(name: String): ProduceAny = GetField(this, name)
+ // def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
+}
+
+
+trait CastTo{
+  self: CastTo => def field(name:String):ProduceAny
+
   def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
+  def asInt(name:String) =as[Int](name)(intToNumeric)
+  def asDouble(name:String) =as[Double](name)(doubleToNumeric)
+  def asFloat(name:String) =as[Float](name)(floatToNumeric)
+  def asString(name:String)=as[String](name)(stringToStrings)
+  def asMap[T](name:String) = as[Map[String,T]](name)(arrayMapToTyped[T])
 }
 
 
 
-
-trait ProduceSequenceLike[T]  extends Sequence[T] with Produce0[T]    with CanManipulate[SPluck[_],Merge,Without]{
+trait ProduceSequenceLike[T]  extends Sequence[T] with Produce0[T]
+                                      with CanManipulate[SPluck[_],Merge,Without]
+                                      {
   type FieldProduce = ProduceArray[T]
 
 
@@ -88,7 +103,7 @@ trait ProduceSequenceLike[T]  extends Sequence[T] with Produce0[T]    with CanMa
 
   def pluck(m: Map[String, Any]) = Pluck(underlying, m)
 
-  def merge(other: MakeObj) = Merge(underlying, other)
+
 
 }
 
@@ -147,11 +162,10 @@ trait ForwardTyped {
   def termType = underlying.term
 }
 
-trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] {
+trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo{
+  any=>
 
 
-  // def numeric: ProduceNumeric =
-  private[rethinkscala] val any = this
 
 
   def numeric = new ProduceNumeric {
@@ -192,7 +206,7 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] {
   override def \(name: String): ProduceAny = field(name)
 
 
-  def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
+  //def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
  def asArray[T](name:String)=field(name).array[T]
   def field(name: String) = GetField(this.asInstanceOf[Typed], name)
 }

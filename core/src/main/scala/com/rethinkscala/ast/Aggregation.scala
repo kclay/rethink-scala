@@ -12,7 +12,7 @@ import com.rethinkscala.GroupResult
   * @param f
   *
   */
-case class Reduce[T](target: Aggregation[T], f: Predicate2) extends Produce[T] {
+case class Reduce[T,R](target: Aggregation[T], f: Predicate2) extends Produce[R] {
 
   override lazy val args = buildArgs(target, f())
 

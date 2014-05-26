@@ -1,6 +1,7 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala.{CanMap, FromAst, Document}
+import com.rethinkscala.ast.Sequence
 
 
 /**
@@ -10,50 +11,66 @@ import com.rethinkscala.{CanMap, FromAst, Document}
  * Time: 8:13 AM 
  */
 
-trait Array[T] extends Typed
+trait Array[T] extends Typed{
+  override val underlying = this
+
+}
 
 object ArrayTyped{
   implicit def mapDocumentToSequence[T<:Document,ST>:Var,S[ST]<:Array[ST] ](implicit fa:FromAst[ST])= CanMap[T,S[ST],fa.Raw]
+
+  implicit class ScalaArrayTyped[T](underlying:ArrayTyped[T]){
+    def :+(value: T) = underlying.append(value)
+
+    def ::[B>:T](value:T) = underlying.prepend(value)
+
+
+
+
+
+    def +:(value: T) = underlying.prepend(value)
+  }
 }
-trait ArrayTyped[T] extends Sequence[T] with Array[T] {
+trait ArrayTyped[T] extends Array[T] {
 
 
   override val underlying = this
 
-  def append(value: Datum) = Append(underlying, value)
+  def append(value: T) = Append(underlying, value)
 
-  //def append(value:T) = Append(underlying,value)
-
-  def :+(value: Datum) = append(value)
-
-  def prepend(value: Datum) = Prepend(underlying, value)
-
-  def +:(value: Datum) = prepend(value)
-
-  def diff(values: Datum*) = Difference(underlying, Expr(values))
-
-  def diff(array: ArrayTyped[_]) = Difference(underlying, array)
-
-  def idiff(array: ArrayTyped[_]) = Difference(array, underlying)
-
-  def idiff(values: Datum*) = Difference(Expr(values), underlying)
+  def prepend[B >:T](value: B) = Prepend(underlying, value)
 
 
-  def setInert(value: T) = SetInsert(underlying, value)
+ def diff[B>:T](values:B*) = Difference(underlying,Expr(values))
+ def diff[B >: T](value: ArrayTyped[B]) = Difference(underlying, value)
 
-  def setUnion(values: T*) = SetUnion(underlying, values)
+ // def diff(array: ArrayTyped[_]) = Difference(underlying, array)
 
-  def setIntersection(values: T*) = SetIntersection(underlying, values)
+  def idiff[B >: T](array: ArrayTyped[B]) = Difference(array, underlying)
 
 
-  def setDifference(values: T*) = SetDifference(underlying, values)
 
-  def insertAt(index: Int, value: T) = InsertAt(underlying, index, value)
+
+  def setInsert[B >: T](value: B) = SetInsert(underlying, value)
+
+
+  def setUnion[B >: T](values: B*) = SetUnion(underlying, values)
+  def setUnion[B >: T](value: ArrayTyped[B]) = SetUnion(underlying, value)
+
+  def setIntersection[B>:T](values: B*) = SetIntersection(underlying, values)
+  def setIntersection[B>:T](values: ArrayTyped[B]) = SetIntersection(underlying, values)
+
+
+  def setDifference[B>:T](values: B*) = SetDifference(underlying, values)
+
+  def setDifference[B>:T](values: ArrayTyped[B]) = SetDifference(underlying, values)
+
+  def insertAt[B>:T](index: Int, value: B) = InsertAt(underlying, index, value)
 
   def spliceAt(index: Int, values: T*) = SpliceAt(underlying, index, values)
 
   def deleteAt(start: Int, end: Option[Int] = None) = DeleteAt(underlying, start, end)
 
-  def changeAt(index: Int, value:T) = ChangeAt(underlying, index, value)
+  def changeAt[B>:T](index: Int, value:B) = ChangeAt(underlying, index, value)
 
 }

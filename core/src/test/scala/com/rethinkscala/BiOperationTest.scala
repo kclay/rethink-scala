@@ -17,6 +17,7 @@ class BiOperationTest extends FunSuite with WithBase {
 
     val addNum = Expr(1) + 2
 
+
     val ProtoBufCompiledAst(term) = addNum.ast
     var args = term.getArgsList.asScala
 

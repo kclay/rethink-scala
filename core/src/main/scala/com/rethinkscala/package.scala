@@ -162,7 +162,7 @@ package object rethinkscala extends ImplicitConversions with ReceptacleImplicits
     def map[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = RMap[Inner](seq.underlying, FuncWrap(f))
 
 
-    def reduce(f: (A, A) => Typed) = Reduce[T](seq.underlying, f)
+    def reduce[P ](f: (A, A) =>Produce0[P]) = Reduce[T,P](seq.underlying, f)
 
   }
 

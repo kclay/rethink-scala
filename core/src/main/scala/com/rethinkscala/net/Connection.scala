@@ -367,6 +367,8 @@ trait Connection {
   val underlying: Connection
   val version: Version
 
+  def toAst(term:Term):CompiledAst = version.toAst(term)
+
   def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T]
 }
 

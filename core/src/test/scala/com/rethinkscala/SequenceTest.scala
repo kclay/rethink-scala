@@ -23,7 +23,7 @@ class SequenceTest extends FunSuite with WithBase {
 
 
     assert(a.reduce(_ + _).run, {
-      b: Int => b == 15
+      b: Double=> b == 15
     })
 
 

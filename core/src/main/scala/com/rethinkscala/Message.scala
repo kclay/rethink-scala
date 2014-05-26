@@ -10,7 +10,7 @@ import com.rethinkscala.net.Connection
 
 trait AssocPair {
 
-  type T
+
   val key: String
   val value: Any
   lazy val token = Expr(value)
@@ -44,19 +44,9 @@ trait DatumMessage extends Message[ql2.Datum] with Term {
   def toMessage: ql2.Datum = build(ql2.Datum.newBuilder.setType(datumType)).build()
 }
 
-case class TermAssocPair(key: String, value: Any) extends AssocPair {
-  type T = ql2.Term.AssocPair
+case class TermAssocPair(key: String, value: Any) extends AssocPair
 
- // def pair = ql2.Term.AssocPair.newBuilder.setKey(key).setVal(token.ast).build()
-}
-
-case class DatumAssocPair(key: String, value: Any) extends AssocPair {
-  type T = ql2.Datum.AssocPair
-
- // def pair = ql2.Datum.AssocPair.newBuilder.setKey(key).setVal(token.asInstanceOf[Datum].toMessage).build()
-
-
-}
+case class DatumAssocPair(key: String, value: Any) extends AssocPair
 
 trait Term extends WithAst {
 
@@ -75,7 +65,7 @@ trait Term extends WithAst {
     .addAllOptargs(optargs.map(_.pair.asInstanceOf[ql2.Term.AssocPair])).build()
 
   */
-  def ast(implicit connection:Connection)  = connection.version.toAst(underlyingTerm)
+  def ast(implicit connection:Connection)  = connection toAst underlyingTerm
   lazy val args: Seq[Term] = if (extractArgs) buildArgs(Reflector.fields(this).map(_.get(this)): _*) else Seq.empty[Term]
 
   protected def buildArgs(args: Any*): Seq[Term] = for (a <- args) yield Expr(a)

@@ -61,7 +61,7 @@ trait ToAst[A] {
 private[rethinkscala] trait ImplicitConversions {
 
 
-  implicit def boolToDataNum(b: Boolean): Binary = BooleanDatum(b)
+
 
 
 

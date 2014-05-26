@@ -210,3 +210,15 @@ case class Version2(host: String = "localhost", port: Int = 28015,
 
   }
 }
+sealed abstract class Protocol
+
+object ProtoBuf extends Protocol
+
+object JSON extends Protocol
+
+ class Version3(host: String = "localhost", port: Int = 28015,
+                db: Option[String] = None, maxConnections: Int = 5,
+                authKey: String = "",protocol:Protocol) extends Version2(host,port,db,maxConnections,authKey){
+
+
+ }

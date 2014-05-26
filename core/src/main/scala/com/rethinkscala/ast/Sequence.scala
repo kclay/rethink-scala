@@ -16,6 +16,11 @@ import com.rethinkscala.magnets.GroupFilterMagnet
 object Sequence {
   implicit def mapDocumentToSequence[T <: Document, ST, S[ST] <: Sequence[ST]] = CanMap[T, S[ST], ST]
 
+  implicit class ScalaSequence[T](underlying:Sequence[T]){
+
+    def ++(sequence: Sequence[_]) = underlying.union(sequence)
+    //def :::[B>:T](prefix:Sequence[B]) = prefix  merge underlying
+  }
 
 }
 
@@ -91,7 +96,7 @@ trait Aggregation[T] {
 
 }
 
-trait Sequence[T] extends Multiply with Filterable[T] with Record with Aggregation[T] {
+trait Sequence[T] extends ArrayTyped[T] with Multiply with Filterable[T] with Record with Aggregation[T] {
 
 
   override val underlying = this
@@ -126,7 +131,7 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record with Aggregati
 
   def union(sequence: Sequence[_]) = Union(underlying, sequence)
 
-  def ++(sequence: Sequence[_]) = union(sequence)
+
 
   def eqJoin[R](attr: String, other: Sequence[R], index: Option[String] = None) = EqJoin(underlying, attr, other, index)
 
@@ -152,6 +157,8 @@ trait Sequence[T] extends Multiply with Filterable[T] with Record with Aggregati
 
   // add dummy implicit to allow methods for Ref
 
+
+  def merge[B>:T](other: Sequence[B]) = MergeSequence(underlying,other)
 
   def foreach(f: Var => Typed) = ForEach(underlying, f)
 
