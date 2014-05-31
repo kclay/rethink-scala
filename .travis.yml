@@ -11,6 +11,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq rethinkdb
   - sudo apt-get install -qq protobuf-compiler
+  - ./scripts/install_protoc.sh
 before_script:
   - rethinkdb --daemon
   - rethinkdb admin set auth foobar
