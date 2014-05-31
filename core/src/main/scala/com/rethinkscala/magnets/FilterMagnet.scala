@@ -1,6 +1,6 @@
 package com.rethinkscala.magnets
 
-import com.rethinkscala.{FromAst, ImplicitConversions, FilterTyped}
+import com.rethinkscala.{FilterTyped, FromAst, ImplicitConversions}
 import com.rethinkscala.ast.{Produce0, Var, Typed}
 
 /**

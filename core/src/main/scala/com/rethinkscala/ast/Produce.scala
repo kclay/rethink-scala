@@ -71,12 +71,12 @@ trait ProduceSingle[T] extends Produce[T] with Produce0[T] with CastTo{
 trait CastTo{
   self: CastTo => def field(name:String):ProduceAny
 
-  def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
-  def asInt(name:String) =as[Int](name)(intToNumeric)
-  def asDouble(name:String) =as[Double](name)(doubleToNumeric)
-  def asFloat(name:String) =as[Float](name)(floatToNumeric)
-  def asString(name:String)=as[String](name)(stringToStrings)
-  def asMap[T](name:String) = as[Map[String,T]](name)(arrayMapToTyped[T])
+  def cast[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
+  def asInt(name:String) =cast[Int](name)(intToNumeric)
+  def asDouble(name:String) =cast[Double](name)(doubleToNumeric)
+  def asFloat(name:String) =cast[Float](name)(floatToNumeric)
+  def asString(name:String)=cast[String](name)(stringToStrings)
+  def asMap[T](name:String) = cast[Map[String,T]](name)(arrayMapToTyped[T])
 }
 
 

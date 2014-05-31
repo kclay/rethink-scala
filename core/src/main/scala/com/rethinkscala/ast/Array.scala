@@ -1,7 +1,7 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{CanMap, FromAst, Document}
-import com.rethinkscala.ast.Sequence
+import com.rethinkscala._
+
 
 
 /**
@@ -19,19 +19,33 @@ trait Array[T] extends Typed{
 object ArrayTyped{
   implicit def mapDocumentToSequence[T<:Document,ST>:Var,S[ST]<:Array[ST] ](implicit fa:FromAst[ST])= CanMap[T,S[ST],fa.Raw]
 
-  implicit class ScalaArrayTyped[T](underlying:ArrayTyped[T]){
-    def :+(value: T) = underlying.append(value)
+  /*
+  implicit class Implicits[T](a:ArrayTyped[T]){
+    def :+(value: T) = a.append(value)
 
-    def ::[B>:T](value:T) = underlying.prepend(value)
-
-
-
+    def ::[B>:T](value:T) = a.prepend(value)
 
 
-    def +:(value: T) = underlying.prepend(value)
-  }
+
+
+
+    def +:(value: T) = a.prepend(value)
+
+    def |+[B >: T](value: B) = a.setInsert(value)
+
+    def ||[B>:T](values:B*) = a.setUnion(values:_*)
+    def ||[B>:T](value:ArrayTyped[B]) =a.setUnion(value)
+    def /\[B>:T](values: B*) = a.setIntersection(values:_*)
+    def /\[B>:T](value: ArrayTyped[B]) = a.setIntersection(value)
+
+    def \/[B>:T](values: B*) = a.setDifference(values:_*)
+
+    def \/[B>:T](value: ArrayTyped[B]) = a.setDifference(value)
+
+  }  */
 }
 trait ArrayTyped[T] extends Array[T] {
+
 
 
   override val underlying = this
@@ -41,7 +55,7 @@ trait ArrayTyped[T] extends Array[T] {
   def prepend[B >:T](value: B) = Prepend(underlying, value)
 
 
- def diff[B>:T](values:B*) = Difference(underlying,Expr(values))
+ def diff[B>:T](values:Iterable[B]) = Difference(underlying,values)
  def diff[B >: T](value: ArrayTyped[B]) = Difference(underlying, value)
 
  // def diff(array: ArrayTyped[_]) = Difference(underlying, array)
@@ -54,16 +68,20 @@ trait ArrayTyped[T] extends Array[T] {
   def setInsert[B >: T](value: B) = SetInsert(underlying, value)
 
 
-  def setUnion[B >: T](values: B*) = SetUnion(underlying, values)
+  def setUnion[B >: T](values: Iterable[B]) = SetUnion(underlying, values)
   def setUnion[B >: T](value: ArrayTyped[B]) = SetUnion(underlying, value)
 
-  def setIntersection[B>:T](values: B*) = SetIntersection(underlying, values)
-  def setIntersection[B>:T](values: ArrayTyped[B]) = SetIntersection(underlying, values)
+
+  def setIntersection[B>:T](values: Iterable[B]) = SetIntersection(underlying, values)
+  def setIntersection[B>:T](value: ArrayTyped[B]) = SetIntersection(underlying, value)
 
 
-  def setDifference[B>:T](values: B*) = SetDifference(underlying, values)
+
+  def setDifference[B>:T](values: Iterable[B]) = SetDifference(underlying, values)
 
   def setDifference[B>:T](values: ArrayTyped[B]) = SetDifference(underlying, values)
+
+
 
   def insertAt[B>:T](index: Int, value: B) = InsertAt(underlying, index, value)
 
@@ -72,5 +90,26 @@ trait ArrayTyped[T] extends Array[T] {
   def deleteAt(start: Int, end: Option[Int] = None) = DeleteAt(underlying, start, end)
 
   def changeAt[B>:T](index: Int, value:B) = ChangeAt(underlying, index, value)
+
+  def :+(value: T) = append(value)
+
+  def ::[B>:T](value:T) = prepend(value)
+
+
+
+
+
+  def +:(value: T) = prepend(value)
+
+  def |+[B >: T](value: B) = setInsert(value)
+
+  def ||[B>:T](values:Iterable[B]) = setUnion(values        )
+  def ||[B>:T](value:ArrayTyped[B]) =setUnion(value)
+  def /\[B>:T](values: Iterable[B]) = setIntersection(values)
+  def /\[B>:T](value: ArrayTyped[B]) = setIntersection(value)
+
+  def \/[B>:T](values: Iterable[B]) = setDifference(values)
+
+  def \/[B>:T](value: ArrayTyped[B]) = setDifference(value)
 
 }

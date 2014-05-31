@@ -99,6 +99,9 @@ class WriteTest extends FunSuite with WithBase {
     })
     update = fetch.update((v: Var) => Map("a" ->r.row("a").add(3)))
 
+    assert(update,{
+      u:ChangeResult=> u.replaced == 1
+    })
     assertAs[Foo](fetch, {
       f: Foo => f.a == 8
     })

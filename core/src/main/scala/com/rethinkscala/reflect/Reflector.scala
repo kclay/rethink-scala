@@ -32,7 +32,7 @@ object Reflector {
   mapper.setSerializationInclusion(Include.NON_NULL);
   mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   mapper.setVisibility(PropertyAccessor.FIELD, Visibility.PUBLIC_ONLY)
-  mapper.setDefaultTyping(new RethinkTypeResolverBuilder)
+  //mapper.setDefaultTyping(new RethinkTypeResolverBuilder)
 
   //mapper.setAnnotationIntrospector()
 

@@ -73,19 +73,19 @@ private[rethinkscala] trait ImplicitConversions {
   //implicit def toTyped[T<:Typed](v:T):Typed = v
 
   implicit def collectionToAst[T](coll:Iterable[T]):MakeArray[T] = Expr[T](coll)
-  implicit def intToDatNum(i: Int): Numeric = NumberDatum(i)
+  implicit def intToDatNum(i: Int) = NumberDatum(i)
 
-  implicit def longToDatNum(l: Long): Numeric = NumberDatum(l)
+  implicit def longToDatNum(l: Long)= NumberDatum(l)
 
-  implicit def floatToDatNum(f: Float): Numeric = NumberDatum(f)
+  implicit def floatToDatNum(f: Float) = NumberDatum(f)
 
-  implicit def doubleToDatNum(d: Double): Numeric = NumberDatum(d)
+  implicit def doubleToDatNum(d: Double) = NumberDatum(d)
 
-  implicit def string2DatNum(s: String): Strings = StringDatum(s)
+  implicit def string2DatNum(s: String) = StringDatum(s)
 
   implicit def boolean2Datum(b:Boolean) =  BooleanDatum(b)
 
-
+   /*
   implicit def intToDatNum0(i: Int): Datum = NumberDatum(i)
 
   implicit def longToDatNum0(l: Long): Datum = NumberDatum(l)
@@ -95,7 +95,7 @@ private[rethinkscala] trait ImplicitConversions {
   implicit def doubleToDatNum0(d: Double):Datum = NumberDatum(d)
 
   implicit def string2DatNum0(s: String): Datum= StringDatum(s)
-
+     */
 
   implicit def toOptLiteral[T <% Literal](v: T): Option[T] = Some(v)
 

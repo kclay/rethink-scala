@@ -15,10 +15,10 @@ trait Options {
 case class TableOptions(
                          durability: Option[Durability.Value] = None,
                          primaryKey: Option[String] = None,
-                         cacheSize: Option[Int] = None,
+
                          dataCenter: Option[String] = None
                          ) extends Options {
-  def toMap = Map("primary_key" -> primaryKey, "datacenter" -> dataCenter, "cache_size" -> cacheSize, "durability" -> durability)
+  def toMap = Map("primary_key" -> primaryKey, "datacenter" -> dataCenter, "durability" -> durability)
 }
 
 case class QueryOptions(

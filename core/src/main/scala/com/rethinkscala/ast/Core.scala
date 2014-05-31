@@ -7,7 +7,7 @@ import com.rethinkscala.reflect.Reflector
 import org.joda.time.ReadableInstant
 import org.joda.time.format.ISODateTimeFormat
 import com.rethinkscala.net.{JsonDocumentConversion, RethinkDriverError}
-import scala.collection.Iterable
+import scala.collection.{mutable, Iterable}
 
 case class MakeArray[T](array: Iterable[T]) extends Term with ProduceArray[T] {
   override lazy val args = buildArgs(array.toSeq: _*)
@@ -190,16 +190,19 @@ trait Expr {
   def apply(a: Any, depth: Int = 20): Term = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
 
+    Seq
     a match {
       case w: FuncWrap => w()
+
 
       case date: ReadableInstant => apply(date)
 
 
       case p: Predicate => p()
       case t: Term => t
-      case f: Function[_, _] if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1]) => new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
-      case f: Function2[_, _, _] if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2]) => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
+
+      case f:Any if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1]) => new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
+      case f:Any if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2]) => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
       case s: Seq[_] => MakeArray(s, depth - 1)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
       case d: Document => MakeObj2(d)
@@ -292,3 +295,4 @@ case class Json(value: String) extends Produce[JsonDocument] with JsonDocumentCo
 object Json {
   def asLazy(value: Any) = LazyJson(value)
 }
+

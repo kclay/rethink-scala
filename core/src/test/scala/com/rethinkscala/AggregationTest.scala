@@ -3,9 +3,7 @@ package com.rethinkscala
 import org.scalatest.FunSuite
 
 import Blocking._
-import com.rethinkscala.magnets._
-import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.magnets.FieldReceptacle
+
 
 
 /**
@@ -108,14 +106,14 @@ class AggregationTest extends FunSuite with WithBase {
 
   test("max"){
 
-    val res = testSeq.max("points").as[Int]("points")
+    val res = testSeq.max("points").cast[Int]("points")
 
    assert(res,{
     p:Int=> p == 15
 
    })
 
-    assert(testSeq.max(x=> x("points")).as[Int]("points").toOpt == Some(15))
+    assert(testSeq.max(x=> x("points")).cast[Int]("points").toOpt == Some(15))
   }
 
 
@@ -142,7 +140,9 @@ class AggregationTest extends FunSuite with WithBase {
 
     assert(Expr(1 to 10 by 1) contains (x=> x > 5))
 
-    assert(Expr('a' to 'd') contains "b")
+    val res = Expr('a' to 'd').contains("b")
+     print(res.ast)
+    assert(res)
 
 
   }

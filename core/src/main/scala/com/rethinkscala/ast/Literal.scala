@@ -38,10 +38,11 @@ trait WithAddition[-T, +R] extends Addition {
 
 object Literal{
 
+  
 }
 
-trait ScalaLiteral{
-  self:Literal=>
+
+trait Literal extends Addition  {
   def unary_~ = not
   def ===(other: Literal) = eq(other)
   def !=(other: Literal) = ne(other)
@@ -53,10 +54,6 @@ trait ScalaLiteral{
   def <=(other: Literal) = lte(other)
   def >=(other: Literal) = gte(other)
   def >(other: Literal) = gt(other)
-}
-
-trait Literal extends Addition with ScalaLiteral {
-
 
   override val underlying = this
 
@@ -91,27 +88,32 @@ trait Literal extends Addition with ScalaLiteral {
 
 
 object Strings{
-
+    implicit class Implicits(s:Strings){
+      
+    }
 }
 
-trait ScalaStrings{
-  self:Strings=>
-  def +(other: Strings) = add(other)
 
-  def +=(other: Strings) =add(other)
-
-  def find(regexp: Regex): Match = find(regexp.toString())
-}
-trait Strings extends Literal with ScalaStrings{
+trait Strings extends Literal {
 
 
   override val underlying = this
   //
 
 
+  def +(other: Strings) = add(other)
+
+  def +=(other: Strings) =add(other)
+
+  def find(regexp: Regex): Match = find(regexp.toString())
 
   def add(other: Strings): StringAdd = StringAdd(underlying, other)
   def add(other:String):StringAdd = StringAdd(underlying,other)
+
+  def split = Split(underlying)
+  def split(delimiter:String) = Split(underlying,delimiter)
+  def split(limit:Int) = Split(underlying,limit=limit)
+  def split(delimiter:String,limit:Int) = Split(underlying,delimiter,limit)
 
 
 
@@ -119,44 +121,40 @@ trait Strings extends Literal with ScalaStrings{
 }
 
 object Numeric{
-  /*implicit class ScalaNumeric(underlying:Numeric){
-    def +(other: Numeric) = underlying.add(other)
+    /*
+  implicit class Implicits(n:Numeric){
+    def +(other: Numeric) = n.add(other)
 
-    def +=(other: Numeric) = underlying.add(other)
-    def -(other: Numeric) = underlying.sub(other)
-
-
-    def /(other: Numeric) = underlying.div(other)
+    def +=(other: Numeric) = n.add(other)
+    def -(other: Numeric) = n.sub(other)
 
 
-    def %(other: Numeric) = underlying.mod(other)
+    def /(other: Numeric) = n.div(other)
 
 
-  } */
-
-}
-
-trait ScalaNumeric{
-  self:Numeric=>
-  def +(other: Numeric) = add(other)
-
-  def +=(other: Numeric) = add(other)
-  def -(other: Numeric) = sub(other)
+    def %(other: Numeric) = n.mod(other)
 
 
-  def /(other: Numeric) = div(other)
-
-
-  def %(other: Numeric) = mod(other)
+  }   */
 
 }
 
-trait Numeric extends Literal with Multiply with Binary with ScalaNumeric {
+
+/*
+object Numeric{
+
+  implicit def toScalaNumeric(value:Numeric) = new Numeric with ScalaNumeric {
+    override val underlying: Numeric = value
+  }
+} */
+
+trait Numeric extends Literal with Multiply with Binary  {
 
 
   override val underlying = this
 
-  /*
+
+
   def +(other: Numeric) = underlying.add(other)
 
   def +=(other: Numeric) = underlying.add(other)
@@ -167,7 +165,7 @@ trait Numeric extends Literal with Multiply with Binary with ScalaNumeric {
 
 
   def %(other: Numeric) = underlying.mod(other)
-   */
+
   def add(other: Numeric) = NumericAdd(underlying, other)
   def add(other: Double) = NumericAdd(underlying, other)
   def add(other: Int) = NumericAdd(underlying, other)

@@ -10,7 +10,7 @@ import com.rethinkscala.BoundOptions
  * Time: 8:20 AM 
  */
 
-trait TimeTyped extends Literal with ProduceSingle[DateTime] {
+trait TimeTyped extends Literal with Produce[DateTime] with Produce0[DateTime] {
   implicit def dateTimeToTimeTyped(dt: DateTime) = Expr(dt)
 
   override val underlying = this

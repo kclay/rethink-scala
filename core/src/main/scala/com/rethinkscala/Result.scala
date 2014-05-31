@@ -1,6 +1,6 @@
 package com.rethinkscala
 
-import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty}
+import com.fasterxml.jackson.annotation.{JsonTypeInfo, JsonIgnore, JsonProperty}
 import com.rethinkscala.reflect.{GroupResultDeserializer, RethinkTypeResolverBuilder, Reflector}
 import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonTypeResolver}
 import scala.collection.generic.CanBuildFrom
@@ -211,6 +211,8 @@ object GroupResult {
 
 
 @JsonDeserialize(using = classOf[GroupResultDeserializer])
+@JsonTypeResolver(value = classOf[RethinkTypeResolverBuilder])
+@JsonTypeInfo(use=JsonTypeInfo.Id.CUSTOM,include = JsonTypeInfo.As.WRAPPER_OBJECT)
 class GroupResult[Base] protected (buffer: ArrayBuffer[GroupResultRecord[Base]])
   extends IndexedSeq[GroupResultRecord[Base]]
           with IndexedSeqLike[GroupResultRecord[Base], GroupResult[Base]] with Document with HasGroupRecords   {

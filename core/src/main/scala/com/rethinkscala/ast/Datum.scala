@@ -122,6 +122,7 @@ object Datum {
 
     case Some(v) => Datum(v)
     case None => NoneDatum()
+    case c:Character=>StringDatum(c.toString)
     case s: String => StringDatum(s)
     case i: Int => NumberDatum(i)
     case f: Float => NumberDatum(f)

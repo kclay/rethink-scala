@@ -14,7 +14,7 @@ class TableTest extends FunSuite with WithBase {
   test("create table with options") {
 
     val table = r.db("test").table(tableName)
-    val create = table.create(TableOptions(primaryKey = Some("a"), durability = Some(Durability.Hard), cacheSize = Some(16)))
+    val create = table.create(TableOptions(primaryKey = Some("a"), durability = Some(Durability.Hard)))
 
     val ast = create.ast
     assert(create)

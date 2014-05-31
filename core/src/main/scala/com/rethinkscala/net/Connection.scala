@@ -324,8 +324,12 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
   }
    */
 
+
+
+
+
   def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T] = {
-    val p = promise[T]()
+    val p = Promise[T]()
     val f = p.future
     logger.debug(s"Writing $term")
     channel take {

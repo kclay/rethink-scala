@@ -35,7 +35,7 @@ object BuildSettings {
     organization := "com.rethinkscala",
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     version := "0.4.3-SNAPSHOT",
-    scalaVersion := "2.11.0-RC3",
+    scalaVersion := "2.11.0-RC4",
 
     scalacOptions ++= Seq(),
 
@@ -72,13 +72,15 @@ object RethinkdbBuild extends Build {
     "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
   )
 
+  val jacksonVersion = "2.4.0-rc3"
+  val jacksonScalaVersion = "2.4.0-SNAPSHOT"
   def jackson = Seq(
-    "com.fasterxml.jackson.core" % "jackson-core" % "2.4.0-SNAPSHOT",
-    "com.fasterxml.jackson.core" % "jackson-annotations" % "2.4-SNAPSHOT",
-    "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.0-SNAPSHOT",
-    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.3.1",
+   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
+   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
+    "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVersion,
 
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.4.0-SNAPSHOT"
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonScalaVersion
   )
 
 
@@ -106,17 +108,17 @@ object RethinkdbBuild extends Build {
 
       libraryDependencies <++= (scalaVersion)(sv => Seq(
 
-        "org.scalatest" %% "scalatest" % "2.1.2" % "test",
+        "org.scalatest" %% "scalatest" % "2.1.3" % "test",
         //"com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
-        "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.0.0",
+        "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.0.2",
         "org.slf4j" % "slf4j-log4j12" % "1.7.6",
 
         "io.netty" % "netty" % "3.6.6.Final",
         "com.google.protobuf" % "protobuf-java" % "2.5.0",
         "joda-time" % "joda-time" % "2.3",
         "org.joda" % "joda-convert" % "1.5",
-        "org.scala-lang" % "scala-reflect" % sv
-
+        "org.scala-lang" % "scala-reflect" % sv,
+        "org.scala-lang.modules" %% "scala-xml" % "1.0.1"  % "test"
         // "net.sandrogrzicic" %% "scalabuff-runtime" % scalaBuffVersion
 
       ) ++ jackson),

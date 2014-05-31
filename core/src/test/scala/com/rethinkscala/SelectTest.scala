@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 import com.rethinkscala.ast.Table
 
 
+
 /**
  * Created with IntelliJ IDEA.
  * User: keyston
@@ -95,7 +96,7 @@ class SelectTest extends FunSuite with WithBase {
 
 
   }
-  lazy val foos = table.asInstanceOf[Table[SelectFoo]]
+  lazy val foos = table.to[SelectFoo]
 }
         
 

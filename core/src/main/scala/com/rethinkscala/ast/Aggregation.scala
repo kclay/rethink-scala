@@ -79,7 +79,7 @@ trait MethodAggregation[T]  extends MethodQuery{
   val target:Aggregation[T]
   val fieldOrFunction:Option[FuncWrap]
 
-  override lazy val args = buildArgs(fieldOrFunction.map(Seq(target,_)).getOrElse(Seq(target)):_*)
+  override lazy val args = buildArgs(Seq(Some(target),fieldOrFunction).flatten:_*)
 }
 
 case class Max[T](target:Aggregation[T],fieldOrFunction:Option[FuncWrap]=None) extends  MethodAggregation[T] with ProduceSingle[T]{

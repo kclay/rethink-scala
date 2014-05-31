@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 
 import Blocking._
 import com.rethinkscala.net.RethinkError
+import com.rethinkscala._
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,7 +20,10 @@ class ManipulateTest extends FunSuite with WithBase{
   test("pluck"){
 
 
-     assert(testSeq.pluck("player","points"),{
+    val res = testSeq.pluck("player","points")
+
+
+     assert(res,{
        a:Seq[Map[String,Any]]=> a.head == Map("player"->"Bob","points"->15)
      })
 
@@ -70,7 +74,10 @@ class ManipulateTest extends FunSuite with WithBase{
     val b = 5 to 15
     val d = a diff b
 
-    assert(Expr(a) diff b run,{
+    var res = Expr(a) diff b
+    val ast = res.ast
+    print(ast)
+    assert(res run,{
       c:Seq[Int]=> c == d
     })
   }
@@ -89,11 +96,25 @@ class ManipulateTest extends FunSuite with WithBase{
 
   test("setUnion"){
     val a = 1 to 10
-    assert(a setUnion a,{
+    assert(a || a,{
       b:Seq[Int]=> b == a
     })
   }
   test("setIntersection") {
+
+    assert((1 to 10) /\ (5 to 8),{
+     b:Seq[Int]=> b == (5 to 8)
+    })
+  }
+
+  test("setDifference"){
+    val a = (1 to 10) ++  (1 to 10)
+    val b = (5 to 10)
+
+    val s = a.distinct.diff(b)
+    assert( a \/ b ,{
+      c:Seq[Int]=> c == s
+    })
 
   }
 

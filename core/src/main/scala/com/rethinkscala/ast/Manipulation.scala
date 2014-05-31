@@ -293,3 +293,11 @@ case class Keys(target: Record) extends ProduceArray[String] {
   def termType = TermType.KEYS
 }
 
+case class Split(target:Strings,delimiter:Option[String]=None,limit:Option[Int]=None) extends ProduceSequence[String]{
+
+
+  override lazy val args=buildArgs(Seq(Some(target),delimiter,limit).flatten:_*)
+
+  def termType = TermType.SPLIT
+}
+

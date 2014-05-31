@@ -127,13 +127,13 @@ trait RethinkApi extends TimeNames {
   def js(code: String, timeout: Option[Int] = None) = JavaScript(code, timeout)
 
   def json(str: String) = Json(str)
-}
-
-
-object r extends RethinkApi {
 
 
 }
+
+
+
+object r extends RethinkApi
 
 trait TimeNames {
 
