@@ -70,7 +70,7 @@ object RethinkdbBuild extends Build {
     "Mandubian repository releases" at "https://github.com/mandubian/mandubian-mvn/raw/master/releases/",
     "Sonatype OSS Repository" at "https://oss.sonatype.org/content/groups/public/",
     "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
-  )                /
+  )
 
   val jacksonVersion = "2.4.0-rc3"
   val jacksonScalaVersion = "2.4.0-SNAPSHOT"
