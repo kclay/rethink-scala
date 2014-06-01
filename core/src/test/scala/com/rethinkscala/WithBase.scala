@@ -101,6 +101,8 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   type IS = Iterable[String]
   type IA = Iterable[Any]
 
+  type Return[T] = Either[RethinkError,T]
+
 
   def assert(t: ql2.Term, tt: Term.TermType) {
     assert(t.getType == tt)
@@ -114,7 +116,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
     assert(d.str == value)
   }
 
-  private def assert[Result](f: () => Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
+  private def assert_[Result](f: () => Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
     val (condition, cause) = f() match {
       case Left(e) => (false, e.getMessage)
       case Right(r) => (check(r), "Successful query but invalid response")
@@ -124,7 +126,13 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   }
 
   def assert[Result](query: Produce[Result], testValue: Result)(implicit mf: Manifest[Result]) {
-    assert[Result](() => query.run, {
+    assert_[Result](() => query.run.asInstanceOf[Return[Result]], {
+      r: Result => r == testValue
+    })
+
+  }
+  def assert1[Result](query: Produce[Result], testValue: Result)(implicit mf: Manifest[Result]) {
+    assert_[Result](() => query.run.asInstanceOf[Return[Result]], {
       r: Result => r == testValue
     })
 
@@ -136,7 +144,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
 
 
   def assert[Result](query: Produce[Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
-    assert[Result](() => query.run, check)
+    assert_[Result](() => query.run.asInstanceOf[Return[Result]], check)
 
   }
 
@@ -144,13 +152,13 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
 
  def assertAs[Result <: Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
 
-   assert[Result](() => query.as[Result], check)
+   assert_[Result](() => query.as[Result].asInstanceOf[Return[Result]], check)
 
  }
 
 
   def assert[Result](result: Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
-    assert[Result](() => result, check)
+    assert_[Result](() => result, check)
   }
 
   def assert0(condition: Boolean) {

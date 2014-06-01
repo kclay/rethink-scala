@@ -13,7 +13,7 @@ import com.rethinkscala.reflect.Reflector
  */
 object GroupDebug {
 
-
+  /*
   val host = (Option(scala.util.Properties.envOrElse("TRAVIS", "empty")) map {
     case "empty" => "172.16.2.45"
     case _ => "127.0.0.1"
@@ -54,4 +54,5 @@ object GroupDebug {
     System.exit(0)
 
   }
+  */
 }

@@ -51,9 +51,7 @@ class ConnectionTest extends FunSuite with WithBase with Futures {
 
     val results = e run
 
-    assert[Double](results, {
-      t: Double => t == 1
-    })
+    assert(results.fold(x=>false,x=> x ==1))
 
 
   }

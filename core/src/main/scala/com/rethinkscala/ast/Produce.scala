@@ -206,6 +206,10 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo{
   override def \(name: String): ProduceAny = field(name)
 
 
+
+  def +(other:ProduceAny) = add(other)
+  def +=(other:ProduceAny) =add(other)
+  def add(other:ProduceAny) =AnyAdd(underlying,other)
   //def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
  def asArray[T](name:String)=field(name).array[T]
   def field(name: String) = GetField(this.asInstanceOf[Typed], name)

@@ -270,10 +270,7 @@ trait Expr {
   }
 }
 
-object Expr extends Expr {
-
-
-}
+object Expr extends Expr
 
 
 trait JsonLike

@@ -9,15 +9,17 @@ import scala.util.Failure
 import scala.Some
 import scala.concurrent.Future
 
+
+object ResultResolver{
+  type Async[T] = Future[T]
+  type Blocking[T] = Either[RethinkError, T]
+}
 trait ResultResolver[Result] {
 
   def toResult[R]: Result
 }
 
 trait ResultQuery[T] {
-
-
- // lazy val ast: ql2.Term = term.ast
 
   type ResolveType = Either[RethinkError, T]
 
@@ -43,10 +45,6 @@ trait ResultQuery[T] {
   }
 }
 
-
-trait QueryMode
-
-trait Blocking extends QueryMode
 
 
 case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, mf: Manifest[R], opts: Map[String, Any])

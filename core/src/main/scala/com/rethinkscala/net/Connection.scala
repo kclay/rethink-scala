@@ -9,7 +9,7 @@ import java.net.InetSocketAddress
 import org.jboss.netty.channel._
 
 import ql2.{Ql2 => ql2}
-import ql2.{Query, Response, VersionDummy}
+import ql2.{Response, VersionDummy}
 
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
 import org.jboss.netty.buffer.ChannelBuffers._
@@ -27,11 +27,10 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder
 import java.util.concurrent.atomic.AtomicInteger
 
 import Translate._
-import com.rethinkscala.Term
+import com.rethinkscala.{Delegate, Term}
 import scala.concurrent.duration.Duration
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scala.Some
-import com.rethinkscala.ast.DB
 
 
 /** Created by IntelliJ IDEA.
@@ -51,6 +50,7 @@ abstract class Token {
   def failure(e: Throwable)
 
 }
+
 
 
 case class QueryToken[R](connection: Connection, query:CompiledQuery, term: Term, p: Promise[R], mf: Manifest[R]) extends Token with LazyLogging {
@@ -215,7 +215,7 @@ private class PipelineFactory extends ChannelPipelineFactory {
 
 
     p.addLast("frameDecoder", new RethinkDBFrameDecoder())
-    p.addLast("protobufDecoder", new ProtobufDecoder2(Response.getDefaultInstance))
+    p.addLast("protobufDecoder", ProtobufDecoder(Response.getDefaultInstance))
 
     //p.addLast("frameEncoder", new ProtobufVarint32LengthFieldPrepender());
 
@@ -374,28 +374,38 @@ trait Connection {
   def toAst(term:Term):CompiledAst = version.toAst(term)
 
   def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T]
+
 }
 
-trait QueryFactory {
+
+trait ConnectionOps[C<:Connection,D<:Mode[C]]{
+  self:C=>
+
+
+
+  val delegate:D
   def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]): ResultQuery[R]
+ def apply[T](produce:Produce[T])(implicit m:Manifest[T]) = delegate(produce)(this).run
+  def toOpt[T](produce:Produce[T])(implicit m:Manifest[T]) = delegate(produce)(this).toOpt
 }
 
-trait BlockingConnection extends Connection with QueryFactory {
 
-  import com.rethinkscala.Blocking
+
+trait BlockingConnection extends Connection with ConnectionOps[BlockingConnection,Blocking]  {
+
 
   val delegate: Blocking.type = Blocking
+
   val timeoutDuration: Duration
 }
 
-trait AsyncConnection extends Connection with QueryFactory {
-
-  import com.rethinkscala.Async
+trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection,Async] {
 
   val delegate: Async.type = Async
 }
 
 object AsyncConnection {
+
   def apply(version: Version) = build(version, None)
 
 
@@ -423,6 +433,7 @@ private class ConnectionWithAsync(v: Version, under: Option[Connection]) extends
 
 object BlockingConnection {
   val defaultTimeoutDuration = Duration(30, "seconds")
+
 
 
   def apply(connection: Connection) = connection match {

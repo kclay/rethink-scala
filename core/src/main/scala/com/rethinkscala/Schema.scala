@@ -69,15 +69,19 @@ class Schema {
     new ActiveRecord(a, m)
 
   class ActiveRecord[T <: Document](o: T, m: Manifest[T])(implicit c: Connection) {
-    private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] = (
-      CurrentSchema.getOrElse(thisSchema)._tableTypes get (m.runtimeClass) map {
+    private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] ={
+
+      val result =  CurrentSchema.getOrElse(thisSchema)._tableTypes get (m.runtimeClass) map {
         table: Table[_] => block(c) {
           implicit c: BlockingConnection =>
             import c.delegate._
-            action(table.asInstanceOf[Table[T]]).run
+            action(table.asInstanceOf[Table[T]]).run.asInstanceOf[Either[Exception,R]]
         }
 
-      }) getOrElse (Left(new Exception(s"No Table found in Schema for this ${m.runtimeClass}")))
+      }
+
+      result getOrElse (Left(new Exception(s"No Table found in Schema for this ${m.runtimeClass}")))
+    }
 
     /**
      * Same as {{{table.insert(a)}}}

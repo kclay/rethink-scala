@@ -53,30 +53,7 @@ package object rethinkscala extends ImplicitConversions with ReceptacleImplicits
 
   }
 
-  object Async {
 
-    object Connection {
-      def apply(version: Version) = AsyncConnection(version)
-
-    }
-
-    implicit def toDelegate[T](produce: Produce[T])(implicit connection: AsyncConnection) = Delegate(produce, connection)
-
-
-  }
-
-  object Blocking {
-
-
-    object Connection {
-      def apply(version: Version): BlockingConnection = BlockingConnection(version)
-
-    }
-
-    implicit def toDelegate[T](produce: Produce[T])(implicit connection: BlockingConnection) = Delegate(produce, connection)
-
-
-  }
 
   trait BlockingContext[T] extends Function[BlockingConnection, T]
 
@@ -110,6 +87,7 @@ package object rethinkscala extends ImplicitConversions with ReceptacleImplicits
 
   implicit val mapStringToStrings = CanMap[String, Strings, String]
   implicit val mapStringToNumeric = CanMap[String, Numeric, Int]
+
 
   implicit def mapStringToArray[T] = CanMap[String, ArrayTyped[T], T]
 
@@ -175,6 +153,11 @@ package object rethinkscala extends ImplicitConversions with ReceptacleImplicits
 
   type Var = com.rethinkscala.ast.Var
 
-  object Expr extends com.rethinkscala.ast.Expr
+  val Expr = com.rethinkscala.ast.Expr
+  val Blocking = com.rethinkscala.net.Blocking
+  val Async = com.rethinkscala.net.Async
+  type BlockingConnection = com.rethinkscala.net.BlockingConnection
+  type AsyncConnection = com.rethinkscala.net.AsyncConnection
+
 
 }

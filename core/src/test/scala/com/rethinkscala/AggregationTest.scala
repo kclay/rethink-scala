@@ -18,6 +18,7 @@ class AggregationTest extends FunSuite with WithBase {
 
   test("reduce") {
     val seq = 1 to 10 by 1
+
     assert(Expr(seq).reduce(_ + _).run, {
       v: Double => seq.reduce(_ + _) == v
     })

@@ -89,7 +89,7 @@ trait Literal extends Addition  {
 
 object Strings{
     implicit class Implicits(s:Strings){
-      
+
     }
 }
 
@@ -102,8 +102,10 @@ trait Strings extends Literal {
 
 
   def +(other: Strings) = add(other)
+ // def +(other:String) = add(other)
 
-  def +=(other: Strings) =add(other)
+  def +=(other:String) = add(other)
+  //def +=(other: Strings) =add(other)
 
   def find(regexp: Regex): Match = find(regexp.toString())
 
