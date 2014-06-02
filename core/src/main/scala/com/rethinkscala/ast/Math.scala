@@ -1,45 +1,46 @@
 package com.rethinkscala.ast
 
 import ql2.Ql2.Term.TermType
+import com.rethinkscala.Term
 
 
-case class Eq(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
+case class Eq(left: Typed, right: Typed) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.EQ
 
   override val stmt = "=="
 }
 
-case class Ne(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
+case class Ne(left: Typed, right: Typed) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.NE
 
   override val stmt = "!="
 }
 
-case class Lt(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
+case class Lt(left: Typed, right: Typed) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.LT
 
   override val stmt = "<"
 }
 
-case class Le(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
+case class Le(left: Typed, right: Typed) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.LE
 
   override val stmt = "<="
 }
 
-case class Gt(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
+case class Gt(left: Typed, right: Typed) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.GT
 
   override val stmt = ">"
 }
 
-case class Ge(left: Literal, right: Literal) extends BiCompareOperQuery with ProduceBinary {
+case class Ge(left: Typed, right: Typed) extends BiCompareOperQuery with ProduceBinary {
   def termType = TermType.GE
 
   override val stmt = ">="
 }
 
-case class Not(prev: Literal) extends Query {
+case class Not(prev: Typed) extends Query {
   override lazy val args = buildArgs(prev)
 
   def termType = TermType.NOT
@@ -66,23 +67,58 @@ case class Mod(left: Numeric, right: Numeric) extends BiCompareOperQuery with Pr
   def termType = TermType.MOD
 }
 
-case class All(left: Binary, right: Binary) extends BiCompareOperQuery with ProduceBinary {
+abstract case class All(left:Typed, right: Typed) extends BiCompareOperQuery {
+
+  override lazy val args = buildArgs(left,right)
   def termType = TermType.ALL
 }
 
-case class Or(left: Binary, right: Binary) extends BiCompareOperQuery with ProduceBinary {
+abstract case class Or(left: Typed, right: Typed) extends BiCompareOperQuery {
+
+  override lazy val args = buildArgs(left,right )
   def termType = TermType.ANY
 }
 
-trait Add extends BiCompareOperQuery with Literal {
 
+object All{
+  def apply(left:Binary,right:Binary) = new All(left,right) with ProduceBinary
+
+  def apply[T](left:Typed,right:ProduceSequence[T]) = new All(left,right) with ProduceSequence[T]
+  def apply(left:Typed,right:Strings) = new All(left,right) with ProduceString
+  def apply(left:Typed,right:Numeric) = new All(left,right) with ProduceNumeric
+}
+
+
+
+object Or{
+
+  def apply(left:Binary,right:Binary) = new Or(left,right) with ProduceBinary
+  def apply[L,R>:L](left:ProduceSequence[L],right:ProduceSequence[R]) =   new Or(left,right) with ProduceSequence[L]
+}
+
+abstract case class Add(left: Typed, right: Typed) extends BiCompareOperQuery  {
+
+
+  override lazy val args = buildArgs(left,right)
 
   def termType = TermType.ADD
 }
 
-case class AnyAdd(left: Addition, right: Addition) extends Add with ProduceAny
+
+object Add{
+
+  def any(left:Typed,right:Typed) = new Add(left,right) with ProduceAny
+
+  def apply(left:Numeric,right:Numeric) = new Add(left,right) with ProduceNumeric
+  def apply(left:Strings,right:Strings):ProduceString = new Add(left,right) with ProduceString
+
+  def apply[L,R>:L](left:ProduceSequence[L],right:ProduceSequence[R]) =   new Add(left,right) with ProduceSequence[L]
+}
 
 
-case class NumericAdd(left: Addition, right: Addition) extends Add with ProduceNumeric
+//case class AnyAdd(left: Addition, right: Addition) extends Add with ProduceAny
 
-case class StringAdd(left: Addition, right: Addition) extends Add with ProduceString
+
+//case class NumericAdd(left: Addition, right: Addition) extends Add with ProduceNumeric
+
+//case class StringAdd(left: Addition, right: Addition) extends Add with ProduceString

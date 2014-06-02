@@ -148,7 +148,9 @@ trait ProduceTypedDocument[T<:Document] extends ProduceDocument[T] with Record
 
 trait ProduceNumeric extends ProduceSingle[Double] with Numeric with Produce0[Double]
 
-trait ProduceString extends ProduceSingle[String] with Strings   with Produce0[String]
+trait ProduceString extends ProduceSingle[String] with Strings   with Produce0[String]{
+  override val underlying = this
+}
 
 trait ForwardTyped {
   self: Produce[_] with Typed =>
@@ -183,7 +185,7 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo{
   }
 
   def string: ProduceString = new ProduceString {
-    override val underlying = any
+    //override val underlying = any
     override lazy val args = underlyingTerm.args
     override lazy val optargs = underlyingTerm.optargs
 
@@ -209,7 +211,7 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo{
 
   def +(other:ProduceAny) = add(other)
   def +=(other:ProduceAny) =add(other)
-  def add(other:ProduceAny) =AnyAdd(underlying,other)
+  def add(other:ProduceAny) =Add.any(underlying,other)
   //def as[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
  def asArray[T](name:String)=field(name).array[T]
   def field(name: String) = GetField(this.asInstanceOf[Typed], name)
@@ -250,5 +252,6 @@ trait ProduceJoin[L, R] extends ProduceSequence[JoinResult[L, R]] with JoinTyped
 }
 
 trait ProduceTime extends TimeTyped {
-  def add(other: Addition) = AnyAdd(underlying, other)
+
+  def add(other: Addition) = Add.any(underlying, other)
 }

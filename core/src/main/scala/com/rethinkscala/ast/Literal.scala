@@ -36,62 +36,9 @@ trait WithAddition[-T, +R] extends Addition {
 }
 
 
-object Literal{
-
-  
-}
 
 
-trait Literal extends Addition  {
-  def unary_~ = not
-  def ===(other: Literal) = eq(other)
-  def !=(other: Literal) = ne(other)
-
-  def =!=(other: Literal) = ne(other)
-
-  def <(other: Literal) = lt(other)
-
-  def <=(other: Literal) = lte(other)
-  def >=(other: Literal) = gte(other)
-  def >(other: Literal) = gt(other)
-
-  override val underlying = this
-
-  def not = Not(underlying)
-
-
-
-
-  def eq(other: Literal) = Eq(underlying, other)
-
-
-
-
-  def ne(other: Literal) = Ne(underlying, other)
-
-
-
-  def lt(other: Literal) = Lt(underlying, other)
-
-  def lte(other: Literal) = Le(underlying, other)
-
-
-
-  def gt(other: Literal) = Gt(underlying, other)
-
-
-
-  def gte(other: Literal) = Ge(underlying, other)
-
-
-}
-
-
-object Strings{
-    implicit class Implicits(s:Strings){
-
-    }
-}
+trait Literal extends Addition
 
 
 trait Strings extends Literal {
@@ -109,8 +56,8 @@ trait Strings extends Literal {
 
   def find(regexp: Regex): Match = find(regexp.toString())
 
-  def add(other: Strings): StringAdd = StringAdd(underlying, other)
-  def add(other:String):StringAdd = StringAdd(underlying,other)
+  def add(other: Strings)= Add(underlying, other)
+  def add(other:String) = Add(underlying,other)
 
   def split = Split(underlying)
   def split(delimiter:String) = Split(underlying,delimiter)
@@ -122,33 +69,6 @@ trait Strings extends Literal {
   def find(regex: String): Match = Match(underlying, regex)
 }
 
-object Numeric{
-    /*
-  implicit class Implicits(n:Numeric){
-    def +(other: Numeric) = n.add(other)
-
-    def +=(other: Numeric) = n.add(other)
-    def -(other: Numeric) = n.sub(other)
-
-
-    def /(other: Numeric) = n.div(other)
-
-
-    def %(other: Numeric) = n.mod(other)
-
-
-  }   */
-
-}
-
-
-/*
-object Numeric{
-
-  implicit def toScalaNumeric(value:Numeric) = new Numeric with ScalaNumeric {
-    override val underlying: Numeric = value
-  }
-} */
 
 trait Numeric extends Literal with Multiply with Binary  {
 
@@ -157,22 +77,22 @@ trait Numeric extends Literal with Multiply with Binary  {
 
 
 
-  def +(other: Numeric) = underlying.add(other)
+  def +(other: Numeric) = add(other)
 
-  def +=(other: Numeric) = underlying.add(other)
-  def -(other: Numeric) = underlying.sub(other)
-
-
-  def /(other: Numeric) = underlying.div(other)
+  def +=(other: Numeric) = add(other)
+  def -(other: Numeric) = sub(other)
 
 
-  def %(other: Numeric) = underlying.mod(other)
+  def /(other: Numeric) = div(other)
 
-  def add(other: Numeric) = NumericAdd(underlying, other)
-  def add(other: Double) = NumericAdd(underlying, other)
-  def add(other: Int) = NumericAdd(underlying, other)
-  def add(other: Float) = NumericAdd(underlying, other)
-  def add(other: Long) = NumericAdd(underlying, other)
+
+  def %(other: Numeric) = mod(other)
+
+  def add(other: Numeric) = Add(underlying, other)
+  def add(other: Double) = Add(underlying, other)
+  def add(other: Int) = Add(underlying, other)
+  def add(other: Float) = Add(underlying, other)
+  def add(other: Long) = Add(underlying, other)
 
 
 

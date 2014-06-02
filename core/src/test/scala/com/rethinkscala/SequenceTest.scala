@@ -21,6 +21,12 @@ class SequenceTest extends FunSuite with WithBase {
     val a = Expr(Seq(1, 2, 3, 4, 5))
 
 
+    a.reduce{
+      (a,b)=> {
+        val c = a + b
+        c
+      }
+    }.ast
 
     assert(a.reduce(_ + _).run, {
       b: Double=> b == 15

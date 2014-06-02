@@ -51,6 +51,28 @@ private[rethinkscala] trait Typed extends ImplicitConversions {
   def typeOf = TypeOf(underlying)
 
   def coerceTo(dataType: DataType) = CoerceTo(underlying, dataType)
+
+  def unary_~ = not
+  def ===(other: Literal) = eq(other)
+  def !=(other: Literal) = ne(other)
+
+  def =!=(other: Literal) = ne(other)
+
+  def <(other: Literal) = lt(other)
+
+  def <=(other: Literal) = lte(other)
+  def >=(other: Literal) = gte(other)
+  def >(other: Literal) = gt(other)
+
+
+  def not = Not(underlying)
+
+  def eq(other: Literal) = Eq(underlying, other)
+  def ne(other: Literal) = Ne(underlying, other)
+  def lt(other: Literal) = Lt(underlying, other)
+  def lte(other: Literal) = Le(underlying, other)
+  def gt(other: Literal) = Gt(underlying, other)
+  def gte(other: Literal) = Ge(underlying, other)
 }
 
 
@@ -66,7 +88,7 @@ trait Ref extends ArrayTyped[Any] with Numeric with Binary with Record with Lite
 
   //override def add(other: Addition): Add = AnyAdd(underlying, other)
 
-  def add(other: Ref): Add = AnyAdd(underlying, other)
+  //def add(other: Ref): Add = Add(underlying, other)
 
 
 
