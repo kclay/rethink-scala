@@ -35,7 +35,7 @@ object BuildSettings {
     organization := "com.rethinkscala",
     testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test"))),
     version := "0.4.3-SNAPSHOT",
-    scalaVersion := "2.11.0-RC4",
+    scalaVersion := "2.11.1",
 
     scalacOptions ++= Seq(),
 
@@ -72,8 +72,8 @@ object RethinkdbBuild extends Build {
     "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
   )
 
-  val jacksonVersion = "2.4.0-rc3"
-  val jacksonScalaVersion = "2.4.0-SNAPSHOT"
+  val jacksonVersion = "2.4.0-rc2"
+  val jacksonScalaVersion = "2.4.0-rc2"
   def jackson = Seq(
    "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
    "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
@@ -110,7 +110,7 @@ object RethinkdbBuild extends Build {
 
         "org.scalatest" %% "scalatest" % "2.1.3" % "test",
         //"com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
-        "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.0.2",
+        "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.0.3",
         "org.slf4j" % "slf4j-log4j12" % "1.7.6",
 
         "io.netty" % "netty" % "3.6.6.Final",
