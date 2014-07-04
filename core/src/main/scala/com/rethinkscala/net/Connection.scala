@@ -1,36 +1,31 @@
 package com.rethinkscala.net
 
 
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
-import java.util.concurrent.Executors
-import org.jboss.netty.bootstrap.ClientBootstrap
 import java.net.InetSocketAddress
+import java.nio.ByteOrder
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
-import org.jboss.netty.channel._
-
-import ql2.{Ql2 => ql2}
-import ql2.{Response, VersionDummy}
-
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
+import com.rethinkscala.ConvertFrom._
+import com.rethinkscala.Term
+import com.rethinkscala.ast._
+import com.rethinkscala.net.Translate._
+import com.rethinkscala.utils.{ConnectionFactory, SimpleConnectionPool}
+import com.typesafe.scalalogging.slf4j.LazyLogging
+import org.jboss.netty.bootstrap.ClientBootstrap
 import org.jboss.netty.buffer.ChannelBuffers._
 import org.jboss.netty.buffer.{ChannelBuffer, HeapChannelBufferFactory}
-import java.nio.ByteOrder
-import com.rethinkscala.utils.{ConnectionFactory, SimpleConnectionPool}
-import concurrent._
 import org.jboss.netty.channel.Channels.pipeline
-import com.rethinkscala.ConvertFrom._
-
-import org.jboss.netty.channel.Channel
-import ql2.Response.ResponseType
-import com.rethinkscala.ast._
+import org.jboss.netty.channel._
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
 import org.jboss.netty.handler.codec.frame.FrameDecoder
-import java.util.concurrent.atomic.AtomicInteger
+import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
+import ql2.{Ql2 => ql2}
+import ql2.Response.ResponseType
+import ql2.{Response, VersionDummy}
 
-import Translate._
-import com.rethinkscala.{Delegate, Term}
+import scala.concurrent.{Promise,Future}
 import scala.concurrent.duration.Duration
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import scala.Some
 
 
 /** Created by IntelliJ IDEA.
@@ -51,10 +46,7 @@ abstract class Token {
 
 }
 
-
-
-case class QueryToken[R](connection: Connection, query:CompiledQuery, term: Term, p: Promise[R], mf: Manifest[R]) extends Token with LazyLogging {
-
+case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R], mf: Manifest[R]) extends Token with LazyLogging {
 
   implicit val t = mf
 
@@ -64,15 +56,7 @@ case class QueryToken[R](connection: Connection, query:CompiledQuery, term: Term
   type MapType = Map[String, _]
   type IterableType = Iterable[MapType]
 
-  /*def cast(value: Any, json: String): ResultType = value match {
-    case v: MapType => translate[MapType, ResultType].read(v.asInstanceOf[MapType], json, term)
-    case a: IterableType => translate[IterableType, ResultType].read(a.asInstanceOf[IterableType], json, term)
-    case x: Any => x.asInstanceOf[R]
-
-  }        */
-
   def cast[T](json: String)(implicit mf: Manifest[T]): T = translate[T].read(json, term)
-
 
   def toResult(response: Response) = {
     logger.debug(s"Processing result : $response")
@@ -83,11 +67,7 @@ case class QueryToken[R](connection: Connection, query:CompiledQuery, term: Term
 
       case _ => cast[ResultType](json)
     }
-
-
     rtn
-
-
   }
 
   def handle(response: Response) = (response.getType match {
@@ -141,26 +121,18 @@ class RethinkDBHandler extends SimpleChannelUpstreamHandler {
 
   implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext): Option[Token] = Some(ctx.getChannel.getAttachment.asInstanceOf[Token])
 
-
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-
     ctx.map(_.handle(e.getMessage.asInstanceOf[Response]))
-
-
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-
     ctx.map(_.failure(e.getCause))
   }
 }
 
 private class RethinkDBFrameDecoder extends FrameDecoder {
-  def decode(ctx: ChannelHandlerContext, channel: Channel, buffer: ChannelBuffer): AnyRef = {
+  def decode(ctx: ChannelHandlerContext, channel:Channel, buffer: ChannelBuffer): AnyRef = {
     buffer.markReaderIndex()
-
-
-
     if (!buffer.readable() || buffer.readableBytes() < 4) {
       buffer.resetReaderIndex()
       return null
@@ -187,7 +159,7 @@ private class RethinkDBEncoder extends OneToOneEncoder {
         b.writeInt(v.getNumber)
         b
       }
-      case q:CompiledQuery=> q.encode
+      case q: CompiledQuery => q.encode
       case s: String =>
         val b = buffer(ByteOrder.LITTLE_ENDIAN, s.length + 4)
         b.writeInt(s.length)
@@ -216,11 +188,7 @@ private class PipelineFactory extends ChannelPipelineFactory {
 
     p.addLast("frameDecoder", new RethinkDBFrameDecoder())
     p.addLast("protobufDecoder", ProtobufDecoder(Response.getDefaultInstance))
-
-    //p.addLast("frameEncoder", new ProtobufVarint32LengthFieldPrepender());
-
     p.addLast("protobufEncoder", new RethinkDBEncoder())
-
     p.addLast("handler", defaultHandler)
     p
   }
@@ -254,7 +222,7 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
 
   case class ChannelWrapper(cf: ChannelFuture) {
     val id = connectionId.incrementAndGet()
-    val token: AtomicInteger = new AtomicInteger()
+    val token: AtomicLong = new AtomicLong()
     @volatile
     var configured: Boolean = false
     lazy val channel = cf.getChannel
@@ -282,7 +250,6 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
     }
 
     def validate(wrapper: ChannelWrapper): Boolean = {
-
       wrapper.channel.isOpen
     }
 
@@ -291,41 +258,6 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
       wrapper.channel.close()
     }
   }, max = version.maxConnections)
- /*
-  private def toQuery(term: Term, token: Int, db: Option[String] = None, opts: Map[String, Any] = Map()) = {
-
-    def scopeDB(q: Query.Builder, db: DB) = q.addGlobalOptargs(Query.AssocPair.newBuilder.setKey("db").setVal(db.ast))
-
-    val query = Some(
-      Query.newBuilder().setType(Query.QueryType.START)
-        .setQuery(term.ast).setToken(token).setAcceptsRJson(true)
-
-    ).map(q => {
-
-      opts.get("db").map {
-        case name: String => scopeDB(q, DB(name))
-      }.getOrElse {
-        term match {
-          case d: WithDB => d.db.map(scopeDB(q, _)).getOrElse(db.map {
-            name => scopeDB(q, DB(name))
-          }.getOrElse(q))
-          case _ => db.map {
-            name => scopeDB(q, DB(name))
-          }.getOrElse(q)
-        }
-
-      }
-
-
-    }).get
-
-    query.build()
-
-  }
-   */
-
-
-
 
 
   def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T] = {
@@ -334,35 +266,27 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
     logger.debug(s"Writing $term")
     channel take {
       case (c, restore) =>
-
         logger.debug("Received connection from pool")
         val con = this
         // add a channel future to ensure that all setup has been done
         c.cf.addListener(new ChannelFutureListener {
           def operationComplete(future: ChannelFuture) {
-
             val query = version.toQuery(term, c.token.getAndIncrement, defaultDB, opts)
-
-
             val token = QueryToken[T](con, query, term, p, mf)
             // TODO : Check into dropping netty and using sockets for each,
             // Or find a way so that we can store the token for the netty handler to complete
-
             c.channel.setAttachment(token)
             logger.debug("Writing query")
             c.channel.write(query)
             future.removeListener(this)
           }
         })
-
-
         f onComplete {
           case _ => restore(c)
         }
     } onFailure {
       case e: Exception => p.failure(e)
     }
-
     p
   }
 }
@@ -371,27 +295,28 @@ trait Connection {
   val underlying: Connection
   val version: Version
 
-  def toAst(term:Term):CompiledAst = version.toAst(term)
+  def toAst(term: Term): CompiledAst = version.toAst(term)
 
   def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T]
 
 }
 
 
-trait ConnectionOps[C<:Connection,D<:Mode[C]]{
-  self:C=>
+trait ConnectionOps[C <: Connection, D <: Mode[C]] {
+  self: C =>
 
 
+  val delegate: D
 
-  val delegate:D
   def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]): ResultQuery[R]
- def apply[T](produce:Produce[T])(implicit m:Manifest[T]) = delegate(produce)(this).run
-  def toOpt[T](produce:Produce[T])(implicit m:Manifest[T]) = delegate(produce)(this).toOpt
+
+  def apply[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).run
+
+  def toOpt[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).toOpt
 }
 
 
-
-trait BlockingConnection extends Connection with ConnectionOps[BlockingConnection,Blocking]  {
+trait BlockingConnection extends Connection with ConnectionOps[BlockingConnection, Blocking] {
 
 
   val delegate: Blocking.type = Blocking
@@ -399,7 +324,7 @@ trait BlockingConnection extends Connection with ConnectionOps[BlockingConnectio
   val timeoutDuration: Duration
 }
 
-trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection,Async] {
+trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Async] {
 
   val delegate: Async.type = Async
 }
@@ -433,7 +358,6 @@ private class ConnectionWithAsync(v: Version, under: Option[Connection]) extends
 
 object BlockingConnection {
   val defaultTimeoutDuration = Duration(30, "seconds")
-
 
 
   def apply(connection: Connection) = connection match {

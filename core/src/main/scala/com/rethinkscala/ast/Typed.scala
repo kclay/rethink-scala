@@ -134,6 +134,7 @@ object Binary{
 }
 
 
+/*
 trait BinaryOps{
   self:Typed=>
 
@@ -153,7 +154,7 @@ trait BinaryOps{
   def >|(other: Binary) = ror(other)
 
   def ror(other: Binary) = Or(other, underlying)
-}
+}*/
 trait Binary extends Typed {
 
   override  val underlying = this
