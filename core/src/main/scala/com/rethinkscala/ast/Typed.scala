@@ -1,6 +1,7 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala._
+import com.rethinkscala.ast.All
 
 
 sealed trait DataType {
@@ -39,7 +40,7 @@ case object ArrayData extends DataType {
 }
 
 
-private[rethinkscala] trait Typed extends ImplicitConversions {
+private[rethinkscala] trait Typed extends ImplicitConversions{
 
   // TODO : Fix me
   def term: Term = this.asInstanceOf[Term]
@@ -53,26 +54,26 @@ private[rethinkscala] trait Typed extends ImplicitConversions {
   def coerceTo(dataType: DataType) = CoerceTo(underlying, dataType)
 
   def unary_~ = not
-  def ===(other: Literal) = eq(other)
-  def !=(other: Literal) = ne(other)
+  def ===(other: Typed) = eq(other)
+  def !=(other: Typed) = ne(other)
 
-  def =!=(other: Literal) = ne(other)
+  def =!=(other: Typed) = ne(other)
 
-  def <(other: Literal) = lt(other)
+  def <(other: Typed) = lt(other)
 
-  def <=(other: Literal) = lte(other)
-  def >=(other: Literal) = gte(other)
-  def >(other: Literal) = gt(other)
+  def <=(other: Typed) = lte(other)
+  def >=(other: Typed) = gte(other)
+  def >(other: Typed) = gt(other)
 
 
   def not = Not(underlying)
 
-  def eq(other: Literal) = Eq(underlying, other)
-  def ne(other: Literal) = Ne(underlying, other)
-  def lt(other: Literal) = Lt(underlying, other)
-  def lte(other: Literal) = Le(underlying, other)
-  def gt(other: Literal) = Gt(underlying, other)
-  def gte(other: Literal) = Ge(underlying, other)
+  def eq(other: Typed) = Eq(underlying, other)
+  def ne(other: Typed) = Ne(underlying, other)
+  def lt(other: Typed) = Lt(underlying, other)
+  def lte(other: Typed) = Le(underlying, other)
+  def gt(other: Typed) = Gt(underlying, other)
+  def gte(other: Typed) = Ge(underlying, other)
 }
 
 
@@ -129,17 +130,36 @@ trait Multiply extends Typed {
 }
 
 object Binary{
-  implicit class ScalaBinary(underlying:Binary){
-    def &(other: Binary) = underlying.and(other)
-  }
+
 }
 
+
+trait BinaryOps{
+  self:Typed=>
+
+  def &&(other: Binary) = and(other)
+  def and(other: Binary) = All(underlying, other)
+
+  def rand(other: Binary) = All(other, underlying)
+
+  def &>(other: Binary) = rand(other)
+
+  // or
+  def ||(other: Binary) = or(other)
+
+  def or(other: Binary) = Or(underlying, other)
+
+  // right or
+  def >|(other: Binary) = ror(other)
+
+  def ror(other: Binary) = Or(other, underlying)
+}
 trait Binary extends Typed {
 
-  override val underlying = this
+  override  val underlying = this
 
 
-
+  def &&(other: Binary) = and(other)
   def and(other: Binary) = All(underlying, other)
 
   def rand(other: Binary) = All(other, underlying)

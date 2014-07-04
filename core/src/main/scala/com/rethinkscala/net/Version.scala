@@ -71,6 +71,44 @@ abstract class Version extends LazyLogging {
 }
 
 
+trait ProvidesQuery{
+
+  self:Version=>
+
+  type Builder
+
+
+  def newQueryBuilder(queryType:ql2.Query.QueryType,token:Int):Builder
+
+  def withDB(builder:Builder,db:DB):Builder
+
+  def toQuery(term: Term, token: Int, db: Option[String], opts: Map[String, Any]):CompiledQuery={
+    def scopeDB(q: Query.Builder, db: DB) = q.addGlobalOptargs(Query.AssocPair.newBuilder.setKey("db").setVal(ast(db)))
+
+
+    val builder = newQueryBuilder(Query.QueryType.START,token)
+
+
+      opts.get("db").map {
+        case name: String => withDB(builder, DB(name))
+      }.getOrElse {
+        term match {
+          case d: WithDB => d.db.map(withDB(builder, _)).getOrElse(db.map {
+            name => withDB(builder, DB(name))
+          }.getOrElse(builder))
+          case _ => db.map {
+            name => scopeDB(builder, DB(name))
+          }.getOrElse(builder)
+        }
+
+      }
+
+
+    }
+
+  }
+}
+
 trait ProvidesProtoBufQuery {
 
   import scala.collection.JavaConversions.{seqAsJavaList, asJavaCollection}
@@ -81,6 +119,7 @@ trait ProvidesProtoBufQuery {
 
   def build(da: DatumAssocPair) = ql2.Datum.AssocPair.newBuilder.setKey(da.key).setVal(da.token.asInstanceOf[Datum].toMessage).build()
 
+  type Builder = Query.Builder
   private[this] def ast(term: Term): ql2.Term = {
 
     val opts = term.optargs.map {
@@ -92,6 +131,11 @@ trait ProvidesProtoBufQuery {
     term.newBuilder.setType(term.termType)
       .addAllArgs(term.args.map(ast))
       .addAllOptargs(opts).build()
+  }
+
+
+  def newQueryBuilder(queryType:ql2.Query.QueryType,token:Int):Builder={
+    Query.newBuilder().setType(Query.QueryType.START).setToken(token).setAcceptsRJson(true)
   }
 
 
