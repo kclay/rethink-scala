@@ -26,7 +26,8 @@ SBT Users
 ```scala
 val main = Project(....).settings(resolvers ++= Seq("RethinkScala Repository" at "http://kclay.github.io/releases"))
 
-val rethinkscala = "com.rethinkscala" %% "core" % "0.4",
+val rethinkscala = "com.rethinkscala" %% "core" % "0.4.3",
+val rethinkscala = "com.rethinkscala" %% "core" % "0.4.4-SNAPSHOT",
 ```
 Examples
 ```scala
