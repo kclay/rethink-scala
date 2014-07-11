@@ -9,7 +9,7 @@ import org.joda.time.format.ISODateTimeFormat
 import com.rethinkscala.net.{JsonDocumentConversion, RethinkDriverError}
 import scala.collection.{mutable, Iterable}
 
-case class MakeArray[T](array: Iterable[T]) extends Term with ProduceArray[T] {
+case class MakeArray[T](array: Iterable[T]) extends  ProduceArray[T] {
   override lazy val args = buildArgs(array.toSeq: _*)
 
   // def datumTermType:TermType.EnumVal=ql2.Datum
@@ -63,8 +63,7 @@ private[rethinkscala] case class MakeObj2(data: Document) extends Term with MapT
   def termType = TermType.MAKE_OBJ
 }
 
-
-private[this] object MakeObj {
+ object MakeObj {
 
 
   def asJson(data: Map[String, Any], depth: Int = 20): MakeObj = new MakeObj(data) {

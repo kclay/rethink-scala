@@ -17,7 +17,7 @@ import com.rethinkscala.reflect.Reflector
 import ql2._
 import com.rethinkscala.Implicits.Quick._
 import com.rethinkscala.net._
-import com.rethinkscala.ast.Table
+import com.rethinkscala.ast._
 
 
 case class Player(id:Int,player:String,points:Int,`type`:String) extends Document
@@ -33,6 +33,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   val authKey = "foobar"
   val version1 = new Version1(host, port)
   val version2 = new Version2(host, port, authKey = authKey)
+  val version3 = new Version3(host, port, authKey = authKey)
 
   lazy val testSeq={
 
@@ -42,13 +43,16 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
                  |    {"id": 11, "player": "Bob", "points": 10, "type": "free"},
                  |    {"id": 12, "player": "Alice", "points": 2, "type": "free"}
                  |]""".stripMargin
+    val map = Reflector.fromJson[Seq[Map[String, Any]]](json)
 
-    Expr(Reflector.fromJson[Seq[Map[String, Any]]](json))
+
+     Expr(map)
+
 
   }
 
   type TableType = Document
-  def useVersion = version2
+  def useVersion:Version = version2
 
   implicit val connection: BlockingConnection = BlockingConnection(useVersion)
 

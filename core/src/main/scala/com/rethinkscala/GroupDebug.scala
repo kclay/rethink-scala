@@ -1,9 +1,5 @@
 package com.rethinkscala
 
-import com.rethinkscala.net.{BlockingConnection, Version2}
-import com.rethinkscala._
-import com.rethinkscala.reflect.Reflector
-
 /**
  * Created with IntelliJ IDEA.
  * User: keyston

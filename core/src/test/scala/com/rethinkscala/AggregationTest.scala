@@ -1,8 +1,10 @@
 package com.rethinkscala
 
+import com.rethinkscala._
 import org.scalatest.FunSuite
+import com.rethinkscala.ast._
 
-import Blocking._
+import com.rethinkscala.net.Blocking._
 
 
 
@@ -107,14 +109,15 @@ class AggregationTest extends FunSuite with WithBase {
 
   test("max"){
 
-    val res = testSeq.max("points").cast[Int]("points")
+    val res = testSeq.max("points").int("points")
 
-   assert(res,{
+
+   assert(res.run,{
     p:Int=> p == 15
 
    })
 
-    assert(testSeq.max(x=> x("points")).cast[Int]("points").toOpt == Some(15))
+    assert(testSeq.max(x=> x("points")).int("points").toOpt == Some(15))
   }
 
 
@@ -131,16 +134,26 @@ class AggregationTest extends FunSuite with WithBase {
   }
   test("avg"){
 
-    assert((1 to 10 by 1).avg.toOpt == Some(5.5))
+    assert(Expr(1 to 10 by 1).avg.toOpt == Some(5.5))
     assert( testSeq.avg("points").toOpt == Some(8.5))
     assert(testSeq.avg(v=> v \ "points" + v\"id").toOpt == Some(16))
   }
   test("contains") {
 
+    val a = Expr(1 to 10 by 1)
+
     assert(Expr(1 to 10 by 1) contains 5)
 
     assert(Expr(1 to 10 by 1) contains (x=> x > 5))
 
+
+    //val b = Var(1).seq[Int]("foo")
+    //print(b)
+
+
+
+     Expr(1 to 10).filter(f=> f("industries").contains(i=> i \ "userId" ==="700"))
+  //  Expr(1 to 10).filter(f=> f.anySeq("industries").contains(i=> i \ "userId" ==="700"))
     val res = Expr('a' to 'd').contains("b")
      print(res.ast)
     assert(res)

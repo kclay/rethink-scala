@@ -84,7 +84,9 @@ object Ref{
      def +=(other: Numeric) = underlying.add(other)
   }
 }
-trait Ref extends ArrayTyped[Any] with Numeric with Binary with Record with Literal with Strings  with CanManipulate[Pluck,Merge,Without]{
+trait Ref extends Sequence[Any] with Numeric with Binary with Record with Literal with Strings
+
+with CanManipulate[Pluck,Merge,Without]{
   override val underlying = this
 
   //override def add(other: Addition): Add = AnyAdd(underlying, other)

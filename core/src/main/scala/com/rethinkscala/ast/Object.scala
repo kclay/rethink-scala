@@ -33,7 +33,7 @@ trait Hash {
 
   override val underlying = this
 
-  def field(name: String): this.FieldProduce
+  def field(name: String):FieldProduce
 
   def apply(name: String)= field(name)
 

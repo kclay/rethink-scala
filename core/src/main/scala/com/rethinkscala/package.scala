@@ -21,36 +21,56 @@ package object rethinkscala extends ImplicitConversions with ReceptacleImplicits
 
   implicit val stringToStrings = new ToAst[String] {
     type TypeMember = Strings
-    type Producer = ProduceString
+
+    type InnerProduce = Produce0[String]
 
 
   }
   implicit val doubleToNumeric = new ToAst[Double] {
     type TypeMember = Numeric
-    type Producer = ProduceNumeric
+
+    type InnerProduce = Produce0[Double]
 
 
   }
   implicit val intToNumeric = new ToAst[Int] {
     type TypeMember = Numeric
-    type Producer = ProduceNumeric
+
+    type InnerProduce = Produce0[Int]
 
   }
   implicit val floatToNumeric = new ToAst[Float] {
     type TypeMember = Numeric
-    type Producer = ProduceNumeric
+
+    type InnerProduce = Produce0[Float]
 
   }
 
+
+
   implicit def arrayMapToTyped[T] = new ToAst[Map[String, T]] {
     type TypeMember = Var
-    type Producer = ProduceAny
+
+    type InnerProduce = Produce0[Map[String,T]]
   }
 
   implicit def docToTyped[T <: Document] = new ToAst[T] {
     type TypeMember = Var
-    type Producer = ProduceAny
 
+    type InnerProduce = Produce0[T]
+
+  }
+  /*
+  implicit def seqToSequence[T>:Any] = new ToAst[Seq[T]] {
+    type TypeMember = Sequence[T]
+
+    type InnerProduce = Produce0[T]
+  } */
+
+  implicit def seqToAnySequence = new ToAst[Seq[Any]] {
+    type TypeMember = Sequence[Any]
+
+    type InnerProduce = Produce0[Any]
   }
 
 

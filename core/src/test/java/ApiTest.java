@@ -23,7 +23,7 @@ public class ApiTest {
 
     public void test() {
 
-
+        /*
         Connection connection = new Connection(Version2.builder().build(), 5000);
 
 
@@ -33,7 +33,7 @@ public class ApiTest {
 
         Map<String,Object> hm = new HashMap<String,Object>();
         hm.put("foo",1);
-        hm.put("bar",1);
+        hm.put("bar",1);*/
       //  r.expr(Arrays.asList(hm)).pluck(Arrays.asList("a","b"));
           /*
           BooleanFunction f = new BooleanFunction(){

@@ -2,7 +2,7 @@ package com.rethinkscala
 
 import org.scalatest.FunSuite
 
-import Blocking._
+import com.rethinkscala.net.Blocking._
 
 /** Created with IntelliJ IDEA.
   * User: keyston

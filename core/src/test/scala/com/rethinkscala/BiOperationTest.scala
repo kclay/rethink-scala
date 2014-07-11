@@ -12,6 +12,7 @@ class BiOperationTest extends FunSuite with WithBase {
   import scala.collection.JavaConverters._
 
 
+
   test("TermNode.add") {
 
 
@@ -35,6 +36,8 @@ class BiOperationTest extends FunSuite with WithBase {
     assert(args(1).getDatum.getRStr == "world")
 
   }
+
+  override def useVersion = version2
 
   override def setupDB = false
 }

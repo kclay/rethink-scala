@@ -2,7 +2,7 @@ package com.rethinkscala
 
 import org.scalatest.FunSuite
 import com.rethinkscala.ast._
-import Blocking._
+import com.rethinkscala.net.Blocking._
 
 
 /**
@@ -13,12 +13,14 @@ import Blocking._
  */
 class SequenceTest extends FunSuite with WithBase {
 
+
   test("mapping from ProduceAny with casting to String") {
 
 
     val rows = Expr(Seq(Map("hello" -> "1"), Map("hello" -> "2"), Map("hello" -> "3")))
 
     val a = Expr(Seq(1, 2, 3, 4, 5))
+
 
 
     a.reduce{
@@ -61,4 +63,5 @@ class SequenceTest extends FunSuite with WithBase {
 
     // assert(ast)
   }       */
+
 }

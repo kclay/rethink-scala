@@ -81,7 +81,8 @@ trait Aggregation[T] {
 
   def distinct = Distinct(underlying)
 
-  //def contains(attrs: Datum*) = Contains(underlying, attrs)
+
+
   def contains(field:String,fields:String*) = Contains(underlying,fields.+:(field).map(FuncWrap(_)))
   def contains(field:Double,fields:Double*) = Contains(underlying,fields.+:(field).map(FuncWrap(_)))
   def contains(fields:Datum*) = Contains(underlying,fields.map(FuncWrap(_)))
@@ -89,7 +90,7 @@ trait Aggregation[T] {
 
   def contains(f:japi.BooleanPredicate) = Contains(underlying,Seq(f))
 
-  //def contains[R >: FilterTyped](attrs: R*)(implicit d:DummyImplicit) = Contains(underlying, attrs.map(FuncWrap(_)))
+
   def contains(f: Var=>Binary) = Contains(underlying, Seq(f))
 
   def ?(attr: Datum) = contains(attr)

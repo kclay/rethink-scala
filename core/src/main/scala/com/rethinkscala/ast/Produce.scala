@@ -57,6 +57,7 @@ trait Produce[ResultType] extends Query {
 }
 
 trait Produce0[T] extends Typed{
+
   type T0 = T
 }
 trait ProduceSingle[T] extends Produce[T] with Produce0[T] with CastTo{
@@ -69,14 +70,28 @@ trait ProduceSingle[T] extends Produce[T] with Produce0[T] with CastTo{
 
 
 trait CastTo{
-  self: CastTo => def field(name:String):ProduceAny
+  self: CastTo with Produce0[_] => def field(name:String):ProduceAny
 
-  def cast[T](name: String)(implicit ast: ToAst[T]) = field(name).asInstanceOf[ast.TypeMember with  Produce[T]]
-  def asInt(name:String) =cast[Int](name)(intToNumeric)
-  def asDouble(name:String) =cast[Double](name)(doubleToNumeric)
-  def asFloat(name:String) =cast[Float](name)(floatToNumeric)
-  def asString(name:String)=cast[String](name)(stringToStrings)
-  def asMap[T](name:String) = cast[Map[String,T]](name)(arrayMapToTyped[T])
+
+
+
+  def cast[T](name: String)(implicit ast: ToAst[T]):ast.Cast = field(name).asInstanceOf[ast.Cast]
+  def int(name:String) =cast[Int](name)(intToNumeric)
+  def double(name:String) =cast[Double](name)(doubleToNumeric)
+  def float(name:String) =cast[Float](name)(floatToNumeric)
+  def string(name:String)=cast[String](name)(stringToStrings)
+  def seq[T](name:String)= field(name).asInstanceOf[Sequence[T] with Produce[Seq[T]] with Produce0[T]]
+  def map[T](name:String) = cast[Map[String,T]](name)(arrayMapToTyped[T])
+  def anySeq(name:String)=cast[Seq[Any]](name)(seqToAnySequence)
+
+  private[rethinkscala] def as[T](implicit ast:ToAst[T]):ast.Cast = this.asInstanceOf[ast.Cast]
+  def asInt = as[Int]
+  def asDouble = as[Double]
+  def asFloat = as[Float]
+  def asString = as[String]
+  //def asSeq[T] = new ToSeq[T](this)
+  def asAnySeq = as[Seq[Any]]
+  def asMap[T] = as[Map[String,T]]
 }
 
 
@@ -152,17 +167,21 @@ trait ProduceString extends ProduceSingle[String] with Strings   with Produce0[S
   override val underlying = this
 }
 
-trait ForwardTyped {
-  self: Produce[_] with Typed =>
+abstract class ForwardTyped(value:Term) {
+  self: Produce[_] with Typed with Term =>
   override lazy val args = underlyingTerm.args
   override lazy val optargs = underlyingTerm.optargs
 
   //override def ast(implicit connection:Connection) = connection.version.toAst(underlyingTerm)
 
-  override protected val underlyingTerm: Term = underlying.asInstanceOf[Term]
+  override private[rethinkscala] val  underlyingTerm: Term = value
 
-  def termType = underlying.term
+
+  //def termType = underlying.term
+  override def termType = value.termType
 }
+
+//class ToSeq[T](value:Produce0[T]) extends ForwardTyped(value.term) with ProduceSequence[T]
 
 trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo{
   any=>
@@ -203,7 +222,12 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo{
   def array[T]: ArrayTyped[T] = this.asInstanceOf[ArrayTyped[T]]
 
 
+
+
   type FieldProduce = ProduceAny
+
+
+ // override def apply(name: String):ProduceAny = super.apply(name)
 
   override def \(name: String): ProduceAny = field(name)
 

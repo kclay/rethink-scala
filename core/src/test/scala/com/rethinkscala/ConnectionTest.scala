@@ -44,6 +44,22 @@ class ConnectionTest extends FunSuite with WithBase with Futures {
     assert(queue.poll(10, TimeUnit.SECONDS))
   }
 
+  test("v3 auth success"){
+
+    val queue = new LinkedBlockingQueue[Boolean]
+    val conn = BlockingConnection(new Version3(host, port, authKey = "foobar"))
+    conn.channel take {
+      case (c, restore) =>
+        restore(c)
+        queue.put(true)
+
+
+    }
+
+
+    assert(queue.poll(10, TimeUnit.SECONDS))
+  }
+
   test("blocking query") {
 
     implicit val connection = blockingConnection("foobar")

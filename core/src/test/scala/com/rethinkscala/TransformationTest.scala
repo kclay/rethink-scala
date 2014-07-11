@@ -3,7 +3,7 @@ package com.rethinkscala
 
 import org.scalatest.FunSuite
 import com.rethinkscala.ast._
-import Blocking._
+import com.rethinkscala.net.Blocking._
 
 case class Transform(a:Int,b:Int,id:Option[String]=None) extends Document
 class TransformationTest extends FunSuite with WithBase {
@@ -56,7 +56,7 @@ class TransformationTest extends FunSuite with WithBase {
     val a = Map("a"->Seq(1,2,3,4,5,6))
     val e = Expr(Seq(a,a))
 
-    assert( e.concatMap(v=> v.asArray[Int]("a")),{
+    assert( e.concatMap(v=> v.seq[Int]("a")),{
       s:Seq[Int]=> s.size == 12
     })
 

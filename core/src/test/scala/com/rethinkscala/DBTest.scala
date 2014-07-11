@@ -8,6 +8,7 @@ import com.rethinkscala.net.ProtoBufCompiledAst
 
 class DBTest extends FunSuite with WithBase {
 
+
   test("create db instance") {
 
     val query = r.dbCreate("foo")
@@ -36,4 +37,5 @@ class DBTest extends FunSuite with WithBase {
     assert(query, true)
   }
 
+  override def useVersion = version2
 }

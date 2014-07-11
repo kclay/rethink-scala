@@ -21,6 +21,7 @@ class SelectTest extends FunSuite with WithBase {
   import connection.delegate._
 
 
+
   test("select between") {
 
     val records = for (i <- 1 to 50) yield SelectFoo(i)
@@ -96,6 +97,9 @@ class SelectTest extends FunSuite with WithBase {
 
 
   }
+
+
+
   lazy val foos = table.to[SelectFoo]
 }
         

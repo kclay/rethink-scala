@@ -10,6 +10,7 @@ import com.rethinkscala.ConvertFrom._
 import com.rethinkscala.Term
 import com.rethinkscala.ast._
 import com.rethinkscala.net.Translate._
+import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.utils.{ConnectionFactory, SimpleConnectionPool}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.jboss.netty.bootstrap.ClientBootstrap
@@ -35,91 +36,12 @@ import scala.concurrent.duration.Duration
   */
 
 
-abstract class Token {
-  type ResultType
-  val query: CompiledQuery
-  val term: Term
 
-  def handle(response: Response)
-
-  def failure(e: Throwable)
-
-}
-
-case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R], mf: Manifest[R]) extends Token with LazyLogging {
-
-  implicit val t = mf
-
-  private[rethinkscala] def context = connection
-
-  type ResultType = R
-  type MapType = Map[String, _]
-  type IterableType = Iterable[MapType]
-
-  def cast[T](json: String)(implicit mf: Manifest[T]): T = translate[T].read(json, term)
-
-  def toResult(response: Response) = {
-    logger.debug(s"Processing result : $response")
-    val json: String = Datum.unwrap(response.getResponse(0))
-
-    val rtn = json match {
-      case "" => None
-
-      case _ => cast[ResultType](json)
-    }
-    rtn
-  }
-
-  def handle(response: Response) = (response.getType match {
-
-    case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => toError(response, term)
-    case ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE => toCursor(0, response)
-    case ResponseType.SUCCESS_ATOM => term match {
-      case x: ProduceSequence[_] => toCursor(0, response)
-      case _ => toResult(response)
-    }
-    // case ResponseType.SUCCESS_ATOM => toResult(response)
-    case _ =>
-
-  }) match {
-    case e: Exception => p failure e
-    case e: Any => p success e.asInstanceOf[R]
-  }
-
-  def failure(e: Throwable) = p failure e
-
-
-  def toCursor(id: Int, response: Response) = {
-    import scala.collection.JavaConverters._
-
-    //val seqManifest = implicitly[Manifest[Seq[R]]]
-
-
-    val results = response.getResponseList.asScala
-    val seq = results.length match {
-      case 1 if response.getType == ResponseType.SUCCESS_ATOM =>
-        cast[ResultType](Datum.unwrap(results(0)))
-      case _ => for (d <- results) yield Datum.unwrap(d) match {
-
-        case json: String => if (mf.typeArguments.nonEmpty) cast(json)(mf.typeArguments(0)) else cast[ResultType](json)
-      }
-
-    }
-
-    new Cursor[R](id, this, seq.asInstanceOf[Seq[R]], response.getType match {
-      case ResponseType.SUCCESS_SEQUENCE => true
-      case _ => false
-    })
-
-  }
-
-
-}
 
 
 class RethinkDBHandler extends SimpleChannelUpstreamHandler {
 
-  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext): Option[Token] = Some(ctx.getChannel.getAttachment.asInstanceOf[Token])
+  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext): Option[Token[Response]] = Some(ctx.getChannel.getAttachment.asInstanceOf[Token[Response]])
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
     ctx.map(_.handle(e.getMessage.asInstanceOf[Response]))
@@ -131,12 +53,31 @@ class RethinkDBHandler extends SimpleChannelUpstreamHandler {
 }
 
 private class RethinkDBFrameDecoder extends FrameDecoder {
-  def decode(ctx: ChannelHandlerContext, channel:Channel, buffer: ChannelBuffer): AnyRef = {
-    buffer.markReaderIndex()
-    if (!buffer.readable() || buffer.readableBytes() < 4) {
+  var acceptJson:Boolean = false
+  def asJson(b: Boolean) = acceptJson = b
+
+  private val PROTO_READ_AMOUNT = 4
+  private val JSON_READ_AMOUNT = 8+ 4
+
+
+  private def decodeJson(buffer:ChannelBuffer):AnyRef= {
+
+    val token = buffer.readLong()
+    val length = buffer.readInt()
+
+    if(buffer.readableBytes() < length) {
       buffer.resetReaderIndex()
       return null
     }
+    val json  = new String(buffer.readBytes(length).array(),"UTF-8")
+
+   val resp =  Reflector.fromJson[JsonResponse](json)
+
+    resp
+
+
+  }
+  private def decodeProto(buffer:ChannelBuffer):AnyRef= {
 
     val length = buffer.readInt()
 
@@ -145,8 +86,18 @@ private class RethinkDBFrameDecoder extends FrameDecoder {
       return null
     }
     buffer.readBytes(length)
-
   }
+  def decode(ctx: ChannelHandlerContext, channel:Channel, buffer: ChannelBuffer): AnyRef = {
+    buffer.markReaderIndex()
+    val readAmount = if(acceptJson) JSON_READ_AMOUNT else PROTO_READ_AMOUNT
+
+     if (!buffer.readable() || buffer.readableBytes() < readAmount) {
+        buffer.resetReaderIndex()
+        return null
+      }
+      if(acceptJson) decodeJson(buffer) else decodeProto(buffer)
+    }
+
 }
 
 private class RethinkDBEncoder extends OneToOneEncoder {
@@ -157,6 +108,11 @@ private class RethinkDBEncoder extends OneToOneEncoder {
       case v: VersionDummy.Version => {
         val b = buffer(ByteOrder.LITTLE_ENDIAN, 4)
         b.writeInt(v.getNumber)
+        b
+      }
+      case p:ql2.VersionDummy.Protocol=>{
+        val b = buffer(ByteOrder.LITTLE_ENDIAN,4)
+        b.writeInt(p.getNumber)
         b
       }
       case q: CompiledQuery => q.encode
@@ -274,6 +230,10 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
             val query = version.toQuery(term, c.token.getAndIncrement, defaultDB, opts)
             val token = QueryToken[T](con, query, term, p, mf)
             // TODO : Check into dropping netty and using sockets for each,
+            val frameDecoder = c.channel.getPipeline.get("frameDecoder").asInstanceOf[RethinkDBFrameDecoder]
+            if(query.isInstanceOf[JsonCompiledQuery]){
+                frameDecoder.asJson(true)
+            }
             // Or find a way so that we can store the token for the netty handler to complete
             c.channel.setAttachment(token)
             logger.debug("Writing query")

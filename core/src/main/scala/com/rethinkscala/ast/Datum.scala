@@ -8,7 +8,10 @@ import org.joda.time.{DateTimeZone, DateTime}
 
 
 sealed trait Datum extends DatumMessage with FilterTyped {
-   self:FilterTyped=>
+  self:FilterTyped=>
+  type DatumType
+  val value:DatumType
+
   override def optArgsBuilder(key: String, value: Any): AssocPair = DatumAssocPair(key, value)
 
 }
@@ -140,6 +143,10 @@ object NoneDatum {
 
 class NoneDatum extends Datum with Produce[Null] {
 
+  override type DatumType = Null
+
+  override val value: DatumType = null
+
   def datumType = DatumType.R_NULL
 
   def build(d: ql2.Datum.Builder) = d
@@ -149,6 +156,7 @@ class NoneDatum extends Datum with Produce[Null] {
 
 case class BooleanDatum(value: Boolean) extends Datum with ProduceBinary {
 
+  override type DatumType = Boolean
   override val extractArgs = false
 
   def datumType = DatumType.R_BOOL
@@ -159,6 +167,8 @@ case class BooleanDatum(value: Boolean) extends Datum with ProduceBinary {
 
 case class NumberDatum(value: Double) extends Datum with ProduceNumeric {
 
+
+  override type DatumType = Double
   override val extractArgs = false
 
   def datumType = DatumType.R_NUM
@@ -169,6 +179,7 @@ case class NumberDatum(value: Double) extends Datum with ProduceNumeric {
 
 case class StringDatum(value: String) extends Datum with ProduceString {
 
+  override type DatumType = String
   override val extractArgs = false
 
   def datumType = DatumType.R_STR

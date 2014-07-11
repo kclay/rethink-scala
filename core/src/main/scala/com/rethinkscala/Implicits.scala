@@ -31,29 +31,12 @@ import scala.collection.Iterable
 
 trait ToAst[A] {
   self: ToAst[A] =>
+  type Type = A
   type TypeMember >: Var
-  type Producer <:Produce[_]
+  type Producer = Produce[A]
+  type InnerProduce <:Produce0[_]
+  type Cast = TypeMember with InnerProduce with Producer
 
-
-
-
-  def apply2[R](f: ((Var, Var) => Typed) => R) = new Applicator2[TypeMember, R] {
-    protected def _apply = f(this.view)
-  }
-
-  def wrap2[R](f: FuncWrap => R) = apply2(o => f(FuncWrap(o)))
-
-  def wrap[R](f: FuncWrap => R) = apply(o => f(FuncWrap(o)))
-
-  def wrap3[R, T](f: FuncWrap => R) = apply3[R, T](o => f(FuncWrap(o)))
-
-  def apply3[R, T](f: (Var => Typed) => R) = new Applicator1[T, R] {
-    protected def _apply = f(this.view)
-  }
-
-  def apply[R](f: (Var => Typed) => R) = new Applicator1[this.type#TypeMember, R] {
-    protected def _apply = f(this.view)
-  }
 
 
 }
