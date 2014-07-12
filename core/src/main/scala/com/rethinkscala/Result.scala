@@ -19,7 +19,9 @@ case class DocPath(root: Map[String, Any], paths: List[String]) {
     x => value match {
 
       case Some(v) => find[T](v, p)
+      // TODO : Fix warnings
       case m: M => find[T](m.get(x), p.tail)
+      // TODO : Fix warnings
       case m: IM => find[T](m.get(x), p.tail)
       case _ => None
     }

@@ -1,7 +1,6 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast.Produce
-import com.rethinkscala.Delegate
 
 
 /**
@@ -17,6 +16,8 @@ package object net {
   trait Mode[C<:Connection]{
 
 
+
+
     type D[T] <:Delegate[T]
     def apply(version: Version):C
 
@@ -28,7 +29,7 @@ package object net {
 
     def apply(version: Version) = AsyncConnection(version)
   }
-  object Async extends Async{
+  trait AsyncImplicits extends Async{
     implicit def toDelegate[T](produce: Produce[T])(implicit connection: AsyncConnection) = Delegate(produce,connection)
 
     type D[T] = AsyncDelegate[T]
@@ -36,16 +37,19 @@ package object net {
     override def apply[T](produce: Produce[T])(implicit connection: AsyncConnection) = toDelegate(produce)
   }
 
+  object Async extends AsyncImplicits
+
 
   abstract class Blocking extends Mode[BlockingConnection]{
 
     def apply(version: Version) = BlockingConnection(version)
   }
-  object Blocking extends Blocking {
+  trait  BlockingImplicits extends Blocking {
     implicit def toDelegate[T](produce: Produce[T])(implicit connection: BlockingConnection) = Delegate(produce,connection)
 
     type D[T] = BlockingDelegate[T]
 
     override def apply[T](produce: Produce[T])(implicit connection: BlockingConnection) = toDelegate(produce)
   }
+  object Blocking extends BlockingImplicits
 }

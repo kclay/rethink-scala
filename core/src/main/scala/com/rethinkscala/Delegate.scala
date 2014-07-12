@@ -80,8 +80,6 @@ class AsyncDelegate[T](producer: Produce[T], connection: AsyncConnection) extend
 
   def toQuery[R](tt: Manifest[R]) = AsyncResultQuery[R](producer.underlyingTerm, connection, tt, producer.underlyingOptions)
 
-
-
   def toOpt(implicit mf: Manifest[T]) = as[T] transform(x => Option(x), t => t)
 
   def asOpt[R <: T](implicit tt: Manifest[R]) = as[R] transform(x => Option(x), t => t)

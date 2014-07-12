@@ -1,6 +1,8 @@
 package com.rethinkscala
 
+import com.rethinkscala._
 import com.rethinkscala.ast._
+import com.rethinkscala.magnets.ReceptacleImplicits
 
 import com.rethinkscala.utils.{Applicator1, Applicator2}
 import com.rethinkscala.ast.StringDatum
@@ -29,6 +31,62 @@ import scala.collection.Iterable
   */
 
 
+trait ToAstImplicts{
+
+  implicit val stringToStrings = new ToAst[String] {
+    type TypeMember = Strings
+
+    type InnerProduce = Produce0[String]
+  }
+  implicit val doubleToNumeric = new ToAst[Double] {
+    type TypeMember = Numeric
+
+    type InnerProduce = Produce0[Double]
+
+
+  }
+  implicit val intToNumeric = new ToAst[Int] {
+    type TypeMember = Numeric
+
+    type InnerProduce = Produce0[Int]
+
+  }
+  implicit val floatToNumeric = new ToAst[Float] {
+    type TypeMember = Numeric
+
+    type InnerProduce = Produce0[Float]
+
+  }
+
+
+
+  implicit def arrayMapToTyped[T] = new ToAst[Map[String, T]] {
+    type TypeMember = Var
+
+    type InnerProduce = Produce0[Map[String,T]]
+  }
+
+  implicit def docToTyped[T <: Document] = new ToAst[T] {
+    type TypeMember = Var
+
+    type InnerProduce = Produce0[T]
+
+  }
+  /*
+  implicit def seqToSequence[T>:Any] = new ToAst[Seq[T]] {
+    type TypeMember = Sequence[T]
+
+    type InnerProduce = Produce0[T]
+  } */
+
+  implicit def seqToAnySequence = new ToAst[Seq[Any]] {
+    type TypeMember = Sequence[Any]
+
+    type InnerProduce = Produce0[Any]
+  }
+}
+
+object ToAst extends ToAstImplicts
 trait ToAst[A] {
   self: ToAst[A] =>
   type Type = A
@@ -37,9 +95,69 @@ trait ToAst[A] {
   type InnerProduce <:Produce0[_]
   type Cast = TypeMember with InnerProduce with Producer
 
+}
+
+
+trait ToFunctionalImplicts{
+
+
+
+  implicit def docToFunctional[T <: Document](seq: Sequence[T]) = new ToFunctional[T, Var](seq)
+
+
+  implicit def toFunctional[T](seq: Sequence[T])(implicit ast: ToAst[T]): ToFunctional[T, ast.TypeMember] = new ToFunctional[T, ast.TypeMember](seq)
 
 
 }
+class ToFunctional[T, A >: Var](seq: Sequence[T]) {
+
+
+  def concatMap[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = ConcatMap[Inner](seq.underlying, FuncWrap(f))
+
+  def map[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = RMap[Inner](seq.underlying, FuncWrap(f))
+
+
+  def reduce[P ](f: (A, A) =>Produce0[P]) = Reduce[T,P](seq.underlying, f)
+
+}
+
+
+
+
+object CanMap{
+  def apply[From, To <: Typed, Out] = new CanMap[From, To, Out]
+}
+trait CanMapImplicits {
+
+
+  implicit val mapStringToStrings = CanMap[String, Strings, String]
+  implicit val mapStringToNumeric = CanMap[String, Numeric, Int]
+
+
+  implicit def mapStringToArray[T] = CanMap[String, Sequence[T], T]
+
+  implicit def mapMapToArray[T] = CanMap[Map[String, _], Sequence[T], T]
+
+
+  implicit val mapIntToNumeric = CanMap[Int, Numeric, Int]
+  implicit val mapDoubleToNumeric = CanMap[Double, Numeric, Double]
+  implicit val mapFloatToNumeric = CanMap[Float, Numeric, Float]
+  implicit val mapLongToNumeric = CanMap[Long, Numeric, Long]
+
+
+  implicit def mapDocumentToDouble[T <: Document] = CanMap[T, Numeric, Double]
+
+  implicit def mapDocumentToString[T <: Document] = CanMap[T, Strings, String]
+
+  implicit def mapDocumentToAny[T <: Document] = CanMap[T, Ref, Any]
+
+
+}
+
+class CanMap[-From, -To <: Typed, Out]
+
+
+
 
 private[rethinkscala] trait ImplicitConversions {
 
@@ -147,9 +265,15 @@ private[rethinkscala] trait ImplicitConversions {
 
 }
 
+
+
 object Implicits extends ImplicitConversions {
 
 
+  trait Common extends CanMapImplicits with ToAstImplicts with ToFunctionalImplicts with ReceptacleImplicits
+  object Blocking extends net.BlockingImplicits with Common
+
+  object Async extends net.AsyncImplicits with Common
   object Quick {
 
     import ql2.{Ql2 => ql2}

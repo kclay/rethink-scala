@@ -31,16 +31,18 @@ trait ResultQuery[T] {
 
   protected def resolve(t: Any): ResolveType = {
     t match {
-      case Some(Failure(e: RethinkError)) => Left(e)
+
+      case Some(Failure(e: Exception)) => resolve(e)
+      case Failure(e: Exception)=>Left(RethinkRuntimeError(e.getMessage, term))
+      case Failure(e:RethinkError)=> resolve(e)
+      case e:RethinkError=>Left(e)
       case Some(Success(res)) => res match {
         case x: None.type => Left(RethinkNoResultsError("No results found for " + mf.runtimeClass.getSimpleName, term))
         case _ => Right(res.asInstanceOf[T])
 
 
       }
-
-      case Some(Failure(e: Exception)) => Left(RethinkRuntimeError(e.getMessage, term))
-      case _ => Left(RethinkRuntimeError("Opps", term))
+      case value=>Right(value.asInstanceOf[T])
     }
   }
 }
@@ -59,7 +61,9 @@ case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, mf: Mani
 
 
     val p = connection.underlying.write(term, opts)(mf)
-    p.future.transform[R](t => resolve(t).right.get, identity)
+    // FIXME : Write this better
+    p.future.transform(t=>resolve(t).right.get,e=>resolve(e).left.get)
+
 
 
   }

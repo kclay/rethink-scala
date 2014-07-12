@@ -1,9 +1,9 @@
 package com.rethinkscala
 
 
-import org.scalatest.FunSuite
 import com.rethinkscala.ast._
-import com.rethinkscala.net.Blocking._
+import com.rethinkscala.Blocking._
+import org.scalatest.FunSuite
 
 case class Transform(a:Int,b:Int,id:Option[String]=None) extends Document
 class TransformationTest extends FunSuite with WithBase {

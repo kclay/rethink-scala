@@ -1,7 +1,7 @@
 package com.rethinkscala
 
-import org.scalatest.FunSuite
-import com.rethinkscala.net.AsyncConnection
+import org.scalatest.concurrent._
+import org.scalatest.{FunSuite, Matchers}
 
 
 /**
@@ -11,21 +11,26 @@ import com.rethinkscala.net.AsyncConnection
  * Time: 1:42 PM
  *
  */
-class AsyncTest extends FunSuite with WithBase{
+class AsyncTest extends FunSuite with WithBase with ScalaFutures with Matchers{
+
 
 
   test("async"){
     val  res = r.expr(1) === 1
 
-    val f = async(connection){
-      implicit c: AsyncConnection =>
-         c(res)
 
+    val f = async(res)
+
+
+    whenReady(async(res)) { b=>
+
+      assert(b)
     }
 
 
 
-    print(f)
+
+
 
 
 

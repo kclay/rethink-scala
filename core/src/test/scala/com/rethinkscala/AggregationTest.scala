@@ -1,10 +1,7 @@
 package com.rethinkscala
 
-import com.rethinkscala._
+import com.rethinkscala.Implicits.Blocking._
 import org.scalatest.FunSuite
-import com.rethinkscala.ast._
-
-import com.rethinkscala.net.Blocking._
 
 
 
@@ -94,6 +91,7 @@ class AggregationTest extends FunSuite with WithBase {
     assert(testSeq("points").count(p=>p >=10 ).toOpt == Some(2))
     assert(testSeq.count((p:Var)=> p("points") >=10).toOpt == Some(2))
     val seq = Expr(Seq(1, 2, 3, 3, 3, 4, 5, 6, 7))
+
 
     assert(seq.count(3), {
       v: Double => v == 3

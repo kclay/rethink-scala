@@ -1,15 +1,15 @@
 package com.rethinkscala
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
+import com.fasterxml.jackson.annotation.JsonInclude.Include
+import com.fasterxml.jackson.annotation.PropertyAccessor
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.rethinkscala.ast._
-import com.rethinkscala.net.{BlockingConnection, Connection}
+import com.rethinkscala.net.Connection
+import com.rethinkscala.reflect.Reflector
 
 import scala.collection.mutable.ArrayBuffer
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.databind.{ObjectMapper, DeserializationFeature}
-import com.fasterxml.jackson.annotation.PropertyAccessor
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
-import com.rethinkscala.reflect.Reflector
-import com.fasterxml.jackson.annotation.JsonInclude.Include
 
 /**
  * Created with IntelliJ IDEA.
@@ -72,11 +72,7 @@ class Schema {
     private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] ={
 
       val result =  CurrentSchema.getOrElse(thisSchema)._tableTypes get (m.runtimeClass) map {
-        table: Table[_] => block(c) {
-          implicit c: BlockingConnection =>
-            import c.delegate._
-            action(table.asInstanceOf[Table[T]]).run.asInstanceOf[Either[Exception,R]]
-        }
+        table: Table[_] => block(action(table.asInstanceOf[Table[T]]))
 
       }
 
@@ -137,7 +133,7 @@ class Schema {
   def db(name: String) = r.db(name)
 
   def setup(implicit c: Connection) = {
-    block(c) {
+    block {
       implicit c: BlockingConnection =>
         import c.delegate._
         tables.foreach {
@@ -165,7 +161,7 @@ class TableView[T <: Document](table: Table[T]) {
 
   private[rethinkscala] val _indexes = ArrayBuffer.empty[ProduceBinary]
 
-  private[rethinkscala] def apply(implicit c: Connection) = block(c) {
+  private[rethinkscala] def apply(implicit c: Connection) = block {
     implicit c: BlockingConnection =>
       import c.delegate._
       _indexes foreach (_.run)

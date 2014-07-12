@@ -268,25 +268,35 @@ trait ConnectionOps[C <: Connection, D <: Mode[C]] {
 
   val delegate: D
 
+
   def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]): ResultQuery[R]
 
-  def apply[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).run
+ // def apply[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).run
 
-  def toOpt[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).toOpt
+ // def toOpt[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).toOpt
 }
 
 
 trait BlockingConnection extends Connection with ConnectionOps[BlockingConnection, Blocking] {
 
 
-  val delegate: Blocking.type = Blocking
+  val delegate=Blocking
+
+  // FIXME : Need to place here to help out Intellijd
+  def apply[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).run
+
+  def toOpt[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).toOpt
 
   val timeoutDuration: Duration
 }
 
 trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Async] {
 
-  val delegate: Async.type = Async
+  val delegate=Async
+  // FIXME : Need to place here to help out Intellij with async(_.apply(res))
+  def apply[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).run
+
+  def toOpt[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).toOpt
 }
 
 object AsyncConnection {

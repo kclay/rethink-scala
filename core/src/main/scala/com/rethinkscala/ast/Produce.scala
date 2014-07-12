@@ -76,13 +76,13 @@ trait CastTo{
 
 
   def cast[T](name: String)(implicit ast: ToAst[T]):ast.Cast = field(name).asInstanceOf[ast.Cast]
-  def int(name:String) =cast[Int](name)(intToNumeric)
-  def double(name:String) =cast[Double](name)(doubleToNumeric)
-  def float(name:String) =cast[Float](name)(floatToNumeric)
-  def string(name:String)=cast[String](name)(stringToStrings)
+  def int(name:String) =cast[Int](name)
+  def double(name:String) =cast[Double](name)
+  def float(name:String) =cast[Float](name)
+  def string(name:String)=cast[String](name)
   def seq[T](name:String)= field(name).asInstanceOf[Sequence[T] with Produce[Seq[T]] with Produce0[T]]
-  def map[T](name:String) = cast[Map[String,T]](name)(arrayMapToTyped[T])
-  def anySeq(name:String)=cast[Seq[Any]](name)(seqToAnySequence)
+  def map[T](name:String) = cast[Map[String,T]](name)
+  def anySeq(name:String)=cast[Seq[Any]](name)
 
   private[rethinkscala] def as[T](implicit ast:ToAst[T]):ast.Cast = this.asInstanceOf[ast.Cast]
   def asInt = as[Int]

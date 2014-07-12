@@ -1,14 +1,11 @@
 package com.rethinkscala
 
+import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
+
+import com.rethinkscala.Blocking._
+import com.rethinkscala.net._
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.Futures
-
-import com.rethinkscala.net._
-import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
-import com.rethinkscala.net.BlockingConnection
-import com.rethinkscala.net.Version2
-
-import Blocking._
 
 
 /**
