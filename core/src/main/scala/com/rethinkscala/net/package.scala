@@ -15,9 +15,6 @@ package object net {
 
   trait Mode[C<:Connection]{
 
-
-
-
     type D[T] <:Delegate[T]
     def apply(version: Version):C
 

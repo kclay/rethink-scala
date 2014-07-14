@@ -398,3 +398,10 @@ case class Version3(host: String = "localhost", port: Int = 28015,
 
   override def toQuery(term: Term, token: Long, db: Option[String], opts: Map[String, Any]): Query = JSON.toQuery(term, token, db, opts)
 }
+
+trait Versions{
+
+  def Version2(host: String = "localhost", port: Int = 28015,
+               db: Option[String] = None, maxConnections: Int = 5,
+               authKey: String = "")=new Version2(host,port,db,maxConnections,authKey)
+}

@@ -161,7 +161,11 @@ trait ProduceAnyDocument extends ProduceDocument[Document] with Record
 
 trait ProduceTypedDocument[T<:Document] extends ProduceDocument[T] with Record
 
-trait ProduceNumeric extends ProduceSingle[Double] with Numeric with Produce0[Double]
+trait ProduceNumeric extends ProduceTypedNumeric[Double]
+
+trait ProduceFloat extends ProduceTypedNumeric[Float]
+
+trait ProduceTypedNumeric[T] extends ProduceSingle[T] with Numeric with Produce0[T]
 
 trait ProduceString extends ProduceSingle[String] with Strings   with Produce0[String]{
   override val underlying = this

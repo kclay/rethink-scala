@@ -33,7 +33,7 @@ object CurrentSchema {
 
 }
 
-class Schema {
+class Schema extends Helpers{
 
 
   protected implicit def thisSchema = this
@@ -157,7 +157,7 @@ class Schema {
 
 }
 
-class TableView[T <: Document](table: Table[T]) {
+class TableView[T <: Document](table: Table[T]) extends Helpers{
 
   private[rethinkscala] val _indexes = ArrayBuffer.empty[ProduceBinary]
 

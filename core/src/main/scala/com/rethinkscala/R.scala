@@ -24,6 +24,7 @@ import com.rethinkscala.ast.UserError
 import com.rethinkscala.ast.ByAvg
 import com.rethinkscala.ast.TableCreate
 import com.rethinkscala.ast.NumberDatum
+import scala.specialized
 
 
 /**
@@ -114,6 +115,10 @@ trait RethinkApi extends TimeNames {
 
   def avg(attr: String) = ByAvg(attr)
 
+  def random  = Random[Double](Seq.empty)
+  def random[@specialized(Int,Double,Long) T](values:T *) =Random[T](values)
+ // def random(values:Float*) = Random[Float,Float](values,true)
+
   val count = ByCount
 
   def asc(attr: String) = Asc(attr)
@@ -141,7 +146,7 @@ trait RethinkApi extends TimeNames {
 
 
 
-object r extends RethinkApi
+
 
 trait TimeNames {
 

@@ -1,7 +1,7 @@
 package com.rethinkscala.magnets
 
-import com.rethinkscala.{FilterTyped, FromAst, ImplicitConversions}
-import com.rethinkscala.ast.{Produce0, Var, Typed}
+import com.rethinkscala.FilterTyped
+import com.rethinkscala.ast.{Produce0, Typed, Var}
 
 /**
  * Created by IntelliJ IDEA.

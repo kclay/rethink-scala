@@ -1,24 +1,11 @@
 package com.rethinkscala
 
-import com.rethinkscala._
 import com.rethinkscala.ast._
 import com.rethinkscala.magnets.ReceptacleImplicits
+import com.rethinkscala.net.{AsyncConnection, BlockingConnection, Connection, ResultResolver}
 
-import com.rethinkscala.utils.{Applicator1, Applicator2}
-import com.rethinkscala.ast.StringDatum
-import com.rethinkscala.ast.SliceRange
-
-import com.rethinkscala.ast.ScalaBooleanPredicate2
-import com.rethinkscala.ast.DB
-import com.rethinkscala.ast.Asc
-import scala.Some
-import com.rethinkscala.ast.FuncWrap
-import com.rethinkscala.ast.Desc
-import com.rethinkscala.ast.BooleanDatum
-import com.rethinkscala.ast.ScalaBooleanPredicate1
-
-import com.rethinkscala.ast.NumberDatum
 import scala.collection.Iterable
+import scala.concurrent.Future
 
 
 /** Created with IntelliJ IDEA.
@@ -164,7 +151,7 @@ private[rethinkscala] trait ImplicitConversions {
 
 
 
-
+  object r extends RethinkApi
 
   @inline
   implicit def toOptionFuncWrap(v:Any):Option[FuncWrap] = Some(FuncWrap(v))
@@ -264,20 +251,69 @@ private[rethinkscala] trait ImplicitConversions {
 
 
 }
+trait FromAst[T] {
+  type Raw
+}
 
 
 
-object Implicits extends ImplicitConversions {
+trait Helpers{
+
+  type Var = com.rethinkscala.ast.Var
+  val Expr = com.rethinkscala.ast.Expr
+  val Blocking = com.rethinkscala.Implicits.Blocking
+  val Async = com.rethinkscala.Implicits.Async
+  type BlockingConnection = com.rethinkscala.net.BlockingConnection
+  type AsyncConnection = com.rethinkscala.net.AsyncConnection
+
+  type BlockResult[T] = ResultResolver.Blocking[T]
+  type AsyncResult[T] = ResultResolver.Async[T]
+
+  def async[T](p:Produce[T])(implicit c:Connection,mf:Manifest[T]):AsyncResult[T]=async(_.apply(p))
+  def async[T](f: AsyncConnection => Future[T])(implicit c: Connection):AsyncResult[T] = f(AsyncConnection(c))
+
+  def block[T](f: BlockingConnection => Unit)(implicit c: Connection):Unit = f(BlockingConnection(c))
+  def block[T](f: BlockingConnection => BlockResult[T])(implicit c: Connection):BlockResult[T] = f(BlockingConnection(c))
+  def block[T](p:Produce[T])(implicit c:Connection,mf:Manifest[T]):BlockResult[T] = {
+
+    block{c:BlockingConnection=> c.apply(p)}
+  }
+
+}
+object Implicits  {
 
 
-  trait Common extends CanMapImplicits with ToAstImplicts with ToFunctionalImplicts with ReceptacleImplicits
+  trait Common extends CanMapImplicits
+  with ToAstImplicts with ToFunctionalImplicts
+  with ReceptacleImplicits with ImplicitConversions with net.Versions with Helpers{
+
+
+    implicit val numericToDouble = new FromAst[Numeric] {
+      type Raw = Double
+    }
+    implicit val stringsToString = new FromAst[Strings] {
+      type Raw = String
+    }
+
+    implicit def arrayToSeq[T](seq: ProduceSequence[T]) = new FromAst[ProduceSequence[T]] {
+      type Raw = Seq[T]
+    }
+
+    implicit def binaryToBoolean = new FromAst[Binary] {
+      type Raw = Boolean
+    }
+
+
+
+  }
   object Blocking extends net.BlockingImplicits with Common
 
   object Async extends net.AsyncImplicits with Common
   object Quick {
 
     import ql2.{Ql2 => ql2}
-    import scala.collection.JavaConverters._
+
+import scala.collection.JavaConverters._
 
     case class Q12Datum(datum: ql2.Datum) {
       def bool = datum.getRBool

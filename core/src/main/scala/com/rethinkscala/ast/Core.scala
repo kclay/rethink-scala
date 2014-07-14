@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{JsonDocument, Term, InfoResult, Document}
+import com.rethinkscala._
 
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
@@ -290,5 +290,22 @@ case class Json(value: String) extends Produce[JsonDocument] with JsonDocumentCo
 
 object Json {
   def asLazy(value: Any) = LazyJson(value)
+}
+
+class Random[T,R](values:Seq[T],float:Option[Boolean] = None) extends Query{
+
+
+  override lazy val args = buildArgs(values:_*)
+
+  def toFloat =new Random[T,Float](values,Some(true)) with ProduceFloat
+
+  override lazy val optargs = buildOptArgs(Map("float"->float))
+
+  def termType = TermType.RANDOM
+}
+
+object Random{
+
+  def apply[T](values:Seq[T]) = new Random[T,T](values) with ProduceNumeric
 }
 

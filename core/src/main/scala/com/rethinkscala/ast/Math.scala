@@ -40,7 +40,7 @@ case class Ge(left: Typed, right: Typed) extends BiCompareOperQuery with Produce
   override val stmt = ">="
 }
 
-case class Not(prev: Typed) extends Query {
+case class Not(prev: Typed) extends ProduceBinary{
   override lazy val args = buildArgs(prev)
 
   def termType = TermType.NOT

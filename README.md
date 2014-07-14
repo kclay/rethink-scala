@@ -27,21 +27,19 @@ SBT Users
 val main = Project(....).settings(resolvers ++= Seq("RethinkScala Repository" at "http://kclay.github.io/releases"))
 
 val rethinkscala = "com.rethinkscala" %% "core" % "0.4.3",
-val rethinkscala = "com.rethinkscala" %% "core" % "0.4.4-SNAPSHOT",
+val rethinkscala = "com.rethinkscala" %% "core" % "0.4.4-SNAPSHOT"
 ```
+To get started
+```scala
+import com.rethinkscala.Implicts.Blocking._ // for blocking api
+implicit val blockingConnection = Blocking(Version2)
+import com.rethinkscala.Implicits.Async._ // for async api
+implicit val asyncConnection = Async(Version2)
+``
 Examples
 ```scala
-scala> import com.rethinkscala.r
-import com.rethinkscala.r
 
-scala> r.db("foo").table("bar").get("batman")
-res0: com.rethinkscala.ast.Get = Get(Table(bar,Some(false),Some(DB(foo))),batman)
-
-
-scala> import com.rethinkscala.Implicits._
-import com.rethinkscala.Implicits._
-
-scala> r.table("marvel").map((hero:Var)=> hero \ "combatPower" + hero \ "combatPower" * 2)
+scala> r.table("marvel").map(hero=> hero \ "combatPower" + hero \ "combatPower" * 2)
 res2: com.rethinkscala.ast.RMap = RMap(Table(marvel,None,None),Predicate1(<function1>))
 
 
@@ -82,10 +80,10 @@ res2: Either[com.rethinkscala.net.RethinkError,com.rethinkscala.net.InsertResult
 scala> val results = table.between(2,4).order("id").as[SelectFoo]
 results: Either[com.rethinkscala.net.RethinkError,Seq[SelectFoo]] = Right(Cursor(SelectFoo(2), SelectFoo(3), SelectFoo(4)))
 
-scala> val results = table.filter((f:Var)=> f \ "id"> 2).as[SelectFoo]
+scala> val results = table.filter(f=> f \ "id"> 2).as[SelectFoo]
 results: Either[com.rethinkscala.net.RethinkError,Seq[SelectFoo]] = Right(Cursor(SelectFoo(3), SelectFoo(5), SelectFoo(4)))
 
-scala> val results = table.filter((f:Var)=> f \ "id"> 2).order("id".desc).as[SelectFoo]
+scala> val results = table.filter(f=> f \ "id"> 2).order("id".desc).as[SelectFoo]
 results: Either[com.rethinkscala.net.RethinkError,Seq[SelectFoo]] = Right(Cursor(SelectFoo(5), SelectFoo(4), SelectFoo(3)))
 
 

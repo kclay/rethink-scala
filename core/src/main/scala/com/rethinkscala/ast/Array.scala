@@ -19,30 +19,7 @@ trait Array[T] extends Typed{
 object ArrayTyped{
   implicit def mapDocumentToSequence[T<:Document,ST>:Var,S[ST]<:Array[ST] ](implicit fa:FromAst[ST])= CanMap[T,S[ST],fa.Raw]
 
-  /*
-  implicit class Implicits[T](a:ArrayTyped[T]){
-    def :+(value: T) = a.append(value)
 
-    def ::[B>:T](value:T) = a.prepend(value)
-
-
-
-
-
-    def +:(value: T) = a.prepend(value)
-
-    def |+[B >: T](value: B) = a.setInsert(value)
-
-    def ||[B>:T](values:B*) = a.setUnion(values:_*)
-    def ||[B>:T](value:ArrayTyped[B]) =a.setUnion(value)
-    def /\[B>:T](values: B*) = a.setIntersection(values:_*)
-    def /\[B>:T](value: ArrayTyped[B]) = a.setIntersection(value)
-
-    def \/[B>:T](values: B*) = a.setDifference(values:_*)
-
-    def \/[B>:T](value: ArrayTyped[B]) = a.setDifference(value)
-
-  }  */
 }
 trait ArrayTyped[T] extends Array[T] {
 

@@ -2,6 +2,7 @@ package com.rethinkscala
 
 import org.scalatest.concurrent._
 import org.scalatest.{FunSuite, Matchers}
+import com.rethinkscala.Implicits.Async._
 
 
 /**
@@ -19,7 +20,7 @@ class AsyncTest extends FunSuite with WithBase with ScalaFutures with Matchers{
     val  res = r.expr(1) === 1
 
 
-    val f = async(res)
+
 
 
     whenReady(async(res)) { b=>

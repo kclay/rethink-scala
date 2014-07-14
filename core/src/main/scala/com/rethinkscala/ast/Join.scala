@@ -1,7 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{ZipResult, AssocPair, Term}
-
+import com.rethinkscala.{AssocPair, Term, ZipResult}
 import ql2.Ql2.Term.TermType
 
 abstract class Join[L,R] extends ProduceJoin[L,R] {
@@ -40,13 +39,13 @@ case class OuterJoin[L,R](left: Sequence[L], right: Sequence[R], func: ScalaBool
 /** An efficient join that looks up elements in the right table by primary key.
  *  @param left
  *  @param right
- *  @param attr
+ *  @param attrOrFunc
  *  @param index
  */
-case class EqJoin[L,R](left: Sequence[L], attr: String, right: Sequence[R], index: Option[String] = None) extends Join[L,R] {
+case class EqJoin[L,R](left: Sequence[L], attrOrFunc:Either[String,Predicate1], right: Sequence[R], index: Option[String] = None) extends Join[L,R] {
   def termType = TermType.EQ_JOIN
 
-  override lazy val args: Seq[Term] = buildArgs(left, attr, right)
+  override lazy val args: Seq[Term] = buildArgs(left, attrOrFunc.fold(identity,identity), right)
   override lazy val optargs: Iterable[AssocPair] = buildOptArgs(Map("index" -> index))
 }
 

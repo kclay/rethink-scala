@@ -19,12 +19,12 @@ object Wrap {
 
   private def scan(node: Any): Boolean = node match {
     case node: ImplicitVar => true
-    case t: Term if (t.args.collectFirst {
+    case t: Term if (t.args.find{
       case arg: Term if (scan(arg)) => true
-    }.getOrElse(false)) => true
-    case t: Term if (t.optargs.collectFirst {
+    }.isDefined) => true
+    case t: Term if (t.optargs.find {
       case p: com.rethinkscala.AssocPair if (scan(p.token)) => true
-    }.getOrElse(false)) => true
+    }.isDefined) => true
     case _ => false
   }
 
@@ -115,29 +115,4 @@ case class ScalaBooleanPredicate2(f: (Var, Var) => Binary) extends BooleanPredic
   val amount: Int = 2
 }
 
-//class Functional {
 
-// TODO : Reduce
-
-// TODO : Map
-// TODO : Filter
-// TODO : ConcatMap
-// TODO : OrderBy
-// TODO : Distinct
-// TODO : Count
-// TODO : Union
-// TODO : Nth
-// TODO : GroupedMapReduce
-// TODO : GroupBy
-// TODO : InnerJoin
-// TODO : OuterJoin
-// TODO : EqJoin
-// TODO : Zip
-// TODO : CoerceTo
-// TODO : TypeOf
-// TODO : Update  ^
-// TODO : Delete
-// TODO : Replace
-// TODO : Insert
-
-//}

@@ -1,8 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala._
-import com.rethinkscala.BoundOptions
-import scala.Some
+import com.rethinkscala.{BoundOptions, _}
 import com.rethinkscala.magnets.GroupFilterMagnet
 
 /**
@@ -16,9 +14,10 @@ import com.rethinkscala.magnets.GroupFilterMagnet
 object Sequence {
   implicit def mapDocumentToSequence[T <: Document, ST, S[ST] <: Sequence[ST]] = CanMap[T, S[ST], ST]
 
-  implicit class ScalaSequence[T](underlying:Sequence[T]){
+  implicit class ScalaSequence[T](underlying: Sequence[T]) {
 
     def ++(sequence: Sequence[_]) = underlying.union(sequence)
+
     //def :::[B>:T](prefix:Sequence[B]) = prefix  merge underlying
   }
 
@@ -82,16 +81,17 @@ trait Aggregation[T] {
   def distinct = Distinct(underlying)
 
 
+  def contains(field: String, fields: String*) = Contains(underlying, fields.+:(field).map(FuncWrap(_)))
 
-  def contains(field:String,fields:String*) = Contains(underlying,fields.+:(field).map(FuncWrap(_)))
-  def contains(field:Double,fields:Double*) = Contains(underlying,fields.+:(field).map(FuncWrap(_)))
-  def contains(fields:Datum*) = Contains(underlying,fields.map(FuncWrap(_)))
+  def contains(field: Double, fields: Double*) = Contains(underlying, fields.+:(field).map(FuncWrap(_)))
 
-
-  def contains(f:japi.BooleanPredicate) = Contains(underlying,Seq(f))
+  def contains(fields: Datum*) = Contains(underlying, fields.map(FuncWrap(_)))
 
 
-  def contains(f: Var=>Binary) = Contains(underlying, Seq(f))
+  def contains(f: japi.BooleanPredicate) = Contains(underlying, Seq(f))
+
+
+  def contains(f: Var => Binary) = Contains(underlying, Seq(f))
 
   def ?(attr: Datum) = contains(attr)
 
@@ -104,7 +104,6 @@ trait Sequence[T] extends ArrayTyped[T] with Multiply with Filterable[T] with Re
 
 
   def indexesOf[R >: Datum](value: R) = IndexesOf(underlying, value)
-
 
 
   //def indexesOf(value: Binary): IndexesOf = indexesOf((x: Var) => value)
@@ -133,13 +132,17 @@ trait Sequence[T] extends ArrayTyped[T] with Multiply with Filterable[T] with Re
   def union(sequence: Sequence[_]) = Union(underlying, sequence)
 
 
+  def eqJoin[R](attr: String, other: Sequence[R]) = EqJoin(underlying, Left(attr), other)
 
-  def eqJoin[R](attr: String, other: Sequence[R], index: Option[String] = None) = EqJoin(underlying, attr, other, index)
+  def eqJoin[R](attr: String, other: Sequence[R], index: String) = EqJoin(underlying, Left(attr), other, index)
+
+  def eqJoin[R](func: Var => Typed, other: Sequence[R], index: String) = EqJoin(underlying, Right(func), other, index)
+
+  def eqJoin[R](func: Var => Typed, other: Sequence[R]) = EqJoin(underlying, Right(func), other)
 
   def innerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = InnerJoin[T, R](underlying, other, func)
 
   def outerJoin[R](other: Sequence[R], func: (Var, Var) => Binary) = OuterJoin[T, R](underlying, other, func)
-
 
   def orderByIndex(index: String): OrderBy[T] = orderByIndex(index: Order)
 
@@ -159,7 +162,7 @@ trait Sequence[T] extends ArrayTyped[T] with Multiply with Filterable[T] with Re
   // add dummy implicit to allow methods for Ref
 
 
-  def merge[B>:T](other: Sequence[B]) = MergeSequence(underlying,other)
+  def merge[B >: T](other: Sequence[B]) = MergeSequence(underlying, other)
 
   def foreach(f: Var => Typed) = ForEach(underlying, f)
 
@@ -170,11 +173,10 @@ trait Sequence[T] extends ArrayTyped[T] with Multiply with Filterable[T] with Re
 trait Stream[T] extends Sequence[T]
 
 
+trait Selection[T] extends Typed {
 
-trait Selection[T] extends Typed{
 
-
-   override   val underlying = this
+  override val underlying = this
 
 
   def update(attributes: Map[String, Any]): Update[T] = update(attributes, UpdateOptions())
@@ -222,8 +224,8 @@ trait StreamSelection[T] extends Selection[T] with Stream[T] {
 
 }
 
-trait SingleSelection[T] extends Selection[T]{
-  def merge(value:Any) =  new Merge(underlying.asInstanceOf[Typed], Expr(value).asInstanceOf[Typed]) with ProduceAnyDocument
+trait SingleSelection[T] extends Selection[T] {
+  def merge(value: Any) = new Merge(underlying.asInstanceOf[Typed], Expr(value).asInstanceOf[Typed]) with ProduceAnyDocument
 }
 
 

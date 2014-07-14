@@ -31,27 +31,30 @@ class JoinTest extends FunSuite with WithBase {
 
     // println(foos.run)
 
-    val join = foos.eqJoin("value", bars)
+    val joins = Seq(foos.eqJoin("value", bars),foos.eqJoin(f=> f\"value",bars))
+
+
+    for(join <- joins){
+      val results = join.toOpt
 
 
 
-    val results = join.toOpt
 
 
+      assert(results.isDefined)
+
+      assert(results.get.size == 1)
+      val head = results.get.head
+      assert(head.left == FooJ(1, 1) && head.right == BarJ(1, 1))
+    }
 
 
-
-    assert(results.isDefined)
-
-    assert(results.get.size == 1)
-    val head = results.get.head
-    assert(head.left == FooJ(1, 1) && head.right == BarJ(1, 1))
 
 
   }
 
   test("inner join") {
-    val join = foos.innerJoin(bars, (f: Var, b: Var) => f \ "value" === b \ "value")
+    val join = foos.innerJoin(bars, (f,b) => f \ "value" === b \ "value")
 
 
 
