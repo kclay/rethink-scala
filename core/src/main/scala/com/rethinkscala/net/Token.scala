@@ -2,10 +2,10 @@ package com.rethinkscala.net
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.rethinkscala.ConvertFrom._
+import com.rethinkscala.ast.{Datum, ProduceSequence}
+import com.rethinkscala.net.Translate._
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{Profile, Term}
-import com.rethinkscala.ast.{ProduceSequence, Datum}
-import com.rethinkscala.net.Translate._
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import ql2.Ql2.Response
 import ql2.Ql2.Response.ResponseType
@@ -25,7 +25,7 @@ abstract class Token[R] {
   type ResultType
   val query: CompiledQuery
   val term: Term
-  val connection:Connection
+  val connection: Connection
 
   def handle(response: R)
 
@@ -34,101 +34,105 @@ abstract class Token[R] {
 }
 
 
+trait BaseJsonResponse[T] {
 
+   val responseType: Long
+   val result: Seq[T]
+   val backtrace: Option[Seq[Frame]]
+  val profile: Option[Profile]
+  lazy val single = result.head
+}
 
-case class JsonBinaryResponse(@JsonProperty("t")responseType:Long,
-                                @JsonProperty("r")result:Seq[Map[String,Int]],
-                                @JsonProperty("b")backtrace:Option[Seq[Frame]],
-                                @JsonProperty("p")profile:Option[Profile]){
-  def convert(resultField:String) = JsonResponse(
-        responseType,result.head.get(resultField).getOrElse(0) == 1,
-  backtrace,
-  profile)
+case class JsonBinaryResponse(@JsonProperty("t")responseType: Long,
+                              @JsonProperty("r") result: Seq[Map[String, Int]],
+                              @JsonProperty("b")backtrace: Option[Seq[Frame]],
+                              @JsonProperty("p") profile: Option[Profile]) extends BaseJsonResponse[Map[String, Int]] {
+  def convert(resultField: String) = JsonResponse(
+    responseType, Seq(result.head.get(resultField).getOrElse(0) == 1),
+    backtrace,
+    profile)
 }
 
 case class JsonErrorResponse(
-                              @JsonProperty("t")responseType:Long,
-                              @JsonProperty("r")result:Seq[String],
-                              @JsonProperty("b")backtrace:Option[Seq[Frame]],
-                              @JsonProperty("p")profile:Option[Profile]
-                              )
-case class JsonResponse[T](@JsonProperty("t")responseType:Long,
-                        @JsonProperty("r")result:T,
-                        @JsonProperty("b")backtrace:Option[Seq[Frame]],
-                        @JsonProperty("p")profile:Option[Profile])
-case class JsonQueryToken[R](connection:Connection,query:CompiledQuery,term:Term,p:Promise[R])(implicit mf:Manifest[R]) extends Token[String] with LazyLogging{
-  override type ResultType = R
+                              @JsonProperty("t") responseType: Long,
+                              @JsonProperty("r") result: Seq[String],
+                              @JsonProperty("b") backtrace: Option[Seq[Frame]],
+                              @JsonProperty("p") profile: Option[Profile]
+                              ) extends BaseJsonResponse[String]
+
+case class JsonResponse[T](@JsonProperty("t") responseType: Long,
+                           @JsonProperty("r") result: Seq[T],
+                           @JsonProperty("b") backtrace: Option[Seq[Frame]],
+                           @JsonProperty("p") profile: Option[Profile]) extends BaseJsonResponse[T]
+
+case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R])(implicit mf: Manifest[R])
+  extends Token[String] with LazyLogging {
+
+  import ql2.Ql2.Response.ResponseType.{CLIENT_ERROR_VALUE, COMPILE_ERROR_VALUE, RUNTIME_ERROR_VALUE, SUCCESS_ATOM_VALUE, SUCCESS_PARTIAL_VALUE, SUCCESS_SEQUENCE_VALUE}
+
+  val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
+
+  override def failure(e: Throwable) = p failure e
 
 
-  import ResponseType.{RUNTIME_ERROR_VALUE,COMPILE_ERROR_VALUE,
-  CLIENT_ERROR_VALUE,SUCCESS_PARTIAL_VALUE,SUCCESS_SEQUENCE_VALUE,SUCCESS_ATOM_VALUE }
-    val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
-
-  override def failure(e: Throwable) =  p failure e
-
-
-  def toError(json:String) = {
-    val response =Reflector.fromJson[JsonErrorResponse](json)
+  def toError(json: String) = {
+    val response = Reflector.fromJson[JsonErrorResponse](json)
     val error = response.result.head
     val frames = response.backtrace.getOrElse(Iterable.empty)
 
 
 
-    response.responseType match{
-      case RUNTIME_ERROR_VALUE=>RethinkRuntimeError(error,term,frames)
-      case COMPILE_ERROR_VALUE=>RethinkCompileError(error,term,frames)
-      case CLIENT_ERROR_VALUE=> RethinkClientError(error,term,frames)
+    response.responseType match {
+      case RUNTIME_ERROR_VALUE => RethinkRuntimeError(error, term, frames)
+      case COMPILE_ERROR_VALUE => RethinkCompileError(error, term, frames)
+      case CLIENT_ERROR_VALUE => RethinkClientError(error, term, frames)
     }
   }
-  override def handle(json: String) =( json match{
-    case ResponseTypeExtractor(responseType) => responseType.toInt match{
-      case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE|CLIENT_ERROR_VALUE=>toError(json)
-      case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => toCursor(0, json,responseType.toInt)
-      case SUCCESS_ATOM_VALUE=> term match {
-        case x: ProduceSequence[_] => toCursor(0, json,responseType.toInt)
+
+  override def handle(json: String) = (json match {
+    case ResponseTypeExtractor(responseType) => responseType.toInt match {
+      case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE | CLIENT_ERROR_VALUE => toError(json)
+      case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => toCursor(0, json, responseType.toInt)
+      case SUCCESS_ATOM_VALUE => term match {
+        case x: ProduceSequence[_] => toCursor(0, json, responseType.toInt)
         case _ => toResult(json)
       }
-      case _=> RethinkRuntimeError(s"Invalid response = $json",term)
+      case _ => RethinkRuntimeError(s"Invalid response = $json", term)
     }
-  } ) match {
+  }) match {
     case e: Exception => p failure e
     case e: Any => p success e.asInstanceOf[R]
   }
 
-  def toCursor(id:Int,json:String,responseType:Int)={
-    //val seqMan = Manifest.classType(classOf[Seq[R]],mf)
-    val manifest = implicitly[Manifest[JsonResponse[Seq[R]]]]
-    val seq = cast(json)(manifest).result
-    new Cursor[R](id, this, seq, responseType match {
+  val manifest = implicitly[Manifest[JsonResponse[R]]]
+
+  def toCursor(id: Int, json: String, responseType: Int) = {
+
+    val seq = cast(json)(manifest).single
+    new Cursor[R](id, this, seq.asInstanceOf[Seq[R]], responseType match {
       case SUCCESS_SEQUENCE_VALUE => true
       case _ => false
     })
 
   }
 
-  def cast[T](json: String)(implicit mf: Manifest[T]): T =  {
+  def cast[T](json: String)(implicit mf: Manifest[T]): T = {
     term match {
-      case b:BinaryConversion =>
+      case b: BinaryConversion =>
         Reflector.fromJson[JsonBinaryResponse](json)
-        .convert(b.resultField).asInstanceOf[T]
-      case _=>translate[T].read(json, term)
+          .convert(b.resultField).asInstanceOf[T]
+      case _ => translate[T].read(json, term)
     }
-    
+
   }
 
 
-  def toResult(json:String) = {
-    val manifest = implicitly[Manifest[JsonResponse[R]]]
-    cast(json)(manifest).result
-  }
+  def toResult(json: String) =cast(json)(manifest).single
 }
-
-
 
 
 case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R])(implicit mf: Manifest[R])
   extends Token[Response] with LazyLogging {
-
 
 
   private[rethinkscala] def context = connection
@@ -167,12 +171,11 @@ case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Ter
     case e: Any => p success e.asInstanceOf[R]
   }
 
-  def failure(e: Throwable) = p failure e
-
+  def failure(e: Throwable) = p failure (e)
 
   def toCursor(id: Int, response: Response) = {
-    import scala.collection.JavaConverters._
 
+    import scala.collection.JavaConverters._
     //val seqManifest = implicitly[Manifest[Seq[R]]]
 
 

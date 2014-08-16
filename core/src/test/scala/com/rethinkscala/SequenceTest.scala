@@ -36,7 +36,7 @@ class SequenceTest extends FunSuite with WithBase {
 
 
     assert(a.map(x => x * 2), {
-      b: Seq[Int] => b == a.array.map(_ * 2)
+      b: Seq[Int] => b == a.array.map(_ * 2).toSeq
     })
 
 
@@ -51,16 +51,5 @@ class SequenceTest extends FunSuite with WithBase {
     })
   }
 
-  /*
-  test("ordering") {
-
-
-    val ast = table.orderBy((doc: Var) => doc \ "foo").ast
-    // TODO add asert
-
-   // System.out.println(ast)
-
-    // assert(ast)
-  }       */
-
+  override def useVersion = version3
 }
