@@ -86,4 +86,6 @@ class JoinTest extends FunSuite with WithBase {
     foos.insert(FooJ(1, value = 1)).run
     bars.insert(BarJ(1, value = 1)).run
   }
+
+  override def useVersion = version3
 }

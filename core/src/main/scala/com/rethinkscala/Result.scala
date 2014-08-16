@@ -136,7 +136,7 @@ case class DBResult(name: String, @JsonProperty("type") kind: String) extends Do
 
 case class JoinResult[Left, Right](left: Left, right: Right) extends Document
 
-class ZipResult[L, R] extends Document {
+case class ZipResult[L, R](left:L,right:R) extends Document {
 
 
   private var _left: Option[L] = None

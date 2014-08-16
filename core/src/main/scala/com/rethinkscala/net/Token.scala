@@ -60,6 +60,13 @@ case class JsonErrorResponse(
                               @JsonProperty("p") profile: Option[Profile]
                               ) extends BaseJsonResponse[String]
 
+case class JsonCursorResponse[T](@JsonProperty("t") responseType: Long,
+                           @JsonProperty("r") result: T,
+                           @JsonProperty("b") backtrace: Option[Seq[Frame]],
+                           @JsonProperty("p") profile: Option[Profile]) {
+
+}
+
 case class JsonResponse[T](@JsonProperty("t") responseType: Long,
                            @JsonProperty("r") result: Seq[T],
                            @JsonProperty("b") backtrace: Option[Seq[Frame]],
@@ -94,7 +101,7 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
       case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE | CLIENT_ERROR_VALUE => toError(json)
       case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => toCursor(0, json, responseType.toInt)
       case SUCCESS_ATOM_VALUE => term match {
-        case x: ProduceSequence[_] => toCursor(0, json, responseType.toInt)
+        case x: ProduceSequence[_] => toCursor(0, json, responseType.toInt,true)
         case _ => toResult(json)
       }
       case _ => RethinkRuntimeError(s"Invalid response = $json", term)
@@ -105,10 +112,14 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
   }
 
   val manifest = implicitly[Manifest[JsonResponse[R]]]
+  val cursorManifest = implicitly[Manifest[JsonCursorResponse[R]]]
 
-  def toCursor(id: Int, json: String, responseType: Int) = {
+  def toCursor(id: Int, json: String, responseType: Int,atom:Boolean=false) = {
 
-    val seq = cast(json)(manifest).single
+    val seq =  atom match{
+      case true=> cast(json)(manifest).single
+      case _=> cast(json)(cursorManifest).result
+    }
     new Cursor[R](id, this, seq.asInstanceOf[Seq[R]], responseType match {
       case SUCCESS_SEQUENCE_VALUE => true
       case _ => false
