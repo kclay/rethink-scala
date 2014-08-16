@@ -88,6 +88,7 @@ ReqlTypeDeserializer[GroupResult[_]] {
 
         } while (next != END_ARRAY)
 
+       jp.nextToken()
         results.getOrElse(null)
 
 

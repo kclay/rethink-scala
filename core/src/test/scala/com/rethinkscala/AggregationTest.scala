@@ -41,7 +41,6 @@ class AggregationTest extends FunSuite with WithBase {
   test("group") {
 
 
-
     val seq = testSeq
     val check = {
       g:GroupResult[String]=> g.size == 2 && g.head.group == "Alice" && g.head.values.head.get("id") == Some(5)
@@ -159,4 +158,5 @@ class AggregationTest extends FunSuite with WithBase {
 
   }
 
+  override def useVersion = version3
 }
