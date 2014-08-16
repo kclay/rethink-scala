@@ -32,38 +32,55 @@ abstract class Token[R] {
 
 }
 
-case class JsonResponse(@JsonProperty("t")responseType:Long,
-                        @JsonProperty("r")json:String,
+case class JsonResponse[T](@JsonProperty("t")responseType:Long,
+                        @JsonProperty("r")result:T,
                         @JsonProperty("b")backtrace:Option[Frame],
                         @JsonProperty("p")profile:Option[Profile])
-case class JsonQueryToken[R](connection:Connection,query:CompiledQuery,term:Term,p:Promise[R],mf:Manifest[R]) extends Token[JsonResponse] with LazyLogging{
+case class JsonQueryToken[R](connection:Connection,query:CompiledQuery,term:Term,p:Promise[R])(implicit mf:Manifest[R]) extends Token[String] with LazyLogging{
   override type ResultType = R
 
+
+  import ResponseType.{RUNTIME_ERROR_VALUE,COMPILE_ERROR_VALUE,
+  CLIENT_ERROR_VALUE,SUCCESS_PARTIAL_VALUE,SUCCESS_SEQUENCE_VALUE,SUCCESS_ATOM_VALUE }
+  val ResponseTypeExtractor = """\"t\":(\d+)""".r
   override def failure(e: Throwable) =  p failure e
 
-  override def handle(response: JsonResponse) = ???
+  override def handle(json: String) = json match{
+    case ResponseTypeExtractor(responseType) => responseType.toInt match{
+      case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE|CLIENT_ERROR_VALUE=>
+      case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE =>
+      case SUCCESS_ATOM_VALUE=> term match {
+        case x: ProduceSequence[_] => toCursor(0, json,responseType.toInt)
+        case _ => toResult(json)
+      }
+    }
+  }
+
+  def toCursor(id:Int,json:String,responseType:Int)={
+    //val seqMan = Manifest.classType(classOf[Seq[R]],mf)
+    val manifest = implicitly[Manifest[JsonResponse[Seq[R]]]]
+    val seq = cast(json)(manifest).result
+    new Cursor[R](id, this, seq, responseType match {
+      case SUCCESS_SEQUENCE_VALUE => true
+      case _ => false
+    })
+
+  }
 
   def cast[T](json: String)(implicit mf: Manifest[T]): T = translate[T].read(json, term)
-  def toResult(response: JsonResponse) = {
-    logger.debug(s"Processing result : $response")
-
-
-    val rtn = response.json match {
-      case "" => None
-
-      case _ => cast[ResultType](response.json)(mf)
-    }
-    rtn
+  def toResult(json:String) = {
+    val manifest = implicitly[Manifest[JsonResponse[R]]]
+    cast(json)(manifest).result
   }
 }
 
 
 
 
-case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R], mf: Manifest[R])
+case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R])(implicit mf: Manifest[R])
   extends Token[Response] with LazyLogging {
 
-  implicit val t = mf
+
 
   private[rethinkscala] def context = connection
 

@@ -39,11 +39,8 @@ class JsonFrameDecoder extends RethinkFrameDecoder(12) {
       buffer.resetReaderIndex()
       return null
     }
-    val json = new String(buffer.readBytes(length).array(), "UTF-8")
+    new String(buffer.readBytes(length).array(), "UTF-8")
 
-    val resp = Reflector.fromJson[JsonResponse](json)
-
-    resp
   }
 }
 

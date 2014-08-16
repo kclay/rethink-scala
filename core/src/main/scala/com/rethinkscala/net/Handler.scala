@@ -26,5 +26,5 @@ class RethinkChannelHandler[T] extends SimpleChannelUpstreamHandler {
 
 class ProtoChannelHandler extends RethinkChannelHandler[Response]
 
-class JsonChannelHandler extends RethinkChannelHandler[JsonResponse]
+class JsonChannelHandler extends RethinkChannelHandler[String]
 

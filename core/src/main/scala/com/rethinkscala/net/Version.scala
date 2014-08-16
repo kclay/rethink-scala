@@ -13,11 +13,11 @@ import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.buffer.ChannelBuffers._
 import org.jboss.netty.channel.Channel
 import org.jboss.netty.handler.queue.{BlockingReadHandler, BlockingReadTimeoutException}
-import ql2.Ql2.{Query, VersionDummy}
+import ql2.Ql2.{Response, Query, VersionDummy}
 import ql2.{Ql2 => ql2}
 
 import scala.beans.BeanProperty
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Promise, ExecutionContext}
 
 
 /**
@@ -61,12 +61,19 @@ case class JsonCompiledAst(underlying: JsonAst) extends CompiledAst
 
 trait CompiledQuery {
 
+  val token:Long
   protected final def newBuffer(size: Int) = buffer(ByteOrder.LITTLE_ENDIAN, size)
 
   def encode: ChannelBuffer
+  type TokenType
+
+  def asToken[T](conn:Connection,term:Term,promise:Promise[T])(implicit mf:Manifest[T]):TokenType
 }
 
 class ProtoBufCompiledQuery(underlying: Query) extends CompiledQuery {
+
+  override val token: Long = underlying.getToken
+
   override def encode = {
     val size = underlying.getSerializedSize
     val b = newBuffer(size + 4)
@@ -75,6 +82,10 @@ class ProtoBufCompiledQuery(underlying: Query) extends CompiledQuery {
     b.writeBytes(underlying.toByteArray)
     b
   }
+
+  override type TokenType = Token[Response]
+
+  override def asToken[T](conn: Connection, term: Term, promise: Promise[T])(implicit mf: Manifest[T]) = QueryToken[T](conn, this, term, promise)
 }
 
 case class JsonQuery(queryType: ql2.Query.QueryType, ast: JsonAst, opts: Map[String, Any]) {
@@ -98,6 +109,11 @@ case class JsonCompiledQuery(token: Long, query: JsonQuery) extends CompiledQuer
     b.writeBytes(jsonBytes)
     b
   }
+
+
+  override type TokenType = Token[String]
+
+  override def asToken[T](conn: Connection, term: Term, promise: Promise[T])(implicit mf: Manifest[T]) = JsonQueryToken[T](conn, this, term, promise)
 }
 
 abstract class Version extends LazyLogging {
