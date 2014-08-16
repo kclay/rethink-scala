@@ -37,11 +37,11 @@ abstract class Token[R] {
 
 
 case class JsonBinaryResponse(@JsonProperty("t")responseType:Long,
-                                @JsonProperty("r")result:Map[String,Int],
+                                @JsonProperty("r")result:Seq[Map[String,Int]],
                                 @JsonProperty("b")backtrace:Option[Seq[Frame]],
                                 @JsonProperty("p")profile:Option[Profile]){
   def convert(resultField:String) = JsonResponse(
-        responseType,result.get(resultField).getOrElse(0) == 1,
+        responseType,result.head.get(resultField).getOrElse(0) == 1,
   backtrace,
   profile)
 }
@@ -108,13 +108,15 @@ case class JsonQueryToken[R](connection:Connection,query:CompiledQuery,term:Term
 
   def cast[T](json: String)(implicit mf: Manifest[T]): T =  {
     term match {
-      case b:BinaryConversion => translate[JsonBinaryResponse]
-        .read(json, term)
-        .convert(b.resultField).result.asInstanceOf[T]
+      case b:BinaryConversion =>
+        Reflector.fromJson[JsonBinaryResponse](json)
+        .convert(b.resultField).asInstanceOf[T]
       case _=>translate[T].read(json, term)
     }
     
   }
+
+
   def toResult(json:String) = {
     val manifest = implicitly[Manifest[JsonResponse[R]]]
     cast(json)(manifest).result

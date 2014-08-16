@@ -32,7 +32,7 @@ class JsonProtocolTest  extends FunSuite with WithBase{
 
   test("db create"){
 
-    assert(r.dbCreate("foo"))
+    assert(r.dbCreate(dbName))
   }
 
   override def setupDB = false
