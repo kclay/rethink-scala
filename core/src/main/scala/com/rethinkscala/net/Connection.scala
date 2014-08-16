@@ -39,117 +39,6 @@ import scala.concurrent.duration.Duration
 
 
 
-class RethinkDBHandler extends SimpleChannelUpstreamHandler {
-
-  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext): Option[Token[Response]] = Some(ctx.getChannel.getAttachment.asInstanceOf[Token[Response]])
-
-  override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-    ctx.map(_.handle(e.getMessage.asInstanceOf[Response]))
-  }
-
-  override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-    ctx.map(_.failure(e.getCause))
-  }
-}
-
-private class RethinkDBFrameDecoder extends FrameDecoder {
-  var acceptJson:Boolean = false
-  def asJson(b: Boolean) = acceptJson = b
-
-  private val PROTO_READ_AMOUNT = 4
-  private val JSON_READ_AMOUNT = 8+ 4
-
-
-  private def decodeJson(buffer:ChannelBuffer):AnyRef= {
-
-    val token = buffer.readLong()
-    val length = buffer.readInt()
-
-    if(buffer.readableBytes() < length) {
-      buffer.resetReaderIndex()
-      return null
-    }
-    val json  = new String(buffer.readBytes(length).array(),"UTF-8")
-
-   val resp =  Reflector.fromJson[JsonResponse](json)
-
-    resp
-
-
-  }
-  private def decodeProto(buffer:ChannelBuffer):AnyRef= {
-
-    val length = buffer.readInt()
-
-    if (buffer.readableBytes() < length) {
-      buffer.resetReaderIndex()
-      return null
-    }
-    buffer.readBytes(length)
-  }
-  def decode(ctx: ChannelHandlerContext, channel:Channel, buffer: ChannelBuffer): AnyRef = {
-    buffer.markReaderIndex()
-    val readAmount = if(acceptJson) JSON_READ_AMOUNT else PROTO_READ_AMOUNT
-
-     if (!buffer.readable() || buffer.readableBytes() < readAmount) {
-        buffer.resetReaderIndex()
-        return null
-      }
-      if(acceptJson) decodeJson(buffer) else decodeProto(buffer)
-    }
-
-}
-
-private class RethinkDBEncoder extends OneToOneEncoder {
-
-  def encode(ctx: ChannelHandlerContext, channel: Channel, msg: Any): AnyRef = {
-
-    msg match {
-      case v: VersionDummy.Version => {
-        val b = buffer(ByteOrder.LITTLE_ENDIAN, 4)
-        b.writeInt(v.getNumber)
-        b
-      }
-      case p:ql2.VersionDummy.Protocol=>{
-        val b = buffer(ByteOrder.LITTLE_ENDIAN,4)
-        b.writeInt(p.getNumber)
-        b
-      }
-      case q: CompiledQuery => q.encode
-      case s: String =>
-        val b = buffer(ByteOrder.LITTLE_ENDIAN, s.length + 4)
-        b.writeInt(s.length)
-        b.writeBytes(s.getBytes("ascii"))
-        b
-      case q: ql2.Query =>
-        val size = q.getSerializedSize
-        val b = buffer(ByteOrder.LITTLE_ENDIAN, size + 4)
-        b.writeInt(size)
-
-        b.writeBytes(q.toByteArray)
-        b
-    }
-
-  }
-}
-
-private class PipelineFactory extends ChannelPipelineFactory {
-  // stateless
-  val defaultHandler = new RethinkDBHandler()
-
-
-  def getPipeline: ChannelPipeline = {
-    val p = pipeline()
-
-
-    p.addLast("frameDecoder", new RethinkDBFrameDecoder())
-    p.addLast("protobufDecoder", ProtobufDecoder(Response.getDefaultInstance))
-    p.addLast("protobufEncoder", new RethinkDBEncoder())
-    p.addLast("handler", defaultHandler)
-    p
-  }
-}
-
 
 abstract class AbstractConnection(version: Version) extends LazyLogging with Connection {
 
@@ -167,7 +56,7 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
         Executors.newCachedThreadPool())
 
     val b = new ClientBootstrap(factory)
-    b.setPipelineFactory(new PipelineFactory())
+    b.setPipelineFactory(version.pipelineFactory)
     b.setOption("tcpNoDelay", true)
     b.setOption("keepAlive", true)
     b.setOption("bufferFactory", new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN))
@@ -230,10 +119,7 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
             val query = version.toQuery(term, c.token.getAndIncrement, defaultDB, opts)
             val token = QueryToken[T](con, query, term, p, mf)
             // TODO : Check into dropping netty and using sockets for each,
-            val frameDecoder = c.channel.getPipeline.get("frameDecoder").asInstanceOf[RethinkDBFrameDecoder]
-            if(query.isInstanceOf[JsonCompiledQuery]){
-                frameDecoder.asJson(true)
-            }
+
             // Or find a way so that we can store the token for the netty handler to complete
             c.channel.setAttachment(token)
             logger.debug("Writing query")
@@ -271,9 +157,6 @@ trait ConnectionOps[C <: Connection, D <: Mode[C]] {
 
   def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]): ResultQuery[R]
 
- // def apply[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).run
-
- // def toOpt[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).toOpt
 }
 
 

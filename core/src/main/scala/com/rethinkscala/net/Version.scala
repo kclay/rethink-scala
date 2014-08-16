@@ -108,6 +108,8 @@ abstract class Version extends LazyLogging {
   val db: Option[String]
   val timeout: Int = 10
 
+  private[rethinkscala] val pipelineFactory:RethinkPipelineFactory
+
 
   val executionContext: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(5))
 
@@ -227,9 +229,12 @@ trait ProvidesProtoBufQuery extends ProvidesQuery {
   def compile(builder: Builder, term: Term) = new ProtoBufCompiledQuery(builder.setQuery(ast(term)).build())
 }
 
+@deprecated("Use Version2 or Version3")
 case class Version1(host: String = "localhost", port: Int = 28015, db: Option[String] = None, maxConnections: Int = 5)
   extends Version with ProvidesProtoBufQuery {
 
+
+  override private[rethinkscala] val pipelineFactory: RethinkPipelineFactory = ProtoPipelineFactory
 
   def configure(c: Channel) {
     c.write(VersionDummy.Version.V0_1).await()
@@ -306,7 +311,9 @@ trait ConfigureAuth {
 
 case class Version2(host: String = "localhost", port: Int = 28015,
                     db: Option[String] = None, maxConnections: Int = 5,
-                    authKey: String = "") extends Version with ProvidesProtoBufQuery with ConfigureAuth
+                    authKey: String = "") extends Version with ProvidesProtoBufQuery with ConfigureAuth{
+  override private[rethinkscala] val pipelineFactory: RethinkPipelineFactory = ProtoPipelineFactory
+}
 
 sealed abstract class Protocol {
   type Query <: CompiledQuery
@@ -383,6 +390,8 @@ case class Version3(host: String = "localhost", port: Int = 28015,
                     db: Option[String] = None, maxConnections: Int = 5,
                     authKey: String = "", protocol: Protocol = JSON) extends Version with ConfigureAuth {
 
+
+  override private[rethinkscala] val pipelineFactory: RethinkPipelineFactory = JsonPipelineFactory
   override val version = VersionDummy.Version.V0_3
 
   override protected def write(c: Channel) = {
