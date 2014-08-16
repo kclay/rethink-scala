@@ -3,6 +3,7 @@ package com.rethinkscala
 import com.rethinkscala.net.{JsonAst, JsonCompiledAst}
 import org.scalatest.FunSuite
 import ql2.{Ql2=> ql2}
+import Blocking._
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,6 +28,11 @@ class JsonProtocolTest  extends FunSuite with WithBase{
 
 
 
+  }
+
+  test("db create"){
+
+    assert(r.dbCreate("foo"))
   }
 
   override def setupDB = false

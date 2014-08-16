@@ -123,7 +123,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   private def assert_[Result](f: () => Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
     val (condition, cause) = f() match {
       case Left(e) => (false, e.getMessage)
-      case Right(r) => (check(r), "Successful query but invalid response")
+      case Right(r) => (check(r), s"Successful query but invalid response = $r")
     }
     if (!condition)
       throw new TestFailedException(cause, 5)

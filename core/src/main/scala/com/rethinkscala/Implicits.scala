@@ -138,10 +138,9 @@ private[rethinkscala] trait ImplicitConversions {
 
   object r extends RethinkApi
 
-  @inline
-  implicit def toOptionFuncWrap(v:Any):Option[FuncWrap] = Some(FuncWrap(v))
-  @inline
-  implicit def toFuncWrap(v:Any):FuncWrap = FuncWrap(v)
+
+
+  implicit def anyToPimpled(v:Any) = new PimpedAny(v)
 
   //implicit def toTyped[T<:Typed](v:T):Typed = v
 
@@ -265,12 +264,21 @@ trait Helpers{
   }
 
 }
+
+ class PimpedAny(val v:Any) extends AnyVal{
+  @inline
+  def wrap = FuncWrap(v)
+  @inline
+  def optWrap = Some(FuncWrap(v))
+}
+
 object Implicits  {
 
 
   trait Common extends CanMapImplicits
   with ToAstImplicts
   with ReceptacleImplicits with ImplicitConversions with net.Versions with Helpers{
+
 
 
     implicit val numericToDouble = new FromAst[Numeric] {

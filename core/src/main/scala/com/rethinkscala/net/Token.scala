@@ -2,6 +2,7 @@ package com.rethinkscala.net
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.rethinkscala.ConvertFrom._
+import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{Profile, Term}
 import com.rethinkscala.ast.{ProduceSequence, Datum}
 import com.rethinkscala.net.Translate._
@@ -32,9 +33,28 @@ abstract class Token[R] {
 
 }
 
+
+
+
+case class JsonBinaryResponse(@JsonProperty("t")responseType:Long,
+                                @JsonProperty("r")result:Map[String,Int],
+                                @JsonProperty("b")backtrace:Option[Seq[Frame]],
+                                @JsonProperty("p")profile:Option[Profile]){
+  def convert(resultField:String) = JsonResponse(
+        responseType,result.get(resultField).getOrElse(0) == 1,
+  backtrace,
+  profile)
+}
+
+case class JsonErrorResponse(
+                              @JsonProperty("t")responseType:Long,
+                              @JsonProperty("r")result:Seq[String],
+                              @JsonProperty("b")backtrace:Option[Seq[Frame]],
+                              @JsonProperty("p")profile:Option[Profile]
+                              )
 case class JsonResponse[T](@JsonProperty("t")responseType:Long,
                         @JsonProperty("r")result:T,
-                        @JsonProperty("b")backtrace:Option[Frame],
+                        @JsonProperty("b")backtrace:Option[Seq[Frame]],
                         @JsonProperty("p")profile:Option[Profile])
 case class JsonQueryToken[R](connection:Connection,query:CompiledQuery,term:Term,p:Promise[R])(implicit mf:Manifest[R]) extends Token[String] with LazyLogging{
   override type ResultType = R
@@ -42,18 +62,37 @@ case class JsonQueryToken[R](connection:Connection,query:CompiledQuery,term:Term
 
   import ResponseType.{RUNTIME_ERROR_VALUE,COMPILE_ERROR_VALUE,
   CLIENT_ERROR_VALUE,SUCCESS_PARTIAL_VALUE,SUCCESS_SEQUENCE_VALUE,SUCCESS_ATOM_VALUE }
-  val ResponseTypeExtractor = """\"t\":(\d+)""".r
+    val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
+
   override def failure(e: Throwable) =  p failure e
 
-  override def handle(json: String) = json match{
+
+  def toError(json:String) = {
+    val response =Reflector.fromJson[JsonErrorResponse](json)
+    val error = response.result.head
+    val frames = response.backtrace.getOrElse(Iterable.empty)
+
+
+
+    response.responseType match{
+      case RUNTIME_ERROR_VALUE=>RethinkRuntimeError(error,term,frames)
+      case COMPILE_ERROR_VALUE=>RethinkCompileError(error,term,frames)
+      case CLIENT_ERROR_VALUE=> RethinkClientError(error,term,frames)
+    }
+  }
+  override def handle(json: String) =( json match{
     case ResponseTypeExtractor(responseType) => responseType.toInt match{
-      case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE|CLIENT_ERROR_VALUE=>
-      case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE =>
+      case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE|CLIENT_ERROR_VALUE=>toError(json)
+      case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => toCursor(0, json,responseType.toInt)
       case SUCCESS_ATOM_VALUE=> term match {
         case x: ProduceSequence[_] => toCursor(0, json,responseType.toInt)
         case _ => toResult(json)
       }
+      case _=> RethinkRuntimeError(s"Invalid response = $json",term)
     }
+  } ) match {
+    case e: Exception => p failure e
+    case e: Any => p success e.asInstanceOf[R]
   }
 
   def toCursor(id:Int,json:String,responseType:Int)={
@@ -67,7 +106,15 @@ case class JsonQueryToken[R](connection:Connection,query:CompiledQuery,term:Term
 
   }
 
-  def cast[T](json: String)(implicit mf: Manifest[T]): T = translate[T].read(json, term)
+  def cast[T](json: String)(implicit mf: Manifest[T]): T =  {
+    term match {
+      case b:BinaryConversion => translate[JsonBinaryResponse]
+        .read(json, term)
+        .convert(b.resultField).result.asInstanceOf[T]
+      case _=>translate[T].read(json, term)
+    }
+    
+  }
   def toResult(json:String) = {
     val manifest = implicitly[Manifest[JsonResponse[R]]]
     cast(json)(manifest).result

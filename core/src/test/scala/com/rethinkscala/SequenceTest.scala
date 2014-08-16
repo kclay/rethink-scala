@@ -1,6 +1,6 @@
 package com.rethinkscala
 
-import com.rethinkscala.Blocking._
+import Blocking._
 import org.scalatest.FunSuite
 
 

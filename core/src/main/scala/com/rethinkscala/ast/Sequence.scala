@@ -40,46 +40,46 @@ trait Aggregation[T] {
 
   def count(value: Boolean): Count = count(value: Datum)
 
-  def count(value: Datum) = Count(underlying, value)
+  def count(value: Datum) = Count(underlying, value.optWrap)
 
-  def count(f: Var => Binary) = Count(underlying, f)
+  def count(f: Var => Binary) = Count(underlying, f.optWrap)
 
-  def count(f: japi.BooleanPredicate) = Count(underlying, f)
+  def count(f: japi.BooleanPredicate) = Count(underlying, f.optWrap)
 
   def sum() = Sum(underlying)
 
-  def sum(value: String) = Sum(underlying, value)
+  def sum(value: String) = Sum(underlying, value.optWrap)
 
-  def sum(f: Var => Numeric) = Sum(underlying, f)
+  def sum(f: Var => Numeric) = Sum(underlying, f.optWrap)
 
-  def sum(f: japi.NumericPredicate) = Sum(underlying, f)
+  def sum(f: japi.NumericPredicate) = Sum(underlying, f.optWrap)
 
 
-  def group[R](magnet: GroupFilterMagnet[R]): Group[R, T] = Group[R, T](underlying, magnet().map(FuncWrap(_)))
+  def group[R](magnet: GroupFilterMagnet[R]): Group[R, T] = Group[R, T](underlying, magnet().map(_.wrap))
 
   def max() = Max(underlying)
 
-  def max(field: String) = Max(underlying, field)
+  def max(field: String) = Max(underlying, field.optWrap)
 
-  def max(f: Var => Typed) = Max(underlying, f)
+  def max(f: Var => Typed) = Max(underlying, f.optWrap)
 
-  def max(f: japi.Predicate) = Max(underlying, f)
+  def max(f: japi.Predicate) = Max(underlying, f.optWrap)
 
   def min() = Max(underlying)
 
-  def min(field: String) = Min(underlying, field)
+  def min(field: String) = Min(underlying, field.optWrap)
 
-  def min(f: japi.Predicate) = Min(underlying, f)
+  def min(f: japi.Predicate) = Min(underlying, f.optWrap)
 
-  def min(f: Var => Typed) = Min(underlying, f)
+  def min(f: Var => Typed) = Min(underlying, f.optWrap)
 
   def avg() = Avg(underlying)
 
-  def avg(field: String) = Avg(underlying, field)
+  def avg(field: String) = Avg(underlying, field.optWrap)
 
-  def avg(f: japi.NumericPredicate) = Avg(underlying, f)
+  def avg(f: japi.NumericPredicate) = Avg(underlying, f.optWrap)
 
-  def avg(f: Var => Numeric) = Avg(underlying, f)
+  def avg(f: Var => Numeric) = Avg(underlying, f.optWrap)
 
 
   def distinct = Distinct(underlying)
@@ -92,10 +92,10 @@ trait Aggregation[T] {
   def contains(fields: Datum*) = Contains(underlying, fields.map(FuncWrap(_)))
 
 
-  def contains(f: japi.BooleanPredicate) = Contains(underlying, Seq(f))
+  def contains(f: japi.BooleanPredicate) = Contains(underlying, Seq(f.wrap))
 
 
-  def contains(f: Var => Binary) = Contains(underlying, Seq(f))
+  def contains(f: Var => Binary) = Contains(underlying, Seq(f.wrap))
 
   def ?(attr: Datum) = contains(attr)
 
@@ -107,7 +107,7 @@ trait Sequence[T] extends ArrayTyped[T] with Multiply with Filterable[T] with Re
   override val underlying = this
 
 
-  def indexesOf[R >: Datum](value: R) = IndexesOf(underlying, value)
+  def indexesOf[R >: Datum](value: R) = IndexesOf(underlying, value.wrap)
 
 
   //def indexesOf(value: Binary): IndexesOf = indexesOf((x: Var) => value)
@@ -116,7 +116,7 @@ trait Sequence[T] extends ArrayTyped[T] with Multiply with Filterable[T] with Re
 
   def sample(amount: Int) = Sample(underlying, amount)
 
-  def indexesOf(p: Var => Binary) = IndexesOf(underlying, p)
+  def indexesOf(p: Var => Binary) = IndexesOf(underlying, p.wrap)
 
   def apply(index: Int) = Nth(underlying, index)
 
@@ -185,28 +185,28 @@ trait Selection[T] extends Typed {
 
   def update(attributes: Map[String, Any]): Update[T] = update(attributes, UpdateOptions())
 
-  def update(attributes: Map[String, Any], options: UpdateOptions) = Update[T](underlying, FuncWrap(attributes), options)
+  def update(attributes: Map[String, Any], options: UpdateOptions) = Update[T](underlying, attributes.wrap, options)
 
   def update(p: Predicate1): Update[T] = update(p, UpdateOptions())
 
-  def update(p: Predicate1, options: UpdateOptions) = Update[T](underlying, FuncWrap(p), options)
+  def update(p: Predicate1, options: UpdateOptions) = Update[T](underlying, p.wrap, options)
 
   def update(d: Document): Update[T] = update((x: Var) => MakeObj2(d))
 
-  def update(d: Document, options: UpdateOptions): Update[T] = Update[T](underlying, FuncWrap(MakeObj2(d)), options)
+  def update(d: Document, options: UpdateOptions): Update[T] = Update[T](underlying, MakeObj2(d).wrap, options)
 
 
   def replace(p: Predicate1): Replace[T] = replace(p, UpdateOptions())
 
-  def replace(p: Predicate1, options: UpdateOptions): Replace[T] = Replace(underlying, p, options)
+  def replace(p: Predicate1, options: UpdateOptions): Replace[T] = Replace(underlying, p.wrap, options)
 
   def replace(d: Document): Replace[T] = replace(d, UpdateOptions())
 
-  def replace(d: Document, options: UpdateOptions): Replace[T] = Replace(underlying, MakeObj2(d), options)
+  def replace(d: Document, options: UpdateOptions): Replace[T] = Replace(underlying, MakeObj2(d).wrap, options)
 
   def replace(data: Map[String, Any]): Replace[T] = replace(data, UpdateOptions())
 
-  def replace(data: Map[String, Any], options: UpdateOptions): Replace[T] = Replace(underlying, FuncWrap(data), options)
+  def replace(data: Map[String, Any], options: UpdateOptions): Replace[T] = Replace(underlying, data.wrap, options)
 
   def delete: Delete[T] = delete()
 

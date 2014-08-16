@@ -19,6 +19,7 @@ class TransformationTest extends FunSuite with WithBase {
 
     val a = Expr(Seq(1, 2, 3, 4, 5))
 
+
     assert(a.map(x => x * 2), {
       b: Seq[Int] => b == a.array.map(_ * 2)
     })
