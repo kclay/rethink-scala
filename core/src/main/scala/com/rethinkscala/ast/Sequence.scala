@@ -14,6 +14,10 @@ import com.rethinkscala.magnets.GroupFilterMagnet
 object Sequence {
   implicit def mapDocumentToSequence[T <: Document, ST, S[ST] <: Sequence[ST]] = CanMap[T, S[ST], ST]
 
+  implicit def docToFunctional[T <: Document](seq: Sequence[T]) = new ToFunctional[T, Var](seq)
+  implicit def toFunctional[T](seq: Sequence[T])(implicit ast: ToAst[T]): ToFunctional[T, ast.TypeMember] = new ToFunctional[T, ast.TypeMember](seq)
+
+
   implicit class ScalaSequence[T](underlying: Sequence[T]) {
 
     def ++(sequence: Sequence[_]) = underlying.union(sequence)

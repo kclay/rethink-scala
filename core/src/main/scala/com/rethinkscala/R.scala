@@ -44,6 +44,7 @@ trait RethinkApi extends TimeNames {
 
 
 
+ // def http
 
   def expr(term: Term): Term = term
   def expr(value: String): StringDatum = Expr(value)

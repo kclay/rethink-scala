@@ -84,26 +84,11 @@ trait ToAst[A] {
 
 }
 
-
-trait ToFunctionalImplicts{
-
-
-
-  implicit def docToFunctional[T <: Document](seq: Sequence[T]) = new ToFunctional[T, Var](seq)
-
-
-  implicit def toFunctional[T](seq: Sequence[T])(implicit ast: ToAst[T]): ToFunctional[T, ast.TypeMember] = new ToFunctional[T, ast.TypeMember](seq)
-
-
-}
 class ToFunctional[T, A >: Var](seq: Sequence[T]) {
 
 
   def concatMap[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = ConcatMap[Inner](seq.underlying, FuncWrap(f))
-
   def map[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = RMap[Inner](seq.underlying, FuncWrap(f))
-
-
   def reduce[P ](f: (A, A) =>Produce0[P]) = Reduce[T,P](seq.underlying, f)
 
 }
@@ -284,7 +269,7 @@ object Implicits  {
 
 
   trait Common extends CanMapImplicits
-  with ToAstImplicts with ToFunctionalImplicts
+  with ToAstImplicts
   with ReceptacleImplicits with ImplicitConversions with net.Versions with Helpers{
 
 
