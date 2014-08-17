@@ -11,6 +11,7 @@ import com.rethinkscala.{Document, Profile, Term}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import ql2.Ql2.Response
 import ql2.Ql2.Response.ResponseType
+import ql2.Ql2.Response.ResponseType._
 
 import scala.concurrent.Promise
 
@@ -155,20 +156,22 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
       case _ => cast(json)(cursorManifest).result
     }).asInstanceOf[Seq[R]]
 
+    val seq2 = seq.headOption match {
+      case Some(d: Document) => {
+        val rawJson = raw(json)
+        seq.zipWithIndex.collect {
+          case (d: Document, index) => d.raw = rawJson(index); d
+        }
+      }.asInstanceOf[Seq[R]]
+      case _ => seq
+    }
 
-    new Cursor[R](id, this,
-      seq.headOption match {
-        case Some(d: Document) => {
-          val rawJson = raw(json)
-          seq.zipWithIndex.collect {
-            case (d: Document, index) => d.raw = rawJson(index); d
-          }
-        }.asInstanceOf[Seq[R]]
-        case _ => seq
-      }, responseType match {
-        case SUCCESS_SEQUENCE_VALUE => true
-        case _ => false
-      })
+    val cursor = query.cursor[R](id,this,responseType match {
+      case SUCCESS_SEQUENCE_VALUE => true
+      case _ => false
+    })
+
+   cursor << seq2
 
   }
   // TODO: Check performance and see if we can set the json value for type Document
@@ -254,11 +257,13 @@ case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Ter
       }
 
     }
-
-    new Cursor[R](id, this, seq.asInstanceOf[Seq[R]], response.getType match {
+    val cursor = query.cursor[R](id,this,response.getType match {
       case ResponseType.SUCCESS_SEQUENCE => true
       case _ => false
     })
+
+    cursor <<  seq.asInstanceOf[Seq[R]]
+
 
   }
 

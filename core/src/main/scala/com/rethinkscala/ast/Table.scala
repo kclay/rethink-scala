@@ -34,6 +34,7 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
 
 
+
   def insert[R<: T](records: Seq[R], options: InsertOptions) = Insert[T,R](this, Right(records), options)
 
   def insert[R <: T](records: Seq[R]) = Insert(this, Right(records), InsertOptions())
@@ -171,3 +172,4 @@ case class Sync(target: TableTyped, durability: Option[Durability.Kind] = None) 
 
   def termType = TermType.SYNC
 }
+

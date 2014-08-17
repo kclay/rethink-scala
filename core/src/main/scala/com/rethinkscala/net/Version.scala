@@ -68,6 +68,8 @@ trait CompiledQuery {
   type TokenType
 
   def asToken[T](conn:Connection,term:Term,promise:Promise[T])(implicit mf:Manifest[T]):TokenType
+
+  def cursor[T] = DefaultCursorFactory.apply[T] _
 }
 
 class ProtoBufCompiledQuery(underlying: Query) extends CompiledQuery {

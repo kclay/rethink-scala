@@ -96,7 +96,7 @@ object RethinkdbBuild extends Build {
     "root",
     file("."),
     settings = buildWithRelease
-  ) aggregate(lifted, core)
+  ) aggregate( core,changeFeed)
   lazy val core = Project(
     id = "core",
     base = file("core"),
@@ -135,6 +135,10 @@ object RethinkdbBuild extends Build {
 
   ) //.configs(ScalaBuff)
 
+
+  lazy val changeFeed = Project("change-feed",
+  file("change-feed"),
+    settings = buildWithRelease).dependsOn(core).aggregate(core)
   lazy val lifted = Project(
     "lifted",
     file("lifted"),
