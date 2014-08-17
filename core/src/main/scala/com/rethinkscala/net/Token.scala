@@ -1,11 +1,13 @@
 package com.rethinkscala.net
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation._
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.rethinkscala.ConvertFrom._
 import com.rethinkscala.ast.{Datum, ProduceSequence}
 import com.rethinkscala.net.Translate._
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.{Profile, Term}
+import com.rethinkscala.{Document, Profile, Term}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import ql2.Ql2.Response
 import ql2.Ql2.Response.ResponseType
@@ -36,21 +38,35 @@ abstract class Token[R] {
 
 trait BaseJsonResponse[T] {
 
-   val responseType: Long
-   val result: Seq[T]
-   val backtrace: Option[Seq[Frame]]
+  val responseType: Long
+  val result: Seq[T]
+  val backtrace: Option[Seq[Frame]]
   val profile: Option[Profile]
   lazy val single = result.head
 }
 
-case class JsonBinaryResponse(@JsonProperty("t")responseType: Long,
+case class JsonBinaryResponse(@JsonProperty("t") responseType: Long,
                               @JsonProperty("r") result: Seq[Map[String, Int]],
-                              @JsonProperty("b")backtrace: Option[Seq[Frame]],
+                              @JsonProperty("b") backtrace: Option[Seq[Frame]],
                               @JsonProperty("p") profile: Option[Profile]) extends BaseJsonResponse[Map[String, Int]] {
   def convert(resultField: String) = JsonResponse(
     responseType, Seq(result.head.get(resultField).getOrElse(0) == 1),
     backtrace,
     profile)
+}
+
+
+case class ResultFolder[T](json: String)(implicit mf: Manifest[T]) {
+  lazy val value = {
+    val result = Reflector.fromJson(json)(mf)
+    result match {
+      case d: Document => {
+        d.raw = json
+        d
+      }
+      case _ => result
+    }
+  }
 }
 
 case class JsonErrorResponse(
@@ -61,10 +77,25 @@ case class JsonErrorResponse(
                               ) extends BaseJsonResponse[String]
 
 case class JsonCursorResponse[T](@JsonProperty("t") responseType: Long,
-                           @JsonProperty("r") result: T,
-                           @JsonProperty("b") backtrace: Option[Seq[Frame]],
-                           @JsonProperty("p") profile: Option[Profile]) {
+                                 @JsonProperty("r") result: T,
+                                 @JsonProperty("b") backtrace: Option[Seq[Frame]],
+                                 @JsonProperty("p") profile: Option[Profile]) {
 
+}
+
+
+class JsonResponseExtractor {
+
+  var result: Seq[String] = Seq.empty
+
+  @JsonProperty("r")
+  @JsonUnwrapped
+  def apply(node:JsonNode)={
+   node match{
+     case a:ArrayNode=> result = for(i <- 0 to a.size()-1) yield a.get(i).toString
+   }
+  }
+  def apply(index: Int) = result(index)
 }
 
 case class JsonResponse[T](@JsonProperty("t") responseType: Long,
@@ -101,7 +132,7 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
       case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE | CLIENT_ERROR_VALUE => toError(json)
       case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => toCursor(0, json, responseType.toInt)
       case SUCCESS_ATOM_VALUE => term match {
-        case x: ProduceSequence[_] => toCursor(0, json, responseType.toInt,true)
+        case x: ProduceSequence[_] => toCursor(0, json, responseType.toInt, true)
         case _ => toResult(json)
       }
       case _ => RethinkRuntimeError(s"Invalid response = $json", term)
@@ -114,18 +145,34 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
   val manifest = implicitly[Manifest[JsonResponse[R]]]
   val cursorManifest = implicitly[Manifest[JsonCursorResponse[R]]]
 
-  def toCursor(id: Int, json: String, responseType: Int,atom:Boolean=false) = {
 
-    val seq =  atom match{
-      case true=> cast(json)(manifest).single
-      case _=> cast(json)(cursorManifest).result
-    }
-    new Cursor[R](id, this, seq.asInstanceOf[Seq[R]], responseType match {
-      case SUCCESS_SEQUENCE_VALUE => true
-      case _ => false
-    })
+  def toCursor(id: Int, json: String, responseType: Int, atom: Boolean = false) = {
+
+
+    val seq = (atom match {
+      case true => cast(json)(manifest).single
+      case _ => cast(json)(cursorManifest).result
+    }).asInstanceOf[Seq[R]]
+
+
+    new Cursor[R](id, this,
+      seq.headOption match {
+        case Some(d: Document) => {
+          val rawJson = raw(json)
+          seq.zipWithIndex.collect {
+            case (d: Document, index) => d.raw = rawJson(index)
+              d
+          }
+        }.asInstanceOf[Seq[R]]
+        case _ => seq
+      }, responseType match {
+        case SUCCESS_SEQUENCE_VALUE => true
+        case _ => false
+      })
 
   }
+
+  def raw(json:String)=Reflector.fromJson[JsonResponseExtractor](json)
 
   def cast[T](json: String)(implicit mf: Manifest[T]): T = {
     term match {
@@ -138,7 +185,13 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
   }
 
 
-  def toResult(json: String) =cast(json)(manifest).single
+  def toResult(json: String) = {
+    val result = cast(json)(manifest).single
+     result match{
+       case d:Document=> d.raw = raw(json)(0); d.asInstanceOf[R]
+       case _=> result
+     }
+  }
 }
 
 

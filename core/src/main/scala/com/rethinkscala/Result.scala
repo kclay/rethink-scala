@@ -45,6 +45,8 @@ trait Document  {
   @JsonIgnore
   private[rethinkscala] var raw: String = _
 
+
+
   private def _raw = Option(raw).getOrElse({
     raw = Reflector.toJson(this)
     raw
@@ -136,7 +138,7 @@ case class DBResult(name: String, @JsonProperty("type") kind: String) extends Do
 
 case class JoinResult[Left, Right](left: Left, right: Right) extends Document
 
-case class ZipResult[L, R](left:L,right:R) extends Document {
+ class ZipResult[L, R] extends Document {
 
 
   private var _left: Option[L] = None
