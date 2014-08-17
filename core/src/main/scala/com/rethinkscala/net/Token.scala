@@ -90,11 +90,12 @@ class JsonResponseExtractor {
 
   @JsonProperty("r")
   @JsonUnwrapped
-  def apply(node:JsonNode)={
-   node match{
-     case a:ArrayNode=> result = for(i <- 0 to a.size()-1) yield a.get(i).toString
-   }
+  def apply(node: JsonNode) = {
+    node match {
+      case a: ArrayNode => result = for (i <- 0 to a.size() - 1) yield a.get(i).toString
+    }
   }
+
   def apply(index: Int) = result(index)
 }
 
@@ -160,8 +161,7 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
         case Some(d: Document) => {
           val rawJson = raw(json)
           seq.zipWithIndex.collect {
-            case (d: Document, index) => d.raw = rawJson(index)
-              d
+            case (d: Document, index) => d.raw = rawJson(index); d
           }
         }.asInstanceOf[Seq[R]]
         case _ => seq
@@ -171,15 +171,16 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
       })
 
   }
-
-  def raw(json:String)=Reflector.fromJson[JsonResponseExtractor](json)
+  // TODO: Check performance and see if we can set the json value for type Document
+  // as we parse it to avoid double parsing
+  def raw(json: String) = Reflector.fromJson[JsonResponseExtractor](json)
 
   def cast[T](json: String)(implicit mf: Manifest[T]): T = {
     term match {
       case b: BinaryConversion =>
         Reflector.fromJson[JsonBinaryResponse](json)
           .convert(b.resultField).asInstanceOf[T]
-      case _ => translate[T].read(json, term)
+      case _ => Reflector.fromJson(json)(mf)
     }
 
   }
@@ -187,10 +188,10 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
 
   def toResult(json: String) = {
     val result = cast(json)(manifest).single
-     result match{
-       case d:Document=> d.raw = raw(json)(0); d.asInstanceOf[R]
-       case _=> result
-     }
+    result match {
+      case d: Document => d.raw = raw(json)(0); d.asInstanceOf[R]
+      case _ => result
+    }
   }
 }
 

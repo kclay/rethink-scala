@@ -118,4 +118,5 @@ class ManipulateTest extends FunSuite with WithBase{
 
   }
 
+  override def useVersion = version3
 }
