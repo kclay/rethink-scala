@@ -39,13 +39,20 @@ case class Insert[T<:Document,R <: Document](table: Table[T], records: Either[Se
 
   override lazy val args = buildArgs(table, records match {
     case Left(x: Seq[Map[String, Any]]) => x
-    case Right(x: Seq[T]) => Json(Reflector.toJson(x))
+    case Right(Seq(doc:R))=>  Json(Reflector.toJson(doc))
+    case Right(x: Seq[R]) => Json(Reflector.toJson(x))
 
 
   })
+
+  private[this] def toMap(doc:R) = Reflector.fields(doc).map(f =>
+    (f.getName, f.get(doc))).collect{
+    case (name,value) if((name == "id" && value !=None ) || name !="id")=>(name,value)
+  }.toMap
   private[rethinkscala] lazy val argsForJson = buildArgs(table, records match {
     case Left(x: Seq[Map[String, Any]]) => x
-    case Right(x: Seq[T]) =>x
+    case Right(Seq(doc:R))=> MakeObj(toMap(doc))  // wrap in single object so withResults work
+    case Right(x: Seq[R]) => MakeArray(x.map(toMap))
 
 
   })

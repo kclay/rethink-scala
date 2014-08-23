@@ -3,7 +3,7 @@ package com.rethinkscala.net
 import ql2.{Ql2 => ql2}
 import scala.concurrent._
 import scala.concurrent.duration.Duration
-import com.rethinkscala.Term
+import com.rethinkscala.{ResultExtractor, Term}
 import scala.util.Success
 import scala.util.Failure
 import scala.Some
@@ -25,7 +25,7 @@ trait ResultQuery[T] {
 
   val connection: Connection
 
-  val mf: Manifest[T]
+  val extractor: ResultExtractor[T]
   val term: Term
 
 
@@ -37,7 +37,7 @@ trait ResultQuery[T] {
       case Failure(e:RethinkError)=> resolve(e)
       case e:RethinkError=>Left(e)
       case Some(Success(res)) => res match {
-        case x: None.type => Left(RethinkNoResultsError("No results found for " + mf.runtimeClass.getSimpleName, term))
+        case x: None.type => Left(RethinkNoResultsError("No results found for " + extractor.manifest.runtimeClass.getSimpleName, term))
         case _ => Right(res.asInstanceOf[T])
 
 
@@ -49,7 +49,7 @@ trait ResultQuery[T] {
 
 
 
-case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, mf: Manifest[R], opts: Map[String, Any])
+case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, extractor: ResultExtractor[R], opts: Map[String, Any])
   extends ResultQuery[R] with ResultResolver[Future[R]] {
 
 
@@ -60,7 +60,7 @@ case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, mf: Mani
   protected def run[T] = {
 
 
-    val p = connection.underlying.write(term, opts)(mf)
+    val p = connection.underlying.write(term, opts)(extractor)
     // FIXME : Write this better
     p.future.transform(t=>resolve(t).right.get,e=>resolve(e).left.get)
 
@@ -70,7 +70,7 @@ case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, mf: Mani
 }
 
 
-case class BlockingResultQuery[R](term: Term, connection: BlockingConnection, mf: Manifest[R], opts: Map[String, Any])
+case class BlockingResultQuery[R](term: Term, connection: BlockingConnection,extractor: ResultExtractor[R], opts: Map[String, Any])
   extends ResultQuery[R] with ResultResolver[Either[RethinkError, R]] {
 
 
@@ -78,7 +78,7 @@ case class BlockingResultQuery[R](term: Term, connection: BlockingConnection, mf
 
   def toResult[T](atMost: Duration): Either[RethinkError, R] = {
 
-    val p = connection.underlying.write(term, opts)(mf)
+    val p = connection.underlying.write(term, opts)(extractor)
 
 
     try {

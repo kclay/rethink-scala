@@ -2,7 +2,7 @@ package com.rethinkscala
 
 import com.rethinkscala.ast._
 import com.rethinkscala.magnets.ReceptacleImplicits
-import com.rethinkscala.net.{AsyncConnection, BlockingConnection, Connection, ResultResolver}
+import com.rethinkscala.net._
 
 import scala.collection.Iterable
 import scala.concurrent.Future
@@ -253,12 +253,12 @@ trait Helpers{
   type BlockResult[T] = ResultResolver.Blocking[T]
   type AsyncResult[T] = ResultResolver.Async[T]
 
-  def async[T](p:Produce[T])(implicit c:Connection,mf:Manifest[T]):AsyncResult[T]=async(_.apply(p))
+  def async[T](p:Produce[T])(implicit c:Connection,extractor:ResultExtractor[T]):AsyncResult[T]=async(_.apply(p))
   def async[T](f: AsyncConnection => Future[T])(implicit c: Connection):AsyncResult[T] = f(AsyncConnection(c))
 
   def block[T](f: BlockingConnection => Unit)(implicit c: Connection):Unit = f(BlockingConnection(c))
   def block[T](f: BlockingConnection => BlockResult[T])(implicit c: Connection):BlockResult[T] = f(BlockingConnection(c))
-  def block[T](p:Produce[T])(implicit c:Connection,mf:Manifest[T]):BlockResult[T] = {
+  def block[T](p:Produce[T])(implicit c:Connection,extractor:ResultExtractor[T]):BlockResult[T] = {
 
     block{c:BlockingConnection=> c.apply(p)}
   }
@@ -295,6 +295,7 @@ object Implicits  {
     implicit def binaryToBoolean = new FromAst[Binary] {
       type Raw = Boolean
     }
+
 
 
 

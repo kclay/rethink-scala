@@ -1,6 +1,8 @@
 package com.rethinkscala
 
-import com.fasterxml.jackson.annotation.{JsonTypeInfo, JsonIgnore, JsonProperty}
+import com.fasterxml.jackson.annotation.{JsonUnwrapped, JsonTypeInfo, JsonIgnore, JsonProperty}
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.rethinkscala.reflect.{GroupResultDeserializer, RethinkTypeResolverBuilder, Reflector}
 import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonTypeResolver}
 import scala.collection.generic.CanBuildFrom
@@ -76,14 +78,20 @@ trait Document  {
 }
 
 
-class JsonDocument(json: String) {
+
+
+
+class JsonDocument(json:String) {
+
+
+
   private[rethinkscala] lazy val underlying: Either[Map[String, Any], Seq[Any]] = if (raw.startsWith("{"))
     Left(Reflector.fromJson[Map[String, Any]](raw))
   else
     Right(Reflector.fromJson[Seq[Any]](raw))
 
 
-  private[rethinkscala] var raw: String = json
+  private[rethinkscala] var raw: String = json.getOrElse("")
 
   def \(name: String) = DocPath(toMap, List(name))
 

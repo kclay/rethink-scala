@@ -7,7 +7,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
 import com.rethinkscala.ConvertFrom._
-import com.rethinkscala.Term
+import com.rethinkscala.{ResultExtractor, Term}
 import com.rethinkscala.ast._
 import com.rethinkscala.net.Translate._
 import com.rethinkscala.reflect.Reflector
@@ -36,13 +36,14 @@ import scala.concurrent.duration.Duration
   */
 
 
+/*
 case class SingleConnection(version: Version) extends Connection {
   override val underlying: Connection = this
 
   override def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]) = ???
-}
+} */
 
-abstract class AbstractConnection(version: Version) extends LazyLogging with Connection {
+abstract class AbstractConnection(val version: Version) extends LazyLogging with Connection {
 
   private val defaultDB = Some(version.db.getOrElse("test"))
   private[this] val connectionId = new AtomicInteger()
@@ -75,7 +76,7 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
     private[rethinkscala] val tokensToCursor = new com.google.common.collect.MapMaker()
       .concurrencyLevel(4)
       .weakKeys()
-      .makeMap[Long, RethinkCursor]
+      .makeMap[Long, RethinkCursor[_]]
 
     private[rethinkscala] val tokensById = new com.google.common.collect.MapMaker()
       .concurrencyLevel(4)
@@ -90,7 +91,7 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
 
   lazy val versionHandler = version.newHandler
 
-  private[rethinkscala] def get(connectionId: Int)(implicit timeout: Duration): Future[Connection] = channel.getById(connectionId)
+  private[rethinkscala] def get(connectionId: Int)(implicit timeout: Duration): Future[Connection] = ???
 
   protected[rethinkscala] val channel = new SimpleConnectionPool(new ConnectionFactory[ChannelWrapper] {
 
@@ -123,7 +124,7 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
   }, max = version.maxConnections)
 
 
-  def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T] = {
+  def write[T](term: Term, opts: Map[String, Any])(implicit extractor: ResultExtractor[T]): Promise[T] = {
     val p = Promise[T]()
     val f = p.future
     logger.debug(s"Writing $term")
@@ -141,7 +142,7 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
             // TODO : Check into dropping netty and using sockets for each,
 
             // Or find a way so that we can store the token for the netty handler to complete
-            c.channel.setAttachment(c)
+            c.channel.setAttachment(versionHandler)
             logger.debug("Writing query")
             c.channel.write(query)
             future.removeListener(this)
@@ -163,7 +164,7 @@ trait Connection {
 
   def toAst(term: Term): CompiledAst = version.toAst(term)
 
-  def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]): Promise[T]
+  def write[T](term: Term, opts: Map[String, Any])(implicit extractor: ResultExtractor[T]): Promise[T]
 
 }
 
@@ -175,7 +176,7 @@ trait ConnectionOps[C <: Connection, D <: Mode[C]] {
   val delegate: D
 
 
-  def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]): ResultQuery[R]
+  def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]): ResultQuery[R]
 
 }
 
@@ -186,9 +187,9 @@ trait BlockingConnection extends Connection with ConnectionOps[BlockingConnectio
   val delegate = Blocking
 
   // FIXME : Need to place here to help out Intellijd
-  def apply[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).run
+  def apply[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).run
 
-  def toOpt[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).toOpt
+  def toOpt[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).toOpt
 
   val timeoutDuration: Duration
 }
@@ -198,9 +199,9 @@ trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Asy
   val delegate = Async
 
   // FIXME : Need to place here to help out Intellij with async(_.apply(res))
-  def apply[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).run
+  def apply[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).run
 
-  def toOpt[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).toOpt
+  def toOpt[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).toOpt
 }
 
 object AsyncConnection {
@@ -216,18 +217,18 @@ object AsyncConnection {
 
   private def build(v: Version, under: Option[Connection]) = new AbstractConnection(v) with AsyncConnection {
     val underlying: Connection = under.getOrElse(this)
-    val version = v
+    override val version = v
 
-    def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, mf, opts)
+    def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, extractor, opts)
 
   }
 }
 
 private class ConnectionWithAsync(v: Version, under: Option[Connection]) extends AbstractConnection(v) with AsyncConnection {
   val underlying: Connection = under.getOrElse(this)
-  val version = v
+  override val version = v
 
-  def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, mf, opts)
+  def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, extractor, opts)
 }
 
 object BlockingConnection {
@@ -244,9 +245,9 @@ object BlockingConnection {
   private def build(v: Version, t: Duration, under: Option[Connection]) = new AbstractConnection(v) with BlockingConnection {
     val timeoutDuration = t
     val underlying: Connection = under.getOrElse(this)
-    val version = v
+    override val version = v
 
-    def newQuery[R](term: Term, mf: Manifest[R], opts: Map[String, Any]) = BlockingResultQuery[R](term, this, mf, opts)
+    def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = BlockingResultQuery[R](term, this, extractor, opts)
   }
 }
 

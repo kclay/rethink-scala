@@ -20,9 +20,9 @@ class ConnectionTest extends FunSuite with WithBase with Futures {
 
   override def setupDB = false
 
-  def blockingConnection(authKey: String) = BlockingConnection(new Version2(host, port, authKey = authKey))
+  def blockingConnection(authKey: String) = BlockingConnection(new Version3(host, port, authKey = authKey))
 
-  def asyncConnection(authKey: String) = AsyncConnection(new Version2(host, port, authKey = authKey))
+  def asyncConnection(authKey: String) = AsyncConnection(new Version3(host, port, authKey = authKey))
 
   test("v2 auth success") {
 

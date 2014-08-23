@@ -31,7 +31,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   }).get
   val port = 28015
   val authKey = "foobar"
-  val version1 = new Version1(host, port)
+
   val version2 = new Version2(host, port, authKey = authKey)
   val version3 = new Version3(host, port, authKey = authKey)
 
@@ -52,7 +52,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   }
 
   type TableType = Document
-  def useVersion:Version = version2
+  def useVersion:Version = version3
 
   implicit val connection: BlockingConnection = BlockingConnection(useVersion)
 

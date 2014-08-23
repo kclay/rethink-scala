@@ -65,12 +65,14 @@ class Schema extends Helpers{
   def liftAs[T <: Document, R](f: PartialFunction[Table[T], R])(implicit mf: Manifest[T]): Option[R] = get[T] map (f(_))
 
 
-  implicit def doc2Active[A <: Document](a: A)(implicit m: Manifest[A], c: Connection) =
-    new ActiveRecord(a, m)
+  implicit def doc2Active[A <: Document](a: A)(implicit extractor:ResultExtractor[A], c: Connection) =
+    new ActiveRecord(a)
 
-  class ActiveRecord[T <: Document](o: T, m: Manifest[T])(implicit c: Connection) {
+  class ActiveRecord[T <: Document](o: T)(implicit c: Connection, extractor:ResultExtractor[T]) {
     private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] ={
 
+      val m = extractor.manifest
+      implicit val extractor2 = extractor.to[R]
       val result =  CurrentSchema.getOrElse(thisSchema)._tableTypes get (m.runtimeClass) map {
         table: Table[_] => block(action(table.asInstanceOf[Table[T]]))
 
@@ -131,7 +133,7 @@ class Schema extends Helpers{
   }
 
   def db(name: String) = r.db(name)
-
+  /*
   def setup(implicit c: Connection) = {
     block {
       implicit c: BlockingConnection =>
@@ -149,10 +151,10 @@ class Schema extends Helpers{
             }
           }
         }
-        _tableViews foreach (_.apply)
+      //  _tableViews foreach (_.apply)
     }
 
-  }
+  } */
 
 
 }
@@ -160,12 +162,12 @@ class Schema extends Helpers{
 class TableView[T <: Document](table: Table[T]) extends Helpers{
 
   private[rethinkscala] val _indexes = ArrayBuffer.empty[ProduceBinary]
-
+  /*
   private[rethinkscala] def apply(implicit c: Connection) = block {
     implicit c: BlockingConnection =>
       import c.delegate._
       _indexes foreach (_.run)
-  }
+  } */
 
   def db(name: String) = ???
 

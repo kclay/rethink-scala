@@ -3,15 +3,14 @@ package com.rethinkscala.net
 import com.fasterxml.jackson.annotation._
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.rethinkscala.ConvertFrom._
-import com.rethinkscala.ast.{Datum, ProduceSequence}
+import com.rethinkscala.{ResultExtractor,Term,Profile,Document,ConvertFrom}
+
+import com.rethinkscala.ast.Datum
 import com.rethinkscala.net.Translate._
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.{Document, Profile, Term}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import ql2.Ql2.Response
 import ql2.Ql2.Response.ResponseType
-import ql2.Ql2.Response.ResponseType._
 
 import scala.concurrent.Promise
 import scala.util.Try
@@ -30,8 +29,8 @@ abstract class Token[R] {
   val query: CompiledQuery
   val term: Term
   val connection: Connection
+  val extractor:ResultExtractor[ResultType]
 
-  def handle(response: R)
 
   def toError(response: R): RethinkError
 
@@ -98,7 +97,10 @@ class JsonResponseExtractor {
   @JsonUnwrapped
   def apply(node: JsonNode) = {
     node match {
-      case a: ArrayNode => result = for (i <- 0 to a.size() - 1) yield a.get(i).toString
+      case a: ArrayNode => result = (for (i <- 0 to a.size() - 1) yield a.get(i) match{
+        case n:ArrayNode=> for(j <- 0 to n.size() - 1) yield n.get(j).toString
+        case o:JsonNode=> Seq(o.toString)
+      }  ).flatten
     }
   }
 
@@ -110,10 +112,14 @@ case class JsonResponse[T](@JsonProperty("t") responseType: Long,
                            @JsonProperty("b") backtrace: Option[Seq[Frame]],
                            @JsonProperty("p") profile: Option[Profile]) extends BaseJsonResponse[T]
 
-case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R])(implicit mf: Manifest[R])
+case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
   extends Token[String] with LazyLogging {
 
-  import ql2.Ql2.Response.ResponseType.{CLIENT_ERROR_VALUE, COMPILE_ERROR_VALUE, RUNTIME_ERROR_VALUE, SUCCESS_ATOM_VALUE, SUCCESS_PARTIAL_VALUE, SUCCESS_SEQUENCE_VALUE}
+
+  type ResultType = R
+  implicit lazy val mf = extractor.manifest
+
+  import ql2.Ql2.Response.ResponseType.{CLIENT_ERROR_VALUE, COMPILE_ERROR_VALUE, RUNTIME_ERROR_VALUE, SUCCESS_SEQUENCE_VALUE}
 
   val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
 
@@ -134,20 +140,6 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
     }
   }
 
-  override def handle(json: String) = (json match {
-    case ResponseTypeExtractor(responseType) => responseType.toInt match {
-      case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE | CLIENT_ERROR_VALUE => toError(json)
-      case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => toCursor(0, json, responseType.toInt)
-      case SUCCESS_ATOM_VALUE => term match {
-        case x: ProduceSequence[_] => toCursor(0, json, responseType.toInt, true)
-        case _ => toResult(json)
-      }
-      case _ => RethinkRuntimeError(s"Invalid response = $json", term)
-    }
-  }) match {
-    case e: Exception => p failure e
-    case e: Any => p success e.asInstanceOf[R]
-  }
 
   val manifest = implicitly[Manifest[JsonResponse[R]]]
   val cursorManifest = implicitly[Manifest[JsonCursorResponse[R]]]
@@ -159,7 +151,7 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
     val seq = (atom match {
       case true => cast(json)(manifest).single
       case _ => cast(json)(cursorManifest).result
-    }).asInstanceOf[Seq[R]]
+    }).asInstanceOf[Seq[query.Result]]
 
     val seq2 = seq.headOption match {
       case Some(d: Document) => {
@@ -167,11 +159,11 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
         seq.zipWithIndex.collect {
           case (d: Document, index) => d.raw = rawJson(index); d
         }
-      }.asInstanceOf[Seq[R]]
+      }.asInstanceOf[Seq[query.Result]]
       case _ => seq
     }
 
-    val cursor = query.cursor(id, this, responseType match {
+    val cursor = query.cursor(extractor.cursorFactory)(id, this, responseType match {
       case SUCCESS_SEQUENCE_VALUE => true
       case _ => false
     })
@@ -207,9 +199,11 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
 }
 
 
-case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R])(implicit mf: Manifest[R])
+case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
   extends Token[Response] with LazyLogging {
 
+
+  implicit lazy val mf: Manifest[R] = extractor.manifest
 
   private[rethinkscala] def context = connection
 
@@ -231,21 +225,10 @@ case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Ter
     rtn
   }
 
-  def handle(response: Response) = (response.getType match {
 
-    case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => toError(response, term)
-    case ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE => toCursor(0, response)
-    case ResponseType.SUCCESS_ATOM => term match {
-      case x: ProduceSequence[_] => toCursor(0, response)
-      case _ => toResult(response)
-    }
-    // case ResponseType.SUCCESS_ATOM => toResult(response)
-    case _ =>
+  def toError(response: Response) = ConvertFrom.toError(response, term)
 
-  }) match {
-    case e: Exception => p failure e
-    case e: Any => p success e.asInstanceOf[R]
-  }
+  def success(value: Any) = p.tryComplete(Try(value.asInstanceOf[R]))
 
   def failure(e: Throwable) = p failure (e)
 
@@ -265,12 +248,12 @@ case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Ter
       }
 
     }
-    val cursor = query.cursor[R](id, this, response.getType match {
+    val cursor = query.cursor(extractor.cursorFactory)(id, this, response.getType match {
       case ResponseType.SUCCESS_SEQUENCE => true
       case _ => false
     })
 
-    cursor << seq.asInstanceOf[Seq[R]]
+    cursor << seq.asInstanceOf[Seq[query.Result]]
 
 
   }

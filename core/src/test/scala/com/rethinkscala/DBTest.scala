@@ -11,12 +11,8 @@ class DBTest extends FunSuite with WithBase {
   test("create db instance") {
 
     val query = r.dbCreate("foo")
-    val ProtoBufCompiledAst(ast) = r.dbCreate("foo").ast
 
-    assert(ast, Term.TermType.DB_CREATE)
-    assert(ast.getArgsCount == 1)
-    assert(ast.getArgs(0), Term.TermType.DATUM)
-    assert(ast.getArgs(0).getDatum.getRStr == "foo")
+
 
     assert(query, true)
 
@@ -36,5 +32,5 @@ class DBTest extends FunSuite with WithBase {
     assert(query, true)
   }
 
-  override def useVersion = version2
+
 }

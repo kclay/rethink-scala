@@ -13,10 +13,12 @@ import ql2.Ql2.Response
 
 
 class RethinkChannelHandler[T] extends SimpleChannelUpstreamHandler {
-  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext): Option[Token[T]] = Some(ctx.getChannel.getAttachment.asInstanceOf[Token[T]])
+  type Handler = VersionHandler[T]
+  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext) = Some(ctx.getChannel.getAttachment.asInstanceOf[Handler])
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-    ctx.map(_.handle(e.getMessage.asInstanceOf[T]))
+    val (tokenId,response) = e.getMessage.asInstanceOf[(Long, T)]
+    ctx.map(_.handle(tokenId,response))
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {

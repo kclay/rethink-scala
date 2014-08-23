@@ -14,6 +14,11 @@ import scala.Some
  * Time: 2:02 PM 
  */
 
+
+case class ResultExtractor[T](cursorFactory:CursorFactory,manifest:Manifest[T]){
+  def to[R:Manifest] = ResultExtractor[R](cursorFactory,implicitly[Manifest[R]])
+}
+
 object Delegate {
   def apply[T](produce:Produce[T],connection:Connection):Delegate[T]= connection match{
     case c:BlockingConnection=>apply(produce,c)
@@ -25,29 +30,35 @@ object Delegate {
 }
 
 
+
+
+
 trait Delegate[T]{
 
+  type Extractor[R] = ResultExtractor[R]
   type Result[O]
   type Query[Q]<:ResultResolver[Result[Q]]
   type Opt[R]
 
-  def toQuery[R](tt: Manifest[R]):Query[R]
+  def toQuery[R](extractor: Extractor[R]):Query[R]
 
 
 
-  def run(implicit mf: Manifest[T]):Result[T] = toQuery(mf).toResult
+  def run(implicit extractor: Extractor[T]) = toQuery(extractor).toResult
 
-  def toDoc=toQuery[Document](Manifest.classType(classOf[Document])).toResult
-
-
-
-  def as[R <: T](implicit mf: Manifest[R]) = toQuery(mf).toResult
+ // def toDoc=toQuery[Document](Manifest.classType(classOf[Document])).toResult
 
 
-  def toOpt(implicit tt: Manifest[T]): Opt[T]
 
-  def asOpt[R <: T](implicit tt: Manifest[R]): Opt[R]
+  def as[R <: T](implicit extractor: Extractor[R]) = toQuery(extractor).toResult
+
+
+  def toOpt(implicit extractor: Extractor[T]): Opt[T]
+
+  def asOpt[R <: T](implicit extractor: Extractor[R]): Opt[R]
 }
+
+
 
 class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection) extends Delegate[T]{
 
@@ -57,15 +68,15 @@ class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection) 
 
   type Opt[T] = Option[T]
 
-   def toQuery[R](tt: Manifest[R]) = BlockingResultQuery[R](producer.underlyingTerm, connection, tt, producer.underlyingOptions)
+   def toQuery[R](extractor: Extractor[R]) = BlockingResultQuery[R](producer.underlyingTerm, connection, extractor, producer.underlyingOptions)
 
 
 
-  def toOpt(implicit tt: Manifest[T]) = as[T].fold(x=>None,x=>Option(x))
+  def toOpt(implicit extractor: Extractor[T]) = as[T].fold(x=>None,x=>Option(x))
 
-  def asOpt[R <: T](implicit tt: Manifest[R]) = as[R].fold(x => None, x => Option(x))
+  def asOpt[R <: T](implicit extractor: Extractor[R]) = as[R].fold(x => None, x => Option(x))
 
-    def async: AsyncDelegate[T] = Delegate(producer, AsyncConnection(connection))
+  def async: AsyncDelegate[T] = Delegate(producer, AsyncConnection(connection))
 
 }
 
@@ -78,11 +89,11 @@ class AsyncDelegate[T](producer: Produce[T], connection: AsyncConnection) extend
 
   type Opt[T] = Future[Option[T]]
 
-  def toQuery[R](tt: Manifest[R]) = AsyncResultQuery[R](producer.underlyingTerm, connection, tt, producer.underlyingOptions)
+  def toQuery[R](extractor: Extractor[R]) = AsyncResultQuery[R](producer.underlyingTerm, connection, extractor, producer.underlyingOptions)
 
-  def toOpt(implicit mf: Manifest[T]) = as[T] transform(x => Option(x), t => t)
+  def toOpt(implicit extractor: Extractor[T]) = as[T] transform(x => Option(x), t => t)
 
-  def asOpt[R <: T](implicit tt: Manifest[R]) = as[R] transform(x => Option(x), t => t)
+  def asOpt[R <: T](implicit extractor: Extractor[R]) = as[R] transform(x => Option(x), t => t)
 
 
   def block: BlockingDelegate[T] = Delegate(producer, BlockingConnection(connection))
