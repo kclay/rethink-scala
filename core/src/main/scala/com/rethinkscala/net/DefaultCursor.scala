@@ -42,7 +42,7 @@ case class DefaultCursor[T](connectionId: Int, token: Token[_], completed: Boole
       import com.rethinkscala.net.Blocking._
 
 
-      seq.count.run match {
+      seq.count.run(token.extractor.to[Double]) match {
         case Left(e: RethinkError) => underlying.size
         case Right(b: Double) => b.toInt
       }

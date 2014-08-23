@@ -74,19 +74,20 @@ trait RethinkApi extends TimeNames {
   //def row[T<:Sequence](name: String)(implicit d:DummyImplicit) = _row.asInstanceOf[T] field name
 
 
+  lazy val test = db("test")
 
   def table(name: String): Table[Document] = table(name, None)
 
-  def table(name: String, useOutDated: Boolean): Table[Document] = table(name, Some(useOutDated))
+  def table(name: String, useOutDated: Boolean): Table[Document] =  table(name,Some(useOutDated))
 
-  def table(name: String, useOutDated: Option[Boolean] = None): Table[Document] = Table[Document](name, useOutDated)
+  def table(name: String, useOutDated: Option[Boolean] = None): Table[Document] = test.table[Document](name, useOutDated)
 
 
   def tableAs[T  <: Document](name: String): Table[T] = tableAs[T](name, None)
 
   def tableAs[T  <: Document](name: String, useOutDated: Boolean): Table[T] = tableAs[T](name, Some(useOutDated))
 
-  def tableAs[T <: Document](name: String, useOutDated: Option[Boolean] = None): Table[T] = Table[T](name, useOutDated)
+  def tableAs[T <: Document](name: String, useOutDated: Option[Boolean] = None): Table[T] = test.table[T](name, useOutDated)
 
   def db(name: String) = DB(name)
 
@@ -101,11 +102,11 @@ trait RethinkApi extends TimeNames {
 
   def tableCreate(name: String, options: TableOptions): TableCreate = tableCreate(name, Some(options))
 
-  def tableCreate(name: String, options: Option[TableOptions] = None): TableCreate = TableCreate(name, options.getOrElse(TableOptions()))
+  def tableCreate(name: String, options: Option[TableOptions] = None): TableCreate = test.tableCreate(name, options.getOrElse(TableOptions()))
 
-  def tableDrop(name: String) = TableDrop(name)
+  def tableDrop(name: String) = test.tableDrop(name)
 
-  def tables = TableList()
+  def tables = test.tables
 
 
   def branch(predicate: (Var) => Binary, passed: Typed, failed: Typed): Branch = branch(ScalaBooleanPredicate1(predicate), passed, failed)

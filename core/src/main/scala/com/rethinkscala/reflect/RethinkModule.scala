@@ -3,7 +3,7 @@ package com.rethinkscala.reflect
 import com.fasterxml.jackson.module.scala._
 import org.joda.time._
 import com.fasterxml.jackson.databind.module.{SimpleAbstractTypeResolver, SimpleDeserializers}
-import com.rethinkscala.{GroupResultRecord, BasicDocument, Document, GroupResult}
+import com.rethinkscala._
 import com.fasterxml.jackson.module.scala.deser.UntypedObjectDeserializerModule
 
 /**
@@ -19,6 +19,7 @@ class RethinkModule extends DefaultScalaModule {
   _deserializers.addDeserializer(classOf[ReadableDateTime], RethinkDateTimeDeserializer.forType(classOf[ReadableDateTime]))
   _deserializers.addDeserializer(classOf[ReadableInstant], RethinkDateTimeDeserializer.forType(classOf[ReadableInstant]))
   _deserializers.addDeserializer(classOf[GroupResult[_]],new GroupResultDeserializer)
+  _deserializers.addDeserializer(classOf[JsonDocument],new JsonDocumentDeserializer)
 
 
 

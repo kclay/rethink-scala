@@ -47,4 +47,6 @@ class ExprTest extends FunSuite with WithBase {
   }
 
   override def setupDB = false
+
+  override def useVersion = version2
 }

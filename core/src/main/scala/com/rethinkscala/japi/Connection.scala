@@ -2,10 +2,10 @@ package com.rethinkscala.japi
 
 ;
 
-import com.rethinkscala.net.{RethinkError, BlockingConnection, Version}
+import com.rethinkscala.net.{DefaultCursorFactory, RethinkError, BlockingConnection, Version}
 import com.rethinkscala.ast.Produce
 import scala.concurrent.duration.Duration
-import com.rethinkscala.Delegate
+import com.rethinkscala.{ResultExtractor, Delegate}
 import java.lang.reflect.ParameterizedType
 import java.util.{Map => JMap, List => JList}
 
@@ -32,7 +32,8 @@ case class Connection(version: Version, timeoutInMilliseconds: Long = 5000) {
       val t = producer.getClass.getGenericSuperclass.asInstanceOf[ParameterizedType]
       t.getActualTypeArguments()(0).asInstanceOf[Class[_]]
     }
-    QueryResult(Delegate(producer, underlying).run(Manifest.classType(clazz))).asInstanceOf[Result[T]]
+    val extractor = ResultExtractor[T](DefaultCursorFactory,Manifest.classType(clazz))
+    QueryResult(Delegate(producer, underlying).run(extractor)).asInstanceOf[Result[T]]
   }
 
 

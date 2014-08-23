@@ -7,17 +7,17 @@ import java.util.concurrent.{Executors, TimeUnit}
 
 import com.rethinkscala.ast._
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.{Term, TermAssocPair}
+import com.rethinkscala.{ResultExtractor, Term, TermAssocPair}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.buffer.ChannelBuffers._
 import org.jboss.netty.channel.Channel
 import org.jboss.netty.handler.queue.{BlockingReadHandler, BlockingReadTimeoutException}
-import ql2.Ql2.{Response, Query, VersionDummy}
+import ql2.Ql2.{Query, VersionDummy}
 import ql2.{Ql2 => ql2}
 
 import scala.beans.BeanProperty
-import scala.concurrent.{Promise, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Promise}
 
 
 /**
@@ -35,33 +35,45 @@ case class ProtoBufCompiledAst(underlying: ql2.Term) extends CompiledAst
 
 trait JsonAst {
 
-  type T
 
-  def toValue: T
+
+  def toValue: Any
 
 }
 
 case class DatumJsonAst(datumType: ql2.Datum.DatumType, value: Any) extends JsonAst {
 
-  type T = Any
+
 
   override def toValue = value
 }
 
+
 case class TermJsonAst(termType: ql2.Term.TermType, term: Seq[JsonAst], opts: Map[String, Any] = Map.empty)
 
   extends JsonAst {
-  type T = Seq[Any]
 
-  def toValue = if (opts.nonEmpty) Seq(termType.getNumber, term.map(_.toValue), opts)
-  else Seq(termType.getNumber, term.map(_.toValue))
+  def options= opts.mapValues {
+    case v: JsonAst => v.toValue
+    case a: Any => a
+  }
+
+  def toValue = termType match {
+    case ql2.Term.TermType.MAKE_OBJ =>options
+
+    case _ => if
+    (opts.nonEmpty) Seq(termType.getNumber, term.map(_.toValue), options)
+    else Seq(termType.getNumber, term.map(_.toValue))
+  }
 }
+
 
 case class JsonCompiledAst(underlying: JsonAst) extends CompiledAst
 
 
-trait CompiledQuery[T] {
+trait CompiledQuery {
 
+  type Result
   val token: Long
 
   protected final def newBuffer(size: Int) = buffer(ByteOrder.LITTLE_ENDIAN, size)
@@ -70,13 +82,19 @@ trait CompiledQuery[T] {
 
   type TokenType[R]
 
-  def asToken(conn: Connection, term: Term, promise: Promise[T])(implicit mf: Manifest[T]): TokenType[T]
+  def asToken(conn: Connection, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]): TokenType[Result]
 
 
-  def cursor = DefaultCursorFactory.apply[T] _
+  //private val _cursor:RethinkCursor[Result] = None
+  def cursor(factory: CursorFactory) = factory.apply[Result] _
 }
 
 class ProtoBufCompiledQuery[T](underlying: Query) extends CompiledQuery {
+
+
+  override type Result = T
+
+  override def asToken(conn: Connection, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]) = QueryToken[Result](conn, this, term, promise)
 
   override val token: Long = underlying.getToken
 
@@ -92,7 +110,7 @@ class ProtoBufCompiledQuery[T](underlying: Query) extends CompiledQuery {
   override type TokenType[R] = QueryToken[R]
 
   //override def asToken(conn: Connection, term: Term, promise: Promise[T])(implicit mf: Manifest[T]) = QueryToken[T](conn, this, term, promise)
-  override def asToken(conn: Connection, term: Term, promise: Promise[T])(implicit mf: Manifest[T]) = QueryToken[T](conn, this, term, promise)
+
 }
 
 case class JsonQuery(queryType: ql2.Query.QueryType, ast: JsonAst, opts: Map[String, Any]) {
@@ -101,6 +119,11 @@ case class JsonQuery(queryType: ql2.Query.QueryType, ast: JsonAst, opts: Map[Str
 }
 
 case class JsonCompiledQuery[T](token: Long, query: JsonQuery) extends CompiledQuery {
+
+
+  override type Result = T
+
+  override def asToken(conn: Connection, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]) = JsonQueryToken[Result](conn, this, term, promise)
 
   lazy val json = Reflector.toJson(query.toSeq)
   private val TOKEN_SIZE = 8
@@ -120,7 +143,7 @@ case class JsonCompiledQuery[T](token: Long, query: JsonQuery) extends CompiledQ
 
   override type TokenType[R] = JsonQueryToken[R]
 
-  override def asToken[T](conn: Connection, term: Term, promise: Promise[T])(implicit mf: Manifest[T]) = JsonQueryToken[T](conn, this, term, promise)
+
 }
 
 abstract class Version extends LazyLogging {
@@ -144,15 +167,18 @@ abstract class Version extends LazyLogging {
 
   def toAst(term: Term): CompiledAst
 
-  def toQuery[T](term: Term, token: Long, db: Option[String] = None, opts: Map[String, Any] = Map()): CompiledQuery[T]
+  type Query[T] <: CompiledQuery {type Result = T}
+  type Ast
+
+  def toQuery[T](term: Term, token: Long, db: Option[String] = None, opts: Map[String, Any] = Map()): Query[T]
 }
 
 
 trait ProvidesQuery {
-
+  self: Version =>
   type Builder
-  type Query[Q] <: CompiledQuery[Q]
-  type Ast <: CompiledAst
+
+  type Ast = CompiledAst
 
   def newQueryBuilder(queryType: ql2.Query.QueryType, token: Long, opts: Map[String, Any]): Builder
 
@@ -163,7 +189,7 @@ trait ProvidesQuery {
   def compile[T](builder: Builder, term: Term): Query[T]
 
 
-  def toQuery[T](term: Term, token: Long, db: Option[String], opts: Map[String, Any]): Query[T] = {
+  def toQuery[T](term: Term, token: Long, db: Option[String], opts: Map[String, Any]) = {
 
 
     val builder = newQueryBuilder(Query.QueryType.START, token, opts)
@@ -191,10 +217,10 @@ trait ProvidesQuery {
 
 trait ProvidesProtoBufQuery extends ProvidesQuery {
 
+  self: Version =>
+
   import scala.collection.JavaConversions.{asJavaCollection, seqAsJavaList}
 
-  override type Query = ProtoBufCompiledQuery
-  override type Ast = ProtoBufCompiledAst
 
   def toAst(term: Term) = ProtoBufCompiledAst(ast(term))
 
@@ -251,9 +277,12 @@ trait ProvidesProtoBufQuery extends ProvidesQuery {
 
   }
 
+
+  override type Query[T] = ProtoBufCompiledQuery[T]
+
   def withDB(q: Builder, db: DB) = q.addGlobalOptargs(Query.AssocPair.newBuilder.setKey("db").setVal(ast(db)))
 
-  def compile(builder: Builder, term: Term) = new ProtoBufCompiledQuery(builder.setQuery(ast(term)).build())
+  def compile[T](builder: Builder, term: Term) = new ProtoBufCompiledQuery[T](builder.setQuery(ast(term)).build())
 }
 
 /*
@@ -341,36 +370,22 @@ trait ConfigureAuth {
 
 }
 
+@deprecated("Use Version3")
 case class Version2(host: String = "localhost", port: Int = 28015,
                     db: Option[String] = None, maxConnections: Int = 5,
                     authKey: String = "") extends Version with ProvidesProtoBufQuery with ConfigureAuth {
   override private[rethinkscala] val pipelineFactory: RethinkPipelineFactory = ProtoPipelineFactory
   override type ResponseType = ql2.Response
 
-  override def newHandler = ???
-}
-
-sealed abstract class Protocol {
-  type Query <: CompiledQuery
-  type Ast <: CompiledAst
-  val value: ql2.VersionDummy.Protocol
-
-  def toAst(term: Term): Ast
-
-  def toQuery[T](term: Term, token: Long, db: Option[String], opts: Map[String, Any]): Query
-
-}
-
-object ProtoBuf extends Protocol with ProvidesProtoBufQuery {
-
-  override val value = ql2.VersionDummy.Protocol.PROTOBUF
+  override def newHandler = new ProtoVersionHandler(this)
 }
 
 
 trait ProvidesJsonQuery extends ProvidesQuery {
 
-  override type Query[Q] = JsonCompiledQuery[Q]
-  override type Ast = JsonCompiledAst
+  self: Version =>
+
+  override type Query[T] = JsonCompiledQuery[T]
 
   case class QueryBuilder(queryType: ql2.Query.QueryType, token: Long, opts: Map[String, Any] = Map.empty)
 
@@ -393,9 +408,14 @@ trait ProvidesJsonQuery extends ProvidesQuery {
 
       case MakeObj2(doc) => Reflector.fields(doc).map(f =>
         (f.getName, f.get(doc))).toMap
-      case MakeObj(data) => data
+
       case _ => term.optargs.map {
-        case ta: TermAssocPair => ta.key -> ast(ta.token)
+        case ta: TermAssocPair => {
+          if(ta.token.isInstanceOf[Order]){
+            val a = ""
+          }
+          ta.key -> ast(ta.token)
+        }
         // case da:DatumAssocPair=> build(da)
       }.toMap
 
@@ -415,15 +435,10 @@ trait ProvidesJsonQuery extends ProvidesQuery {
 
 }
 
-object JSON extends Protocol with ProvidesJsonQuery {
-
-  override val value = ql2.VersionDummy.Protocol.JSON
-}
-
 
 case class Version3(host: String = "localhost", port: Int = 28015,
                     db: Option[String] = None, maxConnections: Int = 5,
-                    authKey: String = "", protocol: Protocol = JSON) extends Version with ConfigureAuth {
+                    authKey: String = "") extends Version with ConfigureAuth with ProvidesJsonQuery {
 
   override type ResponseType = String
 
@@ -434,16 +449,11 @@ case class Version3(host: String = "localhost", port: Int = 28015,
 
   override protected def write(c: Channel) = {
     super.write(c)
-    c.write(protocol.value)
+    c.write(ql2.VersionDummy.Protocol.JSON)
 
   }
 
-  type Ast = JSON.Ast
-  type Query[Q] = JSON.Query[Q]
 
-  override def toAst(term: Term): Ast = JSON.toAst(term)
-
-  override def toQuery[T](term: Term, token: Long, db: Option[String], opts: Map[String, Any]): Query[T] = JSON.toQuery[T](term, token, db, opts)
 }
 
 trait Versions {

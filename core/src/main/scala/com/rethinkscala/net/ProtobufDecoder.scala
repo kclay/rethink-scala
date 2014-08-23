@@ -17,10 +17,10 @@ import org.jboss.netty.channel.{Channel, ChannelHandlerContext, ChannelHandler}
 
 object ProtobufDecoder{
 
-  def apply(prototype: MessageLite) = new ProtobufDecoder(prototype.getDefaultInstanceForType,null)
+  def apply(prototype: ql2.Ql2.Response) = new ProtobufDecoder(prototype.getDefaultInstanceForType,null)
 }
 @ChannelHandler.Sharable
-case class ProtobufDecoder( prototype: MessageLite, extensionRegistry: ExtensionRegistry) extends OneToOneDecoder {
+case class ProtobufDecoder( prototype: ql2.Ql2.Response, extensionRegistry: ExtensionRegistry) extends OneToOneDecoder {
 
   private final val HAS_PARSER: Boolean = false
 
@@ -42,12 +42,13 @@ case class ProtobufDecoder( prototype: MessageLite, extensionRegistry: Extension
       buf.getBytes(buf.readerIndex, array, 0, length)
       offset = 0
     }
+    var response:ql2.Ql2.Response = null
     if (extensionRegistry == null) {
-      return prototype.newBuilderForType.mergeFrom(array, offset, length).build
+      response =  prototype.newBuilderForType.mergeFrom(array, offset, length).build
+    } else {
+      response =  prototype.newBuilderForType.mergeFrom(array, offset, length, extensionRegistry).build
     }
-    else {
-      return prototype.newBuilderForType.mergeFrom(array, offset, length, extensionRegistry).build
-    }
+    response
   }
 
 

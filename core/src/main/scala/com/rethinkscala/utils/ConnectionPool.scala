@@ -68,12 +68,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
     .makeMap[Conn#Id, Future[Conn]]
 
 
-  def getById(id: Int)(implicit timeout: Duration): Future[Conn] = {
-    val connection
-    Future {
-       connections.get()
-    }
-  }
+  def getById(id: Int)(implicit timeout: Duration): Future[Conn] = ???
 
   def apply[A]()(f: Conn => A): A = {
     val connection = borrow()

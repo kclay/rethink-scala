@@ -34,9 +34,9 @@ case class DB(name: String) extends Term {
 
   def ^-(name: String) = this tableDrop (name)
 
-  def table[T <: Document](name: String, useOutDated: Boolean = false) = Table[T](name, Some(useOutDated), Some(this))
+  def table[T <: Document](name: String, useOutDated:Option[Boolean] = None) = Table[T](name, useOutDated, Some(this))
 
-  def ^(name: String, useOutDated: Boolean = false) = this table(name, useOutDated)
+  def ^(name: String, useOutDated: Boolean = false) = this table(name, Some(useOutDated))
 
 }
 

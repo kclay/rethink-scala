@@ -15,6 +15,7 @@ package object rethinkscala extends ImplicitConversions with Helpers{
 
 
   private[rethinkscala] trait FilterTyped
+  implicit def toResultExtractor[T:Manifest] = new ResultExtractor[T](DefaultCursorFactory,implicitly[Manifest[T]])
 
 
 }

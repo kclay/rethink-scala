@@ -9,7 +9,7 @@ package com.rethinkscala.net
  */
 trait CursorFactory {
 
-  def apply[T](connectionId:Int,token:Token[_],completed:Boolean):RethinkCursor
+  def apply[T](connectionId:Int,token:Token[_],completed:Boolean):RethinkCursor[T]
 }
 
 object DefaultCursorFactory extends CursorFactory{

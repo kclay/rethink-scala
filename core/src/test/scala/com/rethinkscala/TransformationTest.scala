@@ -3,6 +3,7 @@ package com.rethinkscala
 
 import com.rethinkscala.ast._
 import com.rethinkscala.Blocking._
+import com.rethinkscala.net.JsonCompiledQuery
 import org.scalatest.FunSuite
 
 case class Transform(a:Int,b:Int,id:Option[String]=None) extends Document
@@ -57,7 +58,11 @@ class TransformationTest extends FunSuite with WithBase {
     val a = Map("a"->Seq(1,2,3,4,5,6))
     val e = Expr(Seq(a,a))
 
-    assert( e.concatMap(v=> v.seq[Int]("a")),{
+    val term = e.concatMap(v=> v.seq[Int]("a"))
+    val query = version3.toQuery(term,1,None,Map.empty)
+    val json = query.json
+
+    assert(term ,{
       s:Seq[Int]=> s.size == 12
     })
 
@@ -65,11 +70,17 @@ class TransformationTest extends FunSuite with WithBase {
   test("orderBy"){
 
 
-  table.asInstanceOf[Table[Transform]]
+
+
     table.insert(Seq(Transform(1,1),Transform(2,2),Transform(3,3))) run
+
+
+
     val index = table.indexCreate("a")
 
     index.run
+    val term = table.to[Transform].orderBy("a","a")
+    val json = version3.toQuery(term,0,None,Map.empty).json
     assert(table.to[Transform].orderBy("a"),{
       s:Seq[Transform]=>  s(0).a == 1 && s(1).a ==2 && s(2).a == 3
     })

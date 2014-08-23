@@ -23,8 +23,8 @@ class JsonProtocolTest  extends FunSuite with WithBase{
 
     println(version3.toAst(r.expr(1)).underlying.toValue)
     val t = r.tableAs[JFoo]("test").insert(Seq.empty)
-    val compiled = version3.toQuery(t,1,None,Map.empty)
-    println(compiled.json)
+    val compiled = version3.toQuery[JFoo](t,1,None,Map.empty)
+   // println(compiled.json)
 
 
 

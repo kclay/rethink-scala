@@ -2,12 +2,13 @@ package com.rethinkscala.net
 
 import java.util.concurrent.atomic.AtomicLong
 
-import com.rethinkscala.Term
+import com.rethinkscala.{ResultExtractor, Term}
 import com.rethinkscala.ast.ProduceSequence
+import ql2.Ql2.Response
+import ql2.Ql2.Response.ResponseType
 import ql2.Ql2.Response.ResponseType._
 
 import scala.concurrent.Promise
-import scala.util.matching.Regex
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,6 +25,8 @@ trait VersionHandler[R] {
 
   type TokenType <: Token[_]
 
+  def failure(e: Throwable) = ???
+
 
   private[rethinkscala] val tokensById = new com.google.common.collect.MapMaker()
     .concurrencyLevel(4)
@@ -31,9 +34,9 @@ trait VersionHandler[R] {
     .makeMap[Long, TokenType]
 
   def newQuery[T](conn: Connection, term: Term, promise: Promise[T],
-                  db: Option[String] = None, opts: Map[String, Any] = Map())(implicit mf: Manifest[T]): CompiledQuery[T] = {
-    val tokenId = newTokenId.getAndIncrement
-    val query = version.toQuery[T](term, newTokenId.getAndIncrement, db, opts)
+                  db: Option[String] = None, opts: Map[String, Any] = Map())(implicit extractor: ResultExtractor[T]) = {
+    val tokenId = newTokenId.incrementAndGet()
+    val query = version.toQuery[T](term, tokenId, db, opts)
     val token = query.asToken(conn, term, promise)
     tokensById.putIfAbsent(tokenId, token.asInstanceOf[TokenType])
     query
@@ -67,4 +70,26 @@ case class JsonVersionHandler(version: Version3) extends VersionHandler[String] 
       case e: Any => token.success(e)
     }
   }
+}
+
+case class ProtoVersionHandler(version: Version2) extends VersionHandler[ql2.Ql2.Response] {
+  override def handle(tokenId: Long, response: Response) = handle(tokenId) {
+    token => (response.getType match {
+
+      case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => token.toError(response)
+      case ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE => token.toCursor(0, response)
+      case ResponseType.SUCCESS_ATOM => token.term match {
+        case x: ProduceSequence[_] => token.toCursor(0, response)
+        case _ => token.toResult(response)
+      }
+      // case ResponseType.SUCCESS_ATOM => toResult(response)
+      case _ =>
+
+    }) match {
+      case e: Exception => token.failure(e)
+      case e: Any => token.success(e)
+    }
+  }
+
+  override type TokenType = QueryToken[_]
 }

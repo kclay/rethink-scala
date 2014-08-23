@@ -39,7 +39,7 @@ class JsonFrameDecoder extends RethinkFrameDecoder(12) {
       buffer.resetReaderIndex()
       return null
     }
-    new String(buffer.readBytes(length).array(), "UTF-8")
+    (token,new String(buffer.readBytes(length).array(), "UTF-8"))
 
   }
 }

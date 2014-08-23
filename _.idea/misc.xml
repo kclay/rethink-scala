@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="EntryPointsManager">
+    <entry_points version="2.0" />
+  </component>
+  <component name="JavadocGenerationManager">
+    <option name="OUTPUT_DIRECTORY" />
+    <option value="protected" name="OPTION_SCOPE" />
+    <option value="true" name="OPTION_HIERARCHY" />
+    <option value="true" name="OPTION_NAVIGATOR" />
+    <option value="true" name="OPTION_INDEX" />
+    <option value="true" name="OPTION_SEPARATE_INDEX" />
+    <option value="false" name="OPTION_DOCUMENT_TAG_USE" />
+    <option value="false" name="OPTION_DOCUMENT_TAG_AUTHOR" />
+    <option value="false" name="OPTION_DOCUMENT_TAG_VERSION" />
+    <option value="true" name="OPTION_DOCUMENT_TAG_DEPRECATED" />
+    <option value="true" name="OPTION_DEPRECATED_LIST" />
+    <option value="" name="OTHER_OPTIONS" />
+    <option name="HEAP_SIZE" />
+    <option name="LOCALE" />
+    <option value="true" name="OPEN_IN_BROWSER" />
+    <option value="false" name="OPTION_INCLUDE_LIBS" />
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/target/idea_output" />
+  </component>
+</project>
+
