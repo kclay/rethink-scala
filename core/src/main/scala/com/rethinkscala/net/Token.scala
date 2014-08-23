@@ -14,6 +14,7 @@ import ql2.Ql2.Response.ResponseType
 import ql2.Ql2.Response.ResponseType._
 
 import scala.concurrent.Promise
+import scala.util.Try
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,7 +33,11 @@ abstract class Token[R] {
 
   def handle(response: R)
 
+  def toError(response: R): RethinkError
+
   def failure(e: Throwable)
+
+  def success(e: Any)
 
 }
 
@@ -166,14 +171,17 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
       case _ => seq
     }
 
-    val cursor = query.cursor[R](id,this,responseType match {
+    val cursor = query.cursor(id, this, responseType match {
       case SUCCESS_SEQUENCE_VALUE => true
       case _ => false
     })
 
-   cursor << seq2
+    cursor << seq2
 
   }
+
+  def success(value: Any) = p.tryComplete(Try(value.asInstanceOf[R]))
+
   // TODO: Check performance and see if we can set the json value for type Document
   // as we parse it to avoid double parsing
   def raw(json: String) = Reflector.fromJson[JsonResponseExtractor](json)
@@ -257,12 +265,12 @@ case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Ter
       }
 
     }
-    val cursor = query.cursor[R](id,this,response.getType match {
+    val cursor = query.cursor[R](id, this, response.getType match {
       case ResponseType.SUCCESS_SEQUENCE => true
       case _ => false
     })
 
-    cursor <<  seq.asInstanceOf[Seq[R]]
+    cursor << seq.asInstanceOf[Seq[R]]
 
 
   }

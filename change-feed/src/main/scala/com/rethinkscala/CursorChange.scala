@@ -7,5 +7,5 @@ package com.rethinkscala
  * Time: 9:07 PM
  *
  */
-case class CursorChange[T](old:Option[T],current:T) extends Document
+case class CursorChange[T](old:Option[T],current:Option[T]) extends Document
 

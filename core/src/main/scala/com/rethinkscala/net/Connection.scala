@@ -11,7 +11,7 @@ import com.rethinkscala.Term
 import com.rethinkscala.ast._
 import com.rethinkscala.net.Translate._
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.utils.{ConnectionFactory, SimpleConnectionPool}
+import com.rethinkscala.utils.{ConnectionWithId, ConnectionFactory, SimpleConnectionPool}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.jboss.netty.bootstrap.ClientBootstrap
 import org.jboss.netty.buffer.ChannelBuffers._
@@ -25,7 +25,7 @@ import ql2.{Ql2 => ql2}
 import ql2.Response.ResponseType
 import ql2.{Response, VersionDummy}
 
-import scala.concurrent.{Promise,Future}
+import scala.concurrent.{Promise, Future}
 import scala.concurrent.duration.Duration
 
 
@@ -36,9 +36,11 @@ import scala.concurrent.duration.Duration
   */
 
 
+case class SingleConnection(version: Version) extends Connection {
+  override val underlying: Connection = this
 
-
-
+  override def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]) = ???
+}
 
 abstract class AbstractConnection(version: Version) extends LazyLogging with Connection {
 
@@ -65,14 +67,30 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
   }
 
 
-  case class ChannelWrapper(cf: ChannelFuture) {
+  case class ChannelWrapper(cf: ChannelFuture) extends ConnectionWithId {
+    type Id = Int
     val id = connectionId.incrementAndGet()
     val token: AtomicLong = new AtomicLong()
+
+    private[rethinkscala] val tokensToCursor = new com.google.common.collect.MapMaker()
+      .concurrencyLevel(4)
+      .weakKeys()
+      .makeMap[Long, RethinkCursor]
+
+    private[rethinkscala] val tokensById = new com.google.common.collect.MapMaker()
+      .concurrencyLevel(4)
+      .weakKeys()
+      .makeMap[Long, Token[_]]
+    @volatile
     @volatile
     var configured: Boolean = false
     lazy val channel = cf.getChannel
   }
 
+
+  lazy val versionHandler = version.newHandler
+
+  private[rethinkscala] def get(connectionId: Int)(implicit timeout: Duration): Future[Connection] = channel.getById(connectionId)
 
   protected[rethinkscala] val channel = new SimpleConnectionPool(new ConnectionFactory[ChannelWrapper] {
 
@@ -116,12 +134,14 @@ abstract class AbstractConnection(version: Version) extends LazyLogging with Con
         // add a channel future to ensure that all setup has been done
         c.cf.addListener(new ChannelFutureListener {
           def operationComplete(future: ChannelFuture) {
-            val query = version.toQuery(term, c.token.getAndIncrement, defaultDB, opts)
-            val token = query.asToken[T](con,term,p)
+
+            val query = versionHandler.newQuery(con, term, p, defaultDB, opts)
+            //val query = version.toQuery(term, c.token.getAndIncrement, defaultDB, opts)
+            //val token = query.asToken[T](con, term, p)
             // TODO : Check into dropping netty and using sockets for each,
 
             // Or find a way so that we can store the token for the netty handler to complete
-            c.channel.setAttachment(token)
+            c.channel.setAttachment(c)
             logger.debug("Writing query")
             c.channel.write(query)
             future.removeListener(this)
@@ -163,7 +183,7 @@ trait ConnectionOps[C <: Connection, D <: Mode[C]] {
 trait BlockingConnection extends Connection with ConnectionOps[BlockingConnection, Blocking] {
 
 
-  val delegate=Blocking
+  val delegate = Blocking
 
   // FIXME : Need to place here to help out Intellijd
   def apply[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).run
@@ -175,7 +195,8 @@ trait BlockingConnection extends Connection with ConnectionOps[BlockingConnectio
 
 trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Async] {
 
-  val delegate=Async
+  val delegate = Async
+
   // FIXME : Need to place here to help out Intellij with async(_.apply(res))
   def apply[T](produce: Produce[T])(implicit m: Manifest[T]) = delegate(produce)(this).run
 

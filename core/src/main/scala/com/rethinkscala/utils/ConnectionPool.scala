@@ -3,7 +3,8 @@ package com.rethinkscala.utils
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
-import scala.concurrent.{ExecutionContext, future, Future}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.Duration
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -27,6 +28,13 @@ trait ConnectionPool[Connection] {
   def apply[A]()(f: Connection => A): A
 }
 
+
+trait ConnectionWithId {
+
+  type Id
+  val id: Id
+}
+
 trait LowLevelConnectionPool[Connection] {
   def borrow(): Connection
 
@@ -37,9 +45,9 @@ trait LowLevelConnectionPool[Connection] {
 
 class TimeoutError(message: String) extends Error(message)
 
-class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
-                                 max: Int = 20,
-                                 timeout: Int = 500000)
+class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: ConnectionFactory[Conn],
+                                                     max: Int = 20,
+                                                     timeout: Int = 500000)
 
 
   extends ConnectionPool[Conn] with LowLevelConnectionPool[Conn] {
@@ -48,6 +56,24 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   private val size = new AtomicInteger(0)
 
   private val pool = new ArrayBlockingQueue[Conn](max)
+
+  private val connections = new com.google.common.collect.MapMaker()
+    .concurrencyLevel(4)
+    .weakKeys()
+    .makeMap[Conn#Id, Conn]
+
+  private val pending = new com.google.common.collect.MapMaker()
+    .concurrencyLevel(4)
+    .weakKeys()
+    .makeMap[Conn#Id, Future[Conn]]
+
+
+  def getById(id: Int)(implicit timeout: Duration): Future[Conn] = {
+    val connection
+    Future {
+       connections.get()
+    }
+  }
 
   def apply[A]()(f: Conn => A): A = {
     val connection = borrow()
@@ -66,9 +92,10 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
   def take(block: (Conn, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Unit] = {
 
     val connection = borrow()
+    connections.putIfAbsent(connection.id, connection)
 
 
-    val f = future {
+    val f = Future {
 
       connectionFactory.configure(connection)
       block(connection, giveBack)
@@ -98,6 +125,7 @@ class SimpleConnectionPool[Conn](connectionFactory: ConnectionFactory[Conn],
 
   def invalidate(connection: Conn): Unit = {
     connectionFactory.destroy(connection)
+    connections.remove(connection.id, connection)
     size.decrementAndGet
   }
 
