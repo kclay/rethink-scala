@@ -9,7 +9,7 @@ resolvers += Resolver.url(
   new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/")
 )(Resolver.ivyStylePatterns)
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.8.3")
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.8.4")
 
 //addSbtPlugin("com.github.sbt" %% "sbt-scalabuff" % "0.2")
 
