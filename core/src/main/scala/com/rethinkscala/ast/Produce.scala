@@ -80,7 +80,7 @@ trait CastTo{
   def double(name:String) =cast[Double](name)
   def float(name:String) =cast[Float](name)
   def string(name:String)=cast[String](name)
-  def seq[T](name:String)= field(name).asInstanceOf[Sequence[T] with Produce[Seq[T]] with Produce0[T]]
+  def seq[T](name:String)= field(name).asInstanceOf[ProduceSeq[T,DefaultCursor]]
   def map[T](name:String) = cast[Map[String,T]](name)
   def anySeq(name:String)=cast[Seq[Any]](name)
 
@@ -99,6 +99,8 @@ trait CastTo{
 trait ProduceSequenceLike[T]  extends Sequence[T] with Produce0[T]
                                       with CanManipulate[SPluck[_],Merge,Without]
                                       {
+
+   self:ProduceCursor=>
   type FieldProduce = ProduceArray[T]
 
 
@@ -122,9 +124,13 @@ trait ProduceSequenceLike[T]  extends Sequence[T] with Produce0[T]
 
 }
 
+trait ProduceCursor{
+  type Cursor<:AbstractCursor
+  type ElementType
+}
 
-trait ProduceSeq[E,C[_]] extends  ProduceSequenceLike[E] with Produce[C[E]]{
-
+trait ProduceSeq[E,C[_]<:AbstractCursor] extends  ProduceSequenceLike[E] with Produce[C[E]] with ProduceCursor{
+  self=>
   type Cursor= C[_]
   type ElementType = E
 }

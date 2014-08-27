@@ -3,6 +3,7 @@ package com.rethinkscala
 import com.fasterxml.jackson.annotation.{JsonUnwrapped, JsonTypeInfo, JsonIgnore, JsonProperty}
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
+import com.rethinkscala.net.AbstractCursor
 import com.rethinkscala.reflect.{GroupResultDeserializer, RethinkTypeResolverBuilder, Reflector}
 import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonTypeResolver}
 import scala.collection.generic.CanBuildFrom
@@ -227,7 +228,10 @@ object GroupResult {
 @JsonTypeInfo(use=JsonTypeInfo.Id.CUSTOM,include = JsonTypeInfo.As.WRAPPER_OBJECT)
 class GroupResult[Base] protected (buffer: ArrayBuffer[GroupResultRecord[Base]])
   extends IndexedSeq[GroupResultRecord[Base]]
-          with IndexedSeqLike[GroupResultRecord[Base], GroupResult[Base]] with Document with HasGroupRecords   {
+          with IndexedSeqLike[GroupResultRecord[Base], GroupResult[Base]] with Document with HasGroupRecords with AbstractCursor   {
+
+
+  override type ChunkType = Base
 
   override protected[this] def newBuilder: Builder[GroupResultRecord[Base], GroupResult[Base]] =
     GroupResult.newBuilder

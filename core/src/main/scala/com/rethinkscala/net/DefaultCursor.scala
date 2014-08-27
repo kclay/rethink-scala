@@ -6,7 +6,10 @@ import com.rethinkscala.ast.Sequence
 import scala.collection.generic.SeqForwarder
 
 
-trait RethinkCursor[T] {
+trait AbstractCursor{
+  type ChunkType
+}
+trait RethinkCursor[T] extends AbstractCursor{
   val connectionId: Int
   type ChunkType = T
 
