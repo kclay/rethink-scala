@@ -123,13 +123,17 @@ trait ProduceSequenceLike[T]  extends Sequence[T] with Produce0[T]
 }
 
 
-trait ProduceSeq[C[_]<:RethinkCursor[_],E] extends Produce[C[E]]
+trait ProduceSeq[E,C[_]] extends  ProduceSequenceLike[E] with Produce[C[E]]{
+
+  type Cursor= C[_]
+  type ElementType = E
+}
 
 
 
 
 
-trait ProduceSequence[T]  extends ProduceSequenceLike[T]  with ProduceSeq[DefaultCursor,T]
+trait ProduceSequence[T]  extends   ProduceSeq[T,DefaultCursor]
 
 trait ProduceAnySequence extends ProduceSequence[Any]
 
@@ -152,7 +156,7 @@ trait ProduceBinary extends Produce[Boolean] with Binary with Produce0[Boolean]
 //trait ProduceLiteral extends ProduceLiteral with Literal
 
 
-trait ProduceGroup[T] extends Produce[GroupResult[T]] with ProduceSequenceLike[GroupResult[T]]
+trait ProduceGroup[T] extends  ProduceSeq[T,GroupResult]
 
 trait ProduceDocument[T <: Document] extends ProduceSingle[T] with Record with DocumentConversion[T] with CanManipulate[OPluck[_],Merge,Without] {
 
