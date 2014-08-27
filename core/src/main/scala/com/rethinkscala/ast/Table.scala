@@ -85,7 +85,7 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def sync(durability:Durability.Kind)= Sync(this,Some(durability))
 
-  def changes = Changes(table)
+  def changes = Changes(this)
 
 }
 

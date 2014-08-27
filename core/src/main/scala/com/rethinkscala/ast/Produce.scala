@@ -122,11 +122,30 @@ trait ProduceSequenceLike[T]  extends Sequence[T] with Produce0[T]
 
 }
 
-trait ProduceSequence[T]  extends ProduceSequenceLike[T]  with Produce[Seq[T]]
+
+trait ProduceSeq[C[_]<:RethinkCursor[_],E] extends Produce[C[E]]
+
+
+
+
+
+trait ProduceSequence[T]  extends ProduceSequenceLike[T]  with ProduceSeq[DefaultCursor,T]
 
 trait ProduceAnySequence extends ProduceSequence[Any]
 
 trait ProduceSet[T] extends ProduceArray[T]
+
+
+trait ProduceSingleSelection[T] extends SingleSelection[T] with Produce[T] with Produce0[T]/*with ProduceDocument[T]*/
+
+trait ProduceSingleDocumentSelection[T<:Document] extends SingleSelection[T] with ProduceDocument[T]{
+  override val underlying = this
+}
+
+
+trait ProduceStreamSelection[T] extends ProduceSequence[T] with StreamSelection[T]
+
+trait ProduceArray[T] extends ProduceSequence[T] with ArrayTyped[T]
 
 trait ProduceBinary extends Produce[Boolean] with Binary with Produce0[Boolean]
 
@@ -246,16 +265,6 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo{
 }
 
 
-trait ProduceSingleSelection[T] extends SingleSelection[T] with Produce[T] with Produce0[T]/*with ProduceDocument[T]*/
-
-trait ProduceSingleDocumentSelection[T<:Document] extends SingleSelection[T] with ProduceDocument[T]{
-  override val underlying = this
-}
-
-
-trait ProduceStreamSelection[T] extends ProduceSequence[T] with StreamSelection[T]
-
-trait ProduceArray[T] extends ProduceSequence[T] with ArrayTyped[T]
 
 
 
