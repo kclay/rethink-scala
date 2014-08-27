@@ -261,3 +261,6 @@ case class GroupMapReduceResult(group: Int, reduction: Map[String, _]) extends D
   def as[T](clazz: Class[T]): T = as(Manifest.classType(clazz))
 }
 
+
+case class CursorChange[T](old:Option[T],current:Option[T]) extends Document
+

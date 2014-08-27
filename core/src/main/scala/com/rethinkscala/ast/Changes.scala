@@ -1,7 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.{CursorChange,  Document}
-
+import com.rethinkscala.{CursorChange, Document}
 import ql2.Ql2.Term.TermType
 /**
  * Created with IntelliJ IDEA.
