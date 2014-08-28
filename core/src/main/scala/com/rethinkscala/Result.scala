@@ -228,7 +228,7 @@ object GroupResult {
 @JsonTypeInfo(use=JsonTypeInfo.Id.CUSTOM,include = JsonTypeInfo.As.WRAPPER_OBJECT)
 class GroupResult[Base] protected (buffer: ArrayBuffer[GroupResultRecord[Base]])
   extends IndexedSeq[GroupResultRecord[Base]]
-          with IndexedSeqLike[GroupResultRecord[Base], GroupResult[Base]] with Document with HasGroupRecords with AbstractCursor   {
+          with IndexedSeqLike[GroupResultRecord[Base], GroupResult[Base]] with Document with HasGroupRecords with AbstractCursor[Base]   {
 
 
   override type ChunkType = Base

@@ -1,8 +1,8 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.Term
+import com.rethinkscala.{Document, Term, MatchResult}
+import com.rethinkscala.net.{AbstractCursor, DefaultCursor}
 import ql2.Ql2.Term.TermType
-import com.rethinkscala.MatchResult
 
 /** Append a value to an array.
   * @param target
@@ -43,7 +43,7 @@ object GetField {
   //def apply(target: ArrayTyped, name: String) = new GetField(target, name) with ProduceArray
 
 
-  def apply[T](target: Sequence[_], name: String) = new GetField(target, name) with ProduceArray[T]
+  def apply[T,C[_]](target: Sequence[T,C], name: String) = new GetField(target, name) with ProduceArray[T]
 
   // def apply(target: Record, name: String) = new GetField(target, name) with ProduceAnyDocument
 
@@ -69,9 +69,9 @@ abstract class Pluck extends Term {
 object Pluck {
 
 
-  def apply[T](target: Sequence[T], attrs: Seq[String]) = SPluck(target, Left(attrs))
+  def apply[T,C[_]](target: Sequence[T,C], attrs: Seq[String]) = SPluck(target, Left(attrs))
 
-  def apply[T](target: Sequence[T], m: Map[String, Any]) = SPluck(target, Right(m))
+  def apply[T,C[_]](target: Sequence[T,C], m: Map[String, Any]) = SPluck(target, Right(m))
 
 
   def apply(target: Record, attrs: Seq[String]) = OPluck(target, Left(attrs))
@@ -84,8 +84,8 @@ object Pluck {
   * @param target
   * @param data
   */
-case class SPluck[T](target: Sequence[T], data: Either[Seq[String], Map[String, Any]]) extends Pluck
-with ProduceSequence[Map[String,Any]]
+case class SPluck[T,C[_]](target: Sequence[T,C], data: Either[Seq[String], Map[String, Any]]) extends Pluck
+with ProduceSeq[Map[String,Any],C]
 
 /** Plucks out one or more attributes from either an object or a sequence of objects (projection).
   * @param target
@@ -103,7 +103,8 @@ abstract class Without(target: Typed, attributes: Seq[String]) extends Term {
 
 object Without {
 
-  def apply(target: Sequence[_], attrs: Seq[String]) = new Without(target, attrs) with ProduceSequence[Map[String,Any]]
+  // FIXME
+  def apply[T,C[_]](target: Sequence[T,C], attrs: Seq[String]) = new Without(target, attrs) with ProduceSeq[Map[String,Any],C]
 
   def apply(target: Record, attrs: Seq[String]) = new Without(target, attrs) with ProduceAnyDocument
 }
@@ -117,6 +118,7 @@ abstract class Merge(target: Typed, other: Typed) extends Term {
   override lazy val args = buildArgs(target, other)
 
   def termType = TermType.MERGE
+
 }
 
 //abstract class MergeKind[A[_]:  Produce0[_],T,R>:T](left: A[T],right:A[R])  extends Merge(left,right)
@@ -144,20 +146,24 @@ object MergeSequence extends MergeOp{
   type Result[_,T,R>:T] = MergeKind[Sequence[_],T,R]
   def apply[T,R>:T](left:Ast[T],right:Ast[R]):Result =  MergeSequence(left,right)
 } */
-case class MergeSequence[T,R>:T](left:Sequence[T],right:Sequence[R]) extends Merge(left,right)
-   with ProduceSequence[T]
+case class MergeSequence[T,R>:T,C[_],CR[_]](left:Sequence[T,C],right:Sequence[R,CR]) extends Merge(left,right)
+   with ProduceSeq[T,C]
 
 
 
+import com.rethinkscala.Document
 object Merge {
 
-  def apply(target: Sequence[_], other: Sequence[_]) = new Merge(target, other) with ProduceAnySequence
+  def seq[T,C[_],R,CR[_]](target: Sequence[T,C], other: Sequence[R,CR]) = new Merge(target, other) with ProduceAnySequence
 
-  def apply(target: Sequence[_], other: MakeObj) = new Merge(target, other) with ProduceAnySequence
+  def apply[T,C[_]](target: Sequence[T,C], other: MakeObj) = new Merge(target, other) with ProduceAnySequence
 
-  def apply(target: Record, other: Map[String, Any]) = new Merge(target, Expr(other)) with ProduceAnyDocument
+  def selection[T,R](target: Selection[T], other: Selection[R]) = new Merge(target, other) with ProduceSingleSelection[Any]
 
-  def apply[P1<:Pluck,M1<:Merge,W1<:Without,P2<:Pluck,M2<:Merge,W2<:Without](target: CanManipulate[P1,M1,W1], other: CanManipulate[P1,M1,W1]) = new Merge(target, other) with ProduceAnyDocument
+
+  def record(target: Record, other: Any) = new Merge(target, Expr(other).asInstanceOf[Typed]) with ProduceAnyDocument
+
+  def typed(target: Typed, other: Typed) = new Merge(target, other) with ProduceAnyDocument
 
  // def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
 }
@@ -293,7 +299,8 @@ case class Keys(target: Record) extends ProduceArray[String] {
   def termType = TermType.KEYS
 }
 
-case class Split(target:Strings,delimiter:Option[String]=None,limit:Option[Int]=None) extends ProduceSequence[String]{
+// FIXME support change cursor split
+case class Split(target:Strings,delimiter:Option[String]=None,limit:Option[Int]=None) extends ProduceSeq[String,DefaultCursor]{
 
 
   override lazy val args=buildArgs(Seq(Some(target),delimiter,limit).flatten:_*)

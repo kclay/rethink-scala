@@ -2,6 +2,7 @@ package com.rethinkscala.ast
 
 import com.rethinkscala._
 import com.rethinkscala.ast.All
+import com.rethinkscala.net.{DefaultCursor, AbstractCursor}
 
 
 sealed trait DataType {
@@ -38,6 +39,7 @@ case object StringData extends DataType {
 case object ArrayData extends DataType {
   def name = "array"
 }
+
 
 
 private[rethinkscala] trait Typed extends ImplicitConversions{
@@ -84,9 +86,10 @@ object Ref{
      def +=(other: Numeric) = underlying.add(other)
   }
 }
-trait Ref extends Sequence[Any] with Numeric with Binary with Record with Literal with Strings
 
-with CanManipulate[Pluck,Merge,Without]{
+trait Ref extends Sequence[Any,DefaultCursor] with Numeric with Binary with Record with Literal with Strings{
+
+
   override val underlying = this
 
   //override def add(other: Addition): Add = AnyAdd(underlying, other)
@@ -97,12 +100,15 @@ with CanManipulate[Pluck,Merge,Without]{
 
 
 
+    def merge(other: Typed) = Merge.typed(underlying,other)
+    def merge[R,CR[_]](other:Sequence[R,CR]) = Merge.seq(underlying,other)
 
 
-  def merge(other: Map[String, Any]) = Merge(underlying,other)
 
 
- def merge(other: CM) = Merge(underlying,other)
+
+
+
 
   def pluck(attrs: String*) = Pluck(underlying, attrs)
 
@@ -111,7 +117,8 @@ with CanManipulate[Pluck,Merge,Without]{
   def pluck(m: Map[String, Any]) = Pluck(underlying, m)
 }
 
-trait JoinTyped[L, R] extends Typed {
+trait JoinTyped[L, R,C[_]] extends Typed {
+
   override val underlying = this
 
   def zip = Zip(underlying)

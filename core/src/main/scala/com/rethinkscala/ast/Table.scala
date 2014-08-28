@@ -110,7 +110,7 @@ case class TableDrop(name: String, db: Option[DB] = None) extends ProduceBinary 
 
 }
 
-case class TableList(db: Option[DB] = None) extends ProduceSequence[String] {
+case class TableList(db: Option[DB] = None) extends ProduceDefaultSequence[String] {
 
   override protected val extractArgs: Boolean = false
   override lazy val args = buildArgs(db.map(Seq(_)).getOrElse(Seq()): _*)
@@ -123,7 +123,8 @@ case class TableList(db: Option[DB] = None) extends ProduceSequence[String] {
   * @param name
   * @param predicate
   */
-case class IndexCreate(target: TableTyped, name: String, predicate: Option[Predicate] = None, multi: Option[Boolean] = None) extends ProduceBinary with BinaryConversion {
+case class IndexCreate(target: TableTyped, name: String, predicate: Option[Predicate] = None, multi: Option[Boolean] = None)
+  extends ProduceBinary with BinaryConversion {
 
   override lazy val args = buildArgs(predicate.map {
     f => Seq(target, name, f())
@@ -151,18 +152,18 @@ case class IndexDrop(target: TableTyped, name: String) extends ProduceBinary wit
 /** List all the secondary indexes of this table.
   * @param target
   */
-case class IndexList(target: TableTyped) extends ProduceSequence[String] {
+case class IndexList(target: TableTyped) extends ProduceDefaultSequence[String] {
   def termType = TermType.INDEX_LIST
 }
 
-case class IndexStatus(target: TableTyped, indexes: Seq[String]) extends ProduceSequence[IndexStatusResult] {
+case class IndexStatus(target: TableTyped, indexes: Seq[String]) extends ProduceDefaultSequence[IndexStatusResult] {
 
   override lazy val args = buildArgs((if(indexes.isEmpty) Seq(target) else indexes.+:(target)):_*)
 
   def termType = TermType.INDEX_STATUS
 }
 
-case class IndexWait(target: TableTyped, indexes: Seq[String]) extends ProduceSequence[IndexStatusResult] {
+case class IndexWait(target: TableTyped, indexes: Seq[String]) extends ProduceDefaultSequence[IndexStatusResult] {
   override lazy val args = buildArgs((if(indexes.isEmpty) Seq(target) else indexes.+:(target)):_*)
   def termType = TermType.INDEX_WAIT
 }

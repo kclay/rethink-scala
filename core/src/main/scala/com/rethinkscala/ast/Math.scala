@@ -83,7 +83,7 @@ abstract case class Or(left: Typed, right: Typed) extends BiCompareOperQuery {
 object All{
   def apply(left:Binary,right:Binary) = new All(left,right) with ProduceBinary
 
-  def apply[T](left:Typed,right:ProduceSequence[T]) = new All(left,right) with ProduceSequence[T]
+  def apply[T,C[_]](left:Typed,right:Sequence[T,C]) = new All(left,right) with ProduceSeq[T,C]
   def apply(left:Typed,right:Strings) = new All(left,right) with ProduceString
   def apply(left:Typed,right:Numeric) = new All(left,right) with ProduceNumeric
 }
@@ -93,7 +93,7 @@ object All{
 object Or{
 
   def apply(left:Binary,right:Binary) = new Or(left,right) with ProduceBinary
-  def apply[L,R>:L](left:ProduceSequence[L],right:ProduceSequence[R]) =   new Or(left,right) with ProduceSequence[L]
+  def apply[L,C[_],R>:L,CR[_]](left:Sequence[L,C],right:Sequence[R,CR]) = new Or(left,right) with ProduceSeq[L,C]
 }
 
 abstract case class Add(left: Typed, right: Typed) extends BiCompareOperQuery  {
@@ -112,7 +112,7 @@ object Add{
   def apply(left:Numeric,right:Numeric) = new Add(left,right) with ProduceNumeric
   def apply(left:Strings,right:Strings):ProduceString = new Add(left,right) with ProduceString
 
-  def apply[L,R>:L](left:ProduceSequence[L],right:ProduceSequence[R]) =   new Add(left,right) with ProduceSequence[L]
+  def apply[L,C[_],R>:L,CR[_]](left:Sequence[L,C],right:Sequence[R,CR]) =   new Add(left,right) with ProduceSeq[left.ElementType,C]
 }
 
 

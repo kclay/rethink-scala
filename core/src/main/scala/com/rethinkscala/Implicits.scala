@@ -66,8 +66,13 @@ trait ToAstImplicts{
     type InnerProduce = Produce0[T]
   } */
 
+  /*implicit def seqToAnyChangeSequence = new ToAst[ChangeCursor[Any]] {
+    type TypeMember = Sequence[Any,ChangeCursor]
+
+    type InnerProduce = Produce0[Any]
+  } */
   implicit def seqToAnySequence = new ToAst[Seq[Any]] {
-    type TypeMember = Sequence[Any]
+    type TypeMember = Sequence[Any,DefaultCursor]
 
     type InnerProduce = Produce0[Any]
   }
@@ -84,11 +89,11 @@ trait ToAst[A] {
 
 }
 
-class ToFunctional[T, A >: Var](seq: Sequence[T]) {
+class ToFunctional[T, A >: Var,C[_]](val seq: Sequence[T,C]) extends AnyVal{
 
 
-  def concatMap[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = ConcatMap[Inner](seq.underlying, FuncWrap(f))
-  def map[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = RMap[Inner](seq.underlying, FuncWrap(f))
+  def concatMap[B <: Typed, Result](f: A => B)(implicit cm: CanMap[T, B, Result]) = ConcatMap[T,C,Result](seq.underlying, FuncWrap(f))
+  def map[B <: Typed, Result](f: A => B)(implicit cm: CanMap[T, B, Result]) = RMap[T,C,Result](seq.underlying, FuncWrap(f))
   def reduce[P ](f: (A, A) =>Produce0[P]) = Reduce[T,P](seq.underlying, f)
 
 }
@@ -106,9 +111,9 @@ trait CanMapImplicits {
   implicit val mapStringToNumeric = CanMap[String, Numeric, Int]
 
 
-  implicit def mapStringToArray[T] = CanMap[String, Sequence[T], T]
+  implicit def mapStringToArray[T,C[_]] = CanMap[String, Sequence[T,C], T]
 
-  implicit def mapMapToArray[T] = CanMap[Map[String, _], Sequence[T], T]
+  implicit def mapMapToArray[T,C[_]] = CanMap[Map[String, _], Sequence[T,C], T]
 
 
   implicit val mapIntToNumeric = CanMap[Int, Numeric, Int]
@@ -289,7 +294,7 @@ object Implicits  {
     }
 
     implicit def arrayToSeq[T](seq: ProduceSequence[T]) = new FromAst[ProduceSequence[T]] {
-      type Raw = Seq[T]
+      type Raw = seq.Collection[T]
     }
 
     implicit def binaryToBoolean = new FromAst[Binary] {

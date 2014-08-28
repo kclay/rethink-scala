@@ -4,7 +4,7 @@ import com.rethinkscala.{TableOptions, Term}
 
 import ql2.Ql2.Term.TermType
 
-import com.rethinkscala.net.BinaryConversion
+import com.rethinkscala.net.{DefaultCursor, BinaryConversion}
 import com.rethinkscala.Document
 
 trait WithDB {
@@ -56,7 +56,7 @@ case class DBDrop(name: String) extends Term with ProduceBinary with BinaryConve
   def termType = TermType.DB_DROP
 }
 
-case class DBList(db: Option[DB] = None) extends ProduceSequence[String] with WithDB {
+case class DBList(db: Option[DB] = None) extends ProduceSeq[String,DefaultCursor] with WithDB {
 
   override protected val extractArgs = false
 

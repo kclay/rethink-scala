@@ -1,6 +1,7 @@
 package com.rethinkscala
 
 import com.rethinkscala.Implicits.Blocking._
+import com.rethinkscala.net.DefaultCursor
 import org.scalatest.FunSuite
 
 
@@ -31,7 +32,7 @@ class AggregationTest extends FunSuite with WithBase {
     val seq = Seq(1, 2, 2, 2, 43, 4, 5, 5, 6, 6, 6, 7, 7, 1, 1, 1)
 
     assert(Expr(seq).distinct, {
-      v: Seq[Int] => v == seq.distinct.sorted
+      v: DefaultCursor[Int] => v == seq.distinct.sorted
     })
 
   }

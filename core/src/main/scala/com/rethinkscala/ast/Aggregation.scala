@@ -1,5 +1,6 @@
 package com.rethinkscala.ast
 
+import com.rethinkscala.net.AbstractCursor
 import ql2.Ql2.Term.TermType
 
 import com.rethinkscala.GroupResult
@@ -36,7 +37,7 @@ case class Count(target: Aggregation[_], wrap: Option[FuncWrap] = None) extends 
 /** Remove duplicate elements from the sequence.
   * @param target
   */
-case class Distinct[T](target: Aggregation[T]) extends ProduceSequence[T] {
+case class Distinct[T,C[_]](target: Sequence[T,C]) extends ProduceSeq[T,C] {
   def termType = TermType.DISTINCT
 }
 

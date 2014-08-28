@@ -1,15 +1,17 @@
 package com.rethinkscala.ast
 
+import com.rethinkscala.net.{AbstractCursor, RethinkCursor}
 import com.rethinkscala.{AssocPair, Term, ZipResult}
 import ql2.Ql2.Term.TermType
 
-abstract class Join[L,R] extends ProduceJoin[L,R] {
-  val left: Sequence[L]
-  val right:Sequence[R]
+abstract class Join[L,R,C[_]] extends ProduceJoin[L,R,C] {
+
+  val left: Sequence[L,C]
+  val right:Sequence[R,C]
 
 }
 
-abstract class PredicateJoin[L,R] extends Join[L,R] {
+abstract class PredicateJoin[L,R,C[_]] extends Join[L,R,C] {
 
   val func: ScalaBooleanPredicate2
   override lazy val args: Seq[Term] = buildArgs(left, right, func())
@@ -23,7 +25,8 @@ abstract class PredicateJoin[L,R] extends Join[L,R] {
  *  @param right
  *  @param func
  */
-case class InnerJoin[L,R](left: Sequence[L], right: Sequence[R], func: ScalaBooleanPredicate2) extends PredicateJoin[L,R] {
+case class InnerJoin[L,R,C[_]](left: Sequence[L,C], right: Sequence[R,C], func: ScalaBooleanPredicate2) extends
+PredicateJoin[L,R,C] {
   def termType = TermType.INNER_JOIN
 }
 
@@ -32,7 +35,8 @@ case class InnerJoin[L,R](left: Sequence[L], right: Sequence[R], func: ScalaBool
  *  @param right
  *  @param func
  */
-case class OuterJoin[L,R](left: Sequence[L], right: Sequence[R], func: ScalaBooleanPredicate2) extends PredicateJoin[L,R] {
+case class OuterJoin[L,R,C[_]](left: Sequence[L,C], right: Sequence[R,C], func: ScalaBooleanPredicate2) extends
+PredicateJoin[L,R,C] {
   def termType = TermType.OUTER_JOIN
 }
 
@@ -42,7 +46,8 @@ case class OuterJoin[L,R](left: Sequence[L], right: Sequence[R], func: ScalaBool
  *  @param attrOrFunc
  *  @param index
  */
-case class EqJoin[L,R](left: Sequence[L], attrOrFunc:Either[String,Predicate1], right: Sequence[R], index: Option[String] = None) extends Join[L,R] {
+case class EqJoin[L,R,C[_]](left: Sequence[L,C], attrOrFunc:Either[String,Predicate1], right: Sequence[R,C], index: Option[String] = None)
+  extends Join[L,R,C] {
   def termType = TermType.EQ_JOIN
 
   override lazy val args: Seq[Term] = buildArgs(left, attrOrFunc.fold(identity,identity), right)
@@ -52,7 +57,7 @@ case class EqJoin[L,R](left: Sequence[L], attrOrFunc:Either[String,Predicate1], 
 /** Used to 'zip' up the result of a join by merging the 'right' fields into 'left' fields of each member of the sequence.
  *  @param target
  */
-case class Zip[L,R](target: JoinTyped[L,R]) extends ProduceSequence[ZipResult[L,R]] {
+case class Zip[L,R,C[_]](target: JoinTyped[L,R,C]) extends ProduceSeq[ZipResult[L,R],C] {
 
   def termType = TermType.ZIP
 }

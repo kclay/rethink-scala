@@ -120,5 +120,3 @@ trait Numeric extends Literal with Multiply with Binary  {
 
 
 }
-
-trait LiteralSequence[T] extends Sequence[T]
