@@ -65,7 +65,7 @@ class WriteTest extends FunSuite with WithBase {
       rr: ChangeResult => rr.replaced == 1
     })
 
-    replace = fetch.replace((v: Var) => v.merge(Map("is_fav" -> true)))
+    replace = fetch.replace(v => v.merge(Map("is_fav" -> true)))
     assert(replace, {
       cr: ChangeResult => cr.replaced == 1
     })

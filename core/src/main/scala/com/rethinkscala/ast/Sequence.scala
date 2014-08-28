@@ -213,9 +213,9 @@ trait Selection[T] extends Typed {
   def update(d: Document, options: UpdateOptions): Update[T] = Update[T](underlying, MakeObj2(d).wrap, options)
 
 
-  def replace(p: Predicate1): Replace[T] = replace(p, UpdateOptions())
+  def replace(p:Var=>Typed): Replace[T] = replace(p, UpdateOptions())
 
-  def replace(p: Predicate1, options: UpdateOptions): Replace[T] = Replace(underlying, p.wrap, options)
+  def replace(p: Var=>Typed, options: UpdateOptions): Replace[T] = Replace(underlying, (p:Predicate1).wrap, options)
 
   def replace[R<:Document](d:R): Replace[R] = replace(d, UpdateOptions())
 
