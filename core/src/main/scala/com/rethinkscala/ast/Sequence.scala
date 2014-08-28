@@ -108,7 +108,7 @@ trait IndexTyped[T] extends Typed{
   def apply(index: Int) = Nth(underlying, index)
 }
 
-trait Sequence[T,Cursor[_]] extends ArrayTyped[T] with Multiply with Filterable[T] with Record with Aggregation[T] with IndexTyped[T] {
+trait Sequence[T,Cursor[_]] extends ArrayTyped[T] with Multiply with Filterable[T,Cursor] with Record with Aggregation[T] with IndexTyped[T] {
 
 
 
@@ -217,13 +217,13 @@ trait Selection[T] extends Typed {
 
   def replace(p: Predicate1, options: UpdateOptions): Replace[T] = Replace(underlying, p.wrap, options)
 
-  def replace(d: Document): Replace[T] = replace(d, UpdateOptions())
+  def replace[R<:Document](d:R): Replace[R] = replace(d, UpdateOptions())
 
-  def replace(d: Document, options: UpdateOptions): Replace[T] = Replace(underlying, MakeObj2(d).wrap, options)
+  def replace[R<:Document](d: R, options: UpdateOptions): Replace[R] = Replace[R](underlying, MakeObj2(d).wrap, options)
 
   def replace(data: Map[String, Any]): Replace[T] = replace(data, UpdateOptions())
 
-  def replace(data: Map[String, Any], options: UpdateOptions): Replace[T] = Replace(underlying, data.wrap, options)
+  def replace(data: Map[String, Any], options: UpdateOptions): Replace[T] = Replace[T](underlying, data.wrap, options)
 
   def delete: Delete[T] = delete()
 
@@ -248,22 +248,24 @@ trait StreamSelection[T,C[_]] extends Selection[T] with Stream[T,C] {
 
 trait SingleSelection[T] extends Selection[T]
 
-trait Filterable[T] extends Typed {
+trait Filterable[T,C[_]] extends Typed {
 
   //def filter(value: Binary): Filter[T] = filter((x: Var) => value)
 
   override val underlying = this
 
-  def filter(value: Map[String, Any]): Filter[T] = filter(value, false)
+  def filter(value: Map[String, Any]): Filter[T,C] =  Filter[T,C](underlying, FuncWrap(value), None)
 
-  def filter(value: Map[String, Any], default: Boolean): Filter[T] = Filter[T](underlying, FuncWrap(value), default)
+  def filter(value: Map[String, Any], default:Typed): Filter[T,C] = Filter[T,C](underlying, FuncWrap(value), Some(default))
 
   // def filter(value: Typed): Filter[T] = filter(value, false)
 
   // def filter(value: Typed, default: Boolean): Filter[T] = Filter(this, FuncWrap(value), default)
 
-  def filter(f: Var => Binary): Filter[T] = filter(f, false)
+  def filter(value:ProduceBinary): Filter[T,C] =   Filter[T,C](underlying, FuncWrap(value), None)
+  def filter(value:ProduceBinary,default:Typed): Filter[T,C] =   Filter[T,C](underlying, FuncWrap(value), Some(default))
 
-  def filter(f: Var => Binary, default: Boolean): Filter[T] = Filter[T](underlying, FuncWrap(f: ScalaBooleanPredicate1), default)
+  def filter(f: Var => Binary): Filter[T,C] = Filter[T,C](underlying, FuncWrap(f: ScalaBooleanPredicate1), None)
+  def filter(f: Var => Binary, default:Typed): Filter[T,C] = Filter[T,C](underlying, FuncWrap(f: ScalaBooleanPredicate1), Some(default))
 
 }

@@ -54,6 +54,7 @@ class WriteTest extends FunSuite with WithBase {
 
   }
   test("replace") {
+
     assert(fetch.replace(Foo(Some("a"), 10, 60)).withResults, {
       c: ChangeResult => c.replaced == 1 && c.returnedValue[Foo].exists(_.a == 10)
     })

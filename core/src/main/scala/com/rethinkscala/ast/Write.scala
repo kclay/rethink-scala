@@ -60,7 +60,7 @@ case class Insert[T <: Document, R <: Document](table: Table[T], records: Either
   @deprecated("use .withChanges", "0.4.5")
   def withResults = withChanges
 
-  def withChanges = copy(options = options.copy(returnValues = None, returnChanges = Some(true)))
+  def withChanges:Insert[T,R] = copy(options = options.copy(returnValues = None, returnChanges = Some(true)))
 
   def termType = TermType.INSERT
 
@@ -92,10 +92,10 @@ case class Update[T](target: Selection[T], wrap: FuncWrap,
   @deprecated("use .withChanges", "0.4.5")
   def withResults = withChanges
 
-  def withChanges = copy(options = options.copy(returnValues = None, returnChanges = true))
+  def withChanges:Update[T] = copy(options = options.copy(returnValues = None, returnChanges = Some(true)))
 }
 
-case class Replace[T](target: Selection[T], wrap: FuncWrap,
+case class Replace[T](target: Selection[_], wrap: FuncWrap,
                       options: UpdateOptions)
   extends ProduceDocument[ChangeResult] {
 
@@ -107,7 +107,7 @@ case class Replace[T](target: Selection[T], wrap: FuncWrap,
   @deprecated("use .withChanges", "0.4.5")
   def withResults = withChanges
 
-  def withChanges = copy(options = options.copy(returnValues = None, returnChanges = true))
+  def withChanges:Replace[T] = copy(options = options.copy(returnValues = None, returnChanges = Some(true)))
 
 }
 

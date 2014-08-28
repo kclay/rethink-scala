@@ -109,39 +109,44 @@ trait GeneratesKeys {
 }
 
 
-case class ReturnValueExtractor[T](@JsonProperty("changes") value: Seq[T])
+case class ChangeSet[T](@JsonProperty("new_val") current:T, @JsonProperty("old_val") old:T)
+case class ReturnValueExtractor[T](@JsonProperty("changes") value: Seq[ChangeSet[T]])
 
 trait ReturnValues {
   self: Document =>
-  private var _returnedValue: Seq[Any] = null
+  private var _returnedValue: Seq[ChangeSet[_]] = null
 
+  type Changes[A] = Seq[ChangeSet[A]]
+
+  //TODO Javize
   def returnedValue[T](clazz: Class[T]): T = returnedValue(Manifest.classType(clazz)).getOrElse(null.asInstanceOf[T])
 
-  @deprecated("use returnValues","0.4.5")
-  def returnedValue[T](implicit mf: Manifest[T]): Option[T] = {
 
+
+  private def extract[T](implicit mf:Manifest[T])={
     if (_returnedValue == null) {
       try {
         _returnedValue = Reflector.fromJson[ReturnValueExtractor[T]](raw).value
       } catch {
-        case e: Exception => _returnedValue = Seq.empty[T]
+        case e: Exception => _returnedValue = Seq.empty
       }
 
     }
-    _returnedValue.headOption.asInstanceOf[Option[T]]
+  }
+
+  def returnedValue[T](implicit mf: Manifest[T]): Option[T] = {
+      extract[T]
+    _returnedValue.headOption.asInstanceOf[Option[ChangeSet[T]]].map(_.current)
   }
 
   def returnedValues[T](implicit mf: Manifest[T]): Seq[T] = {
+    extract[T]
+    _returnedValue.asInstanceOf[Changes[T]].map(_.current)
+  }
 
-    if (_returnedValue.isEmpty) {
-      try {
-        _returnedValue = Reflector.fromJson[ReturnValueExtractor[T]](raw).value
-      } catch {
-        case e: Exception => _returnedValue = Seq.empty[T]
-      }
-
-    }
-    _returnedValue.asInstanceOf[Seq[T]]
+  def changes[T](implicit mf:Manifest[T]):Changes[T]={
+    extract[T]
+    _returnedValue.asInstanceOf[Changes[T]]
   }
 
 }
@@ -266,3 +271,4 @@ case class GroupMapReduceResult(group: Int, reduction: Map[String, _]) extends D
   def as[T](clazz: Class[T]): T = as(Manifest.classType(clazz))
 }
 
+case class CursorChange[T](@JsonProperty("old_val")old:T,@JsonProperty("new_val")current:T)

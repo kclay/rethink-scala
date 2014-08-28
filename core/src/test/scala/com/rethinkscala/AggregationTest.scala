@@ -151,6 +151,7 @@ class AggregationTest extends FunSuite with WithBase {
 
 
      Expr(1 to 10).filter(f=> f("industries").contains(i=> i \ "userId" ==="700"))
+    Expr(1 to 10).filter(r.row("hello") > 10 )
   //  Expr(1 to 10).filter(f=> f.anySeq("industries").contains(i=> i \ "userId" ==="700"))
     val res = Expr('a' to 'd').contains("b")
      print(res.ast)

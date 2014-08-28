@@ -10,6 +10,3 @@ import ql2.Ql2.Term.TermType
  *
  */
 
-case class Changes[T<:Document](target:Table[T]) extends ProduceStreamSelection[CursorChange[T]]{
-  override def termType =TermType.CHANGES
-}

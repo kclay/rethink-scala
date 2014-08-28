@@ -308,3 +308,7 @@ case class Split(target:Strings,delimiter:Option[String]=None,limit:Option[Int]=
   def termType = TermType.SPLIT
 }
 
+
+case class Changes[T<:Document](target:Table[T]) extends ProduceChangeStream[T]{
+  override def termType =TermType.CHANGES
+}

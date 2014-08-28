@@ -164,10 +164,9 @@ trait ProduceSingleDocumentSelection[T<:Document] extends SingleSelection[T] wit
 
 
 // FIXME support changes ???
-trait ProduceStreamSelection[T] extends ProduceDefaultSequence[T] with StreamSelection[T,DefaultCursor]{
+trait ProduceStreamSelection[T,C[_]] extends ProduceSeq[T,C] with StreamSelection[T,C]
 
-}
-
+trait ProduceChangeStream[T] extends ProduceStreamSelection[CursorChange[T],ChangeCursor]
 trait ProduceArray[T] extends ProduceDefaultSequence[T] with ArrayTyped[T]
 
 trait ProduceBinary extends Produce[Boolean] with Binary with Produce0[Boolean]

@@ -16,7 +16,7 @@ case class GetAll[R <: Document](target: Table[R], attr: Seq[Any], index: Option
   def termType = TermType.GET_ALL
 }
 
-case class Between[T,C[_]](target: StreamSelection[T,C], start: Literal, end: Literal, options:BetweenOptions) extends ProduceStreamSelection[T] {
+case class Between[T,C[_]](target: StreamSelection[T,C], start: Literal, end: Literal, options:BetweenOptions) extends ProduceStreamSelection[T,C] {
   override lazy val args = buildArgs(target, start, end)
 
   override lazy val optargs = buildOptArgs(options.toMap)
@@ -24,7 +24,7 @@ case class Between[T,C[_]](target: StreamSelection[T,C], start: Literal, end: Li
   def termType = TermType.BETWEEN
 }
 
-case class Filter[T](target: Filterable[T], wrap: FuncWrap, default: Option[Boolean] = None) extends ProduceStreamSelection[T] {
+case class Filter[T,C[_]](target: Filterable[T,C], wrap: FuncWrap, default: Option[Typed] = None) extends ProduceStreamSelection[T,C] {
 
   override lazy val args = buildArgs(target, wrap)
   override lazy val optargs = buildOptArgs(Map("default" -> default))

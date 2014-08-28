@@ -2,7 +2,7 @@ package com.rethinkscala.ast
 
 import com.rethinkscala.ast.Changes
 import ql2.Ql2.Term.TermType
-import com.rethinkscala.net.BinaryConversion
+import com.rethinkscala.net.{DefaultCursor, BinaryConversion}
 import com.rethinkscala._
 import com.rethinkscala.InsertOptions
 import com.rethinkscala.TableOptions
@@ -14,7 +14,7 @@ import com.rethinkscala.IndexStatusResult
 case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = None,
                                 db: Option[DB] = None)
 
-  extends ProduceStreamSelection[T]
+  extends ProduceStreamSelection[T,DefaultCursor]
   with WithDB with TableTyped {
 
   override lazy val args = buildArgs(db.map(Seq(_, name)).getOrElse(Seq(name)): _*)
