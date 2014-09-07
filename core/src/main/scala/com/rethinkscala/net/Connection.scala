@@ -7,6 +7,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
 import com.rethinkscala.ConvertFrom._
+
 import com.rethinkscala.{ResultExtractor, Term}
 import com.rethinkscala.ast._
 import com.rethinkscala.net.Translate._
@@ -42,6 +43,15 @@ case class SingleConnection(version: Version) extends Connection {
 
   override def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]) = ???
 } */
+
+class ConnectionAttachment[T](versionHandler: VersionHandler[T], restore: Throwable => Unit) {
+  def handle(tokenId: Long, response: T) = versionHandler.handle(tokenId, response)
+
+  def failure(e: Throwable) = {
+    versionHandler.failure(e)
+    restore(e)
+  }
+}
 
 abstract class AbstractConnection(val version: Version) extends LazyLogging with Connection {
 
@@ -129,7 +139,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     val f = p.future
     logger.debug(s"Writing $term")
     channel take {
-      case (c, restore) =>
+      case (c, restore, invalidate) =>
         logger.debug("Received connection from pool")
         val con = this
         // add a channel future to ensure that all setup has been done
@@ -141,18 +151,22 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
             //val token = query.asToken[T](con, term, p)
             // TODO : Check into dropping netty and using sockets for each,
 
+            val attachment = new ConnectionAttachment(versionHandler, e => {
+              p.tryFailure(e)
+              invalidate(c)
+            })
             // Or find a way so that we can store the token for the netty handler to complete
-            c.channel.setAttachment(versionHandler)
+            c.channel.setAttachment(attachment)
             logger.debug("Writing query")
             c.channel.write(query)
             future.removeListener(this)
           }
         })
-        f onComplete {
+        f onSuccess {
           case _ => restore(c)
         }
     } onFailure {
-      case e: Exception => p.failure(e)
+      case e: Exception => p.tryFailure(e)
     }
     p
   }
@@ -161,6 +175,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 trait Connection {
   val underlying: Connection
   val version: Version
+  protected[rethinkscala] val channel: SimpleConnectionPool[_]
 
   def toAst(term: Term): CompiledAst = version.toAst(term)
 
@@ -202,6 +217,7 @@ trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Asy
   def apply[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).run
 
   def toOpt[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).toOpt
+
 }
 
 object AsyncConnection {

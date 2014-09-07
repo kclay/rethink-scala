@@ -13,7 +13,7 @@ import ql2.Ql2.Response
 
 
 class RethinkChannelHandler[T] extends SimpleChannelUpstreamHandler {
-  type Handler = VersionHandler[T]
+  type Handler = ConnectionAttachment[T]
   implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext) = Some(ctx.getChannel.getAttachment.asInstanceOf[Handler])
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {

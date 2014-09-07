@@ -123,7 +123,7 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
 
   val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
 
-  override def failure(e: Throwable) = p failure e
+  override def failure(e: Throwable) = p.tryFailure(e)
 
 
   def toError(json: String) = {
@@ -230,7 +230,7 @@ case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Ter
 
   def success(value: Any) = p.tryComplete(Try(value.asInstanceOf[R]))
 
-  def failure(e: Throwable) = p failure (e)
+  def failure(e: Throwable) = p.tryFailure(e)
 
   def toCursor(id: Int, response: Response) = {
 

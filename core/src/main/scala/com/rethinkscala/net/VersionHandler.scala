@@ -4,11 +4,14 @@ import java.util.concurrent.atomic.AtomicLong
 
 import com.rethinkscala.{ResultExtractor, Term}
 import com.rethinkscala.ast.ProduceSequence
+import com.typesafe.scalalogging.Logging
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import ql2.Ql2.Response
 import ql2.Ql2.Response.ResponseType
 import ql2.Ql2.Response.ResponseType._
 
 import scala.concurrent.Promise
+import scala.util.{Failure, Try}
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,7 +19,7 @@ import scala.concurrent.Promise
  * Date: 8/22/2014
  * Time: 2:22 PM 
  */
-trait VersionHandler[R] {
+trait VersionHandler[R] extends LazyLogging {
   val version: Version
 
   private val newTokenId: AtomicLong = new AtomicLong()
@@ -25,7 +28,9 @@ trait VersionHandler[R] {
 
   type TokenType <: Token[_]
 
-  def failure(e: Throwable) = ???
+  def failure(e: Throwable) = {
+    logger.error("UnCaught Exception token not resolved", e)
+  }
 
 
   private[rethinkscala] val tokensById = new com.google.common.collect.MapMaker()
@@ -43,7 +48,22 @@ trait VersionHandler[R] {
   }
 
   def handle[T](id: Long)(f: TokenType => Unit) = {
-    Option(tokensById.get(id)).map(f)
+    Option(tokensById.get(id)).map(token => Try(f(token)) match {
+      case Failure(e) => logger.error("Error in trying to handle token", e)
+        val token = tokensById.get(id)
+        // FIXME : Find a better way to invalidate the connection before resolving token
+        try {
+          throw e
+        } catch {
+          case _ => throw e
+        } finally {
+          token.failure(RethinkRuntimeError(e.getMessage, token.term, Iterable.empty, Some(e)))
+        }
+
+
+      case _ =>
+
+    })
   }
 
 

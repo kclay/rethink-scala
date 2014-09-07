@@ -84,7 +84,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
     }
   }
 
-  def take(block: (Conn, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Unit] = {
+  def take(block: (Conn, Conn => Unit, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Unit] = {
 
     val connection = borrow()
     connections.putIfAbsent(connection.id, connection)
@@ -93,7 +93,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
     val f = Future {
 
       connectionFactory.configure(connection)
-      block(connection, giveBack)
+      block(connection, giveBack, invalidate)
 
 
     }
@@ -107,6 +107,8 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
     f
   }
 
+  def total = size.get()
+
   def nonEmpty = size.get() > 0
 
   def isEmpty = size.get() == 1
@@ -114,6 +116,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
   def borrow(): Conn = Option(pool.poll()).getOrElse(createOrBlock)
 
 
+  def available = pool.size()
   def giveBack(connection: Conn): Unit = {
     pool.offer(connection)
   }
