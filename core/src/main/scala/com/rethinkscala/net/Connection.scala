@@ -146,7 +146,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
         c.cf.addListener(new ChannelFutureListener {
           def operationComplete(future: ChannelFuture) {
 
-            val query = versionHandler.newQuery(con, term, p, defaultDB, opts)
+            val query = versionHandler.newQuery(con, term, p, None, opts)
             //val query = version.toQuery(term, c.token.getAndIncrement, defaultDB, opts)
             //val token = query.asToken[T](con, term, p)
             // TODO : Check into dropping netty and using sockets for each,

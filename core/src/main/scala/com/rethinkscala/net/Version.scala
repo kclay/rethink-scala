@@ -404,22 +404,16 @@ trait ProvidesJsonQuery extends ProvidesQuery {
 
   private[this] def ast(term: Term): JsonAst = {
 
-    val opts = term match {
-
-      case MakeObj2(doc) => Reflector.fields(doc).map(f =>
-        (f.getName, f.get(doc))).toMap
-
-      case _ => term.optargs.map {
-        case ta: TermAssocPair => {
-          if(ta.token.isInstanceOf[Order]){
-            val a = ""
-          }
-          ta.key -> ast(ta.token)
+    val opts = term.optargs.map {
+      case ta: TermAssocPair => {
+        if (ta.token.isInstanceOf[Order]) {
+          val a = ""
         }
-        // case da:DatumAssocPair=> build(da)
-      }.toMap
+        ta.key -> ast(ta.token)
+      }
+    }.toMap
 
-    }
+
 
     term match {
       case d: Datum => DatumJsonAst(d.datumType, d.value)
