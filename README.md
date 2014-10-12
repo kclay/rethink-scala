@@ -93,7 +93,7 @@ results: Either[com.rethinkscala.net.RethinkError,Seq[SelectFoo]] = Right(Cursor
 
 Installation
 --------------
-
+Note needs protobuf 2.5.0 installed
 
 ```sh
 
@@ -107,8 +107,23 @@ sbt compile
 
 Version
 -
+###0.4.5 - 10/12/14
+- Fixing Nested documents for json
+- Fixed connection pooling
+- Minor bug fixes
+
+###0.4.4 - 8/26/214
+- JSON Support
+- Start of HTTP Support
+- Updated to support 1.13.x
+
+###0.4.3 - 9/24/13
+ - Added zip
+ - bug fixes
+
 ###0.4.2 - 08/12/13
  - Fixed update and filter quries
+
 ###0.4 - 08/09/13
  - Fixed race conditions in connection pool
  - Switched to using protobuf-java 2.4.1 due to compatibility issues with akka-cluster 2.2.0
