@@ -3,9 +3,11 @@ package com.rethinkscala
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 
 import com.rethinkscala.Blocking._
+import com.rethinkscala.ast.MakeArray
 import com.rethinkscala.net._
 import org.scalatest.FunSuite
-import org.scalatest.concurrent.Futures
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
+import org.scalatest.concurrent.{ScalaFutures, Futures}
 
 
 /**
@@ -14,7 +16,10 @@ import org.scalatest.concurrent.Futures
  * Date: 12/16/13
  * Time: 11:46 AM 
  */
-class ConnectionTest extends FunSuite with WithBase with Futures {
+
+case class Hello(a: Boolean)
+
+class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
   import scala.concurrent.ExecutionContext.Implicits._
 
@@ -30,7 +35,7 @@ class ConnectionTest extends FunSuite with WithBase with Futures {
     val queue = new LinkedBlockingQueue[Boolean]
     val conn = blockingConnection("foobar")
     conn.channel take {
-      case (c, restore) =>
+      case (c, restore, invalidate) =>
         restore(c)
         queue.put(true)
 
@@ -46,7 +51,7 @@ class ConnectionTest extends FunSuite with WithBase with Futures {
     val queue = new LinkedBlockingQueue[Boolean]
     val conn = BlockingConnection(new Version3(host, port, authKey = "foobar"))
     conn.channel take {
-      case (c, restore) =>
+      case (c, restore, invalidate) =>
         restore(c)
         queue.put(true)
 
@@ -65,6 +70,28 @@ class ConnectionTest extends FunSuite with WithBase with Futures {
     val results = e run
 
     assert(results.fold(x=>false,x=> x ==1))
+
+
+  }
+
+  test("restore connection on error") {
+
+
+    val s: MakeArray[Any] = Expr(Seq(1, 2))
+    assert(connection.channel.available == 0)
+
+    val futureResult = async(s.asInstanceOf[MakeArray[Hello]])
+
+    futureResult
+
+
+    import scala.concurrent.duration._
+
+
+    whenReady(futureResult.failed, Timeout(30 seconds)) { result =>
+      assert(connection.channel.available == 0)
+      result should be(asInstanceOf[RethinkRuntimeError])
+    }
 
 
   }
