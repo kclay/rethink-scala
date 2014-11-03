@@ -9,7 +9,7 @@ import org.joda.time.format.ISODateTimeFormat
 import com.rethinkscala.net.{JsonDocumentConversion, RethinkDriverError}
 import scala.collection.{mutable, Iterable}
 
-case class MakeArray[T](array: Iterable[T]) extends  ProduceArray[T] {
+case class MakeArray[T](array: Iterable[T]) extends ProduceArray[T] {
   override lazy val args = buildArgs(array.toSeq: _*)
 
   // def datumTermType:TermType.EnumVal=ql2.Datum
@@ -63,7 +63,7 @@ private[rethinkscala] case class MakeObj2(data: Document) extends Term with MapT
   def termType = TermType.MAKE_OBJ
 }
 
- object MakeObj {
+object MakeObj {
 
 
   def asJson(data: Map[String, Any], depth: Int = 20): MakeObj = new MakeObj(data) {
@@ -200,8 +200,8 @@ trait Expr {
       case p: Predicate => p()
       case t: Term => t
 
-      case f:Any if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1]) => new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
-      case f:Any if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2]) => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
+      case f: Any if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1]) => new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
+      case f: Any if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2]) => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
       case s: Seq[_] => MakeArray(s, depth - 1)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
       case d: Document => MakeObj2(d)
@@ -292,19 +292,35 @@ object Json {
   def asLazy(value: Any) = LazyJson(value)
 }
 
-class Random[T,R](values:Seq[T],float:Option[Boolean] = None) extends Query{
+class Random[T, R](values: Seq[T], float: Option[Boolean] = None) extends Query {
 
 
-  override lazy val args = buildArgs(values:_*)
+  override lazy val args = buildArgs(values: _*)
 
-  def toFloat =new Random[T,Float](values,Some(true)) with ProduceFloat
+  def toFloat = new Random[T, Float](values, Some(true)) with ProduceFloat
 
-  override lazy val optargs = buildOptArgs(Map("float"->float))
+  override lazy val optargs = buildOptArgs(Map("float" -> float))
 
   def termType = TermType.RANDOM
 }
 
-object Random{
+object Random {
 
-  def apply[T](values:Seq[T]) = new Random[T,T](values) with ProduceNumeric
+  def apply[T](values: Seq[T]) = new Random[T, T](values) with ProduceNumeric
+
+}
+
+class UUID extends Produce[java.util.UUID] {
+  self =>
+  override def termType = TermType.UUID
+
+  def string = new ProduceString {
+
+
+    override private[rethinkscala] val underlyingTerm: Term = self
+
+    override def termType = TermType.UUID
+
+
+  }
 }

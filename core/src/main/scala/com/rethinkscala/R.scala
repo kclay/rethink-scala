@@ -42,11 +42,10 @@ trait RethinkApi extends TimeNames {
   private lazy val _row = new ImplicitVar
 
 
-
-
- // def http
+  // def http
 
   def expr(term: Term): Term = term
+
   def expr(value: String): StringDatum = Expr(value)
 
   def expr(value: Boolean): BooleanDatum = Expr(value)
@@ -62,13 +61,13 @@ trait RethinkApi extends TimeNames {
   def expr(value: Document) = Expr(value)
 
   def expr(value: ReadableInstant) = Expr(value)
+
   def expr(v: Any) = Expr(v)
 
   // TODO Fix me, clashes with Sequence and Hash
   def row: ImplicitVar = _row
 
   def string = row.string
-
 
 
   //def row[T<:Sequence](name: String)(implicit d:DummyImplicit) = _row.asInstanceOf[T] field name
@@ -78,14 +77,14 @@ trait RethinkApi extends TimeNames {
 
   def table(name: String): Table[Document] = table(name, None)
 
-  def table(name: String, useOutDated: Boolean): Table[Document] =  table(name,Some(useOutDated))
+  def table(name: String, useOutDated: Boolean): Table[Document] = table(name, Some(useOutDated))
 
   def table(name: String, useOutDated: Option[Boolean] = None): Table[Document] = Table[Document](name, useOutDated)
 
 
-  def tableAs[T  <: Document](name: String): Table[T] = tableAs[T](name, None)
+  def tableAs[T <: Document](name: String): Table[T] = tableAs[T](name, None)
 
-  def tableAs[T  <: Document](name: String, useOutDated: Boolean): Table[T] = tableAs[T](name, Some(useOutDated))
+  def tableAs[T <: Document](name: String, useOutDated: Boolean): Table[T] = tableAs[T](name, Some(useOutDated))
 
   def tableAs[T <: Document](name: String, useOutDated: Option[Boolean] = None): Table[T] = Table[T](name, useOutDated)
 
@@ -117,9 +116,11 @@ trait RethinkApi extends TimeNames {
 
   def avg(attr: String) = ByAvg(attr)
 
-  def random  = Random[Double](Seq.empty)
-  def random[@specialized(Int,Double,Long) T](values:T *) =Random[T](values)
- // def random(values:Float*) = Random[Float,Float](values,true)
+  def random = Random[Double](Seq.empty)
+
+  def random[@specialized(Int, Double, Long) T](values: T*) = Random[T](values)
+
+  // def random(values:Float*) = Random[Float,Float](values,true)
 
   val count = ByCount
 
@@ -143,11 +144,10 @@ trait RethinkApi extends TimeNames {
 
   def json(str: String) = Json(str)
 
+  def uuid = new ast.UUID()
+
 
 }
-
-
-
 
 
 trait TimeNames {
