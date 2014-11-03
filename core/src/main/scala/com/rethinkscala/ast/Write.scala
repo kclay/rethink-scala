@@ -49,7 +49,7 @@ case class Insert[T <: Document, R <: Document](table: Table[T], records: Either
 
     (f.getName, f.get(doc))
   ).collect {
-    case (name, value) if ((name == "id" && value != None) || name != "id") => (name, Expr(value))
+    case (name, value) if (name == "id" && value != None) || name != "id" => (name, Expr(value))
   }.toMap
 
   private[rethinkscala] lazy val argsForJson = buildArgs(table, records match {

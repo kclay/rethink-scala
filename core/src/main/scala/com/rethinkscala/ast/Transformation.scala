@@ -29,7 +29,7 @@ case class RMap[T](target: Sequence[_], func: FuncWrap) extends Transformation[T
   */
 case class ConcatMap[T](target: Sequence[_], func: FuncWrap) extends Transformation[T] {
 
-  def termType = TermType.CONCATMAP
+  def termType = TermType.CONCAT_MAP
 
   def toMap = RMap(target, func)
 }
@@ -84,7 +84,7 @@ case class OrderBy[T](target: Sequence[T], values: Seq[Order], index: Option[Ord
   override lazy val args = buildArgs( values.+:(target): _*)
 
   override lazy val optargs = buildOptArgs(Map("index"->index))
-  def termType = TermType.ORDERBY
+  def termType = TermType.ORDER_BY
 
   def withIndex(i: String) = copy(index = Some(i))
   def withIndex(i: Order) = copy(index = Some(i))

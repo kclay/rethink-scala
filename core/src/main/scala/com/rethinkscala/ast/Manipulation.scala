@@ -286,7 +286,7 @@ case class Match(target: Strings, regexp: String) extends ProduceDocument[MatchR
   * @param target
   */
 case class TypeOf(target: Typed) extends ProduceString {
-  def termType = TermType.TYPEOF
+  def termType = TermType.TYPE_OF
 }
 
 case class Keys(target: Record) extends ProduceArray[String] {

@@ -142,7 +142,7 @@ case class ForEach(target: Sequence[_], function: Predicate1) extends ProduceAny
 
   override lazy val args = buildArgs(target, FuncWrap(function))
 
-  def termType = TermType.FOREACH
+  def termType = TermType.FOR_EACH
 }
 
 case class CoerceTo(target: Typed, dataType: DataType) extends ProduceAny {
@@ -308,4 +308,3 @@ object Random{
 
   def apply[T](values:Seq[T]) = new Random[T,T](values) with ProduceNumeric
 }
-
