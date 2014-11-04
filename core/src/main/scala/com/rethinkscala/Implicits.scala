@@ -18,7 +18,7 @@ import scala.concurrent.Future
   */
 
 
-trait ToAstImplicts{
+trait ToAstImplicts {
 
   implicit val stringToStrings = new ToAst[String] {
     type TypeMember = Strings
@@ -46,11 +46,10 @@ trait ToAstImplicts{
   }
 
 
-
   implicit def arrayMapToTyped[T] = new ToAst[Map[String, T]] {
     type TypeMember = Var
 
-    type InnerProduce = Produce0[Map[String,T]]
+    type InnerProduce = Produce0[Map[String, T]]
   }
 
   implicit def docToTyped[T <: Document] = new ToAst[T] {
@@ -59,6 +58,7 @@ trait ToAstImplicts{
     type InnerProduce = Produce0[T]
 
   }
+
   /*
   implicit def seqToSequence[T>:Any] = new ToAst[Seq[T]] {
     type TypeMember = Sequence[T]
@@ -74,12 +74,13 @@ trait ToAstImplicts{
 }
 
 object ToAst extends ToAstImplicts
+
 trait ToAst[A] {
   self: ToAst[A] =>
   type Type = A
   type TypeMember >: Var
   type Producer = Produce[A]
-  type InnerProduce <:Produce0[_]
+  type InnerProduce <: Produce0[_]
   type Cast = TypeMember with InnerProduce with Producer
 
 }
@@ -88,17 +89,18 @@ class ToFunctional[T, A >: Var](seq: Sequence[T]) {
 
 
   def concatMap[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = ConcatMap[Inner](seq.underlying, FuncWrap(f))
+
   def map[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = RMap[Inner](seq.underlying, FuncWrap(f))
-  def reduce[P ](f: (A, A) =>Produce0[P]) = Reduce[T,P](seq.underlying, f)
+
+  def reduce[P](f: (A, A) => Produce0[P]) = Reduce[T, P](seq.underlying, f)
 
 }
 
 
-
-
-object CanMap{
+object CanMap {
   def apply[From, To <: Typed, Out] = new CanMap[From, To, Out]
 }
+
 trait CanMapImplicits {
 
 
@@ -129,25 +131,21 @@ trait CanMapImplicits {
 class CanMap[-From, -To <: Typed, Out]
 
 
-
-
 private[rethinkscala] trait ImplicitConversions {
-
-
 
 
   object r extends RethinkApi
 
 
-
-  implicit def anyToPimpled(v:Any) = new PimpedAny(v)
+  implicit def anyToPimpled(v: Any) = new PimpedAny(v)
 
   //implicit def toTyped[T<:Typed](v:T):Typed = v
 
-  implicit def collectionToAst[T](coll:Iterable[T]):MakeArray[T] = Expr[T](coll)
+  implicit def collectionToAst[T](coll: Iterable[T]): MakeArray[T] = Expr[T](coll)
+
   implicit def intToDatNum(i: Int) = NumberDatum(i)
 
-  implicit def longToDatNum(l: Long)= NumberDatum(l)
+  implicit def longToDatNum(l: Long) = NumberDatum(l)
 
   implicit def floatToDatNum(f: Float) = NumberDatum(f)
 
@@ -155,19 +153,19 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def string2DatNum(s: String) = StringDatum(s)
 
-  implicit def boolean2Datum(b:Boolean) =  BooleanDatum(b)
+  implicit def boolean2Datum(b: Boolean) = BooleanDatum(b)
 
-   /*
-  implicit def intToDatNum0(i: Int): Datum = NumberDatum(i)
+  /*
+ implicit def intToDatNum0(i: Int): Datum = NumberDatum(i)
 
-  implicit def longToDatNum0(l: Long): Datum = NumberDatum(l)
+ implicit def longToDatNum0(l: Long): Datum = NumberDatum(l)
 
-  implicit def floatToDatNum0(f: Float): Datum = NumberDatum(f)
+ implicit def floatToDatNum0(f: Float): Datum = NumberDatum(f)
 
-  implicit def doubleToDatNum0(d: Double):Datum = NumberDatum(d)
+ implicit def doubleToDatNum0(d: Double):Datum = NumberDatum(d)
 
-  implicit def string2DatNum0(s: String): Datum= StringDatum(s)
-     */
+ implicit def string2DatNum0(s: String): Datum= StringDatum(s)
+    */
 
   implicit def toOptLiteral[T <% Literal](v: T): Option[T] = Some(v)
 
@@ -191,8 +189,6 @@ private[rethinkscala] trait ImplicitConversions {
 
 
   implicit def toBooleanPredicate2(f: (Var, Var) => Binary) = new ScalaBooleanPredicate2(f)
-
-
 
 
   //implicit def seq2Datum(s:Seq[Datum]) = MakeArray(s)
@@ -235,13 +231,13 @@ private[rethinkscala] trait ImplicitConversions {
 
 
 }
+
 trait FromAst[T] {
   type Raw
 }
 
 
-
-trait Helpers{
+trait Helpers {
 
   type Var = com.rethinkscala.ast.Var
   val Expr = com.rethinkscala.ast.Expr
@@ -253,32 +249,38 @@ trait Helpers{
   type BlockResult[T] = ResultResolver.Blocking[T]
   type AsyncResult[T] = ResultResolver.Async[T]
 
-  def async[T](p:Produce[T])(implicit c:Connection,extractor:ResultExtractor[T]):AsyncResult[T]=async(_.apply(p))
-  def async[T](f: AsyncConnection => Future[T])(implicit c: Connection):AsyncResult[T] = f(AsyncConnection(c))
+  def async[T](p: Produce[T])(implicit c: Connection, extractor: ResultExtractor[T]): AsyncResult[T] = async(_.apply(p))
 
-  def block[T](f: BlockingConnection => Unit)(implicit c: Connection):Unit = f(BlockingConnection(c))
-  def block[T](f: BlockingConnection => BlockResult[T])(implicit c: Connection):BlockResult[T] = f(BlockingConnection(c))
-  def block[T](p:Produce[T])(implicit c:Connection,extractor:ResultExtractor[T]):BlockResult[T] = {
+  def async[T](f: AsyncConnection => Future[T])(implicit c: Connection): AsyncResult[T] = f(AsyncConnection(c))
 
-    block{c:BlockingConnection=> c.apply(p)}
+  def block[T](f: BlockingConnection => Unit)(implicit c: Connection): Unit = f(BlockingConnection(c))
+
+  def block[T](f: BlockingConnection => BlockResult[T])(implicit c: Connection): BlockResult[T] = f(BlockingConnection(c))
+
+  def block[T](p: Produce[T])(implicit c: Connection, extractor: ResultExtractor[T]): BlockResult[T] = {
+
+    block { c: BlockingConnection => c.apply(p)}
   }
 
 }
 
- class PimpedAny(val v:Any) extends AnyVal{
+class PimpedAny(val v: Any) extends AnyVal {
   @inline
   def wrap = FuncWrap(v)
+
   @inline
   def optWrap = Some(FuncWrap(v))
 }
 
-object Implicits  {
+object Implicits {
 
 
   trait Common extends CanMapImplicits
   with ToAstImplicts
-  with ReceptacleImplicits with ImplicitConversions with net.Versions with Helpers{
-
+  with ReceptacleImplicits with ImplicitConversions
+  with net.Versions
+  with Helpers
+  with GeometryImplicits {
 
 
     implicit val numericToDouble = new FromAst[Numeric] {
@@ -297,17 +299,17 @@ object Implicits  {
     }
 
 
-
-
   }
+
   object Blocking extends net.BlockingImplicits with Common
 
   object Async extends net.AsyncImplicits with Common
+
   object Quick {
 
     import ql2.{Ql2 => ql2}
 
-import scala.collection.JavaConverters._
+    import scala.collection.JavaConverters._
 
     case class Q12Datum(datum: ql2.Datum) {
       def bool = datum.getRBool

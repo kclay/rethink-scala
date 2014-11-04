@@ -183,6 +183,8 @@ trait Expr {
 
   def apply(d: Document) = MakeObj2(d)
 
+  def apply(v: WrappedValue[_]):Term = apply(v.value)
+
   def apply(date: ReadableInstant) = ISO8601(ISODateTimeFormat.dateTime().print(date))
 
 
@@ -192,6 +194,7 @@ trait Expr {
     Seq
     a match {
       case w: FuncWrap => w()
+      case wv: WrappedValue[_] => apply(wv.value, depth)
 
 
       case date: ReadableInstant => apply(date)
@@ -267,6 +270,11 @@ trait Expr {
 
 
   }
+}
+
+
+trait WrappedValue[T] {
+  val value: T
 }
 
 object Expr extends Expr

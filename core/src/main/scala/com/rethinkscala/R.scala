@@ -36,7 +36,7 @@ import scala.specialized
  */
 
 
-trait RethinkApi extends TimeNames {
+trait RethinkApi extends TimeNames with GeometryApi {
   def getInstance = this
 
   private lazy val _row = new ImplicitVar
@@ -148,6 +148,8 @@ trait RethinkApi extends TimeNames {
 
 
 }
+
+
 
 
 trait TimeNames {

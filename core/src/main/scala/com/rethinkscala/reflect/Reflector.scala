@@ -104,7 +104,7 @@ object Reflector {
   def fromJson[T: Manifest](value: String): T =
     mapper.readValue(value, typeReference[T])
 
-  private[this] def typeReference[T: Manifest] = new TypeReference[T] {
+  private[rethinkscala] def typeReference[T: Manifest] = new TypeReference[T] {
     override def getType = typeFromManifest(manifest[T])
   }
 

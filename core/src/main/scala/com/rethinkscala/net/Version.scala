@@ -36,13 +36,11 @@ case class ProtoBufCompiledAst(underlying: ql2.Term) extends CompiledAst
 trait JsonAst {
 
 
-
   def toValue: Any
 
 }
 
 case class DatumJsonAst(datumType: ql2.Datum.DatumType, value: Any) extends JsonAst {
-
 
 
   override def toValue = value
@@ -53,13 +51,13 @@ case class TermJsonAst(termType: ql2.Term.TermType, term: Seq[JsonAst], opts: Ma
 
   extends JsonAst {
 
-  def options= opts.mapValues {
+  def options = opts.mapValues {
     case v: JsonAst => v.toValue
     case a: Any => a
   }
 
   def toValue = termType match {
-    case ql2.Term.TermType.MAKE_OBJ =>options
+    case ql2.Term.TermType.MAKE_OBJ => options
 
     case _ => if
     (opts.nonEmpty) Seq(termType.getNumber, term.map(_.toValue), options)
@@ -189,7 +187,7 @@ trait ProvidesQuery {
   def compile[T](builder: Builder, term: Term): Query[T]
 
 
-  def toQuery[T](term: Term, token: Long, db: Option[String], opts: Map[String, Any]) = {
+  def toQuery[T](term: Term, token: Long, db: Option[String] = None, opts: Map[String, Any] = Map.empty) = {
 
 
     val builder = newQueryBuilder(Query.QueryType.START, token, opts)
