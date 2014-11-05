@@ -3,6 +3,8 @@ package com.rethinkscala.utils
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.TimeUnit
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 
@@ -50,7 +52,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
                                                      timeout: Int = 500000)
 
 
-  extends ConnectionPool[Conn] with LowLevelConnectionPool[Conn] {
+  extends ConnectionPool[Conn] with LowLevelConnectionPool[Conn] with LazyLogging {
 
 
   private val size = new AtomicInteger(0)
@@ -73,6 +75,9 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
   def apply[A]()(f: Conn => A): A = {
     val connection = borrow()
 
+
+    logger.debug(s"Borrowed connection with id = ${connection.id}")
+
     try {
       val result = f(connection)
       giveBack(connection)
@@ -87,6 +92,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
   def take(block: (Conn, Conn => Unit, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Unit] = {
 
     val connection = borrow()
+    logger.debug(s"take connection with id (${connection.id})")
     connections.putIfAbsent(connection.id, connection)
 
 
@@ -117,18 +123,23 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
 
 
   def available = pool.size()
+
   def giveBack(connection: Conn): Unit = {
+    logger.debug(s"giveBack(connection:${connection.id})")
     pool.offer(connection)
   }
 
   def invalidate(connection: Conn): Unit = {
+    logger.debug(s"invalidate(connection:${connection.id})")
     connectionFactory.destroy(connection)
     connections.remove(connection.id, connection)
     size.decrementAndGet
   }
 
   private def createOrBlock: Conn = {
-    size.get match {
+    val amount = size.get
+    logger.debug(s"createOrBlock size=$amount max = $max")
+    amount match {
       case e: Int if e == max => block
       case _ => create
     }
@@ -137,6 +148,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
   private def create: Conn = {
     size.incrementAndGet match {
       case e: Int if e > max =>
+        logger.debug(s"create $e > $max")
 
         size.decrementAndGet
         borrow()

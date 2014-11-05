@@ -10,16 +10,16 @@ import Blocking._
  * Time: 9:45 AM
  *
  */
-case class Address(labels: List[String] = List("sample")) extends Document
+case class NestedAddress(labels: List[String] = List("sample")) extends Document
 
-case class User(name: String, active: Boolean = true, address: Address = Address(), id: Option[String] = None) extends Document
+case class NestedUser(name: String, active: Boolean = true, address: NestedAddress = NestedAddress(), id: Option[String] = None) extends Document
 
 class NestedTest extends FunSuite with WithBase {
 
 
   test("nested documents") {
 
-    val term = r.table("foo").insert(User("foo"))
+    val term = r.table("foo").insert(NestedUser("foo"))
     val query = version3.toQuery(term, 1, None, Map.empty)
     val json = query.json
     println(json)

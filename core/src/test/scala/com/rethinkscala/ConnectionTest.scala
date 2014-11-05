@@ -46,7 +46,7 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
     assert(queue.poll(10, TimeUnit.SECONDS))
   }
 
-  test("v3 auth success"){
+  test("v3 auth success") {
 
     val queue = new LinkedBlockingQueue[Boolean]
     val conn = BlockingConnection(new Version3(host, port, authKey = "foobar"))
@@ -69,7 +69,7 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
     val results = e run
 
-    assert(results.fold(x=>false,x=> x ==1))
+    assert(results.fold(x => false, x => x == 1))
 
 
   }
@@ -96,6 +96,33 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
   }
 
+
+  test("stress test") {
+
+    implicit val connection = blockingConnection("foobar")
+    val tbl = r.tableAs[ConnectionPoolMsg]("CheckInHitMsg")
+    tbl.create.run
+    val entries = for (i <- 0 to 10) yield ConnectionPoolMsg.create
+    tbl.insert(entries).run
+
+
+    var count = 0
+    do {
+      val res = tbl.orderBy(r.desc("timestamp")).toOpt
+
+      if (res.isEmpty) {
+        throw new UnknownError()
+      }
+
+      count = count + 1
+      println(count)
+      if (count == 125) {
+        var a = ""
+      }
+
+    } while (count < 10000)
+
+  }
   /*
   test("v2 auth failed") {
 

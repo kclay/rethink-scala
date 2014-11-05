@@ -153,6 +153,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 
             val attachment = new ConnectionAttachment(versionHandler, e => {
               p.tryFailure(e)
+              logger.debug(s"Invalidating connection (${c.id})")
               invalidate(c)
             })
             // Or find a way so that we can store the token for the netty handler to complete
@@ -163,7 +164,10 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
           }
         })
         f onSuccess {
-          case _ => restore(c)
+          case _ => {
+            logger.debug(s"Restoring connection (${c.id})")
+            restore(c)
+          }
         }
     } onFailure {
       case e: Exception => p.tryFailure(e)
