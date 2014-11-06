@@ -13,7 +13,7 @@ import ql2.Ql2.Response.ResponseType
 import ql2.Ql2.Response.ResponseType._
 
 import scala.concurrent.Promise
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Try, Success}
 
 /**
  * Created by IntelliJ IDEA.
@@ -67,19 +67,24 @@ trait VersionHandler[R] extends LazyLogging {
           } finally {
             token.failure(RethinkRuntimeError(e.getMessage, token.term, Iterable.empty, Some(e)))
           }
+        case Success(res) => logger.debug(s"Results = $res")
       }
       case _ => logger.error(s"No Token found for $id")
     }
 
 
   }
+}
 
-  case class JsonVersionHandler(version: Version3) extends VersionHandler[String] {
+case class JsonVersionHandler(version: Version3) extends VersionHandler[String] {
 
-    type TokenType = JsonQueryToken[_]
-    val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
+  type TokenType = JsonQueryToken[_]
+  val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
 
-    override def handle(tokenId: Long, json: String) = handle(tokenId) {
+  override def handle(tokenId: Long, json: String) = {
+
+   // logger.debug(s"JSON tokenId =$tokenId json = $json")
+    handle(tokenId) {
       token => (json match {
         case ResponseTypeExtractor(responseType) => responseType.toInt match {
           case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE | CLIENT_ERROR_VALUE => token.toError(json)
@@ -96,25 +101,28 @@ trait VersionHandler[R] extends LazyLogging {
       }
     }
   }
+}
 
-  case class ProtoVersionHandler(version: Version2) extends VersionHandler[ql2.Ql2.Response] {
-    override def handle(tokenId: Long, response: Response) = handle(tokenId) {
-      token => (response.getType match {
+case class ProtoVersionHandler(version: Version2) extends VersionHandler[ql2.Ql2.Response] {
+  override def handle(tokenId: Long, response: Response) = handle(tokenId) {
+    token => (response.getType match {
 
-        case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => token.toError(response)
-        case ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE => token.toCursor(0, response)
-        case ResponseType.SUCCESS_ATOM => token.term match {
-          case x: ProduceSequence[_] => token.toCursor(0, response)
-          case _ => token.toResult(response)
-        }
-        // case ResponseType.SUCCESS_ATOM => toResult(response)
-        case _ =>
-
-      }) match {
-        case e: Exception => token.failure(e)
-        case e: Any => token.success(e)
+      case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => token.toError(response)
+      case ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE => token.toCursor(0, response)
+      case ResponseType.SUCCESS_ATOM => token.term match {
+        case x: ProduceSequence[_] => token.toCursor(0, response)
+        case _ => token.toResult(response)
       }
-    }
+      // case ResponseType.SUCCESS_ATOM => toResult(response)
+      case _ =>
 
-    override type TokenType = QueryToken[_]
+    }) match {
+      case e: Exception => token.failure(e)
+      case e: Any => token.success(e)
+    }
   }
+
+  override type TokenType = QueryToken[_]
+}
+
+

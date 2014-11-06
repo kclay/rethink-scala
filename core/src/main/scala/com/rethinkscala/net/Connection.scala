@@ -71,7 +71,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     val b = new ClientBootstrap(factory)
     b.setPipelineFactory(version.pipelineFactory)
     b.setOption("tcpNoDelay", true)
-    b.setOption("keepAlive", true)
+    //b.setOption("keepAlive", true)
     b.setOption("bufferFactory", new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN))
     b
 

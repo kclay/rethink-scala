@@ -1,6 +1,7 @@
 package com.rethinkscala.net
 
 import com.rethinkscala.reflect.Reflector
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.channel.{Channel, ChannelHandlerContext}
 import org.jboss.netty.handler.codec.frame.FrameDecoder
@@ -14,7 +15,7 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder
  */
 
 
-abstract class RethinkFrameDecoder(readAmount: Int) extends FrameDecoder{
+abstract class RethinkFrameDecoder(readAmount: Int) extends FrameDecoder {
 
   def decode(buffer: ChannelBuffer): AnyRef
 
@@ -30,7 +31,7 @@ abstract class RethinkFrameDecoder(readAmount: Int) extends FrameDecoder{
   }
 }
 
-class JsonFrameDecoder extends RethinkFrameDecoder(12) {
+class JsonFrameDecoder extends RethinkFrameDecoder(12) with LazyLogging {
   override def decode(buffer: ChannelBuffer): AnyRef = {
     val token = buffer.readLong()
     val length = buffer.readInt()
@@ -39,13 +40,17 @@ class JsonFrameDecoder extends RethinkFrameDecoder(12) {
       buffer.resetReaderIndex()
       return null
     }
-    (token,new String(buffer.readBytes(length).array(), "UTF-8"))
+
+    val json = new String(buffer.readBytes(length).array(), "US-ASCII")
+    logger.debug(s"Decoding Frame TOKEN = $token LENGTH = $length ")
+    logger.debug(s"JSON = $json");
+    (token, json)
 
   }
 }
 
 class ProtoFrameDecoder extends RethinkFrameDecoder(4) {
-  override def decode(buffer: ChannelBuffer):AnyRef = {
+  override def decode(buffer: ChannelBuffer): AnyRef = {
     val length = buffer.readInt()
 
     if (buffer.readableBytes() < length) {

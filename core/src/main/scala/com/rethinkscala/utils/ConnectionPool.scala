@@ -49,7 +49,7 @@ class TimeoutError(message: String) extends Error(message)
 
 class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: ConnectionFactory[Conn],
                                                      max: Int = 20,
-                                                     timeout: Int = 500000)
+                                                     timeout: Int = 5000)
 
 
   extends ConnectionPool[Conn] with LowLevelConnectionPool[Conn] with LazyLogging {
@@ -130,10 +130,11 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
   }
 
   def invalidate(connection: Conn): Unit = {
-    logger.debug(s"invalidate(connection:${connection.id})")
+    logger.debug(s"invalidate(connection:${connection.id}) total = ${size.get()}")
     connectionFactory.destroy(connection)
     connections.remove(connection.id, connection)
     size.decrementAndGet
+    logger.debug(s"Finished invalidating(connect:${connection.id} total = ${size.get}")
   }
 
   private def createOrBlock: Conn = {
@@ -159,7 +160,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
   }
 
   private def block: Conn = {
-    Option(pool.poll(timeout, TimeUnit.NANOSECONDS)) getOrElse {
+    Option(pool.poll(timeout, TimeUnit.MILLISECONDS)) getOrElse {
       throw new TimeoutError("Couldn't acquire a connection in %d nanoseconds.".format(timeout))
     }
   }

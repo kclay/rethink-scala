@@ -10,10 +10,11 @@ import scala.Some
 import scala.concurrent.Future
 
 
-object ResultResolver{
+object ResultResolver {
   type Async[T] = Future[T]
   type Blocking[T] = Either[RethinkError, T]
 }
+
 trait ResultResolver[Result] {
 
   def toResult[R]: Result
@@ -33,20 +34,20 @@ trait ResultQuery[T] {
     t match {
 
       case Some(Failure(e: Exception)) => resolve(e)
-      case Failure(e: Exception)=>Left(RethinkRuntimeError(e.getMessage, term))
-      case Failure(e:RethinkError)=> resolve(e)
-      case e:RethinkError=>Left(e)
+
+      case Failure(e: RethinkError) => resolve(e)
+      case Failure(e: Exception) => Left(RethinkRuntimeError(e.getMessage, term))
+      case e: RethinkError => Left(e)
       case Some(Success(res)) => res match {
         case x: None.type => Left(RethinkNoResultsError("No results found for " + extractor.manifest.runtimeClass.getSimpleName, term))
         case _ => Right(res.asInstanceOf[T])
 
 
       }
-      case value=>Right(value.asInstanceOf[T])
+      case value => Right(value.asInstanceOf[T])
     }
   }
 }
-
 
 
 case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, extractor: ResultExtractor[R], opts: Map[String, Any])
@@ -62,15 +63,14 @@ case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, extracto
 
     val p = connection.underlying.write(term, opts)(extractor)
     // FIXME : Write this better
-    p.future.transform(t=>resolve(t).right.get,e=>resolve(e).left.get)
-
+    p.future.transform(t => resolve(t).right.get, e => resolve(e).left.get)
 
 
   }
 }
 
 
-case class BlockingResultQuery[R](term: Term, connection: BlockingConnection,extractor: ResultExtractor[R], opts: Map[String, Any])
+case class BlockingResultQuery[R](term: Term, connection: BlockingConnection, extractor: ResultExtractor[R], opts: Map[String, Any])
   extends ResultQuery[R] with ResultResolver[Either[RethinkError, R]] {
 
 

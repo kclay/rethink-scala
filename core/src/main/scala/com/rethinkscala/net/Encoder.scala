@@ -49,6 +49,7 @@ class RethinkDBEncoder extends OneToOneEncoder {
         b
     }
 
+
   }
 }
 

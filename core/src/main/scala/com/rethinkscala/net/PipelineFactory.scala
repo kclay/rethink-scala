@@ -13,12 +13,12 @@ import ql2.Ql2.Response
  */
 
 
-trait RethinkPipelineFactory extends ChannelPipelineFactory{
+trait RethinkPipelineFactory extends ChannelPipelineFactory {
 
   // stateless
-  val defaultHandler:SimpleChannelUpstreamHandler
+  val defaultHandler: SimpleChannelUpstreamHandler
 
-  val frameDecoder:RethinkFrameDecoder
+  def frameDecoder: RethinkFrameDecoder
   val encoder = new RethinkDBEncoder
 
   def getPipeline: ChannelPipeline = {
@@ -32,20 +32,22 @@ trait RethinkPipelineFactory extends ChannelPipelineFactory{
   }
 }
 
-object JsonPipelineFactory extends RethinkPipelineFactory{
+object JsonPipelineFactory extends RethinkPipelineFactory {
 
   override val defaultHandler: SimpleChannelUpstreamHandler = new JsonChannelHandler
-  override val frameDecoder: RethinkFrameDecoder =new JsonFrameDecoder()
+  override def frameDecoder: RethinkFrameDecoder = new JsonFrameDecoder()
 }
-object ProtoPipelineFactory extends RethinkPipelineFactory{
+
+object ProtoPipelineFactory extends RethinkPipelineFactory {
 
   override val defaultHandler: SimpleChannelUpstreamHandler = new ProtoChannelHandler
-  override val frameDecoder: RethinkFrameDecoder = new ProtoFrameDecoder()
+  override def frameDecoder: RethinkFrameDecoder = new ProtoFrameDecoder()
 
   val protoDecoder = ProtobufDecoder(Response.getDefaultInstance)
+
   override def getPipeline = {
     val p = super.getPipeline
-    p.addAfter("frameDecoder","protoDecoder",protoDecoder)
+    p.addAfter("frameDecoder", "protoDecoder", protoDecoder)
     p
   }
 }
