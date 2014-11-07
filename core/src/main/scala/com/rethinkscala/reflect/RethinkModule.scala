@@ -18,23 +18,21 @@ class RethinkModule extends DefaultScalaModule {
   _deserializers.addDeserializer(classOf[DateTime], RethinkDateTimeDeserializer.forType(classOf[DateTime]))
   _deserializers.addDeserializer(classOf[ReadableDateTime], RethinkDateTimeDeserializer.forType(classOf[ReadableDateTime]))
   _deserializers.addDeserializer(classOf[ReadableInstant], RethinkDateTimeDeserializer.forType(classOf[ReadableInstant]))
-  _deserializers.addDeserializer(classOf[GroupResult[_]],new GroupResultDeserializer)
-  _deserializers.addDeserializer(classOf[JsonDocument],new JsonDocumentDeserializer)
-
-
-
-
+  _deserializers.addDeserializer(classOf[GroupResult[_]], new GroupResultDeserializer)
+  _deserializers.addDeserializer(classOf[JsonDocument], new JsonDocumentDeserializer)
+  _deserializers.addDeserializer(classOf[Polygon], PolygonDeserializer)
+  _deserializers.addDeserializer(classOf[Point], PointDeserializer)
 
 
   private val _resolver = new SimpleAbstractTypeResolver
-  _resolver.addMapping(classOf[Document],classOf[BasicDocument])
+  _resolver.addMapping(classOf[Document], classOf[BasicDocument])
   //_resolver.addMapping(classOf[Seq[GroupResultRecord[_]]],)
 
 
   //dd//
   // this += { _.addDeserializers(Date) }
   this += (_ addDeserializers _deserializers)
-  this += ( _ addAbstractTypeResolver _resolver)
+  this += (_ addAbstractTypeResolver _resolver)
 
   override def getModuleName = "RethinkModule"
 }

@@ -20,7 +20,7 @@ case class Circle(longLat: Point, radius: Double, numVertices: Option[Int] = Non
   extends ProduceGeometry[Polygon] {
 
 
-  override lazy val args = buildArgs(Seq(longLat.ast, radius): _*)
+  override lazy val args = buildArgs(Seq(longLat.encode, radius): _*)
   override lazy val optargs = buildOptArgs(Map("numVertices" -> numVertices, "geoSystem" -> geoSystem, "unit" -> unit, "fill" -> fill))
 
   override def termType = TermType.CIRCLE

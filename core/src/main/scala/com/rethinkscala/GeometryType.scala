@@ -1,9 +1,11 @@
 package com.rethinkscala
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.annotation.{JsonUnwrapped, JsonProperty, JsonTypeInfo}
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonTypeResolver}
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.rethinkscala.ast.{Circle, WrappedValue}
-import com.rethinkscala.reflect.{GroupResultDeserializer, RethinkTypeResolverBuilder}
+import com.rethinkscala.reflect.{GroupResultDeserializer}
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,9 +14,11 @@ import com.rethinkscala.reflect.{GroupResultDeserializer, RethinkTypeResolverBui
  * Time: 12:10 PM 
  */
 
-abstract class GeometryType {
 
-  private[rethinkscala] def ast: Any
+trait GeometryType {
+
+  private[rethinkscala] def encode: Any
+
 
 }
 
@@ -54,7 +58,9 @@ object UnitSphere extends GeoSystem {
 }
 
 case class Point(long: Double, lat: Double) extends GeometryType {
-  override private[rethinkscala] def ast = Seq(long, lat)
+
+
+  override private[rethinkscala] def encode = Seq(long, lat)
 
   def this(l: List[Double]) {
     this(l(0), l(1))
@@ -62,10 +68,10 @@ case class Point(long: Double, lat: Double) extends GeometryType {
 }
 
 
-@JsonTypeResolver(value = classOf[RethinkTypeResolverBuilder])
-@JsonTypeInfo(use = JsonTypeInfo.Id.CUSTOM, include = JsonTypeInfo.As.WRAPPER_OBJECT)
 case class Polygon(points: Seq[Point]) extends GeometryType {
-  override private[rethinkscala] def ast = points.map(_.ast)
+
+
+  override private[rethinkscala] def encode = points.map(_.encode)
 }
 
 trait GeometryApi {

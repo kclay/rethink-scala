@@ -5,7 +5,8 @@ import com.fasterxml.jackson.core.{JsonToken, JsonParser}
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver
 import com.fasterxml.jackson.databind.jsontype.impl.TypeDeserializerBase
 import com.fasterxml.jackson.databind.{BeanProperty, DeserializationContext, JavaType, JsonDeserializer}
-import com.rethinkscala.{Polygon, Point, GroupResult, GeometryType}
+import com.rethinkscala._
+import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,19 +18,45 @@ import com.rethinkscala.{Polygon, Point, GroupResult, GeometryType}
 
 case class GeometryExtractor[T](coordinates: List[T])
 
-case class PolygonExtractor(coordinates: List[List[Polygon]]) {
-  def value = coordinates.head.head
+case class PolygonExtractor(coordinates: List[List[Point]]) {
+  def value = Polygon(coordinates.head)
 }
+
 
 object GeometryDeserializer {
-  val classOfPoint = classOf[Point]
+  val classOfPoint = classOf[(Double, Double)]
   val classOfPolygon = classOf[Polygon]
-  val polygonExtractor = Reflector.typeReference[PolygonExtractor]
+
+  val classOfPolygonExtractor = classOf[PolygonExtractor]
 
 
 }
 
-case class GeometryDeserializer[T <: GeometryType](baseType: JavaType
+
+object PointDeserializer extends StdScalarDeserializer[Point](classOf[Point]) {
+  override def deserialize(jp: JsonParser, p2: DeserializationContext) = {
+
+    jp.nextToken() // [
+    val long = jp.getDoubleValue
+    jp.nextToken()
+    val lat = jp.getDoubleValue
+    jp.nextToken() //[
+
+
+    Point(long, lat)
+  }
+}
+
+object PolygonDeserializer extends StdScalarDeserializer[Polygon](classOf[Polygon]) {
+  override def deserialize(p1: JsonParser, p2: DeserializationContext) = {
+    val polygon = p1.readValueAs(GeometryDeserializer.classOfPolygonExtractor).value
+
+    polygon
+  }
+}
+
+/*
+case class GeometryDeserializer[T <: Geometry](baseType: JavaType
                                                    ,
                                                    idRes: TypeIdResolver
                                                    ,
@@ -72,3 +99,5 @@ TypeDeserializerBase(baseType, idRes, typePropertyName, typeIdVisible, defaultIm
     results
   }
 }
+
+*/

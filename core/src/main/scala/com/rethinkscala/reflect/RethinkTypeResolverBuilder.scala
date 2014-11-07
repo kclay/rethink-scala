@@ -16,6 +16,7 @@ import com.rethinkscala.{Polygon, GroupResult, GroupResultRecord, Point}
  * Time: 6:43 PM
  *
  */
+
 class RethinkTypeResolverBuilder extends StdTypeResolverBuilder {
 
 
@@ -34,12 +35,7 @@ class RethinkTypeResolverBuilder extends StdTypeResolverBuilder {
     baseType match {
       case ct: CollectionLikeType if classGroupRecord.isAssignableFrom(ct.getRawClass) => GroupResultTypeDeserializer(baseType, null, _typeProperty, _typeIdVisible, _defaultImpl)
 
-      case _ => baseType.getRawClass match {
-        case `classOfPoint` => GeometryDeserializer[Point](baseType, null, _typeProperty, _typeIdVisible, _defaultImpl)
-        case `classOfPolygon` => GeometryDeserializer[Polygon](baseType, null, _typeProperty, _typeIdVisible, _defaultImpl)
-
-        case _ => null
-      }
+      case _ => null
     }
 
 

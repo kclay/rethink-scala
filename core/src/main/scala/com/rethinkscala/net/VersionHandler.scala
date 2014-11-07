@@ -63,7 +63,7 @@ trait VersionHandler[R] extends LazyLogging {
           try {
             throw e
           } catch {
-            case _ => throw e
+            case _: Throwable => throw e
           } finally {
             token.failure(RethinkRuntimeError(e.getMessage, token.term, Iterable.empty, Some(e)))
           }
@@ -83,7 +83,7 @@ case class JsonVersionHandler(version: Version3) extends VersionHandler[String] 
 
   override def handle(tokenId: Long, json: String) = {
 
-   // logger.debug(s"JSON tokenId =$tokenId json = $json")
+    // logger.debug(s"JSON tokenId =$tokenId json = $json")
     handle(tokenId) {
       token => (json match {
         case ResponseTypeExtractor(responseType) => responseType.toInt match {

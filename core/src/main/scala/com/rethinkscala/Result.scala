@@ -3,7 +3,7 @@ package com.rethinkscala
 import com.fasterxml.jackson.annotation.{JsonUnwrapped, JsonTypeInfo, JsonIgnore, JsonProperty}
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.rethinkscala.reflect.{GroupResultDeserializer, RethinkTypeResolverBuilder, Reflector}
+import com.rethinkscala.reflect.{RethinkTypeResolverBuilder, GroupResultDeserializer, Reflector}
 import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonTypeResolver}
 import scala.collection.generic.CanBuildFrom
 import scala.collection.{IndexedSeqLike, SeqLike}
