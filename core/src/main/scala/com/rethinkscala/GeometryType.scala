@@ -4,8 +4,9 @@ import com.fasterxml.jackson.annotation.{JsonUnwrapped, JsonProperty, JsonTypeIn
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonTypeResolver}
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.rethinkscala.ast.{Circle, WrappedValue}
+import com.rethinkscala.ast.{Distance, Circle, WrappedValue}
 import com.rethinkscala.reflect.{GroupResultDeserializer}
+import ql2.Ql2.Term.TermType
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,8 +17,6 @@ import com.rethinkscala.reflect.{GroupResultDeserializer}
 
 
 trait GeometryType {
-
-  private[rethinkscala] def encode: Any
 
 
 }
@@ -57,10 +56,13 @@ object UnitSphere extends GeoSystem {
   override val value: String = "unit_sphere"
 }
 
-case class Point(long: Double, lat: Double) extends GeometryType {
+case class Point(long: Double, lat: Double) extends GeometryType with Term {
 
 
-  override private[rethinkscala] def encode = Seq(long, lat)
+  override lazy val args = buildArgs(long, lat)
+
+  override def termType = TermType.POINT
+
 
   def this(l: List[Double]) {
     this(l(0), l(1))
@@ -68,10 +70,12 @@ case class Point(long: Double, lat: Double) extends GeometryType {
 }
 
 
-case class Polygon(points: Seq[Point]) extends GeometryType {
+case class Polygon(points: Seq[Point]) extends GeometryType with Term {
 
 
-  override private[rethinkscala] def encode = points.map(_.encode)
+  override def termType = TermType.POLYGON
+
+
 }
 
 trait GeometryApi {
@@ -82,6 +86,12 @@ trait GeometryApi {
              geoSystem: Option[GeoSystem] = None,
              unit: Option[GeoUnit] = None,
              fill: Option[Boolean] = None): Circle = Circle(point, radius, numVertices, geoSystem, unit, fill)
+
+  def distance(start: GeometryType, end: GeometryType,
+               geoSystem: Option[GeoSystem] = None, unit: Option[GeoUnit] = None) = Distance(start, end, geoSystem, unit)
+
+
+  def point(long: Double, lat: Double) = Point(long, lat)
 }
 
 

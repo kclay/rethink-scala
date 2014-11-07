@@ -183,7 +183,7 @@ trait Expr {
 
   def apply(d: Document) = MakeObj2(d)
 
-  def apply(v: WrappedValue[_]):Term = apply(v.value)
+  def apply(v: WrappedValue[_]): Term = apply(v.value)
 
   def apply(date: ReadableInstant) = ISO8601(ISODateTimeFormat.dateTime().print(date))
 

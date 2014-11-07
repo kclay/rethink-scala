@@ -20,7 +20,7 @@ import com.rethinkscala.net._
 import com.rethinkscala.ast._
 
 
-case class Player(id:Int,player:String,points:Int,`type`:String) extends Document
+case class Player(id: Int, player: String, points: Int, `type`: String) extends Document
 
 trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   self: FunSuite =>
@@ -35,7 +35,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   val version2 = new Version2(host, port, authKey = authKey)
   val version3 = new Version3(host, port, authKey = authKey)
 
-  lazy val testSeq={
+  lazy val testSeq = {
 
     val json = """[
                  |    {"id": 2, "player": "Bob", "points": 15, "type": "ranked"},
@@ -46,13 +46,17 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
     val map = Reflector.fromJson[Seq[Map[String, Any]]](json)
 
 
-     Expr(map)
+    Expr(map)
 
 
   }
 
+
+  def toJson(term: Term) = version3.toQuery(term, 0).json
+
   type TableType = Document
-  def useVersion:Version = version3
+
+  def useVersion: Version = version3
 
   implicit val connection: BlockingConnection = BlockingConnection(useVersion)
 
@@ -63,9 +67,6 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
 
   lazy val db = r.db(dbName)
   lazy val table = db.table[Document](tableName)
-
-
-
 
 
   override protected def beforeAll() {
@@ -105,7 +106,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   type IS = Iterable[String]
   type IA = Iterable[Any]
 
-  type Return[T] = Either[RethinkError,T]
+  type Return[T] = Either[RethinkError, T]
 
 
   def assert(t: ql2.Term, tt: Term.TermType) {
@@ -135,6 +136,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
     })
 
   }
+
   def assert1[Result](query: Produce[Result], testValue: Result)(implicit mf: Manifest[Result]) {
     assert_[Result](() => query.run.asInstanceOf[Return[Result]], {
       r: Result => r == testValue
@@ -153,12 +155,11 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   }
 
 
+  def assertAs[Result <: Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
 
- def assertAs[Result <: Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
+    assert_[Result](() => query.as[Result].asInstanceOf[Return[Result]], check)
 
-   assert_[Result](() => query.as[Result].asInstanceOf[Return[Result]], check)
-
- }
+  }
 
 
   def assert[Result](result: Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {

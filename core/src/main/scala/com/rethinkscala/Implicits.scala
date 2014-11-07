@@ -171,6 +171,8 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def toOptFromDatum[T <% Datum](v: T): Option[T] = Some(v)
 
+  implicit def toOptFromWrappedValue[T <: WrappedValue[_]](v: T) = Some(v)
+
   implicit def toPredicate1Opt(f: (Var) => Typed) = Some(new ScalaPredicate1(f))
 
   implicit def toPredicate2Opt(f: (Var, Var) => Typed) = Some(new ScalaPredicate2(f))

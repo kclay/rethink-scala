@@ -35,10 +35,18 @@ class GeospatialTest extends FunSuite with WithBase {
     //[1, [165, [[2, [-122.423246, 37.779388]], 1000]], {}]
     //[1, [165, [[2, [-122.423246, 37.779388]], 1000]], {}]
     val term = r.circle((-122.423246, 37.779388), 1000)
-    println(version3.toQuery(term, 1).json)
+    val json = toJson(term)
+
     assert(term.run, {
       p: Polygon => p === circlePolygon
     })
+  }
+  test("distance") {
+
+    val term = r.distance(r.point(-122.423246, 37.779388), r.point(-117.220406, 32.719464), unit = KiloMeter)
+    val json = toJson(term)
+    val checks = Seq(734.1252496021841 /* x64 */ , 734.12524960218490833 /* x32 */)
+    assert(term.run, checks.contains _)
   }
 
 }
