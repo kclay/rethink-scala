@@ -32,6 +32,7 @@ object Reflector {
   mapper.setSerializationInclusion(Include.NON_NULL);
   mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   mapper.setVisibility(PropertyAccessor.FIELD, Visibility.PUBLIC_ONLY)
+
   //mapper.setDefaultTyping(new RethinkTypeResolverBuilder)
 
   //mapper.setAnnotationIntrospector()
@@ -104,7 +105,7 @@ object Reflector {
   def fromJson[T: Manifest](value: String): T =
     mapper.readValue(value, typeReference[T])
 
-  private[rethinkscala] def typeReference[T: Manifest] = new TypeReference[T] {
+  private[rethinkscala] def typeReference[T: Manifest]: TypeReference[T] = new TypeReference[T] {
     override def getType = typeFromManifest(manifest[T])
   }
 

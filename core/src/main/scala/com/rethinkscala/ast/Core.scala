@@ -191,7 +191,6 @@ trait Expr {
   def apply(a: Any, depth: Int = 20): Term = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
 
-    Seq
     a match {
       case w: FuncWrap => w()
       case wv: WrappedValue[_] => apply(wv.value, depth)
@@ -203,8 +202,8 @@ trait Expr {
       case p: Predicate => p()
       case t: Term => t
 
-      case f: Any if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1]) => new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
-      case f: Any if (!f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2]) => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
+      case f: Any if !f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1] => new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
+      case f: Any if !f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2] => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
       case s: Seq[_] => MakeArray(s, depth - 1)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
       case d: Document => MakeObj2(d)
@@ -300,7 +299,7 @@ object Json {
   def asLazy(value: Any) = LazyJson(value)
 }
 
-class Random[T, R](values: Seq[T], float: Option[Boolean] = None) extends Query {
+class Random[@specialized(Int, Double, Long) T, R](values: Seq[T], float: Option[Boolean] = None) extends Query {
 
 
   override lazy val args = buildArgs(values: _*)

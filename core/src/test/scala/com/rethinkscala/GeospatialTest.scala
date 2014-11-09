@@ -1,8 +1,7 @@
 package com.rethinkscala
 
-import com.rethinkscala.{Point, Polygon}
-import org.scalatest.FunSuite
 import Blocking._
+import org.scalatest.FunSuite
 
 /**
  * Created by IntelliJ IDEA.

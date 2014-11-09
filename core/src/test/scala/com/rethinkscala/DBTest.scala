@@ -1,9 +1,7 @@
 package com.rethinkscala
 
 import com.rethinkscala.Blocking._
-import com.rethinkscala.net.ProtoBufCompiledAst
 import org.scalatest.FunSuite
-import ql2.Ql2.Term
 
 class DBTest extends FunSuite with WithBase {
 

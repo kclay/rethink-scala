@@ -1,6 +1,7 @@
 package com.rethinkscala.reflect
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As
+import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.core.{JsonToken, JsonParser}
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver
 import com.fasterxml.jackson.databind.jsontype.impl.TypeDeserializerBase
@@ -27,8 +28,6 @@ object GeometryDeserializer {
   val classOfPoint = classOf[(Double, Double)]
   val classOfPolygon = classOf[Polygon]
 
-  val classOfPolygonExtractor = classOf[PolygonExtractor]
-
 
 }
 
@@ -48,11 +47,11 @@ object PointDeserializer extends StdScalarDeserializer[Point](classOf[Point]) {
 }
 
 object PolygonDeserializer extends StdScalarDeserializer[Polygon](classOf[Polygon]) {
-  override def deserialize(p1: JsonParser, p2: DeserializationContext) = {
-    val polygon = p1.readValueAs(GeometryDeserializer.classOfPolygonExtractor).value
+  val classOfPolygonExtractor = Reflector.typeReference[PolygonExtractor]
 
-    polygon
-  }
+  override def deserialize(jp: JsonParser, p2: DeserializationContext) = jp
+    .readValueAs(classOfPolygonExtractor)
+    .asInstanceOf[PolygonExtractor].value
 }
 
 /*

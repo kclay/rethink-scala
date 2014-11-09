@@ -82,8 +82,6 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
     val futureResult = async(s.asInstanceOf[MakeArray[Hello]])
 
-    futureResult
-
 
     import scala.concurrent.duration._
 
