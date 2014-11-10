@@ -84,6 +84,12 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def sync(durability:Durability.Kind)= Sync(this,Some(durability))
 
+  def getIntersecting(geo:GeometryType) = GetIntersecting(this,geo,None)
+
+
+  def getNearest(point:Point) = GetNearest(this,point)
+
+
 }
 
 case class TableCreate(name: String, options: TableOptions, db: Option[DB] = None)

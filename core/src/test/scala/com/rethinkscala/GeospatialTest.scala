@@ -36,6 +36,7 @@ class GeospatialTest extends FunSuite with WithBase {
     val term = r.circle((-122.423246, 37.779388), 1000)
     val json = toJson(term)
 
+    Seq().col
     assert(term.run, {
       p: Polygon => p === circlePolygon
     })

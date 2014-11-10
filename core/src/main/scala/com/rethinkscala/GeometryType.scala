@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.{JsonUnwrapped, JsonProperty, JsonTypeIn
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonTypeResolver}
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.rethinkscala.ast.{Distance, Circle, WrappedValue}
+import com.rethinkscala.ast._
 import com.rethinkscala.reflect.{GroupResultDeserializer}
 import ql2.Ql2.Term.TermType
 
@@ -16,8 +16,11 @@ import ql2.Ql2.Term.TermType
  */
 
 
-trait GeometryType {
+trait GeometryType{
 
+  def toGeoJson = ToGeoJson(this)
+
+  def includes(geo:GeometryType) = Includes(this,geo)
 
 }
 
@@ -78,7 +81,35 @@ case class Polygon(points: Seq[Point]) extends GeometryType with Term {
 
 }
 
+case class Line(points:Seq[Point])  extends GeometryType with Term{
+  override def termType = TermType.LINE
+}
+
+
+sealed class LineSupport(line:Line) extends AnyVal{
+  def fill = Fill(line)
+}
+
+class UnknownGeometry(geo:GeometryType) extends GeometryType{
+  def isPoint = geo.isInstanceOf[Point]
+  def isPolygon = geo.isInstanceOf[Polygon]
+  def isLine = geo.isInstanceOf[Line]
+  def isCircle = geo.isInstanceOf[Circle]
+  def circle = if(isCircle) Some(geo.asInstanceOf[Circle]) else None
+  def polygon = if(isPolygon) Some(geo.asInstanceOf[Polygon]) else None
+  def line = if(isLine) Some(geo.asInstanceOf[Line]) else None
+  def point = if(isPoint ) Some(geo.asInstanceOf[Point]) else None
+  //def map(pf:PartialFunction)
+
+
+
+
+
+
+}
 trait GeometryApi {
+  
+
 
 
   def circle(point: Point, radius: Double,
@@ -97,4 +128,8 @@ trait GeometryApi {
 
 trait GeometryImplicits {
   implicit def tuple2ToPoint(p: (Double, Double)): Point = Point(p._1, p._2)
+
+  implicit def toLineSupport(line:Line) = new LineSupport(line)
+
+
 }
