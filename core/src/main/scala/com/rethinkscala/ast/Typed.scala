@@ -1,7 +1,7 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala._
-import com.rethinkscala.ast.All
+
 
 
 sealed trait DataType {
@@ -84,7 +84,7 @@ object Ref{
      def +=(other: Numeric) = underlying.add(other)
   }
 }
-trait Ref extends Sequence[Any] with Numeric with Binary with Record with Literal with Strings
+trait Ref extends Sequence[Any] with Numeric with Binary with Record with Literal with Strings with Geometry[UnknownGeometry]
 
 with CanManipulate[Pluck,Merge,Without]{
   override val underlying = this

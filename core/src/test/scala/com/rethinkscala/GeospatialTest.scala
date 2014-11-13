@@ -34,12 +34,11 @@ class GeospatialTest extends FunSuite with WithBase {
     //[1, [165, [[2, [-122.423246, 37.779388]], 1000]], {}]
     //[1, [165, [[2, [-122.423246, 37.779388]], 1000]], {}]
     val term = r.circle((-122.423246, 37.779388), 1000)
-    val json = toJson(term)
 
-    Seq().col
-    assert(term.run, {
-      p: Polygon => p === circlePolygon
-    })
+
+
+
+    assert(term.toOpt.contains(circlePolygon))
   }
   test("distance") {
 
@@ -47,6 +46,39 @@ class GeospatialTest extends FunSuite with WithBase {
     val json = toJson(term)
     val checks = Seq(734.1252496021841 /* x64 */ , 734.12524960218490833 /* x32 */)
     assert(term.run, checks.contains _)
+  }
+
+  test("fill") {
+    val check = Polygon(Seq(Point(-122.423246, 37.779388),
+      Point(-122.423246, 37.329898),
+      Point(-121.88642, 37.329898),
+      Point(-121.88642, 37.779388),
+      Point(-122.423246, 37.779388)
+    ))
+    val term = r.line(
+      (-122.423246, 37.779388),
+      (-122.423246, 37.329898),
+      (-121.886420, 37.329898),
+      (-121.886420, 37.779388)
+    ).fill
+
+    assert(term.run, {
+      p: Polygon => p == check
+    })
+  }
+
+  test("geojson") {
+    val term = r.geoJson(Map("type" -> "Point", "coordinates" -> Seq(-122.423246, 37.779388)))
+    val point: Point = (-122.42324600000000601, 37.779387999999997305)
+    assert(term.run, {
+      g: UnknownGeometry => g.point.contains(point)
+    })
+    val term2 = r.geoJson(Map("type" -> "LineString", "coordinates" -> Seq(Seq(-122.423246, 37.779388), Seq(0, 1))))
+    val line: Line = Line(Seq(Point(-122.423246, 37.779388), Point(0, 1)))
+    assert(term2.run, {
+      g: UnknownGeometry => g.line.contains(line)
+    })
+
   }
 
 }

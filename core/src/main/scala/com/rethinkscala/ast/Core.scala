@@ -195,6 +195,8 @@ trait Expr {
       case w: FuncWrap => w()
       case wv: WrappedValue[_] => apply(wv.value, depth)
 
+      case wt: WrappedTerm => wt.unwrap
+
 
       case date: ReadableInstant => apply(date)
 
@@ -274,6 +276,10 @@ trait Expr {
 
 trait WrappedValue[T] {
   val value: T
+}
+
+trait WrappedTerm {
+  def unwrap: Term
 }
 
 object Expr extends Expr
