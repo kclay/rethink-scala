@@ -27,7 +27,7 @@ trait Geometry[T <: GeometryType] extends Typed {
 
   def toGeoJson = ToGeoJson(underlying)
 
-  def includes(geo: GeometryType) = Includes(this, geo)
+
 
   def intersects(geo: GeometryType) = Intersects(GeometryIntersect(this), geo)
 
@@ -37,7 +37,19 @@ trait Geometry[T <: GeometryType] extends Typed {
 
 }
 
-trait ProduceGeometry[T <: GeometryType] extends Geometry[T] with Produce[T] with Produce0[T]
+trait ProduceGeometry[T <: GeometryType] extends Geometry[T] with Produce[T] with Produce0[T]{
+  override val underlying=this
+  def includes(geo: GeometryType) = Includes(this, geo)
+}
+
+trait ProduceGeometryArray[T<:GeometryType] extends ProduceArray[T] with Geometry[T]{
+
+  override val underlying=this
+
+  def includes(geo: GeometryType) = Includes(this, geo)
+}
+
+abstract  class ForwardToGeometry[T](term:Term) extends ForwardTyped(term)
 
 case class Distance[T <: GeometryType](start: Geometry[T], end: GeometryType, geoSystem: Option[GeoSystem] = None, unit: Option[GeoUnit] = None)
   extends ProduceNumeric {
@@ -59,10 +71,21 @@ case class Fill[T <: GeometryType](line: Geometry[T]) extends ProducePolygon {
 }
 
 
-case class Includes[T <: GeometryType](target: Geometry[T], other: GeometryType) extends ProduceGeometry[T] {
-
-  override def termType = TermType.INCLUDES
+class Includes(target:Typed,other:GeometryType) extends Typed{
+  def termType = TermType.INCLUDES
 }
+case class IncludesGeo[T <: GeometryType]( target: Geometry[T],  other: GeometryType) extends
+Includes(target,other) with  ProduceBinary
+
+case class IncludesSeq[T]( target:ProduceSequenceLike[T], other:GeometryType) extends Includes(target,other) with ProduceSequence[T]
+
+object Includes{
+
+  def apply[T<:GeometryType](target:ProduceGeometry[T],other:GeometryType) = IncludesGeo(target,other)
+  def apply[T](target:ProduceSequenceLike[T],other:GeometryType) = IncludesSeq(target,other)
+}
+
+
 
 case class Intersects(target: Intersect, geo: GeometryType) extends ProduceBinary {
   override def termType = TermType.INTERSECTS
@@ -118,38 +141,6 @@ case class GetNearest[T <: Document](target: Table[T], point: Point,
 
 case class ToGeoJson[T <: GeometryType](target: Geometry[T]) extends ProduceString {
   override def termType = TermType.TO_GEOJSON
-}
-
-case class Circle(longLat: Point, radius: Double, numVertices: Option[Int] = None,
-                  geoSystem: Option[GeoSystem] = None, unit: Option[GeoUnit] = None,
-                  fillCircle: Option[Boolean] = None)
-  extends ProducePolygon with GeometryType {
-
-
-  override lazy val args = buildArgs(longLat, radius)
-  override lazy val optargs = buildOptArgs(Map("numVertices" -> numVertices, "geoSystem" -> geoSystem, "unit" -> unit, "fill" -> fillCircle))
-
-  override def termType = TermType.CIRCLE
-
-  def withVertices(amount: Int) = copy(numVertices = Some(amount))
-
-  def withGeoSystem(system: GeoSystem) = copy(geoSystem = Some(system))
-
-  def withUnit(unit: GeoUnit) = copy(unit = Some(unit))
-
-  def toMeter = copy(unit = Some(Meter))
-
-  def toKiloMeter = copy(unit = Some(KiloMeter))
-
-  def toInternationalMile = copy(unit = Some(InternationalMile))
-
-  def toNauticalMile = copy(unit = Some(NauticalMile))
-
-  def toInternationalFoot = copy(unit = Some(InternationalFoot))
-
-  def withFill = copy(fillCircle = Option(true))
-
-  def withoutFill = copy(fillCircle = Option(false))
 }
 
 case class PolygonSub(target: ProduceGeometry[Polygon], other: Polygon) extends ProducePolygon {

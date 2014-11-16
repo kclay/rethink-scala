@@ -1,6 +1,8 @@
 package com.rethinkscala
 
 import Blocking._
+
+import com.rethinkscala.ast.{ProduceArray, ProduceAny}
 import org.scalatest.FunSuite
 
 /**
@@ -78,6 +80,29 @@ class GeospatialTest extends FunSuite with WithBase {
     assert(term2.run, {
       g: UnknownGeometry => g.line.contains(line)
     })
+
+  }
+  test("includes"){
+    val point1 = r.point(-117.220406,32.719464)
+    val point2 = r.point(-117.206201,32.725186)
+
+
+
+
+
+  assert(r.circle(point1, 2000).includes(point2).run,{
+    b:Boolean => b
+  })
+
+
+   table.insertMap(Map("geo"->r.circle(point1, 2000))).run
+
+    val term = table("geo").asPolygon.includes(point2)
+
+    assert(term.run,{
+      s:Seq[Polygon]=>     s.size == 1
+    })
+
 
   }
 

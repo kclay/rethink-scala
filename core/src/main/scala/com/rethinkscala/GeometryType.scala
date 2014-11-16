@@ -120,11 +120,28 @@ class UnknownGeometry(geo: GeometryType) extends GeometryType {
 
 }
 
-final class AnyGeoSupport(val any: CastTo) extends AnyVal {
 
-  private def cast[T <: GeometryType](name: String) = any.field(name).asInstanceOf[ProduceGeometry[T]]
+trait GeoCastDelegate[R[_<:GeometryType]]{
 
-  private def as[T <: GeometryType] = any.asInstanceOf[ProduceGeometry[T]]
+  def cast[T<:GeometryType](name:String):R[T]
+  def as[T<:GeometryType]:R[T]
+}
+final class AnyGeoCastSupport(target:CastTo) extends GeoCastDelegate[ProduceGeometry]{
+  override def cast[T <: GeometryType](name:String) = target.field(name).asInstanceOf[ProduceGeometry[T]]
+
+  override def as[T <: GeometryType] = target.asInstanceOf[ProduceGeometry[T]]
+}
+final class GetFieldCastSupport(target:ProduceArray[_]) extends GeoCastDelegate[ProduceGeometryArray]{
+  override def cast[R <: GeometryType](name: String) = ???
+
+  override def as[R <: GeometryType] = new ForwardTyped(target) with ProduceGeometryArray[R]
+}
+
+final class GeoCastSupport[R[_<:GeometryType]](val delegate:GeoCastDelegate[R]) extends AnyVal {
+
+  private def cast[T <: GeometryType](name: String) = delegate.cast[T](name)
+
+  private def as[T <: GeometryType]=delegate.as[T]
 
   def asPoint = as[Point]
 
@@ -138,12 +155,51 @@ final class AnyGeoSupport(val any: CastTo) extends AnyVal {
 
   def polygon(name: String) = cast[Polygon](name)
 
-  def asCircle = as[Circle]
+ // def asCircle = as[Circle]
 
-  def circle(name: String) = cast[Circle](name)
+ // def circle(name: String) = cast[Circle](name)
+  def unknownGeometry(name:String) = cast[UnknownGeometry](name)
+  def asUnknownGeometry = as[UnknownGeometry]
+  
+  
+  
 
 
 }
+
+
+case class Circle(longLat: Point, radius: Double, numVertices: Option[Int] = None,
+                  geoSystem: Option[GeoSystem] = None, unit: Option[GeoUnit] = None,
+                  fillCircle: Option[Boolean] = None)
+  extends ProducePolygon with GeometryType {
+
+
+  override lazy val args = buildArgs(longLat, radius)
+  override lazy val optargs = buildOptArgs(Map("numVertices" -> numVertices, "geoSystem" -> geoSystem, "unit" -> unit, "fill" -> fillCircle))
+
+  override def termType = TermType.CIRCLE
+
+  def withVertices(amount: Int) = copy(numVertices = Some(amount))
+
+  def withGeoSystem(system: GeoSystem) = copy(geoSystem = Some(system))
+
+  def withUnit(unit: GeoUnit) = copy(unit = Some(unit))
+
+  def toMeter = copy(unit = Some(Meter))
+
+  def toKiloMeter = copy(unit = Some(KiloMeter))
+
+  def toInternationalMile = copy(unit = Some(InternationalMile))
+
+  def toNauticalMile = copy(unit = Some(NauticalMile))
+
+  def toInternationalFoot = copy(unit = Some(InternationalFoot))
+
+  def withFill = copy(fillCircle = Option(true))
+
+  def withoutFill = copy(fillCircle = Option(false))
+}
+
 
 final class TableGeoSupport[T <: Document](val table: Table[T]) extends AnyVal {
   def getIntersecting(geo: GeometryType) = GetIntersecting(table, geo, None)
@@ -178,9 +234,17 @@ trait GeometryImplicits {
 
   implicit def toLineSupport(line: Line) = new LineSupport(line)
 
-  implicit def anyToGeoSupport(any: CastTo) = new AnyGeoSupport(any)
+  implicit def anyToGeoSupport(any: CastTo) = new GeoCastSupport[ProduceGeometry](new AnyGeoCastSupport(any))
 
   implicit def seqOfGeometry[T <: GeometryType](seq: ProduceSequence[T]) = new SequenceGeoSupport(seq)
+
+
+
+ // implicit def toGetFieldCastSupport[T](target:ProduceArray[T]) = new GetFieldCastSupport(target)
+  //implicit def toGeoCastSupport[R[_]](implicit delegate:GeoCastDelegate[R]) = new GeoCastSupport[R](delegate)
+  implicit def toGetFieldCastSupport[T](target:ProduceArray[T])= new GeoCastSupport[ProduceGeometryArray](new GetFieldCastSupport(target))
+
+  //implicit def toGeoCastSupport(delegate:GeoCastDelegate) = new GeoCastSupport(delegate)
 
   implicit def tableToGeometry[T <: Document](table: Table[T]) = new TableGeoSupport[T](table)
 

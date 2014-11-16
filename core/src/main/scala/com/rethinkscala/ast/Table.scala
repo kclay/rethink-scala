@@ -31,6 +31,7 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def insertMap(records: Seq[Map[String, Any]]) = Insert[T,T](this, Left(records), InsertOptions())
   def insertMap(records: Seq[Map[String, Any]], options: InsertOptions) = Insert[T,T](this, Left(records), options)
+  def insertMap(record:Map[String,Any]) = Insert[T,T](this,Left(Seq(record)),InsertOptions())
 
 
 

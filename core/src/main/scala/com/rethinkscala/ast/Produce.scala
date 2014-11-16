@@ -183,8 +183,8 @@ trait ProduceString extends ProduceSingle[String] with Strings with Produce0[Str
   override val underlying = this
 }
 
-abstract class ForwardTyped(value: Term) {
-  self: Produce[_] with Typed with Term =>
+abstract class ForwardTyped(value: Term) extends Term with Typed{
+
   override lazy val args = underlyingTerm.args
   override lazy val optargs = underlyingTerm.optargs
 
