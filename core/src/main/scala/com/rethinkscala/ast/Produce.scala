@@ -92,20 +92,34 @@ trait CastTo {
 
   def anySeq(name: String) = cast[Seq[Any]](name)
 
-  private[rethinkscala] def as[T](implicit ast: ToAst[T]): ast.Cast = this.asInstanceOf[ast.Cast]
+  private[rethinkscala] def to[T](implicit ast: ToAst[T]): ast.Cast = this.asInstanceOf[ast.Cast]
 
-  def asInt = as[Int]
+  @deprecated("use toInt","0.4.6")
+  def asInt = toInt
+  def toInt = to[Int]
+  
+  @deprecated("use toInt","0.4.6")
+  def asDouble = toDouble
+  def toDouble = to[Double]
+  
+  @deprecated("use toFloat","0.4.6")
+  def asFloat = to[Float]
+  //def toFloat = to[Float]
 
-  def asDouble = as[Double]
-
-  def asFloat = as[Float]
-
-  def asString = as[String]
+  @deprecated("use toInt","0.4.6")
+  def asString = mkString
+  def mkString = to[String]
 
   //def asSeq[T] = new ToSeq[T](this)
-  def asAnySeq = as[Seq[Any]]
-
-  def asMap[T] = as[Map[String, T]]
+  @deprecated("use toAnySeq","0.4.6")
+  def asAnySeq = toAnySeq
+ 
+  def toAnySeq = toSeq[Any]
+  
+  def toSeq[T]= to[Seq[Any]]
+  @deprecated("use toMap","0.4.6")
+  def asMap[T] = toMap[T]
+  def toMap[T] = to[Map[String,T]]
 
 
 }

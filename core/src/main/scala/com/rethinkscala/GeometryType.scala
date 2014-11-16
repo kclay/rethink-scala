@@ -121,37 +121,37 @@ class UnknownGeometry(geo: GeometryType) extends GeometryType {
 }
 
 
-trait GeoCastDelegate[R[_<:GeometryType]]{
+trait GeoCastDelegate[R[_<:GeometryType]] extends Any{
 
   def cast[T<:GeometryType](name:String):R[T]
-  def as[T<:GeometryType]:R[T]
+  def to[T<:GeometryType]:R[T]
 }
-final class AnyGeoCastSupport(target:CastTo) extends GeoCastDelegate[ProduceGeometry]{
+final class AnyGeoCastSupport(val target:CastTo) extends AnyVal with GeoCastDelegate[ProduceGeometry]{
   override def cast[T <: GeometryType](name:String) = target.field(name).asInstanceOf[ProduceGeometry[T]]
 
-  override def as[T <: GeometryType] = target.asInstanceOf[ProduceGeometry[T]]
+  override def to[T <: GeometryType] = target.asInstanceOf[ProduceGeometry[T]]
 }
-final class GetFieldCastSupport(target:ProduceArray[_]) extends GeoCastDelegate[ProduceGeometryArray]{
+final class GetFieldCastSupport(val target:ProduceArray[_]) extends AnyVal with GeoCastDelegate[ProduceGeometryArray]{
   override def cast[R <: GeometryType](name: String) = ???
 
-  override def as[R <: GeometryType] = new ForwardTyped(target) with ProduceGeometryArray[R]
+  override def to[R <: GeometryType] = new ForwardTyped(target) with ProduceGeometryArray[R]
 }
 
 final class GeoCastSupport[R[_<:GeometryType]](val delegate:GeoCastDelegate[R]) extends AnyVal {
 
   private def cast[T <: GeometryType](name: String) = delegate.cast[T](name)
 
-  private def as[T <: GeometryType]=delegate.as[T]
+  private def to[T <: GeometryType]=delegate.to[T]
 
-  def asPoint = as[Point]
+  def toPoint = to[Point]
 
   def point(name: String) = cast[Point](name)
 
-  def asLine = as[Line]
+  def toLine = to[Line]
 
   def line(name: String) = cast[Line](name)
 
-  def asPolygon = as[Polygon]
+  def toPolygon = to[Polygon]
 
   def polygon(name: String) = cast[Polygon](name)
 
@@ -159,7 +159,7 @@ final class GeoCastSupport[R[_<:GeometryType]](val delegate:GeoCastDelegate[R]) 
 
  // def circle(name: String) = cast[Circle](name)
   def unknownGeometry(name:String) = cast[UnknownGeometry](name)
-  def asUnknownGeometry = as[UnknownGeometry]
+  def toUnknownGeometry = to[UnknownGeometry]
   
   
   
@@ -223,7 +223,8 @@ trait GeometryApi {
 
   def point(long: Double, lat: Double) = Point(long, lat)
 
-  def line(points: Point*) = Line(points)
+  def line(points:Seq[Point])  = Line(points)
+  def line(point:Point,points: Point*) = Line(points.+:(point))
 
   def geoJson(value: Map[String, Any]) = GeoJson(value)
 }
@@ -235,6 +236,7 @@ trait GeometryImplicits {
   implicit def toLineSupport(line: Line) = new LineSupport(line)
 
   implicit def anyToGeoSupport(any: CastTo) = new GeoCastSupport[ProduceGeometry](new AnyGeoCastSupport(any))
+  implicit def toGetFieldCastSupport[T](target:ProduceArray[T])= new GeoCastSupport[ProduceGeometryArray](new GetFieldCastSupport(target))
 
   implicit def seqOfGeometry[T <: GeometryType](seq: ProduceSequence[T]) = new SequenceGeoSupport(seq)
 
@@ -242,7 +244,7 @@ trait GeometryImplicits {
 
  // implicit def toGetFieldCastSupport[T](target:ProduceArray[T]) = new GetFieldCastSupport(target)
   //implicit def toGeoCastSupport[R[_]](implicit delegate:GeoCastDelegate[R]) = new GeoCastSupport[R](delegate)
-  implicit def toGetFieldCastSupport[T](target:ProduceArray[T])= new GeoCastSupport[ProduceGeometryArray](new GetFieldCastSupport(target))
+
 
   //implicit def toGeoCastSupport(delegate:GeoCastDelegate) = new GeoCastSupport(delegate)
 

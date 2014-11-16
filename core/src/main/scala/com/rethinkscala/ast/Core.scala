@@ -305,19 +305,25 @@ object Json {
   def asLazy(value: Any) = LazyJson(value)
 }
 
-class Random[@specialized(Int, Double, Long) T, R](values: Seq[T], float: Option[Boolean] = None) extends Query {
+class Random[@specialized(Int, Double, Long) T, R](val values: Seq[T], float: Option[Boolean] = None) extends Query {
 
 
   override lazy val args = buildArgs(values: _*)
 
-  def toFloat = new Random[T, Float](values, Some(true)) with ProduceFloat
+
 
   override lazy val optargs = buildOptArgs(Map("float" -> float))
 
   def termType = TermType.RANDOM
 }
 
+final class RandomSupport[T,R](val target:Random[T,R]) extends AnyVal{
+  def toFloat = new Random[T, Float](target.values, Some(true)) with ProduceFloat
+}
+
 object Random {
+
+  implicit def toRandomSupport[T,R](target:Random[T,R])= new RandomSupport[T,R](target)
 
   def apply[T](values: Seq[T]) = new Random[T, T](values) with ProduceNumeric
 

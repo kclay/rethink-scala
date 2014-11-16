@@ -97,7 +97,8 @@ class GeospatialTest extends FunSuite with WithBase {
 
    table.insertMap(Map("geo"->r.circle(point1, 2000))).run
 
-    val term = table("geo").asPolygon.includes(point2)
+
+    val term = table("geo").toPolygon.includes(point2)
 
     assert(term.run,{
       s:Seq[Polygon]=>     s.size == 1

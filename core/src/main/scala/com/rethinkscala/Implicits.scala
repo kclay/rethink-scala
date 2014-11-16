@@ -66,10 +66,11 @@ trait ToAstImplicts {
     type InnerProduce = Produce0[T]
   } */
 
-  implicit def seqToAnySequence = new ToAst[Seq[Any]] {
+  implicit lazy val seqToAnySequence= new ToAst[Seq[Any]] {
     type TypeMember = Sequence[Any]
 
     type InnerProduce = Produce0[Any]
+    type ForType[T] =  Sequence[T] with Produce0[T] with Produce[Seq[T]]
   }
 }
 
