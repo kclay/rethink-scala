@@ -72,8 +72,8 @@ object RethinkdbBuild extends Build {
     "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
   )
 
-  val jacksonVersion = "2.4.0-rc2"
-  val jacksonScalaVersion = "2.4.0-rc2"
+  val jacksonVersion = "2.4.1"
+  val jacksonScalaVersion = "2.4.1"
   def jackson = Seq(
    "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
    "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,

@@ -1,6 +1,6 @@
 package com.rethinkscala.reflect
 
-import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.{JsonToken, JsonParser}
 import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer
 import com.fasterxml.jackson.databind.node.ArrayNode
@@ -12,22 +12,30 @@ import com.rethinkscala.{Point, Polygon, Line, UnknownGeometry, GeometryType}
  * Date: 11/12/2014
  * Time: 4:36 PM 
  */
-case class PointsExtractor(coordinates: List[List[Point]]) {
+case class PolygonExtractor(coordinates: List[List[Point]]) {
   def toPolygon = Polygon(coordinates.head)
 
   def toLine = Line(coordinates.head)
+}
+
+case class LineExtractor(coordinates: List[Point]) {
+  def toLine =Line(coordinates)
 }
 
 object PointDeserializer extends StdScalarDeserializer[Point](classOf[Point]) {
   override def deserialize(jp: JsonParser, p2: DeserializationContext) = {
 
 
-    jp.nextToken() // [
+    val callNextToken  = jp.getCurrentToken == JsonToken.START_ARRAY
+   if(callNextToken)
+     jp.nextToken()
+
 
     val long = jp.getDoubleValue
     jp.nextToken()
     val lat = jp.getDoubleValue
-    jp.nextToken() //[
+    if(callNextToken)
+      jp.nextToken() //[
     Point(long, lat)
 
 
@@ -62,17 +70,17 @@ object UnknownGeometryDeserializer extends StdScalarDeserializer[UnknownGeometry
 }
 
 object LineDeserializer extends StdScalarDeserializer[Line](classOf[Line]) {
-  val typeRefOfPointsExtractor = Reflector.typeReference[PointsExtractor]
+  val typeRefOfPointsExtractor = Reflector.typeReference[LineExtractor]
 
   override def deserialize(jp: JsonParser, p2: DeserializationContext) = jp
     .readValueAs(typeRefOfPointsExtractor)
-    .asInstanceOf[PointsExtractor].toLine
+    .asInstanceOf[LineExtractor].toLine
 }
 
 object PolygonDeserializer extends StdScalarDeserializer[Polygon](classOf[Polygon]) {
-  val typeRefOfPointsExtractor = Reflector.typeReference[PointsExtractor]
+  val typeRefOfPointsExtractor = Reflector.typeReference[PolygonExtractor]
 
   override def deserialize(jp: JsonParser, p2: DeserializationContext) = jp
     .readValueAs(typeRefOfPointsExtractor)
-    .asInstanceOf[PointsExtractor].toPolygon
+    .asInstanceOf[PolygonExtractor].toPolygon
 }
