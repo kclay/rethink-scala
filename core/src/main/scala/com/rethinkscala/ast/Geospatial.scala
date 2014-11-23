@@ -29,7 +29,7 @@ trait Geometry[T <: GeometryType] extends Typed {
 
 
 
-  def intersects(geo: GeometryType) = Intersects(GeometryIntersect(this), geo)
+
 
   def distance(other: GeometryType) = Distance(this, other)
 
@@ -40,6 +40,7 @@ trait Geometry[T <: GeometryType] extends Typed {
 trait ProduceGeometry[T <: GeometryType] extends Geometry[T] with Produce[T] with Produce0[T]{
   override val underlying=this
   def includes(geo: GeometryType) = Includes(this, geo)
+  def intersects(geo:GeometryType) = Intersects(this,geo)
 }
 
 trait ProduceGeometryArray[T<:GeometryType] extends ProduceArray[T] with Geometry[T]{
@@ -47,6 +48,7 @@ trait ProduceGeometryArray[T<:GeometryType] extends ProduceArray[T] with Geometr
   override val underlying=this
 
   def includes(geo: GeometryType) = Includes(this, geo)
+  def intersects(geo:GeometryType) = Intersects(this,geo)
 }
 
 abstract  class ForwardToGeometry[T](term:Term) extends ForwardTyped(term)
@@ -87,19 +89,20 @@ object Includes{
 
 
 
-case class Intersects(target: Intersect, geo: GeometryType) extends ProduceBinary {
-  override def termType = TermType.INTERSECTS
+class Intersects(target: Typed, geo: GeometryType) extends Typed {
+   def termType = TermType.INTERSECTS
+}
+object Intersects{
+
+  def apply[T<:GeometryType](target:ProduceGeometry[T],other:GeometryType) = IntersectsGeo(target,other)
+  def apply[T](target:ProduceSequenceLike[T],other:GeometryType) = IntersectsSeq(target,other)
 }
 
-trait Intersect extends WrappedTerm
+case class IntersectsGeo[T <: GeometryType]( target: Geometry[T],  other: GeometryType) extends
+Intersects(target,other) with  ProduceBinary
 
-case class SequenceIntersect[T <: GeometryType](seq: ProduceSequence[T]) extends Intersect {
-  override def unwrap = seq
-}
+case class IntersectsSeq[T]( target:ProduceSequenceLike[T], other:GeometryType) extends Intersects(target,other) with ProduceSequence[T]
 
-case class GeometryIntersect[T <: GeometryType](geo: Geometry[T]) extends Intersect {
-  override def unwrap = geo.term
-}
 
 case class GeoJson(target: Map[String, Any]) extends ProduceGeometry[UnknownGeometry] {
   override def termType = TermType.GEOJSON

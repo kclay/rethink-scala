@@ -86,7 +86,7 @@ trait ToAst[A] {
 
 }
 
-trait ToCast[From,To,Result]{
+trait ToFloat[From,Result]{
 
   @deprecated("use toFloat","0.4.6")
   def asFloat:Result = toFloat
@@ -97,7 +97,7 @@ trait ToCast[From,To,Result]{
 trait ToFloatLowerImplicits{
   self: ToAstImplicts=>
 
-  implicit  def castToFloat(target:CastTo)=new ToCast[CastTo,Float,floatToNumeric.Cast]{
+  implicit  def castToFloat(target:CastTo)=new ToFloat[CastTo,floatToNumeric.Cast]{
 
 
     override def toFloat = target.asInstanceOf[floatToNumeric.Cast]
@@ -106,7 +106,7 @@ trait ToFloatLowerImplicits{
 trait ToFloatImplicits extends ToFloatLowerImplicits{
   self: ToAstImplicts=>
   type RandomFloat[T,R] =     Random[T,R] with ProduceFloat
-  implicit def  randomToFloat[T,R](target:Random[T,R]) = new ToCast[Random[T,R],Float,RandomFloat[T,Float]] {
+  implicit def  randomToFloat[T,R](target:Random[T,R]) = new ToFloat[Random[T,R],RandomFloat[T,Float]] {
     override def toFloat =  new Random[T, Float](target.values, Some(true)) with ProduceFloat
   }
 

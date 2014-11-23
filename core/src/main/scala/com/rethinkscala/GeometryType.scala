@@ -90,9 +90,7 @@ final class LineSupport(val line: Line) extends AnyVal {
   def fill = Fill(line)
 }
 
-final class SequenceGeoSupport[T <: GeometryType](val seq: ProduceSequence[T]) extends AnyVal {
-  def intersects(geo: GeometryType) = Intersects(SequenceIntersect(seq), geo)
-}
+
 
 final class PolygonSupport(val polygon: ProduceGeometry[Polygon]) extends AnyVal {
   def polygonSub(other: Polygon) = PolygonSub(polygon, other)
@@ -238,7 +236,6 @@ trait GeometryImplicits {
   implicit def anyToGeoSupport(any: CastTo) = new GeoCastSupport[ProduceGeometry](new AnyGeoCastSupport(any))
   implicit def toGetFieldCastSupport[T](target:ProduceArray[T])= new GeoCastSupport[ProduceGeometryArray](new GetFieldCastSupport(target))
 
-  implicit def seqOfGeometry[T <: GeometryType](seq: ProduceSequence[T]) = new SequenceGeoSupport(seq)
 
 
 

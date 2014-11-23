@@ -95,16 +95,32 @@ class GeospatialTest extends FunSuite with WithBase {
   })
 
 
-   table.insertMap(Map("geo"->r.circle(point1, 2000))).run
+   table.insertMap(Map("includes"->r.circle(point1, 2000))).run
 
 
-    val term = table("geo").toPolygon.includes(point2)
 
-    assert(term.run,{
+
+    assert(table("includes").toPolygon.includes(point2).run,{
       s:Seq[Polygon]=>     s.size == 1
     })
 
 
+  }
+
+  test("intersects"){
+    val point1 = r.point(-117.220406,32.719464)
+    val point2 = r.point(-117.206201,32.725186)
+
+    val circle = r.circle(point1, 2000)
+    assert(circle.intersects(point2).run,{
+      b:Boolean=> b
+    })
+
+    table.insertMap(Map("intersects"->circle)).run
+
+    assert(table("intersects").toPolygon.intersects(point2).run,{
+      s:Seq[Polygon]=>     s.size == 1
+    })
   }
 
 }
