@@ -86,6 +86,32 @@ trait ToAst[A] {
 
 }
 
+trait ToCast[From,To,Result]{
+
+  @deprecated("use toFloat","0.4.6")
+  def asFloat:Result = toFloat
+  def toFloat:Result
+}
+
+
+trait ToFloatLowerImplicits{
+  self: ToAstImplicts=>
+
+  implicit  def castToFloat(target:CastTo)=new ToCast[CastTo,Float,floatToNumeric.Cast]{
+
+
+    override def toFloat = target.asInstanceOf[floatToNumeric.Cast]
+  }
+}
+trait ToFloatImplicits extends ToFloatLowerImplicits{
+  self: ToAstImplicts=>
+  type RandomFloat[T,R] =     Random[T,R] with ProduceFloat
+  implicit def  randomToFloat[T,R](target:Random[T,R]) = new ToCast[Random[T,R],Float,RandomFloat[T,Float]] {
+    override def toFloat =  new Random[T, Float](target.values, Some(true)) with ProduceFloat
+  }
+
+}
+
 class ToFunctional[T, A >: Var](seq: Sequence[T]) {
 
 
@@ -283,6 +309,7 @@ object Implicits {
   with ReceptacleImplicits with ImplicitConversions
   with net.Versions
   with Helpers
+  with ToFloatImplicits
   with GeometryImplicits {
 
 

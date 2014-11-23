@@ -323,7 +323,7 @@ final class RandomSupport[T,R](val target:Random[T,R]) extends AnyVal{
 
 object Random {
 
-  implicit def toRandomSupport[T,R](target:Random[T,R])= new RandomSupport[T,R](target)
+ // implicit def toRandomSupport[T,R](target:Random[T,R])= new RandomSupport[T,R](target)
 
   def apply[T](values: Seq[T]) = new Random[T, T](values) with ProduceNumeric
 

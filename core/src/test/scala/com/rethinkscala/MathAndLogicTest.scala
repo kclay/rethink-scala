@@ -89,6 +89,8 @@ class MathAndLogicTest extends FunSuite with WithBase {
     check(r.random, _ < 1)
     check(r.random(100), _ < 100)
     check(r.random(10, 20), c => c > 10 && c < 20)
+
+
     checkf(r.random(1.59, -2.24).toFloat, c => c > -2.24 && c < 1.59)
   }
 

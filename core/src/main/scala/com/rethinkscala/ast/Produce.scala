@@ -71,6 +71,9 @@ trait ProduceSingle[T] extends Produce[T] with Produce0[T] with CastTo {
 }
 
 
+
+
+
 trait CastTo {
   self: CastTo with Produce0[_] =>
   def field(name: String): ProduceAny
@@ -102,15 +105,14 @@ trait CastTo {
   def asDouble = toDouble
   def toDouble = to[Double]
   
-  @deprecated("use toFloat","0.4.6")
-  def asFloat = to[Float]
-  //def toFloat = to[Float]
+
+ // def toFloat[R](implicit tf:ToCast[CastTo ,Float,R]) = tf.cast
 
   @deprecated("use toInt","0.4.6")
   def asString = mkString
   def mkString = to[String]
 
-  //def asSeq[T] = new ToSeq[T](this)
+
   @deprecated("use toAnySeq","0.4.6")
   def asAnySeq = toAnySeq
  
