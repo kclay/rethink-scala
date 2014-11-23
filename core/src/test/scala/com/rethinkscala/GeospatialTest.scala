@@ -140,4 +140,17 @@ class GeospatialTest extends FunSuite with WithBase {
     })
   }
 
+  test("polygon"){
+    val poly=Polygon(List(Point(-122.423246,37.779388),
+      Point(-122.423246,37.329898),
+      Point(-121.88642,37.329898),
+      Point(-121.88642,37.779388),
+      Point(-122.423246,37.779388))
+    )
+    assert(poly.run,{
+      p:Polygon=> p == poly
+    })
+
+  }
+
 }
