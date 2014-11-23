@@ -23,23 +23,39 @@ case class LineExtractor(coordinates: List[Point]) {
 }
 
 object PointDeserializer extends StdScalarDeserializer[Point](classOf[Point]) {
+  val COORDINATES_FIELD = "coordinates"
   override def deserialize(jp: JsonParser, p2: DeserializationContext) = {
 
 
-    val callNextToken  = jp.getCurrentToken == JsonToken.START_ARRAY
-   if(callNextToken)
-     jp.nextToken()
+
+    def point =  {
+
+        jp.nextToken()
+
+        val long = jp.getDoubleValue
+        jp.nextToken()
+        val lat = jp.getDoubleValue
+
+        jp.nextToken() //[
+        Point(long, lat)
 
 
-    val long = jp.getDoubleValue
-    jp.nextToken()
-    val lat = jp.getDoubleValue
-    if(callNextToken)
-      jp.nextToken() //[
-    Point(long, lat)
+
+    }
+    if(jp.getCurrentToken == JsonToken.START_ARRAY) point else {
+      while(jp.getCurrentToken != JsonToken.START_ARRAY)jp.nextToken()
+
+      val value = point
+
+      while(jp.getCurrentToken != JsonToken.END_OBJECT) jp.nextToken()
+      value
+
+    }
 
 
   }
+
+
 }
 
 object UnknownGeometryDeserializer extends StdScalarDeserializer[UnknownGeometry](classOf[UnknownGeometry]) {

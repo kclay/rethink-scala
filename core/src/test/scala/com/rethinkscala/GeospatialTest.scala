@@ -132,5 +132,12 @@ class GeospatialTest extends FunSuite with WithBase {
       l:Line=> l == line
     })
   }
+  test("point"){
+
+    val point = r.point(-122.423246,37.779388)
+    assert(point.run,{
+      p:Point => p == point
+    })
+  }
 
 }
