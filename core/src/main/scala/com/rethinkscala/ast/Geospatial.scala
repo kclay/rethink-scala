@@ -39,16 +39,16 @@ trait Geometry[T <: GeometryType] extends Typed {
 
 trait ProduceGeometry[T <: GeometryType] extends Geometry[T] with Produce[T] with Produce0[T]{
   override val underlying=this
-  def includes(geo: GeometryType) = Includes(this, geo)
-  def intersects(geo:GeometryType) = Intersects(this,geo)
+  def includes(geo: GeometryType) = Includes(underlying, geo)
+  def intersects(geo:GeometryType) = Intersects(underlying,geo)
 }
 
 trait ProduceGeometryArray[T<:GeometryType] extends ProduceArray[T] with Geometry[T]{
 
   override val underlying=this
 
-  def includes(geo: GeometryType) = Includes(this, geo)
-  def intersects(geo:GeometryType) = Intersects(this,geo)
+  def includes(geo: GeometryType) = Includes(underlying, geo)
+  def intersects(geo:GeometryType) = Intersects(underlying,geo)
 }
 
 abstract  class ForwardToGeometry[T](term:Term) extends ForwardTyped(term)
