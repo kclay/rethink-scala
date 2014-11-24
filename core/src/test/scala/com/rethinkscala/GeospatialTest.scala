@@ -153,4 +153,38 @@ class GeospatialTest extends FunSuite with WithBase {
 
   }
 
+  test("polygonSub"){
+    val sub = r.polygon(
+      (-122.4,37.7),
+      (-122.4,37.3),
+    (-121.8,37.3),
+    (-121.8,37.7)
+    ).polygonSub(r.polygon(
+      (-122.3,37.4),
+    (-122.3,37.6),
+    (-122.0,37.6),
+    (-122.0,37.4)
+    ))
+    val poly1 = r.polygon(
+      ( -122.4 ,37.7) ,
+      (-122.4 ,37.3) ,
+      (-121.8 ,37.3) ,
+      (-121.8 ,37.7) ,
+      (-122.4 ,37.7)
+    )
+    val poly2 = r.polygon(
+        (-122.3 ,37.4),
+        (-122.3 ,37.6),
+        (-122 ,37.6),
+        (-122 ,37.4),
+        (-122.3 ,37.4)
+    )
+    val result =Seq(poly1,poly2)
+
+
+    assert(sub.run,{
+      p:Seq[Polygon]=> p.size == 2 && p == result
+    })
+  }
+
 }

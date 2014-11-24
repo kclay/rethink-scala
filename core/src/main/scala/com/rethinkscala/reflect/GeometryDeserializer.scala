@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.{JsonToken, JsonParser}
 import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.rethinkscala.{Point, Polygon, Line, UnknownGeometry, GeometryType}
+import com.rethinkscala._
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,8 +15,9 @@ import com.rethinkscala.{Point, Polygon, Line, UnknownGeometry, GeometryType}
 case class PolygonExtractor(coordinates: List[List[Point]]) {
   def toPolygon = Polygon(coordinates.head)
 
-  def toLine = Line(coordinates.head)
+
 }
+
 
 case class LineExtractor(coordinates: List[Point]) {
   def toLine =Line(coordinates)

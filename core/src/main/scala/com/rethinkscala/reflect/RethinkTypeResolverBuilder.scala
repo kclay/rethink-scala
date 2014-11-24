@@ -32,6 +32,7 @@ class RethinkTypeResolverBuilder extends StdTypeResolverBuilder {
     if (_idType == JsonTypeInfo.Id.NONE) {
       return null
     }
+    println(baseType)
 
     baseType match {
       case ct: CollectionLikeType if classGroupRecord.isAssignableFrom(ct.getRawClass) => GroupResultTypeDeserializer(baseType, null, _typeProperty, _typeIdVisible, _defaultImpl)

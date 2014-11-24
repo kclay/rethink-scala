@@ -8,6 +8,8 @@ import com.rethinkscala.ast._
 import com.rethinkscala.reflect.{GroupResultDeserializer}
 import ql2.Ql2.Term.TermType
 
+import scala.collection.TraversableLike
+
 /**
  * Created by IntelliJ IDEA.
  * User: Keyston
@@ -70,13 +72,21 @@ case class Point(long: Double, lat: Double) extends GeometryType with ProducePoi
 }
 
 
-case class Polygon(points: Seq[Point]) extends GeometryType with ProducePolygon {
+class Polygon(val points: Seq[Point]) extends GeometryType with ProducePolygon {
 
   override lazy val args = buildArgs(points: _*)
   override def termType = TermType.POLYGON
 
 
 }
+
+object Polygon{
+
+  def apply(points:Seq[Point]) = new Polygon(points)
+}
+
+
+
 
 case class Line(points: Seq[Point]) extends GeometryType with ProduceLine {
 
@@ -220,6 +230,8 @@ trait GeometryApi {
 
 
   def point(long: Double, lat: Double) = Point(long, lat)
+  def polygon(points:Seq[Point])= Polygon(points)
+  def polygon(point:Point,points:Point*) = Polygon(points.+:(point))
 
   def line(points:Seq[Point])  = Line(points)
   def line(point:Point,points: Point*) = Line(points.+:(point))
@@ -230,6 +242,9 @@ trait GeometryApi {
 
 trait GeometryImplicits {
   implicit def tuple2ToPoint(p: (Double, Double)): Point = Point(p._1, p._2)
+  implicit def tuple2ToPointInt(p:(Int,Int)):Point = Point(p._1.toDouble,p._2.toDouble)
+  implicit def tuple2ToPointInt2(p:(Int,Double)):Point  = Point(p._1.toDouble,p._2)
+  implicit def tuple2TopPointInt3(p:(Double,Int)):Point = Point(p._1,p._2.toDouble)
 
   implicit def toLineSupport(line: Line) = new LineSupport(line)
 

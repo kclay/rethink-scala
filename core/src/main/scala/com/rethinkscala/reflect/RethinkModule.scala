@@ -23,6 +23,7 @@ class RethinkModule extends DefaultScalaModule {
   _deserializers.addDeserializer(classOf[Point], PointDeserializer)
  _deserializers.addDeserializer(classOf[UnknownGeometry], UnknownGeometryDeserializer)
   _deserializers.addDeserializer(classOf[Line],LineDeserializer)
+ // _deserializers.addDeserializer(classOf[PolygonCollection],SeqOfPolygonDeserializer )
 
 
   private val _resolver = new SimpleAbstractTypeResolver
