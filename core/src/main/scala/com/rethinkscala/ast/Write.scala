@@ -32,8 +32,10 @@ abstract class WithLifecycle[R](implicit mf: Manifest[R]) {
   protected def after(values: R) = {}
 }
 
+
+case class InsertExpr(private val value:(Any,Boolean)) extends AnyVal
 case class Insert[T <: Document, R <: Document](table: Table[T], records: Either[Seq[Map[String, Any]], Seq[R]],
-                                                options: InsertOptions)
+                                                options: InsertOptions,writeNulls:Boolean = false)
   extends WithLifecycle[Seq[String]] with ProduceDocument[InsertResult] {
 
 
@@ -45,12 +47,10 @@ case class Insert[T <: Document, R <: Document](table: Table[T], records: Either
 
   })
 
-  private[this] def toMap(doc: AnyRef): Map[String, Any] = Reflector.fields(doc).map(f =>
 
-    (f.getName, f.get(doc))
-  ).collect {
-    case (name, value) if (name == "id" && value != None) || name != "id" => (name, Expr(value))
-  }.toMap
+  private[this] def toMap(doc: AnyRef): Map[String, Any] = Expr.mapForInsert(doc,writeNulls)
+
+  def withNulls = copy(writeNulls = true)
 
   private[rethinkscala] lazy val argsForJson = buildArgs(table, records match {
     case Left(x: Seq[Map[String, Any]]) => x

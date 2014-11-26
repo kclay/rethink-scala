@@ -18,6 +18,10 @@ case class Foo(id: Option[String] = None, a: Int, b: Int) extends Document {
   }
 }
 
+case class NullItem(a:Int=1) extends Document
+case class NullTest(id:Option[String]=None,item:NullItem)  extends Document
+case class NullTest2(id:Option[String] = None,item:Option[NullItem] =None) extends Document
+
 case class Foo2(id: String, a: Int, b: Int, @JsonProperty("is_fav") fav: Boolean) extends Document
 
 class WriteTest extends FunSuite with WithBase {
@@ -25,6 +29,30 @@ class WriteTest extends FunSuite with WithBase {
   implicit def string2Option(s:String)= Some(s)
   def fetch = table.get("a")
 
+
+  test("serialization of insert document"){
+
+    val foo = r.table("foo")
+    val nullItem:NullItem = null
+val noNulls =     foo.insert(NullTest(None,nullItem))
+    val withNulls = foo.insert(NullTest(None,nullItem)).withNulls
+    val noNullsWithId = foo.insert(NullTest("a",nullItem))
+    val noNulls2 = foo.insert(NullTest2())
+    val withNulls2 = foo.insert(NullTest2()).withNulls
+    val noNullWithId2 = foo.insert(NullTest2("a"))
+    val withValue = foo.insert(NullTest2("a",Some(new NullItem(1))))
+
+
+
+    assert(toJson(noNulls) == "[1,[56,[[15,[\"foo\"]],{}]],{}]")
+    assert(toJson(withNulls) == "[1,[56,[[15,[\"foo\"]],{\"item\":null}]],{}]")
+    assert(toJson(noNullsWithId ) == "[1,[56,[[15,[\"foo\"]],{\"id\":\"a\"}]],{}]")
+
+    assert(toJson(noNulls2) == "[1,[56,[[15,[\"foo\"]],{}]],{}]")
+    assert(toJson(withNulls2) == "[1,[56,[[15,[\"foo\"]],{\"item\":null}]],{}]")
+    assert(toJson(noNullWithId2)=="[1,[56,[[15,[\"foo\"]],{\"id\":\"a\"}]],{}]")
+    assert(toJson(withValue) == "[1,[56,[[15,[\"foo\"]],{\"id\":\"a\",\"item\":{\"a\":1.0}}]],{}]")
+  }
   test("insert documents") {
 
 

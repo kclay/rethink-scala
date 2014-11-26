@@ -53,15 +53,15 @@ case class FuncWrap(value: Any) {
   }
 }
 
-private[rethinkscala] case class MakeObj2(data: Document) extends Term with MapTyped {
+private[rethinkscala] case class MakeObj2(data: Document,writeNulls:Boolean =false) extends Term with MapTyped {
 
   override protected val extractArgs = false
-  override lazy val optargs = buildOptArgs2(Reflector.fields(data).map(f =>
-    (f.getName, Expr(f.get(data)))
-  ).toMap)
+  override lazy val optargs = buildOptArgs2(Expr.mapForInsert(data,writeNulls))
 
   def termType = TermType.MAKE_OBJ
 }
+
+
 
 object MakeObj {
 
@@ -188,6 +188,17 @@ trait Expr {
   def apply(date: ReadableInstant) = ISO8601(ISODateTimeFormat.dateTime().print(date))
 
 
+
+  private[rethinkscala] def mapForInsert(doc:AnyRef,writeNulls:Boolean):Map[String, Any]  = Reflector.fields(doc).map(f =>
+
+    (f.getName, f.get(doc))
+  ).collect {
+    case (name, value) if (name =="id" && value !=None && value !=null) => (name, value)
+    case (name,value) if(writeNulls && name !="id")=>(name,value)
+    case (name,value) if(!writeNulls && value !=None && value !=null) => (name,value)
+  }.map{
+    case(name,value)=>(name,Expr(InsertExpr((value,writeNulls))))
+  }.toMap
   def apply(a: Any, depth: Int = 20): Term = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
 
@@ -208,9 +219,23 @@ trait Expr {
       case f: Any if !f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2] => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
       case s: Seq[_] => MakeArray(s, depth - 1)
       case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
+      case None | null=> NoneDatum()
+      case InsertExpr(value)=>{
+        val item = value._1
+        val writeNulls = value._2
+        item match{
+          case Some(d:Document)=>MakeObj2(d,writeNulls)
+          case Some(v:Any)=>Datum(v)
+          case None | null=>NoneDatum()
+          case _=> apply(item,depth - 1)
+        }
+      }
+      case Some(d:Document) => MakeObj2(d)
+      case Some(a:Any)=> Datum(a)
       case d: Document => MakeObj2(d)
 
       case a: Any => Datum(a)
+
 
 
     }

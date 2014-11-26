@@ -40,7 +40,8 @@ class GeospatialTest extends FunSuite with WithBase {
 
 
 
-    assert(term.toOpt.contains(circlePolygon))
+
+    assert(term.toOpt.exists(_.points == circlePolygon.points) )
   }
   test("distance") {
 
@@ -65,7 +66,7 @@ class GeospatialTest extends FunSuite with WithBase {
     ).fill
 
     assert(term.run, {
-      p: Polygon => p == check
+      p: Polygon => p.points == check.points
     })
   }
 
@@ -148,7 +149,7 @@ class GeospatialTest extends FunSuite with WithBase {
       Point(-122.423246,37.779388))
     )
     assert(poly.run,{
-      p:Polygon=> p == poly
+      p:Polygon=> p.points == poly.points
     })
 
   }

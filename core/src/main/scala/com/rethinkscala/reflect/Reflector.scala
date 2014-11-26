@@ -37,6 +37,8 @@ object Reflector {
 
   //mapper.setAnnotationIntrospector()
 
+
+
   def fields(a: AnyRef): Seq[Field] = fields(a.getClass)
 
 
