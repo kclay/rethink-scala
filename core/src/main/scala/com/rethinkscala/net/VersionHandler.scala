@@ -95,9 +95,14 @@ case class JsonVersionHandler(version: Version3) extends VersionHandler[String] 
           }
           case _ => RethinkRuntimeError(s"Invalid response = $json", token.term)
         }
+        case _=> {
+          token.toResult(json)
+        }
       }) match {
         case e: Exception => token.failure(e)
         case e: Any => token.success(e)
+        case null=> token.failure(RethinkNoResultsError("No results found",token.term))
+
       }
     }
   }

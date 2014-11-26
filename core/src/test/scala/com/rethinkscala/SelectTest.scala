@@ -22,6 +22,11 @@ class SelectTest extends FunSuite with WithBase {
 
 
 
+  test("no_results"){
+
+println(foos.get("all").run)
+  }
+
   test("select between") {
 
     val records = for (i <- 1 to 50) yield SelectFoo(i)
