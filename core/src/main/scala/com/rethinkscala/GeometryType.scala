@@ -8,7 +8,8 @@ import com.rethinkscala.ast._
 import com.rethinkscala.reflect.{GroupResultDeserializer}
 import ql2.Ql2.Term.TermType
 
-import scala.collection.TraversableLike
+import scala.collection.{GenIterable, TraversableLike}
+import scala.collection.generic.SeqForwarder
 
 /**
  * Created by IntelliJ IDEA.
@@ -104,6 +105,12 @@ final class LineSupport(val line: Line) extends AnyVal {
 
 final class PolygonSupport(val polygon: ProduceGeometry[Polygon]) extends AnyVal {
   def polygonSub(other: Polygon) = PolygonSub(polygon, other)
+}
+
+case class PolygonSubResults(polygons:Seq[Polygon]) extends GeometryType with SeqForwarder[Polygon]{
+  protected override def underlying = polygons
+
+  override def sameElements[B >: Polygon](that: GenIterable[B]) = super.sameElements(that)
 }
 
 class UnknownGeometry(geo: GeometryType) extends GeometryType {

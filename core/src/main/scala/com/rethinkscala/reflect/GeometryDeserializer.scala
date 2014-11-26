@@ -18,6 +18,11 @@ case class PolygonExtractor(coordinates: List[List[Point]]) {
 
 }
 
+case class PolygonSubResultsExtractor(coordinates: List[List[Point]]){
+  def toResult = PolygonSubResults(coordinates.map(Polygon(_)))
+}
+
+
 
 case class LineExtractor(coordinates: List[Point]) {
   def toLine =Line(coordinates)
@@ -100,4 +105,12 @@ object PolygonDeserializer extends StdScalarDeserializer[Polygon](classOf[Polygo
   override def deserialize(jp: JsonParser, p2: DeserializationContext) = jp
     .readValueAs(typeRefOfPointsExtractor)
     .asInstanceOf[PolygonExtractor].toPolygon
+}
+
+object PolygonSubResultsDeserializer extends StdScalarDeserializer[PolygonSubResults](classOf[PolygonSubResults]){
+  val typeRefOfPointsExtractor = Reflector.typeReference[PolygonSubResultsExtractor]
+
+  override def deserialize(jp: JsonParser, p2: DeserializationContext) = jp
+    .readValueAs(typeRefOfPointsExtractor)
+    .asInstanceOf[PolygonSubResultsExtractor].toResult
 }

@@ -146,6 +146,6 @@ case class ToGeoJson[T <: GeometryType](target: Geometry[T]) extends ProduceStri
   override def termType = TermType.TO_GEOJSON
 }
 
-case class PolygonSub(target: ProduceGeometry[Polygon], other: Polygon) extends ProduceGeometryArray[Polygon] {
+case class PolygonSub(target: ProduceGeometry[Polygon], other: Polygon) extends ProduceGeometry[PolygonSubResults] {
   override def termType = TermType.POLYGON_SUB
 }
