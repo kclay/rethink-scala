@@ -83,6 +83,9 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     val id = connectionId.incrementAndGet()
     val token: AtomicLong = new AtomicLong()
 
+    @volatile
+    var invalidated = false
+
     private[rethinkscala] val tokensToCursor = new com.google.common.collect.MapMaker()
       .concurrencyLevel(4)
       .weakKeys()
@@ -129,6 +132,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 
     def destroy(wrapper: ChannelWrapper) {
       logger.debug("Destroying Channel")
+      wrapper.invalidated=true
       wrapper.channel.close()
     }
   }, max = version.maxConnections)
@@ -152,9 +156,10 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
             // TODO : Check into dropping netty and using sockets for each,
 
             val attachment = new ConnectionAttachment(versionHandler, e => {
-              p.tryFailure(e)
+
               logger.debug(s"Invalidating connection (${c.id})")
               invalidate(c)
+              p.tryFailure(e)
             })
             // Or find a way so that we can store the token for the netty handler to complete
             c.channel.setAttachment(attachment)
@@ -163,12 +168,13 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
             future.removeListener(this)
           }
         })
-        f onSuccess {
-          case _ => {
+        f onComplete {
+          case _=> if(!c.invalidated){
             logger.debug(s"Restoring connection (${c.id})")
             restore(c)
           }
         }
+
     } onFailure {
       case e: Exception => p.tryFailure(e)
     }
