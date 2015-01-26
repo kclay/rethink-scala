@@ -8,7 +8,7 @@ import java.util.concurrent.{Executors, TimeUnit}
 import com.rethinkscala.ast._
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{ResultExtractor, Term, TermAssocPair}
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.buffer.ChannelBuffers._
 import org.jboss.netty.channel.Channel

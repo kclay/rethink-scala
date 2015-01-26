@@ -13,7 +13,7 @@ import com.rethinkscala.ast._
 import com.rethinkscala.net.Translate._
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.utils.{ConnectionWithId, ConnectionFactory, SimpleConnectionPool}
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import org.jboss.netty.bootstrap.ClientBootstrap
 import org.jboss.netty.buffer.ChannelBuffers._
 import org.jboss.netty.buffer.{ChannelBuffer, HeapChannelBufferFactory}
