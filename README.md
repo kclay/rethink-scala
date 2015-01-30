@@ -26,8 +26,8 @@ SBT Users
 ```scala
 val main = Project(....).settings(resolvers ++= Seq("RethinkScala Repository" at "http://kclay.github.io/releases"))
 
-val rethinkscala = "com.rethinkscala" %% "core" % "0.4.3",
-val rethinkscala = "com.rethinkscala" %% "core" % "0.4.4-SNAPSHOT"
+val rethinkscala = "com.rethinkscala" %% "core" % "0.4.6",
+val rethinkscala = "com.rethinkscala" %% "core" % "0.4.7-SNAPSHOT"
 ```
 To get started
 ```scala
@@ -107,6 +107,15 @@ sbt compile
 
 Version
 -
+###0.4.6 - 01/29/15
+- Geo Support
+- Uuid Support
+- Fixed resotring connection on failed quries (thanks @mick-h)
+- Fixed Option support (thanks @mick-h)
+- Fixed issuse were null results were not handle properly (thanks @mick-h)
+- Fixed nested document insert (thanks @maohde)
+- Fixed expection being thrown when query returns back empty results (thanks @mick-h)
+
 ###0.4.5 - 10/12/14
 - Fixing Nested documents for json
 - Fixed connection pooling
