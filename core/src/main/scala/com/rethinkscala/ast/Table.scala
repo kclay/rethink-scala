@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.ast.Changes
+
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.net.{DefaultCursor, BinaryConversion}
 import com.rethinkscala._
@@ -85,11 +85,6 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
   def sync = Sync(this)
 
   def sync(durability:Durability.Kind)= Sync(this,Some(durability))
-
-
-
-
-  def changes = Changes(this)
 
 }
 

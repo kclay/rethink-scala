@@ -1,4 +1,6 @@
-package com.rethinkscala.net
+package com.rethinkscala.changefeeds.net
+
+import com.rethinkscala.net.{CursorFactory, Token}
 
 /**
  * Created with IntelliJ IDEA.

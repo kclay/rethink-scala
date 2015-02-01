@@ -1,5 +1,6 @@
 package com.rethinkscala.ast
 
+import com.rethinkscala.changefeeds.net.ChangeCursor
 import com.rethinkscala.net._
 import com.rethinkscala._
 import com.rethinkscala.net.Connection

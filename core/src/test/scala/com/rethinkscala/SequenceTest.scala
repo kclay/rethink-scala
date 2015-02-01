@@ -46,7 +46,7 @@ class SequenceTest extends FunSuite with WithBase {
 
 
 
-    assert(b.map(x => x add "s"), {
+    assert(b.map(x => x add "s").run, {
       c: Seq[String] => c == Seq("1s", "2s", "3s")
     })
   }

@@ -1,6 +1,7 @@
-package com.rethinkscala.net
+package com.rethinkscala.changefeeds.net
 
 import com.rethinkscala.CursorChange
+import com.rethinkscala.net.{RethinkCursor, Token}
 
 /**
  * Created with IntelliJ IDEA.
