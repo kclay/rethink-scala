@@ -10,22 +10,29 @@ import Blocking._
  * Time: 9:45 AM
  *
  */
-case class NestedAddress(labels: List[String] = List("sample")) extends Document
+case class NestedZip(zip:String) extends Document
+case class NestedStreet(zip:NestedZip) extends Document
+case class NestedAddress(street:NestedStreet) extends Document
 
-case class NestedUser(name: String, active: Boolean = true, address: NestedAddress = NestedAddress(), id: Option[String] = None) extends Document
+case class NestedUser(name: String, active: Boolean , address: NestedAddress, id: Option[String] = None) extends Document
 
 class NestedTest extends FunSuite with WithBase {
 
 
   test("nested documents") {
 
-    val term = r.table("foo").insert(NestedUser("foo"))
+    val user = NestedUser("foo",true,NestedAddress(NestedStreet(NestedZip("hello"))))
+    val foos= r.tableAs[NestedUser]("foo")
+    val term = foos.insert(user)
     val query = version3.toQuery(term, 1, None, Map.empty)
     val json = query.json
     println(json)
-    assert(term.run, {
-      d: InsertResult => d.inserted == 1
-    })
+   val answer =for {
+      res <- term.toOpt
+      user2 <- foos.get(res.generatedKeys.head).toOpt
+    } yield user2
+
+    println(answer)
   }
 
   // override def setupDB = false

@@ -129,7 +129,7 @@ trait ReturnValues {
   //TODO Javize
   def returnedValue[T](clazz: Class[T]): T = returnedValue(Manifest.classType(clazz)).getOrElse(null.asInstanceOf[T])
 
-  def returnedValue[T](implicit mf: Manifest[T]): Option[T] = {
+
 
 
   private def extract[T](implicit mf:Manifest[T])={

@@ -79,12 +79,12 @@ class Includes(target:Typed,other:GeometryType) extends Typed{
 case class IncludesGeo[T <: GeometryType]( target: Geometry[T],  other: GeometryType) extends
 Includes(target,other) with  ProduceBinary
 
-case class IncludesSeq[T]( target:ProduceSequenceLike[T], other:GeometryType) extends Includes(target,other) with ProduceSequence[T]
+case class IncludesSeq[T,C[_]]( target:ProduceSequenceLike[T,C], other:GeometryType) extends Includes(target,other) with ProduceSeq[T,C]
 
 object Includes{
 
   def apply[T<:GeometryType](target:ProduceGeometry[T],other:GeometryType) = IncludesGeo(target,other)
-  def apply[T](target:ProduceSequenceLike[T],other:GeometryType) = IncludesSeq(target,other)
+  def apply[T,C[_]](target:ProduceSequenceLike[T,C],other:GeometryType) = IncludesSeq(target,other)
 }
 
 
@@ -95,13 +95,13 @@ class Intersects(target: Typed, geo: GeometryType) extends Typed {
 object Intersects{
 
   def apply[T<:GeometryType](target:ProduceGeometry[T],other:GeometryType) = IntersectsGeo(target,other)
-  def apply[T](target:ProduceSequenceLike[T],other:GeometryType) = IntersectsSeq(target,other)
+  def apply[T,C[_]](target:ProduceSequenceLike[T,C],other:GeometryType) = IntersectsSeq(target,other)
 }
 
 case class IntersectsGeo[T <: GeometryType]( target: Geometry[T],  other: GeometryType) extends
 Intersects(target,other) with  ProduceBinary
 
-case class IntersectsSeq[T]( target:ProduceSequenceLike[T], other:GeometryType) extends Intersects(target,other) with ProduceSequence[T]
+case class IntersectsSeq[T,C[_]]( target:ProduceSequenceLike[T,C], other:GeometryType) extends Intersects(target,other) with ProduceSeq[T,C]
 
 
 case class GeoJson(target: Map[String, Any]) extends ProduceGeometry[UnknownGeometry] {
@@ -109,7 +109,7 @@ case class GeoJson(target: Map[String, Any]) extends ProduceGeometry[UnknownGeom
 }
 
 case class GetIntersecting[T <: Document](target: Table[T], geo: GeometryType, index: Option[String])
-  extends ProduceStreamSelection[T] {
+  extends ProduceDefaultStreamSelection[T] {
 
   override lazy val args = buildArgs(target, geo)
 

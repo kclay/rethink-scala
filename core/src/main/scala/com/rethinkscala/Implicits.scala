@@ -67,10 +67,10 @@ trait ToAstImplicts {
   } */
 
   implicit lazy val seqToAnySequence= new ToAst[Seq[Any]] {
-    type TypeMember = Sequence[Any]
+    type TypeMember = Sequence[Any,DefaultCursor]
 
     type InnerProduce = Produce0[Any]
-    type ForType[T] =  Sequence[T] with Produce0[T] with Produce[Seq[T]]
+    //type ForType[T] =  Sequence[T] with Produce0[T] with Produce[Seq[T]]
   }
 }
 
@@ -112,17 +112,14 @@ trait ToFloatImplicits extends ToFloatLowerImplicits{
 
 }
 
-class ToFunctional[T, A >: Var](seq: Sequence[T]) {
+class ToFunctional[T, A >: Var,C[_]](val seq: Sequence[T,C]) extends AnyVal{
 
 
-  def concatMap[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = ConcatMap[Inner](seq.underlying, FuncWrap(f))
-  def map[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = RMap[Inner](seq.underlying, FuncWrap(f))
-  
-
-  def reduce[P](f: (A, A) => Produce0[P]) = Reduce[T, P](seq.underlying, f)
+  def concatMap[B <: Typed, Result](f: A => B)(implicit cm: CanMap[T, B, Result]) = ConcatMap[T,C,Result](seq.underlying, FuncWrap(f))
+  def map[B <: Typed, Result](f: A => B)(implicit cm: CanMap[T, B, Result]) = RMap[T,C,Result](seq.underlying, FuncWrap(f))
+  def reduce[P ](f: (A, A) =>Produce0[P]) = Reduce[T,P](seq.underlying, f)
 
 }
-
 
 object CanMap {
   def apply[From, To <: Typed, Out] = new CanMap[From, To, Out]
