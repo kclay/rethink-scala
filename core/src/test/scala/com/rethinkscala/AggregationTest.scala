@@ -1,6 +1,7 @@
 package com.rethinkscala
 
 import com.rethinkscala.Implicits.Blocking._
+import com.rethinkscala.net.DefaultCursor
 import org.scalatest.FunSuite
 
 
@@ -31,7 +32,7 @@ class AggregationTest extends FunSuite with WithBase {
     val seq = Seq(1, 2, 2, 2, 43, 4, 5, 5, 6, 6, 6, 7, 7, 1, 1, 1)
 
     assert(Expr(seq).distinct, {
-      v: Seq[Int] => v == seq.distinct.sorted
+      v: DefaultCursor[Int] => v == seq.distinct.sorted
     })
 
   }
@@ -150,6 +151,7 @@ class AggregationTest extends FunSuite with WithBase {
 
 
      Expr(1 to 10).filter(f=> f("industries").contains(i=> i \ "userId" ==="700"))
+    Expr(1 to 10).filter(r.row("hello") > 10 )
   //  Expr(1 to 10).filter(f=> f.anySeq("industries").contains(i=> i \ "userId" ==="700"))
     val res = Expr('a' to 'd').contains("b")
      print(res.ast)

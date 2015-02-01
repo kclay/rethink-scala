@@ -1,5 +1,7 @@
 package com.rethinkscala.ast
 
+import com.rethinkscala.Document
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,16 +16,22 @@ trait TableTyped extends Typed
 trait MapTyped extends Typed
 
 
-trait Record extends Typed with Hash {
 
+
+
+trait Record extends Typed with Hash {
 
 
   override val underlying = this
 
+  def mapTo[T<:Document] =  new MapToDocument[T](underlying)
 
+  def merge(other:Any) = Merge.record(underlying,other)
   def hasFields(values: String*) = HasFields(underlying, values)
 
   def keys = Keys(underlying)
+
+
 
 }
 

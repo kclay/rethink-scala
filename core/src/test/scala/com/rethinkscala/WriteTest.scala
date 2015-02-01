@@ -82,8 +82,9 @@ val noNulls =     foo.insert(NullTest(None,nullItem))
 
   }
   test("replace") {
+
     assert(fetch.replace(Foo(Some("a"), 10, 60)).withResults, {
-      c: ChangeResult => c.replaced == 1 && c.returnedValue[Foo].map(_.a == 10).getOrElse(false)
+      c: ChangeResult => c.replaced == 1 && c.returnedValue[Foo].exists(_.a == 10)
     })
 
     var replace = fetch.replace(Map("id" -> "a", "b" -> 29))
@@ -92,7 +93,7 @@ val noNulls =     foo.insert(NullTest(None,nullItem))
       rr: ChangeResult => rr.replaced == 1
     })
 
-    replace = fetch.replace((v: Var) => v.merge(Map("is_fav" -> true)))
+    replace = fetch.replace(v => v.merge(Map("is_fav" -> true)))
     assert(replace, {
       cr: ChangeResult => cr.replaced == 1
     })

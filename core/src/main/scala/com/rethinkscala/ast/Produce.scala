@@ -3,7 +3,6 @@ package com.rethinkscala.ast
 import com.rethinkscala.net._
 import com.rethinkscala._
 import com.rethinkscala.net.Connection
-import com.rethinkscala.JoinResult
 import com.rethinkscala.net.BlockingResultQuery
 import com.rethinkscala.magnets.PluckMagnet
 
@@ -79,6 +78,7 @@ trait CastTo {
   def field(name: String): ProduceAny
 
 
+
   def cast[T](name: String)(implicit ast: ToAst[T]): ast.Cast = field(name).asInstanceOf[ast.Cast]
 
   def int(name: String) = cast[Int](name)
@@ -89,7 +89,7 @@ trait CastTo {
 
   def string(name: String) = cast[String](name)
 
-  def seq[T](name: String) = field(name).asInstanceOf[Sequence[T] with Produce[Seq[T]] with Produce0[T]]
+  def seq[T](name: String) = field(name).asInstanceOf[Sequence[T,DefaultCursor] with Produce[Seq[T]] with Produce0[T]]
 
   def map[T](name: String) = cast[Map[String, T]](name)
 
@@ -127,17 +127,22 @@ trait CastTo {
 }
 
 
-trait ProduceSequenceLike[T] extends Sequence[T] with Produce0[T]
-with CanManipulate[SPluck[_], Merge, Without] {
+
+trait ProduceSequenceLike[T,C[_]]  extends Sequence[T,C] with Produce0[T] with 
+CanManipulate[SPluck[_], Merge, Without]{
+
+
   type FieldProduce = ProduceArray[T]
 
 
-  def field(name: String): ProduceArray[T] = GetField[T](this, name)
+  def field(name: String): ProduceArray[T] = GetField(this, name)
 
   override def merge(other: Map[String, Any]) = Merge(underlying, other)
 
 
+
   // TODO : Fix this
+  def merge[R,CR[_]](other:Sequence[R,CR]) = Merge.seq(underlying,other)
   override def merge(other: CM) = Merge(underlying.asInstanceOf[CM], other)
 
   //  def pluck(attrs: String*) = Pluck[Any,T](underlying, attrs)
@@ -151,18 +156,59 @@ with CanManipulate[SPluck[_], Merge, Without] {
 
 }
 
-trait ProduceSequence[T] extends ProduceSequenceLike[T] with Produce[Seq[T]]
+trait ProduceSequence[E] extends Typed{
 
-trait ProduceAnySequence extends ProduceSequence[Any]
+  type Collection[A]
+}
+
+trait ProduceSeq[E,C[_]] extends  ProduceSequenceLike[E,C] with Produce[C[E]] with ProduceSequence[E]{
+  self=>
+
+  override type Collection[A] = C[A]
+}
+
+
+
+
+trait ProduceDefaultSequence[E] extends ProduceSeq[E,DefaultCursor]
+
+
+
+
+
+// FIXME support changes ???
+trait ProduceAnySequence extends ProduceDefaultSequence[Any]
 
 trait ProduceSet[T] extends ProduceArray[T]
+
+
+trait ProduceSingleSelection[T] extends SingleSelection[T] with Produce[T] with Produce0[T] with Record {
+
+  override val underlying = this
+  type FieldProduce  = ProduceAny
+  def field(name: String):FieldProduce = GetField(underlying,name)
+
+  def merge[R](other:SingleSelection[R]) = Merge.selection(underlying,other)
+
+}
+
+trait ProduceSingleDocumentSelection[T<:Document] extends SingleSelection[T] with ProduceDocument[T]{
+  override val underlying = this
+}
+
+
+// FIXME support changes ???
+trait ProduceStreamSelection[T,C[_]] extends ProduceSeq[T,C] with StreamSelection[T,C]
+
+trait ProduceChangeStream[T] extends ProduceStreamSelection[CursorChange[T],ChangeCursor]
+trait ProduceArray[T] extends ProduceDefaultSequence[T] with ArrayTyped[T]
 
 trait ProduceBinary extends Produce[Boolean] with Binary with Produce0[Boolean]
 
 //trait ProduceLiteral extends ProduceLiteral with Literal
 
 
-trait ProduceGroup[T] extends Produce[GroupResult[T]] with ProduceSequenceLike[GroupResult[T]]
+trait ProduceGroup[T] extends  ProduceSeq[T,GroupResult]
 
 trait ProduceDocument[T <: Document] extends ProduceSingle[T] with Record with DocumentConversion[T] with CanManipulate[OPluck[_], Merge, Without] {
 
@@ -175,6 +221,7 @@ trait ProduceDocument[T <: Document] extends ProduceSingle[T] with Record with D
 
   // TODO : Fix this
   override def merge(other: CM) = Merge(underlying.asInstanceOf[CM], other)
+
 
   def pluck(attrs: String*) = Pluck(underlying, attrs)
 
@@ -219,6 +266,8 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo {
   any =>
 
 
+
+
   def numeric = new ProduceNumeric {
     override val underlying = any
     override lazy val args = underlyingTerm.args
@@ -251,11 +300,14 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo {
 
   def array[T]: ArrayTyped[T] = this.asInstanceOf[ArrayTyped[T]]
 
+  override def merge(other:Any) = Merge.record(underlying,other)
+
+
 
   type FieldProduce = ProduceAny
 
 
-  // override def apply(name: String):ProduceAny = super.apply(name)
+ // override def apply(name: String):ProduceAny = super.apply(name)
 
   override def \(name: String): ProduceAny = field(name)
 
@@ -292,7 +344,7 @@ class MapToDocument[T <: Document](from: Record) extends ProduceTypedDocument[T]
   override lazy val args = underlyingTerm.args
   override lazy val optargs = underlyingTerm.optargs
 
-  // override def ast = underlyingTerm.ast
+ // override def ast = underlyingTerm.ast
 
   override private[rethinkscala] val underlyingTerm: Term = from.underlying.asInstanceOf[Term]
 
@@ -303,8 +355,9 @@ trait ProduceObject extends Produce[Map[String, Any]] with Record {
   self =>
   def mapTo[T <: Document] = new MapToDocument[T](this)
 }
+trait ProduceJoin[L, R,C[_]] extends ProduceSeq[JoinResult[L, R],C] with JoinTyped[L, R,C] {
 
-trait ProduceJoin[L, R] extends ProduceSequence[JoinResult[L, R]] with JoinTyped[L, R] {
+
   override val underlying = this
 }
 

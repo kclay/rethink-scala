@@ -61,7 +61,10 @@ case class Insert[T <: Document, R <: Document](table: Table[T], records: Either
   })
   override lazy val optargs = buildOptArgs(options.toMap)
 
-  def withResults = Insert[T, R](table, records, options.copy(returnValues = Some(true)))
+  @deprecated("use .withChanges", "0.4.5")
+  def withResults = withChanges
+
+  def withChanges:Insert[T,R] = copy(options = options.copy(returnValues = None, returnChanges = Some(true)))
 
   def termType = TermType.INSERT
 
@@ -90,10 +93,13 @@ case class Update[T](target: Selection[T], wrap: FuncWrap,
 
   def termType = TermType.UPDATE
 
-  def withResults = copy(options = options.copy(returnValues = Some(true)))
+  @deprecated("use .withChanges", "0.4.5")
+  def withResults = withChanges
+
+  def withChanges:Update[T] = copy(options = options.copy(returnValues = None, returnChanges = Some(true)))
 }
 
-case class Replace[T](target: Selection[T], wrap: FuncWrap,
+case class Replace[T](target: Selection[_], wrap: FuncWrap,
                       options: UpdateOptions)
   extends ProduceDocument[ChangeResult] {
 
@@ -102,7 +108,10 @@ case class Replace[T](target: Selection[T], wrap: FuncWrap,
 
   def termType = TermType.REPLACE
 
-  def withResults = copy(options = options.copy(returnValues = Some(true)))
+  @deprecated("use .withChanges", "0.4.5")
+  def withResults = withChanges
+
+  def withChanges:Replace[T] = copy(options = options.copy(returnValues = None, returnChanges = Some(true)))
 
 }
 

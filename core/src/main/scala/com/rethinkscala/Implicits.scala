@@ -116,8 +116,8 @@ class ToFunctional[T, A >: Var](seq: Sequence[T]) {
 
 
   def concatMap[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = ConcatMap[Inner](seq.underlying, FuncWrap(f))
-
   def map[B <: Typed, Inner](f: A => B)(implicit cm: CanMap[T, B, Inner]) = RMap[Inner](seq.underlying, FuncWrap(f))
+  
 
   def reduce[P](f: (A, A) => Produce0[P]) = Reduce[T, P](seq.underlying, f)
 
@@ -135,9 +135,9 @@ trait CanMapImplicits {
   implicit val mapStringToNumeric = CanMap[String, Numeric, Int]
 
 
-  implicit def mapStringToArray[T] = CanMap[String, Sequence[T], T]
+  implicit def mapStringToArray[T,C[_]] = CanMap[String, Sequence[T,C], T]
 
-  implicit def mapMapToArray[T] = CanMap[Map[String, _], Sequence[T], T]
+  implicit def mapMapToArray[T,C[_]] = CanMap[Map[String, _], Sequence[T,C], T]
 
 
   implicit val mapIntToNumeric = CanMap[Int, Numeric, Int]
@@ -158,13 +158,18 @@ trait CanMapImplicits {
 class CanMap[-From, -To <: Typed, Out]
 
 
+
+
 private[rethinkscala] trait ImplicitConversions {
+
+
 
 
   object r extends RethinkApi
 
 
-  implicit def anyToPimpled(v: Any) = new PimpedAny(v)
+
+  implicit def anyToPimpled(v:Any) = new PimpedAny(v)
 
   //implicit def toTyped[T<:Typed](v:T):Typed = v
 
@@ -313,6 +318,7 @@ object Implicits {
   with GeometryImplicits {
 
 
+
     implicit val numericToDouble = new FromAst[Numeric] {
       type Raw = Double
     }
@@ -329,8 +335,9 @@ object Implicits {
     }
 
 
-  }
 
+
+  }
   object Blocking extends net.BlockingImplicits with Common
 
   object Async extends net.AsyncImplicits with Common

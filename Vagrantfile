@@ -88,7 +88,9 @@ Vagrant.configure("2") do |config|
   # end
 
    config.vm.provision :shell, :path => "install_rethinkdb.sh"
-
+   config.vm.provider :virtualbox do |v|
+        v.name="rethink-scala"
+   end
 
   # Enable provisioning with chef server, specifying the chef server URL,
   # and the path to the validation key (relative to this Vagrantfile).

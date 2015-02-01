@@ -1,14 +1,16 @@
 package com.rethinkscala.net
 
 
-import com.rethinkscala.ast.Sequence
+import com.rethinkscala.ast.{Aggregation, Sequence}
 
 import scala.collection.generic.SeqForwarder
 
 
-trait RethinkCursor[T] {
+trait AbstractCursor[T]{
+  type ChunkType= T
+}
+trait RethinkCursor[T] extends AbstractCursor[T]{
   val connectionId: Int
-  type ChunkType = T
 
   var _chunks = collection.mutable.Seq.empty[ChunkType]
   val token: Token[_]
@@ -28,6 +30,8 @@ trait RethinkCursor[T] {
   }
 }
 
+
+
 //http://stackoverflow.com/questions/14299454/create-a-custom-scala-collection-where-map-defaults-to-returning-the-custom-coll
 
 case class DefaultCursor[T](connectionId: Int, token: Token[_], completed: Boolean) extends SeqForwarder[T] with RethinkCursor[T] {
@@ -37,7 +41,7 @@ case class DefaultCursor[T](connectionId: Int, token: Token[_], completed: Boole
   lazy val _size = {
     if (completed) underlying.size
     else {
-      val seq = token.term.asInstanceOf[Sequence[_]]
+      val seq = token.term.asInstanceOf[Aggregation[_]]
 
       import com.rethinkscala.net.Blocking._
 
