@@ -1,7 +1,7 @@
 package com.rethinkscala.changefeeds.ast
 
 import com.rethinkscala.Document
-import com.rethinkscala.ast.{ProduceChangeStream, Table}
+import com.rethinkscala.ast.{Typed, ProduceChangeStream}
 import ql2.Ql2.Term.TermType
 
 /**
@@ -11,7 +11,9 @@ import ql2.Ql2.Term.TermType
  * Time: 11:15 AM
  *
  */
-case class Changes[T<:Document](target:Table[T]) extends ProduceChangeStream[T]{
+
+
+case class Changes[T](target:Typed) extends ProduceChangeStream[T]{
   override def termType =TermType.CHANGES
 }
 

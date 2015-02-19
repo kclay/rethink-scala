@@ -76,7 +76,8 @@ case class Contains[T](target: Aggregation[T], value: Seq[FuncWrap]) extends Met
 }
 
 
-trait MethodAggregation[T]  extends MethodQuery{
+trait MethodAggregation[T]  extends MethodQuery with Typed{
+  self:Typed=>
   val target:Aggregation[T]
   val fieldOrFunction:Option[FuncWrap]
 

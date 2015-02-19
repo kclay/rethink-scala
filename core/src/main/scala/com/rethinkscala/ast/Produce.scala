@@ -156,7 +156,7 @@ trait ProduceSequenceLike[T,C[_]]  extends Sequence[T,C] with Produce0[T] {
 
 }
 
-trait ProduceSequence[E] extends Typed{
+trait ProduceSequence[E] extends Typed {
 
   type Collection[A]
 }
