@@ -2,7 +2,7 @@ package com.rethinkscala.net
 
 import com.fasterxml.jackson.annotation._
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.{ObjectNode, ArrayNode}
 import com.rethinkscala.{ResultExtractor,Term,Profile,Document,ConvertFrom}
 
 import com.rethinkscala.ast.Datum
@@ -98,6 +98,17 @@ class JsonResponseExtractor {
   def apply(node: JsonNode) = {
     node match {
       case a: ArrayNode => result = (for (i <- 0 to a.size() - 1) yield a.get(i) match{
+        case o:ObjectNode if(o.get("$reql_type$") != null)=> {
+            Try({
+
+
+              val entries = o.get("data").asInstanceOf[ArrayNode]
+              for (i <- 0 to entries.size() - 1) yield entries.get(i).toString
+            }).getOrElse(Seq.empty)
+
+
+
+        }
         case n:ArrayNode=> for(j <- 0 to n.size() - 1) yield n.get(j).toString
         case o:JsonNode=> Seq(o.toString)
       }  ).flatten
