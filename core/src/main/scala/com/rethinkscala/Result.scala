@@ -132,7 +132,7 @@ trait ReturnValues {
 
 
 
-  private def extract[T](implicit mf:Manifest[T])={
+  private def extract[T](implicit mf:Manifest[T]):Seq[ChangeSet[T]]={
     if (_returnedValue == null) {
       try {
         _returnedValue = Reflector.fromJson[ReturnValueExtractor[T]](raw).value
@@ -141,23 +141,20 @@ trait ReturnValues {
       }
 
     }
-    _returnedValue.asInstanceOf[Option[T]]
+    _returnedValue.asInstanceOf[Seq[ChangeSet[T]]]
   }
 
   def returnedValue[T](implicit mf: Manifest[T]): Option[T] = {
-      extract[T]
-    _returnedValue.headOption.asInstanceOf[Option[ChangeSet[T]]].map(_.current)
+      extract[T].headOption.map(_.current)
+
   }
 
   def returnedValues[T](implicit mf: Manifest[T]): Seq[T] = {
-    extract[T]
-    _returnedValue.asInstanceOf[Changes[T]].map(_.current)
+    extract[T].map(_.current)
+
   }
 
-  def changes[T](implicit mf:Manifest[T]):Changes[T]={
-    extract[T]
-    _returnedValue.asInstanceOf[Changes[T]]
-  }
+  def changes[T](implicit mf:Manifest[T]):Changes[T]=extract[T]
 
 }
 
