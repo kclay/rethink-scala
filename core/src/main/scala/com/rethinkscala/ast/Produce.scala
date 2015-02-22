@@ -192,7 +192,7 @@ trait ProduceSingleSelection[T] extends SingleSelection[T] with Produce[T] with 
 
 }
 
-trait ProduceSingleDocumentSelection[T<:Document] extends SingleSelection[T] with ProduceDocument[T]{
+trait ProduceSingleDocumentSelection[T] extends SingleSelection[T] with ProduceDocument[T]{
   override val underlying = this
 }
 
@@ -212,7 +212,7 @@ trait ProduceBinary extends Produce[Boolean] with Binary with Produce0[Boolean]
 
 trait ProduceGroup[T] extends  ProduceSeq[T,GroupResult]
 
-trait ProduceDocument[T <: Document] extends ProduceSingle[T] with Record with DocumentConversion[T]
+trait ProduceDocument[T] extends ProduceSingle[T] with Record with DocumentConversion[T]
  {
 
 

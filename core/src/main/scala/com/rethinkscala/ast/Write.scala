@@ -34,8 +34,8 @@ abstract class WithLifecycle[R](implicit mf: Manifest[R]) {
 
 
 case class InsertExpr(private val value:(Any,Boolean)) extends AnyVal
-case class Insert[T <: Document, R <: Document](table: Table[T], records: Either[Seq[Map[String, Any]], Seq[R]],
-                                                options: InsertOptions,writeNulls:Boolean = false)
+case class Insert[T<:AnyRef, R<:AnyRef](table: Table[T], records: Either[Seq[Map[String, Any]], Seq[R]],
+                                                options: InsertOptions,writeNulls:Boolean=false)
   extends WithLifecycle[Seq[String]] with ProduceDocument[InsertResult] {
 
 
@@ -55,7 +55,7 @@ case class Insert[T <: Document, R <: Document](table: Table[T], records: Either
   private[rethinkscala] lazy val argsForJson = buildArgs(table, records match {
     case Left(x: Seq[Map[String, Any]]) => x
     case Right(Seq(doc)) => MakeObj(toMap(doc)) // wrap in single object so withResults work
-    case Right(x: Seq[R]) => MakeArray(x.map(toMap))
+    case Right(x: Seq[R]) => MakeArray(x.map(toMap(_)))
 
 
   })
@@ -69,10 +69,11 @@ case class Insert[T <: Document, R <: Document](table: Table[T], records: Either
   def termType = TermType.INSERT
 
 
-  private def lifecycle(f: (R, Int) => Unit) = records match {
-    case Right(x) => x.zipWithIndex map {
+  private def lifecycle(f: (Document, Int) => Unit) = records match {
+    case Right(x) => x.zipWithIndex foreach  {
 
-      case (d, i) => f(d, i)
+      case (d, i) if d.isInstanceOf[Document] => f(d.asInstanceOf[Document], i)
+
     }
     case _ =>
   }

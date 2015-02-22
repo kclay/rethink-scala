@@ -10,11 +10,11 @@ import Blocking._
  * Time: 9:45 AM
  *
  */
-case class NestedZip(zip:String) extends Document
+case class NestedZip(zip:String)
 case class NestedStreet(zip:NestedZip) extends Document
 case class NestedAddress(street:NestedStreet) extends Document
 
-case class NestedUser(name: String, active: Boolean , address: NestedAddress, id: Option[String] = None) extends Document
+case class NestedUser(name: String, active: Boolean , address: NestedAddress, id: Option[String] = None)
 
 class NestedTest extends FunSuite with WithBase {
 
@@ -26,7 +26,7 @@ class NestedTest extends FunSuite with WithBase {
     val term = foos.insert(user)
     val query = version3.toQuery(term, 1, None, Map.empty)
     val json = query.json
-    println(json)
+
    val answer =for {
       res <- term.toOpt
       user2 <- foos.get(res.generatedKeys.head).toOpt

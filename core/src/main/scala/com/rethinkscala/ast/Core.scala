@@ -6,8 +6,8 @@ import ql2.Ql2.Term.TermType
 import com.rethinkscala.reflect.Reflector
 import org.joda.time.ReadableInstant
 import org.joda.time.format.ISODateTimeFormat
-import com.rethinkscala.net.{JsonDocumentConversion, RethinkDriverError}
-import scala.collection.{mutable, Iterable}
+import com.rethinkscala.net.{ JsonDocumentConversion, RethinkDriverError }
+import scala.collection.{ mutable, Iterable }
 
 case class MakeArray[T](array: Iterable[T]) extends ProduceArray[T] {
   override lazy val args = buildArgs(array.toSeq: _*)
@@ -16,7 +16,6 @@ case class MakeArray[T](array: Iterable[T]) extends ProduceArray[T] {
   def termType = TermType.MAKE_ARRAY
 
 }
-
 
 private[this] object MakeArray {
 
@@ -30,44 +29,39 @@ private[this] object MakeArray {
 
 }
 
-
 case class FuncWrap(value: Any) {
-
 
   private def scan(node: Any): Boolean = node match {
 
-    case node: ImplicitVar => true
+    case node: ImplicitVar ⇒ true
     case t: Term if t.args.collectFirst {
-      case arg: Term if scan(arg) => true
-    }.getOrElse(false) => true
+      case arg: Term if scan(arg) ⇒ true
+    }.getOrElse(false) ⇒ true
     case t: Term if t.optargs.collectFirst {
-      case p: com.rethinkscala.AssocPair if scan(p.token) => true
-    }.getOrElse(false) => true
-    case _ => false
+      case p: com.rethinkscala.AssocPair if scan(p.token) ⇒ true
+    }.getOrElse(false) ⇒ true
+    case _ ⇒ false
   }
 
   def apply(): Term = {
     val e = Expr(value)
-    val rtn = if (scan(value)) new ScalaPredicate1((v: Var) => e.asInstanceOf[Typed]).apply() else e
+    val rtn = if (scan(value)) new ScalaPredicate1((v: Var) ⇒ e.asInstanceOf[Typed]).apply() else e
     rtn
   }
 }
 
-private[rethinkscala] case class MakeObj2(data: Document,writeNulls:Boolean =false) extends Term with MapTyped {
+private[rethinkscala] case class MakeObj2(data: AnyRef,writeNulls:Boolean=false) extends Term with MapTyped {
 
   override protected val extractArgs = false
-  override lazy val optargs = buildOptArgs2(Expr.mapForInsert(data,writeNulls))
+  override lazy val optargs = buildOptArgs2(Expr.mapForInsert(data,false))
 
   def termType = TermType.MAKE_OBJ
 }
 
-
-
 object MakeObj {
 
-
   def asJson(data: Map[String, Any], depth: Int = 20): MakeObj = new MakeObj(data) {
-    override lazy val optargs = buildOptArgs2(data.mapValues(v => Expr.json(v, depth)))
+    override lazy val optargs = buildOptArgs2(data.mapValues(v ⇒ Expr.json(v, depth)))
   }
 }
 
@@ -92,12 +86,10 @@ case class JavaScript(code: String, timeout: Option[Int] = None) extends TopLeve
 
   override lazy val optargs = buildOptArgs(Map("timeout" -> timeout))
 
-
   override val stmt = "js"
 
   def termType = TermType.JAVASCRIPT
 }
-
 
 case class Default(value: Any) extends MethodQuery {
 
@@ -126,7 +118,6 @@ case class Info(target: Typed) extends ProduceDocument[InfoResult] {
 
 case class Branch(test: Binary, passed: Typed, failed: Typed) extends ProduceAny {
 
-
   def termType = TermType.BRANCH
 }
 
@@ -134,11 +125,12 @@ object Core {
   val row = new ImplicitVar()
 }
 
-/** Loop over a sequence, evaluating the given write query for each element.
-  * @param target
-  * @param function
-  */
-case class ForEach[T,C[_]](target: Sequence[T,C], function: Predicate1) extends ProduceAnyDocument {
+/**
+ * Loop over a sequence, evaluating the given write query for each element.
+ * @param target
+ * @param function
+ */
+case class ForEach[T, C[_]](target: Sequence[T, C], function: Predicate1) extends ProduceAnyDocument {
 
   override lazy val args = buildArgs(target, FuncWrap(function))
 
@@ -158,7 +150,6 @@ case class FuncCall(function: Predicate, values: Seq[Typed]) extends ProduceAny 
 
   def termType = TermType.FUNCALL
 }
-
 
 trait Expr {
   def apply(term: Term): Term = term
@@ -187,117 +178,111 @@ trait Expr {
 
   def apply(date: ReadableInstant) = ISO8601(ISODateTimeFormat.dateTime().print(date))
 
+  private def canInsert(name:String,value:AnyRef,writeNulls:Boolean):Boolean={
+    val nullType = value ==None || value==null
+    val id = name == "id"
 
+    if(id ) return !nullType
+    nullType && writeNulls || !nullType
 
-  private[rethinkscala] def mapForInsert(doc:AnyRef,writeNulls:Boolean):Map[String, Any]  = Reflector.fields(doc).map(f =>
+  }
 
-    (f.getName, f.get(doc))
-  ).collect {
-    case (name, value) if (name =="id" && value !=None && value !=null) => (name, value)
-    case (name,value) if(writeNulls && name !="id")=>(name,value)
-    case (name,value) if(!writeNulls && value !=None && value !=null) => (name,value)
-  }.map{
-    case(name,value)=>(name,Expr(InsertExpr((value,writeNulls))))
+  private[rethinkscala] def mapForInsert(doc: AnyRef,writeNulls:Boolean): Map[String, Any] = Reflector.fields(doc).map(f ⇒
+
+    (f.getName, f.get(doc))).collect {
+    case (name, value) if canInsert(name,value,writeNulls) ⇒ (name, value)
+
+  }.map {
+    case (name, value) ⇒ (name, Expr(InsertExpr((value,writeNulls))))
   }.toMap
-  def apply(a: Any, depth: Int = 20): Term = {
+
+  def apply(a: Any, depth: Int = 20,writeNulls:Boolean=false): Term = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
 
     a match {
-      case w: FuncWrap => w()
-      case wv: WrappedValue[_] => apply(wv.value, depth)
+      case w: FuncWrap ⇒ w()
+      case wv: WrappedValue[_] ⇒ apply(wv.value, depth)
 
-      case wt: WrappedTerm => wt.unwrap
+      case wt: WrappedTerm ⇒ wt.unwrap
 
+      case date: ReadableInstant ⇒ apply(date)
 
-      case date: ReadableInstant => apply(date)
+      case p: Predicate ⇒ p()
+      case t: Term ⇒ t
 
-
-      case p: Predicate => p()
-      case t: Term => t
-
-      case f: Any if !f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1] => new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
-      case f: Any if !f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2] => new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
-      case s: Seq[_] => MakeArray(s, depth - 1)
-      case m: Map[_, _] => MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
-      case None | null=> NoneDatum()
-      case InsertExpr(value)=>{
-        val item = value._1
-        val writeNulls = value._2
-        item match{
-          case Some(d:Document)=>MakeObj2(d,writeNulls)
-          case Some(v:Any)=>Datum(v)
-          case None | null=>NoneDatum()
-          case _=> apply(item,depth - 1)
-        }
-      }
-      case Some(d:Document) => MakeObj2(d)
-      case Some(a:Any)=> Datum(a)
-      case d: Document => MakeObj2(d)
-
-      case a: Any => Datum(a)
+      case f: Any if !f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1] ⇒ new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
+      case f: Any if !f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2] ⇒ new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
+      case s: Seq[_] ⇒ MakeArray(s, depth - 1)
+      case m: Map[_, _] ⇒ MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
+      case Some(a: Any) ⇒ apply(a, depth - 1)
+      case InsertExpr(value)=> apply(value._1,depth-1,value._2)
 
 
+      case d: Document ⇒ MakeObj2(d,writeNulls)
+      case c: Character ⇒ StringDatum(c.toString)
+      case None | null ⇒ NoneDatum()
+      case s: String ⇒ StringDatum(s)
+      case i: Int ⇒ NumberDatum(i)
+      case f: Float ⇒ NumberDatum(f)
+      case l: Long ⇒ NumberDatum(l)
+      case b: Boolean ⇒ BooleanDatum(b)
+      case d: Double ⇒ NumberDatum(d)
+      case a: AnyRef ⇒ MakeObj2(a,writeNulls)
+      case _=> throw RethinkDriverError(s"Can not determine rethink datatype : ${a.getClass.getName}")
 
     }
   }
-
 
   private[this] val DocumentClass = classOf[Document]
 
   private[this] val ReadableInstantClass = classOf[ReadableInstant]
 
   private[this] def isJsonClass(d: Class[_], depth: Int): Boolean = {
-    Reflector.fields(d).find(f =>
+    Reflector.fields(d).find(f ⇒
       if (DocumentClass isAssignableFrom f.getType) isJsonClass(f.getType, depth - 1)
       else ReadableInstantClass isAssignableFrom f.getType).isEmpty
-
 
   }
 
   type OfMap = Map[String, _]
-  type OfFunction1 = (Var) => Typed
-  type OfFunction2 = (Var, Var) => Typed
+  type OfFunction1 = (Var) ⇒ Typed
+  type OfFunction2 = (Var, Var) ⇒ Typed
 
   def isJson(v: Any, depth: Int = 20): Boolean = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
 
     v match {
-      case t: Term => false
-      case m: Map[String, _] => m.find {
-        case (a, b) => !isJson(b, depth - 1)
+      case t: Term ⇒ false
+      case m: Map[String, _] ⇒ m.find {
+        case (a, b) ⇒ !isJson(b, depth - 1)
       }.isEmpty
-      case d: Document => isJsonClass(d.getClass, depth)
-      case l: Seq[Any] => l.find(r => !isJson(r, depth - 1)).isEmpty
-      case Int | Float | Boolean | Double | Long => true
-
-      case a: Any if classOf[java.io.Serializable].isAssignableFrom(a.getClass) && a.getClass.getName.startsWith("java.lang") => true
-
-      // case d: Any if classOf[java.io.Serializable].isAssignableFrom(d.getClass) => throw RethinkDriverError("Use of classes must extend type Document")
-      case _ => false
+      case d: Document ⇒ isJsonClass(d.getClass, depth)
+      case l: Seq[Any] ⇒ l.find(r ⇒ !isJson(r, depth - 1)).isEmpty
+      case Int | Float | Boolean | Double | Long ⇒ true
+      case a: Any if classOf[java.io.Serializable].isAssignableFrom(a.getClass) && a.getClass.getName.startsWith("java.lang") ⇒ true
+      case _ ⇒ false
 
     }
   }
 
   def json(array: Seq[Any], depth: Int): Seq[Any] = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
-    array.map(v => json(v, depth - 1)).toSeq
+    array.map(v ⇒ json(v, depth - 1)).toSeq
   }
 
   def json(v: Any, depth: Int = 20): Term = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
     v match {
-      case t: Term => t
-      case a: Any if isJson(a, depth) => Json.asLazy(a)
+      case t: Term                    ⇒ t
+      case a: Any if isJson(a, depth) ⇒ Json.asLazy(a)
 
-      case d: Map[String, _] => MakeObj.asJson(d, depth)
-      case l: Iterable[Any] => MakeArray.asJson(l, depth)
-      case a: Any => Expr(a)
+      case d: Map[String, _]          ⇒ MakeObj.asJson(d, depth)
+      case l: Iterable[Any]           ⇒ MakeArray.asJson(l, depth)
+      case a: Any                     ⇒ Expr(a)
     }
-
 
   }
 }
-
 
 trait WrappedValue[T] {
   val value: T
@@ -309,12 +294,9 @@ trait WrappedTerm {
 
 object Expr extends Expr
 
-
 trait JsonLike
 
-
 case class LazyJson(value: Any) extends Produce[JsonDocument] with JsonDocumentConversion with JsonLike {
-
 
   override lazy val args = buildArgs(Reflector.toJson(value))
 
@@ -325,46 +307,40 @@ case class Json(value: String) extends Produce[JsonDocument] with JsonDocumentCo
   def termType = TermType.JSON
 }
 
-
 object Json {
   def asLazy(value: Any) = LazyJson(value)
 }
 
 class Random[@specialized(Int, Double, Long) T, R](val values: Seq[T], float: Option[Boolean] = None) extends Query {
 
-
   override lazy val args = buildArgs(values: _*)
-
-
 
   override lazy val optargs = buildOptArgs(Map("float" -> float))
 
   def termType = TermType.RANDOM
 }
 
-final class RandomSupport[T,R](val target:Random[T,R]) extends AnyVal{
+final class RandomSupport[T, R](val target: Random[T, R]) extends AnyVal {
   def toFloat = new Random[T, Float](target.values, Some(true)) with ProduceFloat
 }
 
 object Random {
 
- // implicit def toRandomSupport[T,R](target:Random[T,R])= new RandomSupport[T,R](target)
+  // implicit def toRandomSupport[T,R](target:Random[T,R])= new RandomSupport[T,R](target)
 
   def apply[T](values: Seq[T]) = new Random[T, T](values) with ProduceNumeric
 
 }
 
 class UUID extends Produce[java.util.UUID] {
-  self =>
+  self ⇒
   override def termType = TermType.UUID
 
   def string = new ProduceString {
 
-
     override private[rethinkscala] val underlyingTerm: Term = self
 
     override def termType = TermType.UUID
-
 
   }
 }

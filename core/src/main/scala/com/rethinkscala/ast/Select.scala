@@ -3,12 +3,12 @@ package com.rethinkscala.ast
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.{BetweenOptions, Document}
 
-case class Get[R <: Document](target: Table[R], attribute: Any) extends ProduceSingleDocumentSelection[R] {
+case class Get[R<:AnyRef](target: Table[R], attribute: Any) extends ProduceSingleDocumentSelection[R] {
 
   def termType = TermType.GET
 }
 
-case class GetAll[R <: Document](target: Table[R], attr: Seq[Any], index: Option[String] = None) extends ProduceArray[R] {
+case class GetAll[R<:AnyRef ](target: Table[R], attr: Seq[Any], index: Option[String] = None) extends ProduceArray[R] {
 
   override lazy val optargs = buildOptArgs(Map("index" -> index))
   override lazy val args = buildArgs((attr.+:(target)):_*)

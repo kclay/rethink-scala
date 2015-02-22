@@ -91,12 +91,13 @@ trait BinaryConversion extends MapConversion[Boolean] {
   protected def _convert(json: String)(implicit mf: Manifest[Boolean]): Boolean = asMap(json).get(resultField).getOrElse(0) == 1
 }
 
-trait DocumentConversion[Out <: Document] extends MapConversion[Out] {
+trait DocumentConversion[Out ] extends MapConversion[Out] {
 
   protected def _convert(json: String)(implicit ct: Manifest[Out]): Out = {
     val out = Reflector.fromJson[Out](json)
     // out.underlying = Reflector.fromJson[Map[String, Any]](json)
-    out.raw = json
+    if(out.isInstanceOf[Document]) out.asInstanceOf[Document].raw = json
+
     out
   }
 

@@ -11,7 +11,7 @@ import com.rethinkscala.IndexStatusResult
 // TODO FuncCall
 
 
-case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = None,
+case class Table[T<:AnyRef](name: String, useOutDated: Option[Boolean] = None,
                                 db: Option[DB] = None)
 
   extends ProduceStreamSelection[T,DefaultCursor]
@@ -24,7 +24,7 @@ case class Table[T <: Document](name: String, useOutDated: Option[Boolean] = Non
 
   def drop = TableDrop(name, db)
 
-  def to[R<:Document] = this.asInstanceOf[Table[R]]
+  def to[R<:AnyRef] = this.asInstanceOf[Table[R]]
 
   def create: TableCreate = create(TableOptions())
 
