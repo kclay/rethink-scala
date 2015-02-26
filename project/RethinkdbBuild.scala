@@ -32,7 +32,7 @@ object BuildSettings {
   val buildSettings = Project.defaultSettings ++ Boilerplate.settings ++ defaultScalariformSettings ++ Seq(
     organization := "com.rethinkscala",
     testOptions in Test := Seq(Tests.Filter(s ⇒ s.endsWith("Test"))),
-    version := "0.4.6-SNAPSHOT",
+    version := "0.4.7-SNAPSHOT",
     scalaVersion := "2.11.1",
 
     scalacOptions ++= Seq(),

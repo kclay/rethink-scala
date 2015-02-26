@@ -113,12 +113,9 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
       }
 
       count = count + 1
-      println(count)
-      if (count == 125) {
-        var a = ""
-      }
 
-    } while (count < 10000)
+
+    } while (count < 10)
 
   }
   /*

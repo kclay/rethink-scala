@@ -45,7 +45,7 @@ case class FuncWrap(value: Any) {
 
   def apply(): Term = {
     val e = Expr(value)
-    val rtn = if (scan(value)) new ScalaPredicate1((v: Var) ⇒ e.asInstanceOf[Typed]).apply() else e
+    val rtn = if (scan(e)) new ScalaPredicate1((v: Var) ⇒ e.asInstanceOf[Typed]).apply() else e
     rtn
   }
 }

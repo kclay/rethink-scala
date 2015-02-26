@@ -9,9 +9,10 @@ import com.rethinkscala.ast.NumberDatum
 import Blocking._
 import com.rethinkscala.net.ProtoBufCompiledAst
 
+case class ExprCase(value:List[String]=List.empty,id:Option[String] = None)
 class ExprTest extends FunSuite with WithBase {
 
-
+  /*
   import scala.collection.JavaConverters._
 
   test("auto casting") {
@@ -45,8 +46,25 @@ class ExprTest extends FunSuite with WithBase {
       e => assert(e._1.num.get == e._2 + 1)
     }
   }
+  */
 
-  override def setupDB = false
+  test("allow the use of r.row inside an update context and other ImplictVar"){
 
-  override def useVersion = version2
+    val results = table.to[ExprCase].insert(ExprCase()).toOpt.flatMap{
+      ir=>
+        val id = ir.generatedKeys.head
+        table.to[ExprCase].get(id).update(Map("value" -> r.row("value").append("foo"))).withChanges.toOpt
+    }
+
+    assert(results.flatMap(c=> c.returnedValue[ExprCase]).map(_.value == List("foo")).getOrElse(false))
+table.getAll("user1").withIndex("participants").orderBy(r.desc(r.row("participants").filter(v=>  v("id").eq("user1"))(0)("unreadCount")))
+
+
+
+
+  }
+
+  //override def setupDB = false
+
+  override def useVersion = version3
 }
