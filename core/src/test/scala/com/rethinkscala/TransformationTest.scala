@@ -74,8 +74,6 @@ class TransformationTest extends FunSuite with WithBase {
 
     table.insert(Seq(Transform(1,1),Transform(2,2),Transform(3,3))) run
 
-
-
     val index = table.indexCreate("a")
 
     index.run

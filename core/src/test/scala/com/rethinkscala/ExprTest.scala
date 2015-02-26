@@ -57,7 +57,7 @@ class ExprTest extends FunSuite with WithBase {
     }
 
     assert(results.flatMap(c=> c.returnedValue[ExprCase]).map(_.value == List("foo")).getOrElse(false))
-table.getAll("user1").withIndex("participants").orderBy(r.desc(r.row("participants").filter(v=>  v("id").eq("user1"))(0)("unreadCount")))
+
 
 
 

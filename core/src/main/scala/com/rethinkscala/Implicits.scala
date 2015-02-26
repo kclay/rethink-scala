@@ -237,9 +237,9 @@ private[rethinkscala] trait ImplicitConversions {
   case class String2Ast(name: String) {
     def row = r.row(name)
 
-    def asc = Asc(name)
+    def asc = Asc(name.wrap)
 
-    def desc = Desc(name)
+    def desc = Desc(name.wrap)
   }
 
   private def p2t(p: Product): MakeArray[Any] = Expr(p.productIterator.toSeq)

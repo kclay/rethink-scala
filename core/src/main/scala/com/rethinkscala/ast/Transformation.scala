@@ -54,21 +54,21 @@ case class SliceRange(start: Int = 0, end: Int = -1)
 trait Order
 
 abstract class Ordering extends Term with Order {
-  val attr: String
+  val attr: FuncWrap
 
   def flip: Ordering
 
   override lazy val args: Seq[Term] = buildArgs(attr)
 }
 
-case class Asc(attr: String) extends Ordering {
+case class Asc(attr: FuncWrap) extends Ordering {
 
   def flip = Desc(attr)
 
   def termType = TermType.ASC
 }
 
-case class Desc(attr: String) extends Ordering {
+case class Desc(attr: FuncWrap) extends Ordering {
   def flip = Asc(attr)
 
   def termType = TermType.DESC

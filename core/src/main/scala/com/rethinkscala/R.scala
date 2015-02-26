@@ -124,9 +124,11 @@ trait RethinkApi extends TimeNames with GeometryApi {
 
   val count = ByCount
 
-  def asc(attr: String) = Asc(attr)
+  def asc(attr: String) = Asc(attr.wrap)
+  def asc(attr:Typed)  = Asc(attr.wrap)
 
-  def desc(attr: String) = Desc(attr)
+  def desc(attr: String) = Desc(attr.wrap)
+  def desc(attr:Typed) = Desc(attr.wrap)
 
   private[this] def compute[T](v: T*)(a: (T, T) => T) = v.drop(1).foldLeft(v.head)(a)
 

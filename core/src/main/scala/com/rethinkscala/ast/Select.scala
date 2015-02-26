@@ -13,6 +13,8 @@ case class GetAll[R<:AnyRef ](target: Table[R], attr: Seq[Any], index: Option[St
   override lazy val optargs = buildOptArgs(Map("index" -> index))
   override lazy val args = buildArgs((attr.+:(target)):_*)
 
+  def withIndex(index:String) = copy(index=Some(index))
+
   def termType = TermType.GET_ALL
 }
 
