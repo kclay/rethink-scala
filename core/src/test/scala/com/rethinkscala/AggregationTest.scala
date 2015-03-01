@@ -142,7 +142,7 @@ class AggregationTest extends FunSuite with WithBase {
 
     assert(Expr(1 to 10 by 1) contains 5)
 
-    assert(Expr(1 to 10 by 1) contains (x=> x > 5))
+    assert(Expr(1 to 10 by 1) contains (x => x > 5))
 
 
     //val b = Var(1).seq[Int]("foo")

@@ -27,7 +27,7 @@ abstract class PredicateJoin[L,R,C[_]] extends Join[L,R,C] {
  */
 case class InnerJoin[L,R,C[_]](left: Sequence[L,C], right: Sequence[R,C], func: ScalaBooleanPredicate2) extends
 PredicateJoin[L,R,C] {
-  def termType = TermType.INNER_JOIN
+  def termType:TermType = TermType.INNER_JOIN
 }
 
 /** Computes a left outer join by retaining each row in the left table even if no match was found in the right table.
@@ -37,7 +37,7 @@ PredicateJoin[L,R,C] {
  */
 case class OuterJoin[L,R,C[_]](left: Sequence[L,C], right: Sequence[R,C], func: ScalaBooleanPredicate2) extends
 PredicateJoin[L,R,C] {
-  def termType = TermType.OUTER_JOIN
+  def termType:TermType = TermType.OUTER_JOIN
 }
 
 /** An efficient join that looks up elements in the right table by primary key.
@@ -48,7 +48,7 @@ PredicateJoin[L,R,C] {
  */
 case class EqJoin[L,R,C[_]](left: Sequence[L,C], attrOrFunc:Either[String,Predicate1], right: Sequence[R,C], index: Option[String] = None)
   extends Join[L,R,C] {
-  def termType = TermType.EQ_JOIN
+  def termType:TermType = TermType.EQ_JOIN
 
   override lazy val args: Seq[Term] = buildArgs(left, attrOrFunc.fold(identity,identity), right)
   override lazy val optargs: Iterable[AssocPair] = buildOptArgs(Map("index" -> index))
@@ -59,5 +59,5 @@ case class EqJoin[L,R,C[_]](left: Sequence[L,C], attrOrFunc:Either[String,Predic
  */
 case class Zip[L,R,C[_]](target: JoinTyped[L,R,C]) extends ProduceSeq[ZipResult[L,R],C] {
 
-  def termType = TermType.ZIP
+  def termType:TermType = TermType.ZIP
 }

@@ -1,58 +1,54 @@
 package com.rethinkscala
 
-import com.fasterxml.jackson.annotation.{JsonUnwrapped, JsonTypeInfo, JsonIgnore, JsonProperty}
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.rethinkscala.reflect.{RethinkTypeResolverBuilder, GroupResultDeserializer, Reflector}
-import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonTypeResolver}
-import scala.collection.generic.CanBuildFrom
-import scala.collection.{IndexedSeqLike, SeqLike}
-import scala.collection.mutable.{ArrayBuffer, Builder}
+import com.fasterxml.jackson.annotation.{ JsonIgnore, JsonProperty, JsonTypeInfo }
+import com.fasterxml.jackson.databind.annotation.{ JsonDeserialize, JsonTypeResolver }
+import com.rethinkscala.reflect.{ GroupResultDeserializer, Reflector, RethinkTypeResolverBuilder }
 
+import scala.collection.IndexedSeqLike
+import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable.{ ArrayBuffer, Builder }
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {
 
   type M = Map[String, _]
   type IM = scala.collection.mutable.Map[String, _]
 
-  def as[T] = find[T](root)
+  def as[T]: Option[T] = find[T](root)
 
   private def find[T](value: Any, p: List[String] = paths): Option[T] = p.headOption.map {
-    x => value match {
+    x ⇒
+      value match {
 
-      case Some(v) => find[T](v, p)
-      // TODO : Fix warnings
-      case m: M => find[T](m.get(x), p.tail)
-      // TODO : Fix warnings
-      case m: IM => find[T](m.get(x), p.tail)
-      case _ => None
-    }
+        case Some(v) ⇒ find[T](v, p)
+        // TODO : Fix warnings
+        case m: M    ⇒ find[T](m.get(x), p.tail)
+        // TODO : Fix warnings
+        case m: IM   ⇒ find[T](m.get(x), p.tail)
+        case _       ⇒ None
+      }
   }.getOrElse(value match {
 
-    case Some(x) => Some(x.asInstanceOf[T])
-    case x: Any => Some(x.asInstanceOf[T])
-    case _ => None
+    case Some(x) ⇒ Some(x.asInstanceOf[T])
+    case x: Any  ⇒ Some(x.asInstanceOf[T])
+    case _       ⇒ None
   })
 
-  def \(name: String) = DocPath(root, paths :+ name)
+  def \(name: String): DocPath = DocPath(root, paths :+ name)
 }
 
 private[rethinkscala] class BasicDocument extends Document
 
 trait Document {
 
-
   @JsonIgnore
   private[rethinkscala] lazy val underlying: Map[String, Any] = Reflector.fromJson[Map[String, Any]](_raw)
   @JsonIgnore
   private[rethinkscala] var raw: String = _
 
-
   private def _raw = Option(raw).getOrElse({
     raw = Reflector.toJson(this)
     raw
   })
-
 
   def \(name: String) = DocPath(underlying, List(name))
 
@@ -63,7 +59,6 @@ trait Document {
   def toJson = _raw
 
   private[rethinkscala] def invokeBeforeInsert = beforeInsert
-
 
   protected def beforeInsert = {}
 
@@ -76,33 +71,25 @@ trait Document {
   private[rethinkscala] def invokeAfterInsert(id: String) = afterInsert(id)
 }
 
-
-
-
-
-class JsonDocument(json:String) {
-
-
+class JsonDocument(json: String) {
 
   private[rethinkscala] lazy val underlying: Either[Map[String, Any], Seq[Any]] = if (raw.startsWith("{"))
     Left(Reflector.fromJson[Map[String, Any]](raw))
   else
     Right(Reflector.fromJson[Seq[Any]](raw))
 
-
   private[rethinkscala] var raw: String = json.getOrElse("")
 
-  def \(name: String) = DocPath(toMap, List(name))
+  def \(name: String): DocPath = DocPath(toMap, List(name))
 
-  def toMap = underlying fold(a => a, b => (b.zipWithIndex map {
-    case (value: Any, index: Int) => (index.toString, value)
+  def toMap = underlying fold (a ⇒ a, b ⇒ (b.zipWithIndex map {
+    case (value: Any, index: Int) ⇒ (index.toString, value)
 
   }).toMap)
 
-  def asRaw = raw
+  def asRaw: String = raw
 
-  def toInt = Integer.parseInt(raw, 10)
-
+  def toInt: Int = Integer.parseInt(raw, 10)
 
   def toList = underlying.fold(_.toList, _.toList)
 }
@@ -116,28 +103,24 @@ trait GeneratesKeys {
   val generatedKeys: Seq[String]
 }
 
+case class ChangeSet[T](@JsonProperty("new_val") current: T, @JsonProperty("old_val") old: T)
 
-case class ChangeSet[T](@JsonProperty("new_val") current:T, @JsonProperty("old_val") old:T)
 case class ReturnValueExtractor[T](@JsonProperty("changes") value: Seq[ChangeSet[T]])
 
 trait ReturnValues {
-  self: Document =>
+  self: Document ⇒
   private var _returnedValue: Seq[ChangeSet[_]] = null
-
   type Changes[A] = Seq[ChangeSet[A]]
 
   //TODO Javize
   def returnedValue[T](clazz: Class[T]): T = returnedValue(Manifest.classType(clazz)).getOrElse(null.asInstanceOf[T])
 
-
-
-
-  private def extract[T](implicit mf:Manifest[T]):Seq[ChangeSet[T]]={
+  private def extract[T](implicit mf: Manifest[T]): Seq[ChangeSet[T]] = {
     if (_returnedValue == null) {
       try {
         _returnedValue = Reflector.fromJson[ReturnValueExtractor[T]](raw).value
       } catch {
-        case e: Exception => _returnedValue = Seq.empty
+        case e: Exception ⇒ _returnedValue = Seq.empty
       }
 
     }
@@ -145,26 +128,22 @@ trait ReturnValues {
   }
 
   def returnedValue[T](implicit mf: Manifest[T]): Option[T] = {
-      extract[T].headOption.map(_.current)
-
+    extract[T].headOption.map(_.current)
   }
 
   def returnedValues[T](implicit mf: Manifest[T]): Seq[T] = {
     extract[T].map(_.current)
-
   }
 
-  def changes[T](implicit mf:Manifest[T]):Changes[T]=extract[T]
+  def changes[T](implicit mf: Manifest[T]): Changes[T] = extract[T]
 
 }
 
 case class DBResult(name: String, @JsonProperty("type") kind: String) extends Document
 
-
 case class JoinResult[Left, Right](left: Left, right: Right) extends Document
 
 class ZipResult[L, R] extends Document {
-
 
   private var _left: Option[L] = None
   private var _right: Option[R] = None
@@ -186,28 +165,22 @@ class ZipResult[L, R] extends Document {
 
 abstract class InfoResult(name: String, @JsonProperty("type") kind: String) extends Document
 
-
-case class InsertResult(inserted: Int = 0, replaced: Int = 0, unchanged: Int = 0, errors: Int = 0, @JsonProperty("first_error") firstError: Option[String] = None,
-
+case class InsertResult(inserted: Int = 0, replaced: Int = 0, unchanged: Int = 0,
+                        errors: Int = 0, @JsonProperty("first_error") firstError: Option[String] = None,
                         @JsonProperty("generated_keys") generatedKeys: Seq[String],
-                        deleted: Int = 0, skipped: Int = 0) extends Document with ReturnValues with GeneratesKeys {
-
-  //private var _returnValues = ???
-
-
-}
+                        deleted: Int = 0, skipped: Int = 0) extends Document
+  with ReturnValues with GeneratesKeys
 
 case class IndexStatusResult(index: String, ready: Boolean) extends Document
 
 case class TableInfoResult(name: String, @JsonProperty("type") kind: String, db: DBResult) extends InfoResult(name, kind)
 
-
 case class ChangeResult(replaced: Int, unchanged: Int, inserted: Int, deleted: Int, errors: Int,
 
                         @JsonProperty("first_error") firstError: Option[String],
                         skipped: Int, @JsonProperty("generated_keys") generatedKeys: Seq[String]) extends Document
-with ReturnValues
-with GeneratesKeys
+  with ReturnValues
+  with GeneratesKeys
 
 case class MatchResult(start: Int, end: Int, str: String, groups: Seq[MatchGroupResult]) extends Document
 
@@ -217,7 +190,6 @@ case class Profile(description: String, @JsonProperty("duration(ms)") duration: 
 
 case class QueryProfile[T](value: T, profile: Profile)
 
-
 case class GroupMapReduceExtractor[T](reduction: T)
 
 object GroupResult {
@@ -226,12 +198,11 @@ object GroupResult {
 
   def fromSeq[Base](buf: Seq[GroupResultRecord[Base]]): GroupResult[Base] = {
     var array = new ArrayBuffer[GroupResultRecord[Base]](buf.size)
-    for (i <- 0 until buf.size) array += buf(i)
+    for (i ← 0 until buf.size) array += buf(i)
     new GroupResult[Base](array)
   }
 
   def newBuilder[Base]: Builder[GroupResultRecord[Base], GroupResult[Base]] = new ArrayBuffer mapResult fromSeq
-
 
   implicit def canBuildFrom[Base, From]: CanBuildFrom[GroupResult[_], GroupResultRecord[Base], GroupResult[Base]] =
     new CanBuildFrom[GroupResult[_], GroupResultRecord[Base], GroupResult[Base]] {
@@ -241,13 +212,12 @@ object GroupResult {
     }
 }
 
-
 @JsonDeserialize(using = classOf[GroupResultDeserializer])
 @JsonTypeResolver(value = classOf[RethinkTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.CUSTOM, include = JsonTypeInfo.As.WRAPPER_OBJECT)
-class GroupResult[Base] protected(buffer: ArrayBuffer[GroupResultRecord[Base]])
+class GroupResult[Base] protected (buffer: ArrayBuffer[GroupResultRecord[Base]])
   extends IndexedSeq[GroupResultRecord[Base]]
-  with IndexedSeqLike[GroupResultRecord[Base], GroupResult[Base]] with Document with HasGroupRecords {
+  with IndexedSeqLike[GroupResultRecord[Base], GroupResult[Base]] with Document  {
 
   override protected[this] def newBuilder: Builder[GroupResultRecord[Base], GroupResult[Base]] =
     GroupResult.newBuilder
@@ -261,18 +231,8 @@ class GroupResult[Base] protected(buffer: ArrayBuffer[GroupResultRecord[Base]])
 
 }
 
-trait HasGroupRecords {
-
-
-}
-
-
 @JsonTypeResolver(value = classOf[RethinkTypeResolverBuilder])
 case class GroupResultRecord[R](group: R, values: Seq[Map[String, Any]]) extends Document
-
-
-
-
 
 case class GroupMapReduceResult(group: Int, reduction: Map[String, _]) extends Document {
 
@@ -281,4 +241,4 @@ case class GroupMapReduceResult(group: Int, reduction: Map[String, _]) extends D
   def as[T](clazz: Class[T]): T = as(Manifest.classType(clazz))
 }
 
-case class CursorChange[T](@JsonProperty("old_val")old:T,@JsonProperty("new_val")current:T)
+case class CursorChange[T](@JsonProperty("old_val") old: T, @JsonProperty("new_val") current: T)

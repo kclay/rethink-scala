@@ -20,7 +20,7 @@ case class Table[T<:AnyRef](name: String, useOutDated: Option[Boolean] = None,
   override lazy val args = buildArgs(db.map(Seq(_, name)).getOrElse(Seq(name)): _*)
   override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
 
-  def termType = TermType.TABLE
+  def termType:TermType = TermType.TABLE
 
   def drop = TableDrop(name, db)
 
@@ -97,7 +97,7 @@ case class TableCreate(name: String, options: TableOptions, db: Option[DB] = Non
 
   override lazy val optargs = buildOptArgs(options.toMap)
 
-  def termType = TermType.TABLE_CREATE
+  def termType:TermType = TermType.TABLE_CREATE
 
 }
 
@@ -105,7 +105,7 @@ case class TableDrop(name: String, db: Option[DB] = None) extends ProduceBinary 
   val resultField = "dropped"
   override lazy val args = buildArgs(db.map(Seq(_, name)).getOrElse(Seq(name)): _*)
 
-  def termType = TermType.TABLE_DROP
+  def termType:TermType = TermType.TABLE_DROP
 
 }
 
@@ -114,7 +114,7 @@ case class TableList(db: Option[DB] = None) extends ProduceDefaultSequence[Strin
   override protected val extractArgs: Boolean = false
   override lazy val args = buildArgs(db.map(Seq(_)).getOrElse(Seq()): _*)
 
-  def termType = TermType.TABLE_LIST
+  def termType:TermType = TermType.TABLE_LIST
 }
 
 /** Create a new secondary index on this table.
@@ -132,7 +132,7 @@ case class IndexCreate(target: TableTyped, name: String, predicate: Option[Predi
 
   override lazy val optargs = buildOptArgs(Map("multi" -> multi))
 
-  def termType = TermType.INDEX_CREATE
+  def termType:TermType = TermType.INDEX_CREATE
 
   val resultField = "created"
 }
@@ -145,26 +145,26 @@ case class IndexDrop(target: TableTyped, name: String) extends ProduceBinary wit
 
   val resultField = "dropped"
 
-  def termType = TermType.INDEX_DROP
+  def termType:TermType = TermType.INDEX_DROP
 }
 
 /** List all the secondary indexes of this table.
   * @param target
   */
 case class IndexList(target: TableTyped) extends ProduceDefaultSequence[String] {
-  def termType = TermType.INDEX_LIST
+  def termType:TermType = TermType.INDEX_LIST
 }
 
 case class IndexStatus(target: TableTyped, indexes: Seq[String]) extends ProduceDefaultSequence[IndexStatusResult] {
 
   override lazy val args = buildArgs((if(indexes.isEmpty) Seq(target) else indexes.+:(target)):_*)
 
-  def termType = TermType.INDEX_STATUS
+  def termType:TermType = TermType.INDEX_STATUS
 }
 
 case class IndexWait(target: TableTyped, indexes: Seq[String]) extends ProduceDefaultSequence[IndexStatusResult] {
   override lazy val args = buildArgs((if(indexes.isEmpty) Seq(target) else indexes.+:(target)):_*)
-  def termType = TermType.INDEX_WAIT
+  def termType:TermType = TermType.INDEX_WAIT
 }
 
 case class Sync(target: TableTyped, durability: Option[Durability.Kind] = None) extends ProduceBinary with BinaryConversion {
@@ -173,6 +173,6 @@ case class Sync(target: TableTyped, durability: Option[Durability.Kind] = None) 
   override lazy val optargs = buildOptArgs(Map("durability" -> durability))
   val resultField = "synced"
 
-  def termType = TermType.SYNC
+  def termType:TermType = TermType.SYNC
 }
 

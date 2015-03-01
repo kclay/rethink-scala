@@ -18,7 +18,7 @@ case class Reduce[T,R](target: Aggregation[T], f: Predicate2) extends Produce[R]
   override lazy val args = buildArgs(target, f())
 
 
-  def termType = TermType.REDUCE
+  def termType:TermType = TermType.REDUCE
 }
 
 
@@ -31,14 +31,14 @@ case class Count(target: Aggregation[_], wrap: Option[FuncWrap] = None) extends 
 
   override lazy val args = buildArgs((wrap.map(Seq(target, _)).getOrElse(Seq(target))): _*)
 
-  def termType = TermType.COUNT
+  def termType:TermType = TermType.COUNT
 }
 
 /** Remove duplicate elements from the sequence.
   * @param target
   */
 case class Distinct[T,C[_]](target: Sequence[T,C]) extends ProduceSeq[T,C] {
-  def termType = TermType.DISTINCT
+  def termType:TermType = TermType.DISTINCT
 }
 
 
@@ -47,7 +47,7 @@ case class Group[R, T](target: Aggregation[T], wrap: Seq[FuncWrap]) extends Prod
 
   override lazy val args = buildArgs(wrap.+:(target): _*)
 
-  def termType = TermType.GROUP
+  def termType:TermType = TermType.GROUP
 }
 
 
@@ -62,7 +62,7 @@ case class GroupBy[T](target: Sequence[T], method: AggregateByMethod, attrs: Seq
 
   override lazy val args = buildArgs((Seq(target, method.underlying) ++ attrs): _*)
 
-  def termType = TermType.GROUPBY
+  def termType:TermType = TermType.GROUPBY
 }
      */
 /** Test if an object has the given attribute.
@@ -72,7 +72,7 @@ case class GroupBy[T](target: Sequence[T], method: AggregateByMethod, attrs: Seq
 case class Contains[T](target: Aggregation[T], value: Seq[FuncWrap]) extends MethodQuery with ProduceBinary {
   override lazy val args = buildArgs(value.+:(target): _*)
 
-  def termType = TermType.CONTAINS
+  def termType:TermType = TermType.CONTAINS
 }
 
 
@@ -86,19 +86,19 @@ trait MethodAggregation[T]  extends MethodQuery with Typed{
 
 case class Max[T](target:Aggregation[T],fieldOrFunction:Option[FuncWrap]=None) extends  MethodAggregation[T] with ProduceSingle[T]{
 
-  def termType = TermType.MAX
+  def termType:TermType = TermType.MAX
 }
 
 case class Min[T](target:Aggregation[T],fieldOrFunction:Option[FuncWrap]=None) extends MethodAggregation[T] with ProduceSingle[T]{
 
-  def termType = TermType.MIN
+  def termType:TermType = TermType.MIN
 }
 case class Sum[T](target:Aggregation[T],fieldOrFunction:Option[FuncWrap] = None) extends MethodAggregation[T] with ProduceNumeric{
 
-  def termType = TermType.SUM
+  def termType:TermType = TermType.SUM
 }
 
 case class Avg[T](target:Aggregation[T],fieldOrFunction:Option[FuncWrap] = None) extends MethodAggregation[T] with ProduceNumeric{
 
-  def termType = TermType.AVG
+  def termType:TermType = TermType.AVG
 }

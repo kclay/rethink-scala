@@ -216,11 +216,10 @@ case class Circle(longLat: Point, radius: Double, numVertices: Option[Int] = Non
 }
 
 
-final class TableGeoSupport[T <: Document](val table: Table[T]) extends AnyVal {
-  def getIntersecting(geo: GeometryType) = GetIntersecting(table, geo, None)
+final class TableGeoSupport[T <: AnyRef](val table: Table[T]) extends AnyVal {
+  def getIntersecting(geo: GeometryType):GetIntersecting[T] = GetIntersecting(table, geo, None)
 
-
-  def getNearest(point: Point) = GetNearest(table, point)
+  def getNearest(point: Point):GetNearest[T] = GetNearest(table, point)
 }
 
 trait GeometryApi {
@@ -267,7 +266,7 @@ trait GeometryImplicits {
 
   //implicit def toGeoCastSupport(delegate:GeoCastDelegate) = new GeoCastSupport(delegate)
 
-  implicit def tableToGeometry[T <: Document](table: Table[T]) = new TableGeoSupport[T](table)
+  implicit def tableToGeometry[T <: AnyRef](table: Table[T]) = new TableGeoSupport[T](table)
 
   implicit def toPolygonSupport(target: ProduceGeometry[Polygon]) = new PolygonSupport(target)
 

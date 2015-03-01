@@ -66,7 +66,7 @@ case class Insert[T<:AnyRef, R<:AnyRef](table: Table[T], records: Either[Seq[Map
 
   def withChanges:Insert[T,R] = copy(options = options.copy(returnValues = None, returnChanges = Some(true)))
 
-  def termType = TermType.INSERT
+  def termType:TermType = TermType.INSERT
 
 
   private def lifecycle(f: (Document, Int) => Unit) = records match {
@@ -92,7 +92,7 @@ case class Update[T](target: Selection[T], wrap: FuncWrap,
   override lazy val args = buildArgs(target, wrap)
   override lazy val optargs = buildOptArgs(options.toMap)
 
-  def termType = TermType.UPDATE
+  def termType:TermType = TermType.UPDATE
 
   @deprecated("use .withChanges", "0.4.5")
   def withResults = withChanges
@@ -107,7 +107,7 @@ case class Replace[T](target: Selection[_], wrap: FuncWrap,
   override lazy val args = buildArgs(target, wrap)
   override lazy val optargs = buildOptArgs(options.toMap)
 
-  def termType = TermType.REPLACE
+  def termType:TermType = TermType.REPLACE
 
   @deprecated("use .withChanges", "0.4.5")
   def withResults = withChanges
@@ -122,5 +122,5 @@ case class Delete[T](target: Selection[T], durability: Option[Durability.Kind] =
   override lazy val args = buildArgs(target)
   override lazy val optargs = buildOptArgs(Map("durability" -> durability))
 
-  def termType = TermType.DELETE
+  def termType:TermType = TermType.DELETE
 }

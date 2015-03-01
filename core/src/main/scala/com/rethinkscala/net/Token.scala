@@ -3,7 +3,7 @@ package com.rethinkscala.net
 import com.fasterxml.jackson.annotation._
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.{ObjectNode, ArrayNode}
-import com.rethinkscala.{ResultExtractor,Term,Profile,Document,ConvertFrom}
+import com.rethinkscala.{ResultExtractor, Term, Profile, Document, ConvertFrom}
 
 import com.rethinkscala.ast.Datum
 import com.rethinkscala.net.Translate._
@@ -29,7 +29,7 @@ abstract class Token[R] {
   val query: CompiledQuery
   val term: Term
   val connection: Connection
-  val extractor:ResultExtractor[ResultType]
+  val extractor: ResultExtractor[ResultType]
 
 
   def toError(response: R): RethinkError
@@ -97,21 +97,20 @@ class JsonResponseExtractor {
   @JsonUnwrapped
   def apply(node: JsonNode) = {
     node match {
-      case a: ArrayNode => result = (for (i <- 0 to a.size() - 1) yield a.get(i) match{
-        case o:ObjectNode if(o.get("$reql_type$") != null)=> {
-            Try({
+      case a: ArrayNode => result = (for (i <- 0 to a.size() - 1) yield a.get(i) match {
+        case o: ObjectNode if (o.get("$reql_type$") != null) => {
+          Try({
 
 
-              val entries = o.get("data").asInstanceOf[ArrayNode]
-              for (i <- 0 to entries.size() - 1) yield entries.get(i).toString
-            }).getOrElse(Seq.empty)
-
+            val entries = o.get("data").asInstanceOf[ArrayNode]
+            for (i <- 0 to entries.size() - 1) yield entries.get(i).toString
+          }).getOrElse(Seq.empty)
 
 
         }
-        case n:ArrayNode=> for(j <- 0 to n.size() - 1) yield n.get(j).toString
-        case o:JsonNode=> Seq(o.toString)
-      }  ).flatten
+        case n: ArrayNode => for (j <- 0 to n.size() - 1) yield n.get(j).toString
+        case o: JsonNode => Seq(o.toString)
+      }).flatten
     }
   }
 
@@ -246,8 +245,6 @@ case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Ter
   def toCursor(id: Int, response: Response) = {
 
     import scala.collection.JavaConverters._
-    //val seqManifest = implicitly[Manifest[Seq[R]]]
-
 
     val results = response.getResponseList.asScala
     val seq = results.length match {

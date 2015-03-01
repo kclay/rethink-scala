@@ -10,7 +10,7 @@ import ql2.Ql2.Term.TermType
   */
 case class Append[T](target: ArrayTyped[T], value: T) extends MethodQuery with ProduceArray[T] {
 
-  def termType = TermType.APPEND
+  def termType:TermType = TermType.APPEND
 }
 
 /** Prepend a value to an array.
@@ -18,7 +18,7 @@ case class Append[T](target: ArrayTyped[T], value: T) extends MethodQuery with P
   * @param value
   */
 case class Prepend[T,R >:T](target: ArrayTyped[T], value: R) extends MethodQuery with ProduceArray[T] {
-  def termType = TermType.PREPEND
+  def termType:TermType = TermType.PREPEND
 }
 
 /** Get a single attribute from an object.
@@ -27,25 +27,16 @@ case class Prepend[T,R >:T](target: ArrayTyped[T], value: R) extends MethodQuery
   */
 abstract class GetField(target: Typed, name: String) extends Term {
 
-
   override lazy val args = buildArgs(target, name)
 
-  def termType = TermType.GET_FIELD
-
-
+  def termType:TermType = TermType.GET_FIELD
 
 }
 
 
 object GetField {
 
-
-  //def apply(target: ArrayTyped, name: String) = new GetField(target, name) with ProduceArray
-
-
   def apply[T,C[_]](target: Sequence[T,C], name: String) = new GetField(target, name) with ProduceArray[T]
-
-  // def apply(target: Record, name: String) = new GetField(target, name) with ProduceAnyDocument
 
   def apply(target: Typed, name: String) = new GetField(target, name) with ProduceAny
 }
@@ -57,22 +48,19 @@ abstract class Pluck extends Term {
 
   val data: Either[Seq[String], Map[String, Any]]
 
-
   override lazy val args = buildArgs(target, data match {
     case Left(a) => a
     case Right(b) => b
   })
 
-  def termType = TermType.PLUCK
+  def termType:TermType = TermType.PLUCK
 }
 
 object Pluck {
 
-
   def apply[T,C[_]](target: Sequence[T,C], attrs: Seq[String]) = SPluck(target, Left(attrs))
 
   def apply[T,C[_]](target: Sequence[T,C], m: Map[String, Any]) = SPluck(target, Right(m))
-
 
   def apply(target: Record, attrs: Seq[String]) = OPluck(target, Left(attrs))
 
@@ -98,11 +86,10 @@ abstract class Without(target: Typed, attributes: Seq[String]) extends Term {
 
   override lazy val args = buildArgs(attributes.+:(target): _*)
 
-  def termType = TermType.WITHOUT
+  def termType:TermType = TermType.WITHOUT
 }
 
 object Without {
-
   // FIXME
   def apply[T,C[_]](target: Sequence[T,C], attrs: Seq[String]) = new Without(target, attrs) with ProduceSeq[Map[String,Any],C]
 
@@ -117,41 +104,13 @@ abstract class Merge(target: Typed, other: Typed) extends Term {
 
   override lazy val args = buildArgs(target, other)
 
-  def termType = TermType.MERGE
+  def termType:TermType = TermType.MERGE
 
 }
 
-//abstract class MergeKind[A[_]:  Produce0[_],T,R>:T](left: A[T],right:A[R])  extends Merge(left,right)
-
-
-/*
-trait Merge
-trait MergeType[T,Ops<:MergeOp]{
-
-
-  def merge[T,R>:T](left:Ops#Ast[T],right:Ops#Ast[R])
-
-
-}
-trait MergeOp{
-  type Ast[B]
-
-  type Result[_,T,R>:T] <:Merge
-  def apply[T,R>:T](left:Ast[T],right:Ast[R]):Result
-}
-object MergeSequence extends MergeOp{
-  type Ast[B] = Sequence[B]
-
-
-  type Result[_,T,R>:T] = MergeKind[Sequence[_],T,R]
-  def apply[T,R>:T](left:Ast[T],right:Ast[R]):Result =  MergeSequence(left,right)
-} */
 case class MergeSequence[T,R>:T,C[_],CR[_]](left:Sequence[T,C],right:Sequence[R,CR]) extends Merge(left,right)
    with ProduceSeq[T,C]
 
-
-
-import com.rethinkscala.Document
 object Merge {
 
   def seq[T,C[_],R,CR[_]](target: Sequence[T,C], other: Sequence[R,CR]) = new Merge(target, other) with ProduceAnySequence
@@ -165,7 +124,6 @@ object Merge {
 
   def typed(target: Typed, other: Typed) = new Merge(target, other) with ProduceAnyDocument
 
- // def apply(target: Ref, other: Ref) = new Merge(target, other) with ProduceAny
 }
 
 /** Remove the elements of one array from another array.
@@ -176,7 +134,7 @@ case class Difference[T,R](target: ArrayTyped[T], array: ArrayTyped[R]) extends
   MethodQuery with ProduceArray[T] {
   override lazy val args = buildArgs(target, array)
 
-  def termType = TermType.DIFFERENCE
+  def termType:TermType = TermType.DIFFERENCE
 }
 
 /** Add a value to an array and return it as a set (an array with distinct values).
@@ -186,7 +144,7 @@ case class Difference[T,R](target: ArrayTyped[T], array: ArrayTyped[R]) extends
 case class SetInsert[T,R>:T](target: ArrayTyped[T], value: R) extends MethodQuery with ProduceSet[T] {
   override lazy val args = buildArgs(target, value)
 
-  def termType = TermType.SET_INSERT
+  def termType:TermType = TermType.SET_INSERT
 }
 
 /** Add a several values to an array and return it as a set (an array with distinct values).
@@ -197,7 +155,7 @@ case class SetUnion[T,R>:T](target: ArrayTyped[T], value: ArrayTyped[R]) extends
 
   override lazy val args = buildArgs(target, value)
 
-  def termType = TermType.SET_UNION
+  def termType:TermType = TermType.SET_UNION
 }
 
 /** Intersect two arrays returning values that occur in both of them as a set (an array with distinct values).
@@ -208,7 +166,7 @@ case class SetIntersection[T,R>:T](target: ArrayTyped[T], values: ArrayTyped[R])
 
   override lazy val args = buildArgs(target, values)
 
-  def termType = TermType.SET_INTERSECTION
+  def termType:TermType = TermType.SET_INTERSECTION
 }
 
 /** Remove the elements of one array from another and return them as a set (an array with distinct values).
@@ -219,7 +177,7 @@ case class SetDifference[T,R>:T](target: ArrayTyped[T], values: ArrayTyped[R]) e
 
   override lazy val args = buildArgs(target, values)
 
-  def termType = TermType.SET_DIFFERENCE
+  def termType:TermType = TermType.SET_DIFFERENCE
 }
 
 /** Test if an object has all of the specified fields. An object has a field if it has the specified
@@ -231,7 +189,7 @@ case class HasFields(target: Record, fields: Seq[String]) extends ProduceBinary 
 
   override lazy val args = buildArgs(fields.+:(target): _*)
 
-  def termType = TermType.HAS_FIELDS
+  def termType:TermType = TermType.HAS_FIELDS
 }
 
 /** Insert a value in to an array at a given index. Returns the modified array.
@@ -240,7 +198,7 @@ case class HasFields(target: Record, fields: Seq[String]) extends ProduceBinary 
   * @param value
   */
 case class InsertAt[T,R>:T](target: ArrayTyped[T], index: Int, value: R) extends ProduceArray[T] {
-  def termType = TermType.INSERT_AT
+  def termType:TermType = TermType.INSERT_AT
 }
 
 /** Insert several values in to an array at a given index. Returns the modified array.
@@ -252,7 +210,7 @@ case class SpliceAt[T](target: ArrayTyped[T], index: Int, values: Seq[T]) extend
 
   override lazy val args = buildArgs(target, index, MakeArray(values))
 
-  def termType = TermType.SPLICE_AT
+  def termType:TermType = TermType.SPLICE_AT
 }
 
 /** Remove an element from an array at a given index. Returns the modified array.
@@ -265,7 +223,7 @@ case class DeleteAt[T](target: ArrayTyped[T], start: Int, end: Option[Int] = Non
 
   override lazy val args = buildArgs(end.map(Seq(target, start, _)).getOrElse(Seq(target, start)): _*)
 
-  def termType = TermType.DELETE_AT
+  def termType:TermType = TermType.DELETE_AT
 }
 
 /** Change a value in an array at a given index. Returns the modified array.
@@ -274,7 +232,7 @@ case class DeleteAt[T](target: ArrayTyped[T], start: Int, end: Option[Int] = Non
   * @param value
   */
 case class ChangeAt[T,B>:T](target: ArrayTyped[T], index: Int, value: B) extends ProduceArray[T] {
-  def termType = TermType.CHANGE_AT
+  def termType:TermType = TermType.CHANGE_AT
 }
 
 /** Match against a regular expression. Returns a match object containing the matched string,
@@ -285,27 +243,24 @@ case class ChangeAt[T,B>:T](target: ArrayTyped[T], index: Int, value: B) extends
   * @param regexp
   */
 case class Match(target: Strings, regexp: String) extends ProduceDocument[MatchResult] {
-  def termType = TermType.MATCH
+  def termType:TermType = TermType.MATCH
 }
 
 /** Gets the type of a value.
   * @param target
   */
 case class TypeOf(target: Typed) extends ProduceString {
-  def termType = TermType.TYPE_OF
+  def termType:TermType = TermType.TYPE_OF
 }
 
 case class Keys(target: Record) extends ProduceArray[String] {
-  def termType = TermType.KEYS
+  def termType:TermType = TermType.KEYS
 }
 
 // FIXME support change cursor split
 case class Split(target:Strings,delimiter:Option[String]=None,limit:Option[Int]=None) extends ProduceSeq[String,DefaultCursor]{
 
-
   override lazy val args=buildArgs(Seq(Some(target),delimiter,limit).flatten:_*)
 
-  def termType = TermType.SPLIT
+  def termType:TermType = TermType.SPLIT
 }
-
-

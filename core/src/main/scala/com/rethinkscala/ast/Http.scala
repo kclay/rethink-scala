@@ -18,7 +18,7 @@ case class Http(url: String, options: HttpOptions) extends ProduceAnyDocument {
   override lazy val args = buildArgs(url)
   override lazy val optargs = buildOptArgs(options.toMap)
 
-  override def termType = TermType.HTTP
+  override def termType:TermType = TermType.HTTP
 }
 
 

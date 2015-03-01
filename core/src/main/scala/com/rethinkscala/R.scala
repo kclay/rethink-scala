@@ -1,30 +1,7 @@
 package com.rethinkscala
 
-import com.rethinkscala.ast._
-import org.joda.time.{ReadableInstant, DateTime}
-import com.rethinkscala.ast.StringDatum
-
-import com.rethinkscala.ast.JavaScript
-import com.rethinkscala.ast.TableDrop
-import com.rethinkscala.ast.Branch
-import com.rethinkscala.ast.DBCreate
-import com.rethinkscala.ast.DB
-import com.rethinkscala.ast.Asc
-import scala.Some
-import com.rethinkscala.ast.FuncCall
-import com.rethinkscala.ast.DBDrop
-import com.rethinkscala.ast.TableList
-import com.rethinkscala.ast.Desc
-import com.rethinkscala.ast.BySum
-import com.rethinkscala.ast.Table
-import com.rethinkscala.ast.BooleanDatum
-import com.rethinkscala.ast.DBList
-import com.rethinkscala.ast.ScalaBooleanPredicate1
-import com.rethinkscala.ast.UserError
-import com.rethinkscala.ast.ByAvg
-import com.rethinkscala.ast.TableCreate
-import com.rethinkscala.ast.NumberDatum
-import scala.specialized
+import com.rethinkscala.ast.{Asc, BooleanDatum, Branch, ByAvg, BySum, DB, DBCreate, DBDrop, DBList, Desc, FuncCall, JavaScript, NumberDatum, ScalaBooleanPredicate1, StringDatum, Table, TableCreate, UserError, _}
+import org.joda.time.{DateTime, ReadableInstant}
 
 
 /**
@@ -40,9 +17,6 @@ trait RethinkApi extends TimeNames with GeometryApi {
   def getInstance = this
 
   private lazy val _row = new ImplicitVar
-
-
-  // def http
 
   def expr(term: Term): Term = term
 
@@ -69,10 +43,6 @@ trait RethinkApi extends TimeNames with GeometryApi {
 
   def string = row.string
 
-
-  //def row[T<:Sequence](name: String)(implicit d:DummyImplicit) = _row.asInstanceOf[T] field name
-
-
   lazy val test = db("test")
 
   def table(name: String): Table[Document] = table(name, None)
@@ -81,12 +51,11 @@ trait RethinkApi extends TimeNames with GeometryApi {
 
   def table(name: String, useOutDated: Option[Boolean] = None): Table[Document] = Table[Document](name, useOutDated)
 
+  def tableAs[T <: AnyRef](name: String): Table[T] = tableAs[T](name, None)
 
-  def tableAs[T<:AnyRef](name: String): Table[T] = tableAs[T](name, None)
+  def tableAs[T <: AnyRef](name: String, useOutDated: Boolean): Table[T] = tableAs[T](name, Some(useOutDated))
 
-  def tableAs[T<:AnyRef](name: String, useOutDated: Boolean): Table[T] = tableAs[T](name, Some(useOutDated))
-
-  def tableAs[T<:AnyRef](name: String, useOutDated: Option[Boolean] = None): Table[T] = Table[T](name, useOutDated)
+  def tableAs[T <: AnyRef](name: String, useOutDated: Option[Boolean] = None): Table[T] = Table[T](name, useOutDated)
 
   def db(name: String) = DB(name)
 
@@ -96,25 +65,25 @@ trait RethinkApi extends TimeNames with GeometryApi {
 
   def dbs = DBList()
 
-
   def tableCreate(name: String): TableCreate = tableCreate(name, None)
 
   def tableCreate(name: String, options: TableOptions): TableCreate = tableCreate(name, Some(options))
 
   def tableCreate(name: String, options: Option[TableOptions] = None): TableCreate = test.tableCreate(name, options.getOrElse(TableOptions()))
 
-  def tableDrop(name: String) = test.tableDrop(name)
+  def tableDrop(name: String):TableDrop = test.tableDrop(name)
 
-  def tables = test.tables
-
+  def tables:TableList = test.tables
 
   def branch(predicate: (Var) => Binary, passed: Typed, failed: Typed): Branch = branch(ScalaBooleanPredicate1(predicate), passed, failed)
 
   def branch(predicate: Binary, passed: Typed, failed: Typed): Branch = Branch(predicate, passed, failed)
 
-  def sum(attr: String) = BySum(attr)
+  @deprecated("Call .sum on collection")
+  def sum(attr: String):BySum = BySum(attr)
 
-  def avg(attr: String) = ByAvg(attr)
+  @deprecated("Call .avg on collection")
+  def avg(attr: String):ByAvg = ByAvg(attr)
 
   def random = Random[Double](Seq.empty)
 
@@ -124,17 +93,15 @@ trait RethinkApi extends TimeNames with GeometryApi {
 
   val count = ByCount
 
-  def asc(attr: String) = Asc(attr.wrap)
-  def asc(attr:Typed)  = Asc(attr.wrap)
+  def asc(attr: String):Asc = Asc(attr.wrap)
 
-  def desc(attr: String) = Desc(attr.wrap)
-  def desc(attr:Typed) = Desc(attr.wrap)
+  def asc(attr: Typed):Asc = Asc(attr.wrap)
+
+  def desc(attr: String):Desc = Desc(attr.wrap)
+
+  def desc(attr: Typed):Desc = Desc(attr.wrap)
 
   private[this] def compute[T](v: T*)(a: (T, T) => T) = v.drop(1).foldLeft(v.head)(a)
-
-  // def eq(base:Comparable,v:Comparable *) = compute[Comparable](v:_*)()
-  //def add(v: Addition*) = compute[Addition](v: _*)(_ + _)
-
 
   def sub(v: Numeric*) = compute[Numeric](v: _*)(_ - _)
 
@@ -152,12 +119,10 @@ trait RethinkApi extends TimeNames with GeometryApi {
 }
 
 
-
-
 trait TimeNames {
 
-  import ql2.Ql2.Term.TermType
   import com.rethinkscala.ast.TimeName
+  import ql2.Ql2.Term.TermType
 
   private def apply(tt: TermType) = TimeName(tt)
 

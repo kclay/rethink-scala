@@ -18,7 +18,7 @@ abstract class Transformation[T,C[_],R] extends ProduceSeq[R,C] {
   */
 case class RMap[T,C[_],R](target: Sequence[T,C], func: FuncWrap) extends Transformation[T,C,R] {
 
-  def termType = TermType.MAP
+  def termType:TermType = TermType.MAP
 
   def toConcat = ConcatMap(target, func)
 
@@ -30,7 +30,7 @@ case class RMap[T,C[_],R](target: Sequence[T,C], func: FuncWrap) extends Transfo
   */
 case class ConcatMap[T,C[_],R](target: Sequence[T,C], func: FuncWrap) extends Transformation[T,C,R] {
 
-  def termType = TermType.CONCAT_MAP
+  def termType:TermType = TermType.CONCAT_MAP
 
   def toMap = RMap(target, func)
 }
@@ -43,7 +43,7 @@ case class ConcatMap[T,C[_],R](target: Sequence[T,C], func: FuncWrap) extends Tr
   */
 case class WithFields[T,C[_]](target: Sequence[T,C], fields: Seq[Any]) extends ProduceSeq[T,C] {
 
-  def termType = TermType.WITH_FIELDS
+  def termType:TermType = TermType.WITH_FIELDS
 
   override lazy val args = buildArgs(fields.+:(target): _*)
 }
@@ -65,13 +65,13 @@ case class Asc(attr: FuncWrap) extends Ordering {
 
   def flip = Desc(attr)
 
-  def termType = TermType.ASC
+  def termType:TermType = TermType.ASC
 }
 
 case class Desc(attr: FuncWrap) extends Ordering {
   def flip = Asc(attr)
 
-  def termType = TermType.DESC
+  def termType:TermType = TermType.DESC
 }
 
 /** Sort the sequence by document values of the given key(s).
@@ -86,7 +86,7 @@ case class OrderBy[T,C[_]](target: Sequence[T,C], values: Seq[Order], index: Opt
   override lazy val args = buildArgs( values.+:(target): _*)
 
   override lazy val optargs = buildOptArgs(Map("index"->index))
-  def termType = TermType.ORDER_BY
+  def termType:TermType = TermType.ORDER_BY
 
   def withIndex(i: String) = copy(index = Some(i))
   def withIndex(i: Order) = copy(index = Some(i))
@@ -97,7 +97,7 @@ case class OrderBy[T,C[_]](target: Sequence[T,C], values: Seq[Order], index: Opt
   * @param index
   */
 case class Skip[T,C[_]](target: Sequence[T,C], index: Int) extends MethodQuery with ProduceSeq[T,C] {
-  def termType = TermType.SKIP
+  def termType:TermType = TermType.SKIP
 }
 
 /** Concatenate two sequences.
@@ -108,7 +108,7 @@ case class Union[T,C[_],R,CR[_]](target: Sequence[T,C], others: Sequence[R,CR]) 
 
   override lazy val args: Seq[Term] = buildArgs(target, others)
 
-  def termType = TermType.UNION
+  def termType:TermType = TermType.UNION
 }
 
 /** Get the nth element of a sequence.
@@ -122,7 +122,7 @@ case class Slice[T,C[_]](target: Sequence[T,C], left: Int = 0, right: Int = -1, 
 
   override lazy val optargs = buildOptArgs(bounds.toMap)
 
-  def termType = TermType.SLICE
+  def termType:TermType = TermType.SLICE
 }
 
 /** End the sequence after the given number of elements.
@@ -132,14 +132,14 @@ case class Slice[T,C[_]](target: Sequence[T,C], left: Int = 0, right: Int = -1, 
 case class Limit[T,C[_]](target: Sequence[T,C], amount: Int) extends MethodQuery with ProduceSeq[T,C] {
   override lazy val args = buildArgs(target, amount)
 
-  def termType = TermType.LIMIT
+  def termType:TermType = TermType.LIMIT
 }
 
 /** Test if a sequence is empty.
   * @param target
   */
 case class IsEmpty[T,C[_]](target: Sequence[T,C]) extends ProduceBinary {
-  def termType = TermType.IS_EMPTY
+  def termType:TermType = TermType.IS_EMPTY
 }
 
 /** Get the indexes of an element in a sequence. If the argument is a predicate, get the indexes of all elements matching it.
@@ -150,11 +150,11 @@ case class IndexesOf[T,C[_]](target: Sequence[T,C], filter: FuncWrap) extends Pr
 
   override lazy val args = buildArgs(target, filter)
 
-  def termType = TermType.INDEXES_OF
+  def termType:TermType = TermType.INDEXES_OF
 }
 
 case class Nth[T](target: IndexTyped[T], index: Int) extends ProduceSingleSelection[T] {
-  def termType = TermType.NTH
+  def termType:TermType = TermType.NTH
 }
 
 /** Select a given number of elements from a sequence with uniform random distribution. Selection is done without replacement.
@@ -162,5 +162,5 @@ case class Nth[T](target: IndexTyped[T], index: Int) extends ProduceSingleSelect
   * @param amount
   */
 case class Sample[T,C[_]](target: Sequence[T,C], amount: Int) extends ProduceSeq[T,C] {
-  def termType = TermType.SAMPLE
+  def termType:TermType = TermType.SAMPLE
 }

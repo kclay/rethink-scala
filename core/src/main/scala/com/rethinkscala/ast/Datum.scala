@@ -24,12 +24,6 @@ object Datum {
   private val KEY_REQL_TYPE = "$reql_type$"
   private val REQL_TYPE_TIME = "TIME"
 
-  /*def unwrap(datum: ql2.Datum): (Any, String) = {
-    val buf = new StringBuilder
-    (unwrap(datum, buf), buf.toString())
-
-  } */
-
   def unwrap(datum: ql2.Datum): String = {
     val buf = new StringBuilder
     unwrap(datum, buf)

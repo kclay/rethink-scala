@@ -19,7 +19,7 @@ object Wrap {
 
   private def scan(node: Any): Boolean = node match {
     case node: ImplicitVar => true
-    case t: Term if (t.args.find{
+    case t: Term if (t.args.find {
       case arg: Term if (scan(arg)) => true
     }.isDefined) => true
     case t: Term if (t.optargs.find {
@@ -28,15 +28,12 @@ object Wrap {
     case _ => false
   }
 
-  //def apply(t: Typed) = new Predicate1((v: Var) => t)
 
   def apply(t: Any) = {
     val e = Expr(t).asInstanceOf[Typed]
     val rtn = if (scan(e)) new ScalaPredicate1((v: Var) => e).apply() else e
     rtn
   }
-
-  // def apply(t: Typed) = new Predicate1((v: Var) => t)
 }
 
 abstract class Predicate extends FilterTyped {
@@ -65,7 +62,7 @@ case class Func(f: Predicate) extends Term {
 
   override lazy val args = buildArgs(f.invoke: _*)
 
-  def termType = TermType.FUNC
+  def termType:TermType = TermType.FUNC
 }
 
 
@@ -96,7 +93,6 @@ class ScalaPredicate2(f: (Var, Var) => Typed) extends Predicate2 {
 }
 
 trait BooleanPredicate extends Predicate with Binary
-
 
 trait BooleanPredicate1 extends BooleanPredicate
 

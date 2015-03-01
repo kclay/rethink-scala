@@ -5,7 +5,7 @@ import com.rethinkscala.{BetweenOptions, Document}
 
 case class Get[R<:AnyRef](target: Table[R], attribute: Any) extends ProduceSingleDocumentSelection[R] {
 
-  def termType = TermType.GET
+  def termType:TermType = TermType.GET
 }
 
 case class GetAll[R<:AnyRef ](target: Table[R], attr: Seq[Any], index: Option[String] = None) extends ProduceArray[R] {
@@ -15,7 +15,7 @@ case class GetAll[R<:AnyRef ](target: Table[R], attr: Seq[Any], index: Option[St
 
   def withIndex(index:String) = copy(index=Some(index))
 
-  def termType = TermType.GET_ALL
+  def termType:TermType = TermType.GET_ALL
 }
 
 case class Between[T,C[_]](target: StreamSelection[T,C], start: Literal, end: Literal, options:BetweenOptions) extends ProduceStreamSelection[T,C] {
@@ -23,7 +23,7 @@ case class Between[T,C[_]](target: StreamSelection[T,C], start: Literal, end: Li
 
   override lazy val optargs = buildOptArgs(options.toMap)
 
-  def termType = TermType.BETWEEN
+  def termType:TermType = TermType.BETWEEN
 }
 
 case class Filter[T,C[_]](target: Filterable[T,C], wrap: FuncWrap, default: Option[Typed] = None) extends ProduceStreamSelection[T,C] {
@@ -31,5 +31,5 @@ case class Filter[T,C[_]](target: Filterable[T,C], wrap: FuncWrap, default: Opti
   override lazy val args = buildArgs(target, wrap)
   override lazy val optargs = buildOptArgs(Map("default" -> default))
 
-  def termType = TermType.FILTER
+  def termType:TermType = TermType.FILTER
 }
