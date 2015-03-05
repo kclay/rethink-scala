@@ -206,13 +206,13 @@ trait StreamSelection[T, C[_]] extends Selection[T] with Stream[T, C] {
   self: ProduceSequence[T] =>
   override val underlying = this
 
-  def between(start: Int, stop: Int): Between[T, C] = between(start, stop, BetweenOptions())
+ // def between(start: Int, stop: Int): Between[T, C] = between(start, stop, BetweenOptions())
 
-  def between(start: String, stop: String): Between[T, C] = between(start, stop, BetweenOptions())
+  def between(start: Typed, stop: Typed): Between[T, C] = between(start, stop, BetweenOptions())
 
-  def between(start: Int, stop: Int, options: BetweenOptions) = Between(underlying, start, stop, options)
+  //def between(start: Int, stop: Int, options: BetweenOptions) = Between(underlying, start, stop, options)
 
-  def between(start: String, stop: String, options: BetweenOptions) = Between(underlying, start, stop, options)
+  def between(start: Typed, stop: Typed, options: BetweenOptions) = Between(underlying, start, stop, options)
 
 }
 

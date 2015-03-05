@@ -18,7 +18,7 @@ case class GetAll[R<:AnyRef ](target: Table[R], attr: Seq[Any], index: Option[St
   def termType:TermType = TermType.GET_ALL
 }
 
-case class Between[T,C[_]](target: StreamSelection[T,C], start: Literal, end: Literal, options:BetweenOptions) extends ProduceStreamSelection[T,C] {
+case class Between[T,C[_]](target: StreamSelection[T,C], start: Typed, end:Typed, options:BetweenOptions) extends ProduceStreamSelection[T,C] {
   override lazy val args = buildArgs(target, start, end)
 
   override lazy val optargs = buildOptArgs(options.toMap)

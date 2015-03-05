@@ -39,6 +39,7 @@ println(foos.get("all").run)
 
 
 
+
     assert(foos.between(10, 20).orderBy("id"), {
       f: Seq[SelectFoo] => f.size == 10 & f(0).id == 10 & f.last.id == 19
     })
