@@ -1,5 +1,6 @@
 package com.rethinkscala
 
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import org.scalatest.FunSuite
 import Blocking._
 
@@ -12,16 +13,23 @@ import Blocking._
  */
 case class NestedZip(zip:String)
 case class NestedStreet(zip:NestedZip) extends Document
-case class NestedAddress(street:NestedStreet) extends Document
 
-case class NestedUser(name: String, active: Boolean , address: NestedAddress, id: Option[String] = None)
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY)
+trait NestedAddress
+
+case class NestedAddress1(street:NestedStreet)       extends NestedAddress
+
+case class NestedAddress2(name:String)  extends NestedAddress
+
+case class NestedUser(name: String, active: Boolean , address:List[NestedAddress], id: Option[String] = None)
 
 class NestedTest extends FunSuite with WithBase {
 
 
   test("nested documents") {
 
-    val user = NestedUser("foo",true,NestedAddress(NestedStreet(NestedZip("hello"))))
+    val user = NestedUser("foo",true,List(NestedAddress1(NestedStreet(NestedZip("hello"))),NestedAddress2("foo")))
     val foos= r.tableAs[NestedUser]("foo")
     val term = foos.insert(user)
     val query = version3.toQuery(term, 1, None, Map.empty)

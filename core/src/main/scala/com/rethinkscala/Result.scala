@@ -45,18 +45,18 @@ trait Document {
   @JsonIgnore
   private[rethinkscala] var raw: String = _
 
-  private def _raw = Option(raw).getOrElse({
+  private def _raw:String = Option(raw).getOrElse({
     raw = Reflector.toJson(this)
     raw
   })
 
-  def \(name: String) = DocPath(underlying, List(name))
+  def \(name: String):DocPath = DocPath(underlying, List(name))
 
-  def apply(name: String*) = DocPath(underlying, name.toList)
+  def apply(name: String*):DocPath = DocPath(underlying, name.toList)
 
-  def toMap = underlying
+  def toMap:Map[String,Any] = underlying
 
-  def toJson = _raw
+  def toJson:String = _raw
 
   private[rethinkscala] def invokeBeforeInsert = beforeInsert
 
@@ -227,7 +227,7 @@ class GroupResult[Base] protected (buffer: ArrayBuffer[GroupResultRecord[Base]])
     buffer(idx)
   }
 
-  def length = buffer.length
+  def length:Int = buffer.length
 
 }
 

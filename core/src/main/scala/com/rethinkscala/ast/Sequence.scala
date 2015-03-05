@@ -33,7 +33,7 @@ trait Aggregation[T] {
   // self:ProduceSequence[T]=>
   val underlying = this
 
-  def count() = Count(underlying)
+  def count(): Count = Count(underlying)
 
   def count(value: String): Count = count(value: Datum)
 
@@ -41,57 +41,57 @@ trait Aggregation[T] {
 
   def count(value: Boolean): Count = count(value: Datum)
 
-  def count(value: Datum) = Count(underlying, value.optWrap)
+  def count(value: Datum): Count = Count(underlying, value.optWrap)
 
-  def count(f: Var => Binary) = Count(underlying, f.optWrap)
+  def count(f: Var => Binary): Count = Count(underlying, f.optWrap)
 
-  def count(f: japi.BooleanPredicate) = Count(underlying, f.optWrap)
+  def count(f: japi.BooleanPredicate): Count = Count(underlying, f.optWrap)
 
-  def sum() = Sum(underlying)
+  def sum(): Sum[T] = Sum(underlying)
 
-  def sum(value: String) = Sum(underlying, value.optWrap)
+  def sum(value: String): Sum[T] = Sum(underlying, value.optWrap)
 
-  def sum(f: Var => Numeric) = Sum(underlying, f.optWrap)
+  def sum(f: Var => Numeric): Sum[T] = Sum(underlying, f.optWrap)
 
-  def sum(f: japi.NumericPredicate) = Sum(underlying, f.optWrap)
+  def sum(f: japi.NumericPredicate): Sum[T] = Sum(underlying, f.optWrap)
 
   def group[R](magnet: GroupFilterMagnet[R]): Group[R, T] = Group[R, T](underlying, magnet().map(_.wrap))
 
-  def max() = Max(underlying)
+  def max(): Max[T] = Max(underlying)
 
-  def max(field: String) = Max(underlying, field.optWrap)
+  def max(field: String): Max[T] = Max(underlying, field.optWrap)
 
-  def max(f: Var => Typed) = Max(underlying, f.optWrap)
+  def max(f: Var => Typed): Max[T] = Max(underlying, f.optWrap)
 
-  def max(f: japi.Predicate) = Max(underlying, f.optWrap)
+  def max(f: japi.Predicate): Max[T] = Max(underlying, f.optWrap)
 
-  def min() = Max(underlying)
+  def min(): Min[T] = Min(underlying)
 
-  def min(field: String) = Min(underlying, field.optWrap)
+  def min(field: String): Min[T] = Min(underlying, field.optWrap)
 
-  def min(f: japi.Predicate) = Min(underlying, f.optWrap)
+  def min(f: japi.Predicate): Min[T] = Min(underlying, f.optWrap)
 
-  def min(f: Var => Typed) = Min(underlying, f.optWrap)
+  def min(f: Var => Typed): Min[T] = Min(underlying, f.optWrap)
 
-  def avg() = Avg(underlying)
+  def avg(): Avg[T] = Avg(underlying)
 
-  def avg(field: String) = Avg(underlying, field.optWrap)
+  def avg(field: String): Avg[T] = Avg(underlying, field.optWrap)
 
-  def avg(f: japi.NumericPredicate) = Avg(underlying, f.optWrap)
+  def avg(f: japi.NumericPredicate): Avg[T] = Avg(underlying, f.optWrap)
 
-  def avg(f: Var => Numeric) = Avg(underlying, f.optWrap)
+  def avg(f: Var => Numeric): Avg[T] = Avg(underlying, f.optWrap)
 
-  def contains(field: String, fields: String*) = Contains(underlying, fields.+:(field).map(FuncWrap(_)))
+  def contains(field: String, fields: String*): Contains[T] = Contains(underlying, fields.+:(field).map(FuncWrap(_)))
 
-  def contains(field: Double, fields: Double*) = Contains(underlying, fields.+:(field).map(FuncWrap(_)))
+  def contains(field: Double, fields: Double*): Contains[T] = Contains(underlying, fields.+:(field).map(FuncWrap(_)))
 
-  def contains(fields: Datum*) = Contains(underlying, fields.map(FuncWrap(_)))
+  def contains(fields: Datum*): Contains[T] = Contains(underlying, fields.map(FuncWrap(_)))
 
-  def contains(f: japi.BooleanPredicate) = Contains(underlying, Seq(f.wrap))
+  def contains(f: japi.BooleanPredicate): Contains[T] = Contains(underlying, Seq(f.wrap))
 
-  def contains(f: Var => Binary) = Contains(underlying, Seq(f.wrap))
+  def contains(f: Var => Binary): Contains[T] = Contains(underlying, Seq(f.wrap))
 
-  def ?(attr: Datum) = contains(attr)
+  def ?(attr: Datum): Contains[T] = contains(attr)
 
 }
 
@@ -111,54 +111,54 @@ trait Sequence[T, Cursor[_]] extends ArrayTyped[T] with Multiply with Filterable
 
   override val underlying = this
 
-  def indexesOf[R >: Datum](value: R) = IndexesOf[T, Cursor](underlying, value.wrap)
+  def indexesOf[R >: Datum](value: R): ProduceSeq[Long, Cursor] = IndexesOf[T, Cursor](underlying, value.wrap)
 
-  def isEmpty = IsEmpty(underlying)
+  def isEmpty: ProduceBinary = IsEmpty(underlying)
 
-  def sample(amount: Int) = Sample[T, Cursor](underlying, amount)
+  def sample(amount: Int): ProduceSeq[T, Cursor] = Sample[T, Cursor](underlying, amount)
 
-  def indexesOf(p: Var => Binary) = IndexesOf[T, Cursor](underlying, p.wrap)
+  def indexesOf(p: Var => Binary): ProduceSeq[Long, Cursor] = IndexesOf[T, Cursor](underlying, p.wrap)
 
-  def skip(amount: Int) = Skip[T, Cursor](underlying, amount)
+  def skip(amount: Int): ProduceSeq[T, Cursor] = Skip[T, Cursor](underlying, amount)
 
-  def limit(amount: Int) = Limit[T, Cursor](underlying, amount)
+  def limit(amount: Int): ProduceSeq[T, Cursor] = Limit[T, Cursor](underlying, amount)
 
-  def slice(start: Int = 0, end: Int = -1) = Slice[T, Cursor](underlying, start, end, BoundOptions())
+  def slice(start: Int = 0, end: Int = -1): ProduceSeq[T, Cursor] = Slice[T, Cursor](underlying, start, end, BoundOptions())
 
-  def slice(start: Int, end: Int, bounds: BoundOptions) = if (end > 0) Slice(underlying, start, end, bounds)
+  def slice(start: Int, end: Int, bounds: BoundOptions): ProduceSeq[T, Cursor] = if (end > 0) Slice(underlying, start, end, bounds)
   else
     Slice(underlying, List(start, end).max, -1, BoundOptions(rightBound = Some(Bound.Closed)))
 
 
-  def apply(range: SliceRange) = slice(range.start, range.end)
+  def apply(range: SliceRange): ProduceSeq[T, Cursor] = slice(range.start, range.end)
 
-  def union[R, CR[_]](sequence: Sequence[R, CR]) = Union(underlying, sequence)
+  def union[R, CR[_]](sequence: Sequence[R, CR]): ProduceAnySequence = Union(underlying, sequence)
 
-  def eqJoin[R](attr: String, other: Sequence[R, Cursor]) = EqJoin[T, R, Cursor](underlying, Left(attr), other)
+  def eqJoin[R](attr: String, other: Sequence[R, Cursor]): Join[T, R, Cursor] = EqJoin[T, R, Cursor](underlying, Left(attr), other)
 
-  def eqJoin[R](attr: String, other: Sequence[R, Cursor], index: String) = EqJoin[T, R, Cursor](underlying, Left(attr), other, index)
+  def eqJoin[R](attr: String, other: Sequence[R, Cursor], index: String): Join[T, R, Cursor] = EqJoin[T, R, Cursor](underlying, Left(attr), other, index)
 
-  def eqJoin[R](func: Var => Typed, other: Sequence[R, Cursor], index: String) = EqJoin[T, R, Cursor](underlying, Right(func), other, index)
+  def eqJoin[R](func: Var => Typed, other: Sequence[R, Cursor], index: String): Join[T, R, Cursor] = EqJoin[T, R, Cursor](underlying, Right(func), other, index)
 
-  def eqJoin[R](func: Var => Typed, other: Sequence[R, Cursor]) = EqJoin[T, R, Cursor](underlying, Right(func), other)
+  def eqJoin[R](func: Var => Typed, other: Sequence[R, Cursor]): Join[T, R, Cursor] = EqJoin[T, R, Cursor](underlying, Right(func), other)
 
-  def innerJoin[R](other: Sequence[R, Cursor], func: (Var, Var) => Binary) = InnerJoin[T, R, Cursor](underlying, other, func)
+  def innerJoin[R](other: Sequence[R, Cursor], func: (Var, Var) => Binary): Join[T, R, Cursor] = InnerJoin[T, R, Cursor](underlying, other, func)
 
-  def outerJoin[R](other: Sequence[R, Cursor], func: (Var, Var) => Binary) = OuterJoin[T, R, Cursor](underlying, other, func)
+  def outerJoin[R](other: Sequence[R, Cursor], func: (Var, Var) => Binary): Join[T, R, Cursor] = OuterJoin[T, R, Cursor](underlying, other, func)
 
   def orderByIndex(index: String): OrderBy[T, Cursor] = orderByIndex(index: Order)
 
   def orderByIndex(index: Order): OrderBy[T, Cursor] = OrderBy[T, Cursor](underlying, Seq(), Some(index))
 
-  def orderBy(keys: Order*) = OrderBy[T, Cursor](underlying, keys)
+  def orderBy(keys: Order*): OrderBy[T, Cursor] = OrderBy[T, Cursor](underlying, keys)
 
-  def withFields(keys: Any*) = WithFields[T, Cursor](underlying, keys)
+  def withFields(keys: Any*): WithFields[T, Cursor] = WithFields[T, Cursor](underlying, keys)
 
-  def distinct = Distinct(underlying)
+  def distinct: ProduceSeq[T, Cursor] = Distinct(underlying)
 
-  def merge[B >: T](other: Sequence[B, Cursor]) = MergeSequence(underlying, other)
+  def merge[B >: T](other: Sequence[B, Cursor]): ProduceSeq[T, Cursor] = MergeSequence(underlying, other)
 
-  def foreach(f: Var => Typed) = ForEach(underlying, f)
+  def foreach(f: Var => Typed):ForEach[T,Cursor] = ForEach(underlying, f)
 
 }
 

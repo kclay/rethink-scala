@@ -43,9 +43,11 @@ case class FuncWrap(value: Any) {
   }
 
   def apply(): Term = {
-    val e = Expr(value)
-    val rtn = if (scan(e)) new ScalaPredicate1((v: Var) ⇒ e.asInstanceOf[Typed]).apply() else e
-    rtn
+    val expressed = Expr(value)
+    expressed match{
+      case f:Func=> f
+      case _=> if (scan(expressed)) new ScalaPredicate1((v: Var) ⇒ expressed.asInstanceOf[Typed]).apply() else expressed
+    }
   }
 }
 
@@ -106,7 +108,7 @@ class ImplicitVar extends ProduceAny {
 
   def termType: TermType = TermType.IMPLICIT_VAR
 
-  e
+
 
   override private[rethinkscala] def print(args: Seq[String], opt: Map[String, String]) = "r.row"
 }
@@ -184,14 +186,8 @@ trait Expr {
 
   }
 
-  private[rethinkscala] def mapForInsert(doc: AnyRef, writeNulls: Boolean): Map[String, Any] = Reflector.fields(doc).map(f ⇒
+  private[rethinkscala] def mapForInsert(doc: AnyRef, writeNulls: Boolean): Map[String, Any] =Reflector.toMap(doc)
 
-    (f.getName, f.get(doc))).collect {
-    case (name, value) if canInsert(name, value, writeNulls) ⇒ (name, value)
-
-  }.map {
-    case (name, value) ⇒ (name, Expr(InsertExpr((value, writeNulls))))
-  }.toMap
 
   def apply(a: Any, depth: Int = 20, writeNulls: Boolean = false): Term = {
     if (depth < 0) throw RethinkDriverError("Nesting depth limit exceeded")
