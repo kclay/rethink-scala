@@ -17,10 +17,18 @@ trait Options {
 case class TableOptions(
                          durability: Option[Durability.Value] = None,
                          primaryKey: Option[String] = None,
+                         shards: Int = 1,
 
-                         dataCenter: Option[String] = None
+                         dataCenter: Option[String] = None,
+                         replicas: Either[Int, Map[String, Any]] = Left(1),
+                         primaryReplicaTag: Option[String]
+
                          ) extends Options {
-  def toMap = Map("primary_key" -> primaryKey, "datacenter" -> dataCenter, "durability" -> durability)
+  def toMap = Map("primary_key" -> primaryKey, "shards" -> shards,
+    "datacenter" -> dataCenter,
+    "replicas" -> Some(replicas.fold[Any](identity, identity)),
+    "durability" -> durability,
+    "primary_replica_tag" -> primaryReplicaTag)
 }
 
 case class QueryOptions(
@@ -37,7 +45,7 @@ case class InsertOptions(
                           upsert: Option[Boolean] = None,
                           returnChanges: Option[Boolean] = None
                           ) extends Options {
-  def toMap = Map("upsert" -> upsert, "durability" -> durability,  "return_changes" -> returnChanges)
+  def toMap = Map("upsert" -> upsert, "durability" -> durability, "return_changes" -> returnChanges)
 }
 
 
@@ -47,7 +55,7 @@ case class UpdateOptions(
                           returnValues: Option[Boolean] = None,
                           returnChanges: Option[Boolean] = None
                           ) extends Options {
-  def toMap = Map("non_atomic" -> nonAtomic, "durability" -> durability,  "return_changes" -> returnChanges)
+  def toMap = Map("non_atomic" -> nonAtomic, "durability" -> durability, "return_changes" -> returnChanges)
 }
 
 
@@ -82,7 +90,7 @@ object Durability extends Enumeration {
 
 trait RequestOptionsOps {
 
-  import HttpMethod._
+  import com.rethinkscala.ast.HttpMethod._
 
   type OptionType
 
