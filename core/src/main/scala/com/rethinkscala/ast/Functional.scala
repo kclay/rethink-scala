@@ -36,7 +36,7 @@ object Wrap {
   }
 }
 
-abstract class Predicate extends FilterTyped {
+abstract class Predicate extends FilterTyped with Typed {
 
   val amount: Int
 

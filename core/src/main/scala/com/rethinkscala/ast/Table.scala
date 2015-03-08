@@ -59,19 +59,18 @@ case class Table[T <: AnyRef](name: String, useOutDated: Option[Boolean] = None,
 
   def indexes = IndexList(this)
 
-  def indexCreate(name: String, indexFunction: Typed, geo: Option[Boolean], multi: Option[Boolean] = None) = {
-    IndexCreate(this, name, indexFunction.optWrap, geo = geo, multi = multi)
+  def indexCreate(name: String, indexFunction:Option[Typed]=None, geo: Option[Boolean]=None, multi: Option[Boolean] = None) = {
+    IndexCreate(this, name, indexFunction.map(_.wrap), geo = geo, multi = multi)
   }
 
-  def indexCreate(name: String, geo: Option[Boolean], multi: Option[Boolean] = None) = {
-    IndexCreate(this, name, geo = geo, multi = multi)
-  }
 
   def indexDrop(name: String) = IndexDrop(this, name)
 
   def indexStatus(indexes: String*) = IndexStatus(this, indexes)
 
   def indexWait(indexes: String*) = IndexWait(this, indexes)
+
+  def indexRename(oldName: String, newName: String, overwrite: Option[Boolean] = None) = IndexRename(this, oldName, newName, overwrite)
 
   def sync = Sync(this)
 
@@ -171,6 +170,15 @@ case class IndexWait(target: TableTyped, indexes: Seq[String]) extends ProduceDe
   override lazy val args = buildArgs((if (indexes.isEmpty) Seq(target) else indexes.+:(target)): _*)
 
   def termType: TermType = TermType.INDEX_WAIT
+}
+
+case class IndexRename(target: TableTyped, oldName: String, newName: String, overwrite: Option[Boolean] = None)
+  extends ProduceBinary with BinaryConversion {
+  val resultField = "renamed"
+  override lazy val args = buildArgs(target,oldName,newName)
+  override lazy val optargs = buildOptArgs(Map("overwrite" -> overwrite))
+
+  override def termType: TermType = TermType.INDEX_RENAME
 }
 
 case class Sync(target: TableTyped, durability: Option[Durability.Kind] = None) extends ProduceBinary with BinaryConversion {

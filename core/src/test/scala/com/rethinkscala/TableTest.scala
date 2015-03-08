@@ -57,6 +57,11 @@ class TableTest extends FunSuite with WithBase {
 
   }
 
+  test("index rename"){
+
+    assert(r.table(tableName).indexRename("foo4","_foo4"))
+  }
+
   test("list index") {
 
     val table = r.table(tableName)
