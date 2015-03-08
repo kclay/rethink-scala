@@ -186,7 +186,7 @@ trait Expr {
 
   }
 
-  private[rethinkscala] def mapForInsert(doc: AnyRef, writeNulls: Boolean): Map[String, Any] =Reflector.toMap(doc)
+  private[rethinkscala] def mapForInsert(doc: AnyRef): Map[String, Any] =Reflector.toMap(doc)
 
 
   def apply(a: Any, depth: Int = 20, writeNulls: Boolean = false): Term = {

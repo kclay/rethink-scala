@@ -21,7 +21,7 @@ case class TableOptions(
 
                          dataCenter: Option[String] = None,
                          replicas: Either[Int, Map[String, Any]] = Left(1),
-                         primaryReplicaTag: Option[String] =None
+                         primaryReplicaTag: Option[String] = None
 
                          ) extends Options {
   def toMap = Map("primary_key" -> primaryKey, "shards" -> shards,
@@ -43,9 +43,12 @@ case class InsertOptions(
                           durability: Option[Durability.Value] = None,
                           returnValues: Option[Boolean] = None,
                           upsert: Option[Boolean] = None,
-                          returnChanges: Option[Boolean] = None
+                          returnChanges: Option[Boolean] = None,
+                          conflict: Option[Conflict.Kind] = None
                           ) extends Options {
-  def toMap = Map("upsert" -> upsert, "durability" -> durability, "return_changes" -> returnChanges)
+  def toMap = Map("upsert" -> upsert,
+    "conflict" -> conflict,
+    "durability" -> durability, "return_changes" -> returnChanges)
 }
 
 
@@ -85,6 +88,13 @@ object Durability extends Enumeration {
   type Kind = Value
   val Hard = Value("hard")
   val Soft = Value("soft")
+}
+
+object Conflict extends Enumeration {
+  type Kind = Value
+  val Error = Value("error")
+  val Replace = Value("replace")
+  val Update = Value("update")
 }
 
 
