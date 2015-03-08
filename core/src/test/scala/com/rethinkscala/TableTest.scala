@@ -11,13 +11,15 @@ import com.rethinkscala.net.Blocking._
   * To change this template use File | Settings | File Templates.
   */
 class TableTest extends FunSuite with WithBase {
+
   test("create table with options") {
 
     val table = r.db("test").table(tableName)
-    val create = table.create(TableOptions(primaryKey = Some("a"), durability = Some(Durability.Hard)))
+    val create = table.create(TableOptions(primaryKey = Some("a"), durability = Some(Durability.Hard))).withChanges
 
-    val ast = create.ast
-    assert(create)
+    assert(create.run,{
+      c:TableCreateResults=> c.wasSuccessful
+    })
 
   }
   test("list tables") {
@@ -103,9 +105,17 @@ class TableTest extends FunSuite with WithBase {
   }
 
 
+
+
   test("drop table") {
-    assert(r.table(tableName).drop)
+
+
+
+    assert(r.table(tableName).drop.withChanges.run,{
+      d:TableDropResults=> d.tablesDropped ==1
+    })
   }
+
 
   override def setupDB = false
 }

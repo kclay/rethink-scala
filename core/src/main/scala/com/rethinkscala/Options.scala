@@ -17,11 +17,11 @@ trait Options {
 case class TableOptions(
                          durability: Option[Durability.Value] = None,
                          primaryKey: Option[String] = None,
-                         shards: Int = 1,
+                         shards: Option[Int] = None,
 
                          dataCenter: Option[String] = None,
                          replicas: Either[Int, Map[String, Any]] = Left(1),
-                         primaryReplicaTag: Option[String]
+                         primaryReplicaTag: Option[String] =None
 
                          ) extends Options {
   def toMap = Map("primary_key" -> primaryKey, "shards" -> shards,

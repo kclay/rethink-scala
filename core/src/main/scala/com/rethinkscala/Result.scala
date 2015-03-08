@@ -1,12 +1,12 @@
 package com.rethinkscala
 
-import com.fasterxml.jackson.annotation.{ JsonIgnore, JsonProperty, JsonTypeInfo }
-import com.fasterxml.jackson.databind.annotation.{ JsonDeserialize, JsonTypeResolver }
-import com.rethinkscala.reflect.{ GroupResultDeserializer, Reflector, RethinkTypeResolverBuilder }
+import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty, JsonTypeInfo}
+import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonTypeResolver}
+import com.rethinkscala.reflect.{GroupResultDeserializer, Reflector, RethinkTypeResolverBuilder}
 
 import scala.collection.IndexedSeqLike
 import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable.{ ArrayBuffer, Builder }
+import scala.collection.mutable.{ArrayBuffer, Builder}
 
 case class DocPath(root: Map[String, Any], paths: List[String]) {
 
@@ -21,16 +21,16 @@ case class DocPath(root: Map[String, Any], paths: List[String]) {
 
         case Some(v) ⇒ find[T](v, p)
         // TODO : Fix warnings
-        case m: M    ⇒ find[T](m.get(x), p.tail)
+        case m: M ⇒ find[T](m.get(x), p.tail)
         // TODO : Fix warnings
-        case m: IM   ⇒ find[T](m.get(x), p.tail)
-        case _       ⇒ None
+        case m: IM ⇒ find[T](m.get(x), p.tail)
+        case _ ⇒ None
       }
   }.getOrElse(value match {
 
     case Some(x) ⇒ Some(x.asInstanceOf[T])
-    case x: Any  ⇒ Some(x.asInstanceOf[T])
-    case _       ⇒ None
+    case x: Any ⇒ Some(x.asInstanceOf[T])
+    case _ ⇒ None
   })
 
   def \(name: String): DocPath = DocPath(root, paths :+ name)
@@ -45,18 +45,18 @@ trait Document {
   @JsonIgnore
   private[rethinkscala] var raw: String = _
 
-  private def _raw:String = Option(raw).getOrElse({
+  private def _raw: String = Option(raw).getOrElse({
     raw = Reflector.toJson(this)
     raw
   })
 
-  def \(name: String):DocPath = DocPath(underlying, List(name))
+  def \(name: String): DocPath = DocPath(underlying, List(name))
 
-  def apply(name: String*):DocPath = DocPath(underlying, name.toList)
+  def apply(name: String*): DocPath = DocPath(underlying, name.toList)
 
-  def toMap:Map[String,Any] = underlying
+  def toMap: Map[String, Any] = underlying
 
-  def toJson:String = _raw
+  def toJson: String = _raw
 
   private[rethinkscala] def invokeBeforeInsert = beforeInsert
 
@@ -82,7 +82,7 @@ class JsonDocument(json: String) {
 
   def \(name: String): DocPath = DocPath(toMap, List(name))
 
-  def toMap = underlying fold (a ⇒ a, b ⇒ (b.zipWithIndex map {
+  def toMap = underlying fold(a ⇒ a, b ⇒ (b.zipWithIndex map {
     case (value: Any, index: Int) ⇒ (index.toString, value)
 
   }).toMap)
@@ -169,24 +169,60 @@ case class InsertResult(inserted: Int = 0, replaced: Int = 0, unchanged: Int = 0
                         errors: Int = 0, @JsonProperty("first_error") firstError: Option[String] = None,
                         @JsonProperty("generated_keys") generatedKeys: Seq[String],
                         deleted: Int = 0, skipped: Int = 0) extends Document
-  with ReturnValues with GeneratesKeys
+with ReturnValues with GeneratesKeys
+
+trait TableOperationResults {
+
+  val configChanges: ConfigChanges
+
+  def wasSuccessful: Boolean
+}
+
+case class TableCreateResults(@JsonProperty("tables_created") tablesCreated: Int,
+                         @JsonProperty("config_changes") configChanges: ConfigChanges) extends TableOperationResults {
+  override def wasSuccessful = tablesCreated == 1
+}
+
+case class TableDropResults(@JsonProperty("tables_dropped") tablesDropped: Int,
+                       @JsonProperty("config_changes") configChanges: ConfigChanges) extends TableOperationResults {
+  override def wasSuccessful = tablesDropped == 1
+}
+
+case class ConfigChanges(@JsonProperty("old_val") oldVal: Option[TableConfigResults],
+                         @JsonProperty("new_val") newVal: Option[TableConfigResults])
+
+case class ShardConfig(@JsonProperty("primary_replica") primaryReplica: Option[String], replicas: List[String])
+
+case class TableConfigResults(id: String,
+                              name: String,
+                              db: String, @JsonProperty("primary_key") primaryKey: String,
+                              shards: List[ShardConfig],
+                              @JsonProperty("write_acks") writeAcks: String,
+                              durability: Durability.Kind)
 
 case class IndexStatusResult(index: String, ready: Boolean) extends Document
 
 case class TableInfoResult(name: String, @JsonProperty("type") kind: String, db: DBResult) extends InfoResult(name, kind)
 
-case class ChangeResult(replaced: Int, unchanged: Int, inserted: Int, deleted: Int, errors: Int,
-
+case class ChangeResult(replaced: Int,
+                        unchanged: Int,
+                        inserted: Int,
+                        deleted: Int,
+                        errors: Int,
                         @JsonProperty("first_error") firstError: Option[String],
-                        skipped: Int, @JsonProperty("generated_keys") generatedKeys: Seq[String]) extends Document
-  with ReturnValues
-  with GeneratesKeys
+                        skipped: Int,
+                        @JsonProperty("generated_keys") generatedKeys: Seq[String]) extends Document
+with ReturnValues
+with GeneratesKeys
 
 case class MatchResult(start: Int, end: Int, str: String, groups: Seq[MatchGroupResult]) extends Document
 
 case class MatchGroupResult(start: Int, end: Int, str: String)
 
-case class Profile(description: String, @JsonProperty("duration(ms)") duration: Double, @JsonProperty("sub_task") subTask: List[Profile], parallelTasks: Option[Profile])
+case class Profile(description: String,
+                   @JsonProperty("duration(ms)") duration: Double,
+                   @JsonProperty("sub_task") subTask: List[Profile],
+                   parallelTasks: Option[Profile])
 
 case class QueryProfile[T](value: T, profile: Profile)
 
@@ -215,9 +251,9 @@ object GroupResult {
 @JsonDeserialize(using = classOf[GroupResultDeserializer])
 @JsonTypeResolver(value = classOf[RethinkTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.CUSTOM, include = JsonTypeInfo.As.WRAPPER_OBJECT)
-class GroupResult[Base] protected (buffer: ArrayBuffer[GroupResultRecord[Base]])
+class GroupResult[Base] protected(buffer: ArrayBuffer[GroupResultRecord[Base]])
   extends IndexedSeq[GroupResultRecord[Base]]
-  with IndexedSeqLike[GroupResultRecord[Base], GroupResult[Base]] with Document  {
+  with IndexedSeqLike[GroupResultRecord[Base], GroupResult[Base]] with Document {
 
   override protected[this] def newBuilder: Builder[GroupResultRecord[Base], GroupResult[Base]] =
     GroupResult.newBuilder
@@ -227,7 +263,7 @@ class GroupResult[Base] protected (buffer: ArrayBuffer[GroupResultRecord[Base]])
     buffer(idx)
   }
 
-  def length:Int = buffer.length
+  def length: Int = buffer.length
 
 }
 

@@ -19,11 +19,13 @@ class RethinkModule extends DefaultScalaModule {
   _deserializers.addDeserializer(classOf[ReadableInstant], RethinkDateTimeDeserializer.forType(classOf[ReadableInstant]))
   _deserializers.addDeserializer(classOf[GroupResult[_]], new GroupResultDeserializer)
   _deserializers.addDeserializer(classOf[JsonDocument], new JsonDocumentDeserializer)
-    _deserializers.addDeserializer(classOf[Polygon], PolygonDeserializer)
+  _deserializers.addDeserializer(classOf[Polygon], PolygonDeserializer)
   _deserializers.addDeserializer(classOf[Point], PointDeserializer)
- _deserializers.addDeserializer(classOf[UnknownGeometry], UnknownGeometryDeserializer)
-  _deserializers.addDeserializer(classOf[Line],LineDeserializer)
- _deserializers.addDeserializer(classOf[PolygonSubResults],PolygonSubResultsDeserializer )
+  _deserializers.addDeserializer(classOf[UnknownGeometry], UnknownGeometryDeserializer)
+  _deserializers.addDeserializer(classOf[Line], LineDeserializer)
+  _deserializers.addDeserializer(classOf[PolygonSubResults], PolygonSubResultsDeserializer)
+  _deserializers.addDeserializer(classOf[ConfigChanges], ConfigChangesDeserializer)
+  _deserializers.addDeserializer(classOf[Durability.Kind],DurabilityDeserializer)
 
 
   private val _resolver = new SimpleAbstractTypeResolver

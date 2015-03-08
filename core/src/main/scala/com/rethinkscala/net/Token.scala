@@ -190,7 +190,7 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
 
   def cast[T](json: String)(implicit mf: Manifest[T]): T = {
     term match {
-      case b: BinaryConversion =>
+      case b: BinaryConversion if(mf.typeArguments.headOption.exists(_.runtimeClass == classOf[Boolean])) =>
         Reflector.fromJson[JsonBinaryResponse](json)
           .convert(b.resultField).asInstanceOf[T]
       case _ => Reflector.fromJson(json)(mf)
