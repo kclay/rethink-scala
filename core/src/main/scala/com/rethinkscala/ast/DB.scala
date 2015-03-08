@@ -43,14 +43,14 @@ case class DBCreate(name: String)
 
   extends ProduceBinary with BinaryConversion {
   override lazy val args = buildArgs(name)
-  val resultField = "created"
+  val resultField = "dbs_created"
 
   def termType:TermType = TermType.DB_CREATE
 }
 
 case class DBDrop(name: String) extends Term with ProduceBinary with BinaryConversion {
   override lazy val args = buildArgs(name)
-  val resultField = "dropped"
+  val resultField = "dbs_dropped"
 
   def termType:TermType = TermType.DB_DROP
 }

@@ -91,7 +91,7 @@ case class Update[T](target: Selection[T], wrap: FuncWrap,
   @deprecated("use .withChanges", "0.4.5")
   def withResults = withChanges
 
-  def withChanges:Update[T] = copy(options = options.copy(returnValues = None, returnChanges = Some(true)))
+  def withChanges:Update[T] = copy(options = options.copy( returnChanges = Some(true)))
 }
 
 case class Replace[T](target: Selection[_], wrap: FuncWrap,

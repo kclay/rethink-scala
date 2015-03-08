@@ -51,10 +51,10 @@ case class FuncWrap(value: Any) {
   }
 }
 
-private[rethinkscala] case class MakeObj2(data: AnyRef, writeNulls: Boolean = false) extends Term with MapTyped {
+private[rethinkscala] case class MakeObj2(data: AnyRef) extends Term with MapTyped {
 
   override protected val extractArgs = false
-  override lazy val optargs = buildOptArgs2(Expr.mapForInsert(data, false))
+  override lazy val optargs = buildOptArgs2(Expr.mapForInsert(data))
 
   def termType: TermType = TermType.MAKE_OBJ
 }

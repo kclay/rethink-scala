@@ -176,9 +176,9 @@ trait Selection[T] extends Typed {
 
   def update(attributes: Map[String, Any], options: UpdateOptions) = Update[T](underlying, attributes.wrap, options)
 
-  def update(p: Predicate1): Update[T] = update(p, UpdateOptions())
+  def update(p: Var=>Typed): Update[T] = update(p, UpdateOptions())
 
-  def update(p: Predicate1, options: UpdateOptions) = Update[T](underlying, p.wrap, options)
+  def update(p: Var=>Typed, options: UpdateOptions) = Update[T](underlying, p.wrap, options)
 
   def update(d: Document): Update[T] = update((x: Var) => MakeObj2(d))
 
