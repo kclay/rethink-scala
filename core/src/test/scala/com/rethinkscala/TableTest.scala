@@ -1,8 +1,7 @@
 package com.rethinkscala
 
-import org.scalatest.FunSuite
-
 import com.rethinkscala.net.Blocking._
+import org.scalatest.FunSuite
 
 /** Created with IntelliJ IDEA.
   * User: keyston
@@ -17,8 +16,8 @@ class TableTest extends FunSuite with WithBase {
     val table = r.db("test").table(tableName)
     val create = table.create(TableOptions(primaryKey = Some("a"), durability = Some(Durability.Hard))).withChanges
 
-    assert(create.run,{
-      c:TableCreateResults=> c.wasSuccessful
+    assert(create.run, {
+      c: TableCreateResults => c.wasSuccessful
     })
 
   }
@@ -36,6 +35,25 @@ class TableTest extends FunSuite with WithBase {
     val index = table.indexCreate("foo_count", (bar: Var) => bar \ "foos" + 2 * bar \ "foos")
 
     assert(index)
+
+    val index2 = table.indexCreate("foo_a", r.row("foos"))
+    assert(index2)
+
+    val index3 = table.indexCreate("foo3").withGeo
+
+    assert(index3)
+
+    val index4 = table.indexCreate("foo4").withMulti
+    assert(index4)
+
+    val index5 = table.indexCreate("foo5", (b:Var) => r.branch(
+      b.hasFields("updated_at"),
+      b("updated_at"),
+      b("created_at")
+    ))
+
+    assert(index5)
+
 
   }
 
@@ -56,7 +74,7 @@ class TableTest extends FunSuite with WithBase {
 
     assert(table.indexStatus(), {
       i: Seq[IndexStatusResult] => {
-        i.size == 1
+        i.size == 5
       }
     })
   }
@@ -65,7 +83,7 @@ class TableTest extends FunSuite with WithBase {
     val table = r.table(tableName)
     table.indexCreate("hello").run
     assert(table.indexWait(), {
-      i: Seq[IndexStatusResult] => i.size == 2
+      i: Seq[IndexStatusResult] => i.size == 6
     })
     assert(table.indexWait("hello"), {
       i: Seq[IndexStatusResult] => i.size == 1
@@ -110,9 +128,8 @@ class TableTest extends FunSuite with WithBase {
   test("drop table") {
 
 
-
-    assert(r.table(tableName).drop.withChanges.run,{
-      d:TableDropResults=> d.tablesDropped ==1
+    assert(r.table(tableName).drop.withChanges.run, {
+      d: TableDropResults => d.tablesDropped == 1
     })
   }
 

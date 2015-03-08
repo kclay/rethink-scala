@@ -59,23 +59,17 @@ case class Table[T <: AnyRef](name: String, useOutDated: Option[Boolean] = None,
 
   def indexes = IndexList(this)
 
+  def indexCreate(name: String, indexFunction: Typed, geo: Option[Boolean], multi: Option[Boolean] = None) = {
+    IndexCreate(this, name, indexFunction.optWrap, geo = geo, multi = multi)
+  }
 
-  def indexCreate(name: String, predicate: Predicate) = IndexCreate(this, name, Option(predicate), None)
-
-  def indexCreate(name: String, multi: Boolean, predicate: Predicate) = IndexCreate(this, name, Option(predicate), Some(multi))
-
-  def indexCreate(name: String, multi: Boolean) = IndexCreate(this, name, None, Some(multi))
-
-
-  def indexCreate(name: String) = IndexCreate(this, name)
+  def indexCreate(name: String, geo: Option[Boolean], multi: Option[Boolean] = None) = {
+    IndexCreate(this, name, geo = geo, multi = multi)
+  }
 
   def indexDrop(name: String) = IndexDrop(this, name)
 
-  // def indexStatus = IndexStatus(this, Seq())
-
   def indexStatus(indexes: String*) = IndexStatus(this, indexes)
-
-  // def indexWait = IndexWait(this, Seq())
 
   def indexWait(indexes: String*) = IndexWait(this, indexes)
 
@@ -127,7 +121,9 @@ case class TableList(db: Option[DB] = None) extends ProduceDefaultSequence[Strin
   * @param name
   * @param predicate
   */
-case class IndexCreate(target: TableTyped, name: String, predicate: Option[Predicate] = None, multi: Option[Boolean] = None)
+case class IndexCreate(target: TableTyped, name: String, predicate: Option[FuncWrap] = None,
+                       multi: Option[Boolean] = None,
+                       geo: Option[Boolean] = None)
   extends ProduceBinary with BinaryConversion {
 
   override lazy val args = buildArgs(predicate.map {
@@ -135,9 +131,13 @@ case class IndexCreate(target: TableTyped, name: String, predicate: Option[Predi
   }.getOrElse(Seq(target, name)): _*)
 
 
-  override lazy val optargs = buildOptArgs(Map("multi" -> multi))
+  override lazy val optargs = buildOptArgs(Map("multi" -> multi, "geo" -> geo))
 
   def termType: TermType = TermType.INDEX_CREATE
+
+  def withGeo = copy(geo = Some(true))
+
+  def withMulti = copy(multi = Some(true))
 
   val resultField = "created"
 }

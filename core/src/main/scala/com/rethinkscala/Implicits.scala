@@ -206,7 +206,7 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def toPredicate2Opt(f: (Var, Var) => Typed) = Some(new ScalaPredicate2(f))
 
-  implicit def toPredicate1(f: Var => Typed) = new ScalaPredicate1(f)
+  implicit def toPredicate1(f: Var => Typed):Predicate1 = new ScalaPredicate1(f)
 
   implicit def toPredicate2(f: (Var, Var) => Typed): ScalaPredicate2 = new ScalaPredicate2(f)
 
