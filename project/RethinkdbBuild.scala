@@ -96,7 +96,7 @@ object RethinkdbBuild extends Build {
 
         "org.scalatest" %% "scalatest" % "2.1.3" % "test",
         //"com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
-        "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.0.3",
+        "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
         "org.slf4j" % "slf4j-log4j12" % "1.7.6",
 
         "io.netty" % "netty" % "3.9.3.Final",

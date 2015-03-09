@@ -6,8 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 import com.google.common.cache.{CacheBuilder, Cache}
 import com.rethinkscala.{ResultExtractor, Term}
 import com.rethinkscala.ast.ProduceSequence
-import com.typesafe.scalalogging.Logging
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import ql2.Ql2.Response
 import ql2.Ql2.Response.ResponseType
 import ql2.Ql2.Response.ResponseType._

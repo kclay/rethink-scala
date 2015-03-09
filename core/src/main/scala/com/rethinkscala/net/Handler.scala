@@ -1,6 +1,6 @@
 package com.rethinkscala.net
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import org.jboss.netty.channel.{ChannelHandlerContext, ExceptionEvent, MessageEvent, SimpleChannelUpstreamHandler}
 import org.jboss.netty.handler.queue.BufferedWriteHandler
 import ql2.Ql2.Response

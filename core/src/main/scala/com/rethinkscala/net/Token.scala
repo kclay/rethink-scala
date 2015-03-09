@@ -8,7 +8,7 @@ import com.rethinkscala.{ResultExtractor, Term, Profile, Document, ConvertFrom}
 import com.rethinkscala.ast.Datum
 import com.rethinkscala.net.Translate._
 import com.rethinkscala.reflect.Reflector
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import ql2.Ql2.Response
 import ql2.Ql2.Response.ResponseType
 

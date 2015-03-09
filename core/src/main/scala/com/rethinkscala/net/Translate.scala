@@ -4,7 +4,7 @@ package com.rethinkscala.net
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{JsonDocument, GeneratesKeys, Term, Document}
 import com.rethinkscala.ast.{After, WithLifecycle}
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 object Translate {
   def translate[Out](implicit ct: Manifest[Out]): Translate[Out] = new BaseTranslate[Out] {}
