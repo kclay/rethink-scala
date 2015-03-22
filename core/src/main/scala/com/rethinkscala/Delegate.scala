@@ -14,6 +14,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 case class ResultExtractor[T](cursorFactory: CursorFactory, manifest: Manifest[T]) {
+
   def to[R: Manifest] = ResultExtractor[R](cursorFactory, implicitly[Manifest[R]])
 }
 
@@ -30,11 +31,14 @@ object Delegate {
 
 
 trait Delegate[T] {
+  self=>
 
   type Extractor[R] = ResultExtractor[R]
   type Result[O]
   type Query[Q] <: ResultResolver[Result[Q]]
   type Opt[R]
+  val connectionId:Option[Long]
+  def withConnection(id:Long):Delegate[T]
 
   def toQuery[R](extractor: Extractor[R]): Query[R]
 
@@ -48,13 +52,16 @@ trait Delegate[T] {
 }
 
 
-class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection) extends Delegate[T] {
+case class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection,connectionId:Option[Long]=None) extends Delegate[T] {
 
   type Result[O] = ResultResolver.Blocking[O]
   type Query[R] = BlockingResultQuery[R]
   type Opt[T] = Option[T]
 
-  def toQuery[R](extractor: Extractor[R]):BlockingResultQuery[R] = BlockingResultQuery[R](producer.underlyingTerm, connection, extractor, producer.underlyingOptions)
+
+  def withConnection(id:Long) = copy(connectionId=Some(id))
+
+  def toQuery[R](extractor: Extractor[R]):BlockingResultQuery[R] = BlockingResultQuery[R](producer.underlyingTerm, connection, extractor, producer.underlyingOptions,connectionId)
 
   def toOpt(implicit extractor: Extractor[T]): Option[T] = as[T].fold(x => None, x => Option(x))
 
@@ -65,14 +72,17 @@ class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection) 
 }
 
 
-class AsyncDelegate[T](producer: Produce[T], connection: AsyncConnection) extends Delegate[T] {
+case class AsyncDelegate[T](producer: Produce[T], connection: AsyncConnection,connectionId:Option[Long]=None) extends Delegate[T] {
 
   implicit val exc: ExecutionContext = connection.version.executionContext
   type Result[O] = ResultResolver.Async[O]
   type Query[R] = AsyncResultQuery[R]
   type Opt[T] = Future[Option[T]]
 
-  def toQuery[R](extractor: Extractor[R]):AsyncResultQuery[R] = AsyncResultQuery[R](producer.underlyingTerm, connection, extractor, producer.underlyingOptions)
+  def withConnection(id:Long) = copy(connectionId=Some(id))
+
+  def toQuery[R](extractor: Extractor[R]):AsyncResultQuery[R] = AsyncResultQuery[R](producer.underlyingTerm, connection, extractor,
+    producer.underlyingOptions,connectionId)
 
   def toOpt(implicit extractor: Extractor[T]):Future[Option[T]] = as[T] transform(x => Option(x), t => t)
 

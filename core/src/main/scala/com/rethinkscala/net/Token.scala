@@ -31,6 +31,8 @@ abstract class Token[R] {
   val connection: Connection
   val extractor: ResultExtractor[ResultType]
 
+  def id:Long
+
 
   def toError(response: R): RethinkError
 
@@ -122,14 +124,15 @@ case class JsonResponse[T](@JsonProperty("t") responseType: Long,
                            @JsonProperty("b") backtrace: Option[Seq[Frame]],
                            @JsonProperty("p") profile: Option[Profile]) extends BaseJsonResponse[T]
 
-case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
+case class JsonQueryToken[R](connection: Connection,connectionId:Long, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
   extends Token[String] with LazyLogging {
 
 
   type ResultType = R
   implicit lazy val mf = extractor.manifest
+  def id:Long = query.tokenId
 
-  import ql2.Ql2.Response.ResponseType.{CLIENT_ERROR_VALUE, COMPILE_ERROR_VALUE, RUNTIME_ERROR_VALUE, SUCCESS_SEQUENCE_VALUE}
+  import ql2.Ql2.Response.ResponseType.{CLIENT_ERROR_VALUE, COMPILE_ERROR_VALUE, RUNTIME_ERROR_VALUE, SUCCESS_SEQUENCE_VALUE,SUCCESS_ATOM_VALUE}
 
   val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
 
@@ -140,6 +143,7 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
     val response = Reflector.fromJson[JsonErrorResponse](json)
     val error = response.result.head
     val frames = response.backtrace.getOrElse(Iterable.empty)
+
 
 
 
@@ -155,7 +159,7 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
   val cursorManifest = implicitly[Manifest[JsonCursorResponse[R]]]
 
 
-  def toCursor(id: Int, json: String, responseType: Int, atom: Boolean = false) = {
+  def toCursor( json: String, responseType: Int, atom: Boolean = false) = {
 
 
     val seq = (atom match {
@@ -173,8 +177,8 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
       case _ => seq
     }
 
-    val cursor = query.cursor(extractor.cursorFactory)(id, this, responseType match {
-      case SUCCESS_SEQUENCE_VALUE => true
+    val cursor = query.cursor(extractor.cursorFactory)(this,connectionId,responseType match {
+      case SUCCESS_SEQUENCE_VALUE=> true
       case _ => false
     })
 
@@ -209,13 +213,14 @@ case class JsonQueryToken[R](connection: Connection, query: CompiledQuery, term:
 }
 
 
-case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
+case class QueryToken[R](connection: Connection,connectionId:Long, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
   extends Token[Response] with LazyLogging {
 
 
   implicit lazy val mf: Manifest[R] = extractor.manifest
 
   private[rethinkscala] def context = connection
+  def id:Long  = query.tokenId
 
   type ResultType = R
   type MapType = Map[String, _]
@@ -256,7 +261,7 @@ case class QueryToken[R](connection: Connection, query: CompiledQuery, term: Ter
       }
 
     }
-    val cursor = query.cursor(extractor.cursorFactory)(id, this, response.getType match {
+    val cursor = query.cursor(extractor.cursorFactory)( this,connectionId, response.getType match {
       case ResponseType.SUCCESS_SEQUENCE => true
       case _ => false
     })

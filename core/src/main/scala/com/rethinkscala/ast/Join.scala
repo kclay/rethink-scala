@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.net.{AbstractCursor, RethinkCursor}
+import com.rethinkscala.net.RethinkCursor
 import com.rethinkscala.{AssocPair, Term, ZipResult}
 import ql2.Ql2.Term.TermType
 

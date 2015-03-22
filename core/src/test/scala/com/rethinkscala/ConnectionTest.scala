@@ -34,7 +34,7 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
     val queue = new LinkedBlockingQueue[Boolean]
     val conn = blockingConnection("foobar")
-    conn.channel take {
+    conn.channel.take(None) {
       case (c, restore, invalidate) =>
         restore(c)
         queue.put(true)
@@ -50,7 +50,7 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
     val queue = new LinkedBlockingQueue[Boolean]
     val conn = BlockingConnection(new Version3(host, port, authKey = "foobar"))
-    conn.channel take {
+    conn.channel.take(None) {
       case (c, restore, invalidate) =>
         restore(c)
         queue.put(true)

@@ -1,6 +1,7 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.net.AbstractCursor
+
+
 import com.rethinkscala.{BoundOptions, Term}
 import ql2.Ql2.Term.TermType
 

@@ -72,7 +72,7 @@ case class JsonCompiledAst(underlying: JsonAst) extends CompiledAst
 trait CompiledQuery {
 
   type Result
-  val token: Long
+  val tokenId: Long
 
   protected final def newBuffer(size: Int) = buffer(ByteOrder.LITTLE_ENDIAN, size)
 
@@ -80,7 +80,7 @@ trait CompiledQuery {
 
   type TokenType[R]
 
-  def asToken(conn: Connection, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]): TokenType[Result]
+  def asToken(conn: Connection, connectionId: Long, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]): TokenType[Result]
 
 
   //private val _cursor:RethinkCursor[Result] = None
@@ -92,9 +92,10 @@ class ProtoBufCompiledQuery[T](underlying: Query) extends CompiledQuery {
 
   override type Result = T
 
-  override def asToken(conn: Connection, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]) = QueryToken[Result](conn, this, term, promise)
+  override def asToken(conn: Connection, connectionId: Long, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]) =
+    QueryToken[Result](conn, connectionId, this, term, promise)
 
-  override val token: Long = underlying.getToken
+  override val tokenId: Long = underlying.getToken
 
   override def encode = {
     val size = underlying.getSerializedSize
@@ -116,12 +117,12 @@ case class JsonQuery(queryType: ql2.Query.QueryType, ast: JsonAst, opts: Map[Str
 
 }
 
-case class JsonCompiledQuery[T](token: Long, query: JsonQuery) extends CompiledQuery {
+case class JsonCompiledQuery[T](tokenId: Long, query: JsonQuery) extends CompiledQuery {
 
 
   override type Result = T
 
-  override def asToken(conn: Connection, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]) = JsonQueryToken[Result](conn, this, term, promise)
+  override def asToken(conn: Connection, connectionId: Long, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]) = JsonQueryToken[Result](conn, connectionId, this, term, promise)
 
   lazy val json = Reflector.toJson(query.toSeq)
   private val TOKEN_SIZE = 8
@@ -132,7 +133,7 @@ case class JsonCompiledQuery[T](token: Long, query: JsonQuery) extends CompiledQ
     val jsonSize = jsonBytes.length
     val size = TOKEN_SIZE + 4 + jsonSize // token + json len + json string
     val b = newBuffer(size)
-    b.writeLong(token)
+    b.writeLong(tokenId)
     b.writeInt(jsonSize)
     b.writeBytes(jsonBytes)
     b
@@ -190,26 +191,31 @@ trait ProvidesQuery {
   def toQuery[T](term: Term, token: Long, db: Option[String] = None, opts: Map[String, Any] = Map.empty) = {
 
 
-    val builder = newQueryBuilder(Query.QueryType.START, token, opts)
+    val builder = term match {
+      case internal.Continue() => newQueryBuilder(Query.QueryType.CONTINUE, token, opts)
+      case _ =>
+        val builder = newQueryBuilder(Query.QueryType.START, token, opts)
 
 
-    val finalBuilder = opts.get("db").map {
-      case name: String => withDB(builder, DB(name))
-    }.getOrElse {
-      term match {
-        case d: WithDB => d.db.map(withDB(builder, _)).getOrElse(db.map {
-          name => withDB(builder, DB(name))
-        }.getOrElse(builder))
-        case _ => db.map {
-          name => withDB(builder, DB(name))
-        }.getOrElse(builder)
-      }
+        opts.get("db").map {
+          case name: String => withDB(builder, DB(name))
+        }.getOrElse {
+          term match {
+            case d: WithDB => d.db.map(withDB(builder, _)).getOrElse(db.map {
+              name => withDB(builder, DB(name))
+            }.getOrElse(builder))
+            case _ => db.map {
+              name => withDB(builder, DB(name))
+            }.getOrElse(builder)
+          }
+
+        }
 
     }
 
 
 
-    compile[T](finalBuilder, term)
+    compile[T](builder, term)
   }
 }
 

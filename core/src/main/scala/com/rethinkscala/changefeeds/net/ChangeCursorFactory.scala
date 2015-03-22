@@ -10,5 +10,5 @@ import com.rethinkscala.net.{CursorFactory, Token}
  *
  */
 object ChangeCursorFactory extends CursorFactory{
-  override def apply[T](connectionId: Int, token: Token[_], completed: Boolean) =  ??? //ChangeCursor[T](connectionId,token)
+  override def apply[T]( token: Token[_],connectionId: Long, completed: Boolean) =  ??? //ChangeCursor[T](connectionId,token)
 }

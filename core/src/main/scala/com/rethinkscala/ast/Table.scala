@@ -47,10 +47,10 @@ case class Table[T <: AnyRef](name: String, useOutDated: Option[Boolean] = None,
 
   def ++=(records: Seq[T])(implicit d: DummyImplicit) = this insert records
 
-  def \\(attribute: Any) = get(attribute)
+  def \\(attribute: Typed) = get(attribute)
 
 
-  def get(attribute: Any) = Get[T](this, attribute)
+  def get(attribute: Typed) = Get[T](this, attribute)
 
 
   def getAll(index: String, attr: Any*): GetAll[T] = GetAll[T](this, attr, index)

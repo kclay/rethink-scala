@@ -1,12 +1,13 @@
 package com.rethinkscala.utils
 
-import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ArrayBlockingQueue, TimeUnit}
+
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 /** Created by IntelliJ IDEA.
   * User: Keyston
@@ -33,8 +34,9 @@ trait ConnectionPool[Connection] {
 
 trait ConnectionWithId {
 
-  type Id
-  val id: Id
+
+  val id: Long
+  var active: Boolean
 }
 
 trait LowLevelConnectionPool[Connection] {
@@ -62,12 +64,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
   private val connections = new com.google.common.collect.MapMaker()
     .concurrencyLevel(4)
     .weakKeys()
-    .makeMap[Conn#Id, Conn]
-
-  private val pending = new com.google.common.collect.MapMaker()
-    .concurrencyLevel(4)
-    .weakKeys()
-    .makeMap[Conn#Id, Future[Conn]]
+    .makeMap[Long, Conn]
 
 
   def getById(id: Int)(implicit timeout: Duration): Future[Conn] = ???
@@ -89,28 +86,52 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
     }
   }
 
-  def take(block: (Conn, Conn => Unit, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Unit] = {
-
+  private def checkout = {
     val connection = borrow()
     logger.debug(s"take connection with id (${connection.id})")
     connections.putIfAbsent(connection.id, connection)
+    connection
+  }
 
+  case class ScopedPromised(promise:Promise[Conn],exc:ExecutionContext)
 
-    val f = Future {
+  private val pending: Map[Long, ArrayBuffer[ScopedPromised]] = Map.empty.withDefault(_ => ArrayBuffer.empty)
+
+  def take(connectionId: Option[Long])(block: (Conn, Conn => Unit, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Conn] = {
+
+    def execute(connection: Conn): Future[Conn]= Future{
 
       connectionFactory.configure(connection)
       block(connection, giveBack, invalidate)
+      connection
 
+    }
+
+    connectionId
+      .fold(execute(borrow())) {
+      id =>
+        val maybe = Option(connections.get(id))
+        maybe match {
+          case Some(c) if c.active => execute(c)
+          case _ =>
+            val p = Promise[Conn]()
+            p.future.onSuccess {
+              case conn => execute(conn)
+            }
+
+            pending(id) += ScopedPromised(p,exc)
+
+            p.future
+
+
+        }
 
     }
 
-    f onFailure {
-      case t: Throwable =>
-        invalidate(connection)
 
 
-    }
-    f
+
+
   }
 
   def total = size.get()
@@ -126,13 +147,28 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
 
   def giveBack(connection: Conn): Unit = {
     logger.debug(s"giveBack(connection:${connection.id})")
-    pool.offer(connection)
+
+
+    val hasPending = pending(connection.id)
+    def drain(): Unit = if (hasPending.nonEmpty) {
+      val current = hasPending.remove(0)
+      current.promise.future.onComplete {
+        case _ => drain()
+      }(current.exc)
+      current.promise.trySuccess(connection)
+    } else {
+      connection.active = false
+      pool.offer(connection)
+    }
+    drain()
+
   }
 
   def invalidate(connection: Conn): Unit = {
     logger.debug(s"invalidate(connection:${connection.id}) total = ${size.get()}")
     connectionFactory.destroy(connection)
     connections.remove(connection.id, connection)
+    // TODO : Some how resovle Query.CONTINUE results
     size.decrementAndGet
     logger.debug(s"Finished invalidating(connect:${connection.id} total = ${size.get}")
   }

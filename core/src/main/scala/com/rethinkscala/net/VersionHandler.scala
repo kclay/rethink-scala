@@ -42,11 +42,11 @@ trait VersionHandler[R] extends LazyLogging {
     .build().asInstanceOf[Cache[Long, TokenType]]
 
 
-  def newQuery[T](conn: Connection, term: Term, promise: Promise[T],
+  def newQuery[T](conn: Connection,connectionId:Long, term: Term, promise: Promise[T],
                   db: Option[String] = None, opts: Map[String, Any] = Map())(implicit extractor: ResultExtractor[T]) = {
     val tokenId = newTokenId.incrementAndGet()
     val query = version.toQuery[T](term, tokenId, db, opts)
-    val token = query.asToken(conn, term, promise)
+    val token = query.asToken(conn,connectionId, term, promise)
     tokensById.put(tokenId, token.asInstanceOf[TokenType])
     //tokensById.putIfAbsent(tokenId, token.asInstanceOf[TokenType])
     query
@@ -88,9 +88,9 @@ case class JsonVersionHandler(version: Version3) extends VersionHandler[String] 
       token => (json match {
         case ResponseTypeExtractor(responseType) => responseType.toInt match {
           case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE | CLIENT_ERROR_VALUE => token.toError(json)
-          case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => token.toCursor(0, json, responseType.toInt)
+          case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => token.toCursor( json, responseType.toInt)
           case SUCCESS_ATOM_VALUE => token.term match {
-            case x: ProduceSequence[_] => token.toCursor(0, json, responseType.toInt, atom = true)
+            case x: ProduceSequence[_] => token.toCursor(json, responseType.toInt, atom = true)
             case _ => token.toResult(json)
           }
           case _ => RethinkRuntimeError(s"Invalid response = $json", token.term)

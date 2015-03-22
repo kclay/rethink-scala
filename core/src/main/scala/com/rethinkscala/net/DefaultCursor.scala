@@ -1,53 +1,63 @@
 package com.rethinkscala.net
 
 
-import com.rethinkscala.ast.{Aggregation, Sequence}
+import com.rethinkscala.ResultExtractor
+import com.rethinkscala.ast.{internal, Aggregation}
 
-import scala.collection.generic.SeqForwarder
 
 
-trait AbstractCursor[T]{
-  type ChunkType= T
+case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] {
+
+  var index = 0
+
+  override def hasNext = index < cursor.length
+
+  override def next() = {
+    val value = if (index < cursor.chunks.length) cursor.chunks(index)
+    else {
+
+      import com.rethinkscala.net.Blocking._
+      import cursor.connection
+
+      val more = internal.Continue[T]
+      // FIXME : Currently this only works for non change feed sequences
+      val extractor = cursor.token.extractor
+        .asInstanceOf[ResultExtractor[DefaultCursor[T]]]
+      more.withConnection(cursor.connectionId).run(extractor)
+
+      cursor.chunks(index)
+    }
+    index += 1
+    value
+  }
+
+
 }
-trait RethinkCursor[T] extends AbstractCursor[T]{
-  val connectionId: Int
 
-  var _chunks = collection.mutable.Seq.empty[ChunkType]
-  val token: Token[_]
+trait RethinkCursor[T] extends Seq[T] {
+  type ChunkType = T
+
+  private[rethinkscala] val token: Token[_]
+
   // TODO need to assocate collection with the connectionid it came from
   implicit lazy val connection = BlockingConnection(token.connection)
 
-  def completed: Boolean
+  override def length = _length
 
-  private[rethinkscala] def <<(chunks: Seq[ChunkType]) = {
-    _chunks ++= chunks
-    this
-  }
+  var _completed: Boolean = false
 
-  private[rethinkscala] def <(chunk: ChunkType) = {
-    _chunks :+ chunk
-    this
-  }
-}
+  def completed: Boolean = _completed
 
+  lazy val _length = {
 
-
-//http://stackoverflow.com/questions/14299454/create-a-custom-scala-collection-where-map-defaults-to-returning-the-custom-coll
-
-case class DefaultCursor[T](connectionId: Int, token: Token[_], completed: Boolean) extends SeqForwarder[T] with RethinkCursor[T] {
-
-
-  //implicit lazy val connection = BlockingConnection(token.connection)
-  lazy val _size = {
-    if (completed) underlying.size
+    if (completed) chunks.size
     else {
       val seq = token.term.asInstanceOf[Aggregation[_]]
 
       import com.rethinkscala.net.Blocking._
 
-
       seq.count.run(token.extractor.to[Double]) match {
-        case Left(e: RethinkError) => underlying.size
+        case Left(e: RethinkError) => chunks.size
         case Right(b: Double) => b.toInt
       }
     }
@@ -55,7 +65,30 @@ case class DefaultCursor[T](connectionId: Int, token: Token[_], completed: Boole
 
   }
 
-  override def size = _size
+  override def apply(idx: Int) = chunks.apply(idx)
 
-  protected override def underlying = _chunks
+
+  override def iterator = new RethinkIterator[T](this)
+
+  val connectionId: Long
+
+
+  private[rethinkscala] var chunks = collection.mutable.Seq.empty[ChunkType]
+
+
+  private[rethinkscala] def <<(more: Seq[ChunkType]) = {
+    chunks ++= more
+    this
+  }
+
+  private[rethinkscala] def <(chunk: ChunkType) = {
+    chunks :+ chunk
+    this
+  }
 }
+
+
+//http://stackoverflow.com/questions/14299454/create-a-custom-scala-collection-where-map-defaults-to-returning-the-custom-coll
+
+case class DefaultCursor[T](connectionId: Long, token: Token[_]) extends RethinkCursor[T]
+

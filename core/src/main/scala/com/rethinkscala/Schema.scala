@@ -92,8 +92,8 @@ class Schema extends Helpers{
      */
     def replace =
       _performAction(_.get(o.asInstanceOf[ {val id: Any}].id match {
-        case Some(v: Any) => v
-        case v: Any => v
+        case Some(v: Any) => Expr(v).asInstanceOf[Typed]
+        case v: Any => Expr(v).asInstanceOf[Typed]
       }).replace(o))
 
     // def save: Option[T]

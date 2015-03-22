@@ -20,7 +20,7 @@ class ChangeWatcher[T](f: CursorChange[T] => Unit, cursor: ChangeCursor[T]) {
   private[rethinkscala] def apply(change: CursorChange[T]) = f(change)
 }
 
-case class ChangeCursor[T](connectionId: Int, token: Token[_]) extends RethinkCursor[CursorChange[T]] {
+case class ChangeCursor[T](connectionId: Long, token: Token[_]) extends RethinkCursor[CursorChange[T]] {
 
 
   private[rethinkscala] var watchers = collection.mutable.ArrayBuffer.empty[ChangeWatcher[T]]
@@ -36,13 +36,13 @@ case class ChangeCursor[T](connectionId: Int, token: Token[_]) extends RethinkCu
     this
   }
 
-  var _completed = false
+
 
   def stop = synchronized {
     _completed = true
   }
 
-  def completed = synchronized(_completed)
+ override def completed = synchronized(_completed)
 
   def foreach(f: ChunkType => Unit) = {
     val watcher = new ChangeWatcher(f, this)

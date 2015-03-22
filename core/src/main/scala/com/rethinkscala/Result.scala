@@ -178,6 +178,12 @@ trait TableOperationResults {
   def wasSuccessful: Boolean
 }
 
+
+case class DBCreateResults(@JsonProperty("dbs_created") dbsCreated: Int,
+                              @JsonProperty("config_changes") configChanges: ConfigChanges) extends TableOperationResults {
+  override def wasSuccessful = dbsCreated == 1
+}
+
 case class TableCreateResults(@JsonProperty("tables_created") tablesCreated: Int,
                          @JsonProperty("config_changes") configChanges: ConfigChanges) extends TableOperationResults {
   override def wasSuccessful = tablesCreated == 1
@@ -188,6 +194,10 @@ case class TableDropResults(@JsonProperty("tables_dropped") tablesDropped: Int,
   override def wasSuccessful = tablesDropped == 1
 }
 
+case class DBDropResults(@JsonProperty("tables_dropped") dbsDropped: Int,
+                            @JsonProperty("config_changes") configChanges: ConfigChanges) extends TableOperationResults {
+  override def wasSuccessful = dbsDropped == 1
+}
 case class ConfigChanges(@JsonProperty("old_val") oldVal: Option[TableConfigResults],
                          @JsonProperty("new_val") newVal: Option[TableConfigResults])
 

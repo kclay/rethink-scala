@@ -152,6 +152,13 @@ case class FuncCall(function: Predicate, values: Seq[Typed]) extends ProduceAny 
   def termType: TermType = TermType.FUNCALL
 }
 
+
+object internal{
+  case class Continue[T]() extends ProduceDefaultSequence[T]{
+    override def termType =  null
+  }
+}
+
 trait Expr {
   def apply(term: Term): Term = term
 
@@ -232,7 +239,7 @@ trait Expr {
   }
 
   type OfMap = Map[String, _]
-  type OfFunction1 = (Var) ⇒ Typed
+  type OfFunction1 = (Var) => Typed
   type OfFunction2 = (Var, Var) ⇒ Typed
 
   def isJson(v: Any, depth: Int = 20): Boolean = {

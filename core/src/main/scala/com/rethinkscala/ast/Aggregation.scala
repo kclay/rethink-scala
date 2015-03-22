@@ -1,6 +1,6 @@
 package com.rethinkscala.ast
 
-import com.rethinkscala.net.AbstractCursor
+
 import ql2.Ql2.Term.TermType
 
 import com.rethinkscala.GroupResult

@@ -56,7 +56,7 @@ class ConnectionAttachment[T](versionHandler: VersionHandler[T], restore: Throwa
 abstract class AbstractConnection(val version: Version) extends LazyLogging with Connection {
 
   private val defaultDB = Some(version.db.getOrElse("test"))
-  private[this] val connectionId = new AtomicInteger()
+  private[this] val connectionId = new AtomicLong()
 
   implicit val exc = version.executionContext
 
@@ -99,6 +99,8 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     @volatile
     var configured: Boolean = false
     lazy val channel = cf.getChannel
+    @volatile
+    override var active: Boolean = false
   }
 
 
@@ -117,6 +119,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     }
 
     def configure(wrapper: ChannelWrapper) = {
+      wrapper.active = true
       if (!wrapper.configured) {
         logger.debug("Configuring ChannelWrapper")
         version.configure(wrapper.channel)
@@ -138,11 +141,11 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
   }, max = version.maxConnections)
 
 
-  def write[T](term: Term, opts: Map[String, Any])(implicit extractor: ResultExtractor[T]): Promise[T] = {
+  def write[T](term: Term, opts: Map[String, Any],connectionId:Option[Long]=None)(implicit extractor: ResultExtractor[T]): Promise[T] = {
     val p = Promise[T]()
     val f = p.future
     logger.debug(s"Writing $term")
-    channel take {
+    channel.take(connectionId) {
       case (c, restore, invalidate) =>
         logger.debug("Received connection from pool")
         val con = this
@@ -150,7 +153,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
         c.cf.addListener(new ChannelFutureListener {
           def operationComplete(future: ChannelFuture) {
 
-            val query = versionHandler.newQuery(con, term, p, None, opts)
+            val query = versionHandler.newQuery(con,c.id, term, p, None, opts)
             //val query = version.toQuery(term, c.token.getAndIncrement, defaultDB, opts)
             //val token = query.asToken[T](con, term, p)
             // TODO : Check into dropping netty and using sockets for each,
@@ -189,8 +192,7 @@ trait Connection {
 
   def toAst(term: Term): CompiledAst = version.toAst(term)
 
-  def write[T](term: Term, opts: Map[String, Any])(implicit extractor: ResultExtractor[T]): Promise[T]
-
+  def write[T](term: Term, opts: Map[String, Any],connectionId:Option[Long]= None)(implicit extractor: ResultExtractor[T]): Promise[T]
 }
 
 

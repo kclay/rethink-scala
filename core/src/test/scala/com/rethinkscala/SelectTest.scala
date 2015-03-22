@@ -1,8 +1,6 @@
 package com.rethinkscala
 
 import org.scalatest.FunSuite
-import com.rethinkscala.ast.Table
-
 
 
 /**
@@ -20,12 +18,6 @@ class SelectTest extends FunSuite with WithBase {
 
   import connection.delegate._
 
-
-
-  test("no_results"){
-
-println(foos.get("all").run)
-  }
 
   test("select between") {
 
@@ -45,22 +37,20 @@ println(foos.get("all").run)
       f: Seq[SelectFoo] => f.size == 10 & f(0).id == 10 & f.last.id == 19
     })
 
-    assert(foos.between(10, 20,BetweenOptions(leftBound = Some(Bound.Closed),rightBound = Some(Bound.Closed))).orderBy("id"), {
-      f: Seq[SelectFoo] => f.size == 11 & f.last.id==20
+    assert(foos.between(10, 20, BetweenOptions(leftBound = Some(Bound.Closed), rightBound = Some(Bound.Closed))).orderBy("id"), {
+      f: Seq[SelectFoo] => f.size == 11 & f.last.id == 20
     })
 
-    assert(foos.between(10, 20,BetweenOptions(leftBound = Some(Bound.Open),rightBound = Some(Bound.Closed))).orderBy("id"), {
-      f: Seq[SelectFoo] => f.size == 10 & f.last.id==20  && f(0).id == 11
+    assert(foos.between(10, 20, BetweenOptions(leftBound = Some(Bound.Open), rightBound = Some(Bound.Closed))).orderBy("id"), {
+      f: Seq[SelectFoo] => f.size == 10 & f.last.id == 20 && f(0).id == 11
     })
-
-
 
 
   }
 
-  test("table select"){
-    assert(foos,{
-      f:Seq[SelectFoo]=> f.size == 50
+  test("table select") {
+    assert(foos, {
+      f: Seq[SelectFoo] => f.size == 50
     })
   }
   test("table select ordered") {
@@ -92,12 +82,12 @@ println(foos.get("all").run)
       f: Seq[SelectFoo] => f.size == 1
     })
 
-    results = foos.filter((f: Var) => f \ "id" > 10)
+    results = foos.filter(f => f \ "id" > 10)
     assert(results, {
       s: Seq[SelectFoo] => s.size == 40
     })
 
-    results = foos.filter((f: Var) => f.hasFields("id"))
+    results = foos.filter(f => f.hasFields("id"))
     assert(results, {
       s: Seq[SelectFoo] => s.size == 50
     })
@@ -105,6 +95,37 @@ println(foos.get("all").run)
 
   }
 
+
+  class ListHelper[T](ls: List[T]) {
+    /** @param size  The size of each sub list */
+    def chunk(size: Int) = List.range(0, ls.size, size).map { i => ls.slice(i, i + size)}
+  }
+
+  implicit def list2helper[T](ls: List[T]) = new ListHelper(ls)
+
+  test("5000 results") {
+
+
+    val chunks = List.range(0, 50000).chunk(125)
+
+
+    chunks.map {
+      chunk =>
+        foos.insert(chunk.map(SelectFoo(_))).run
+    }
+
+    val length = foos.count().run
+
+    foos.orderBy("id").toOpt.map {
+      case seq =>
+        val len = seq.length
+        val c = seq.chunks
+        val b = c.size
+        seq
+
+    }
+
+  }
 
 
   lazy val foos = table.to[SelectFoo]

@@ -3,7 +3,7 @@ package com.rethinkscala.ast
 import ql2.Ql2.Term.TermType
 import com.rethinkscala.{BetweenOptions, Document}
 
-case class Get[R<:AnyRef](target: Table[R], attribute: Any) extends ProduceSingleDocumentSelection[R] {
+case class Get[R<:AnyRef](target: Table[R], attribute: Typed) extends ProduceSingleDocumentSelection[R] {
 
   def termType:TermType = TermType.GET
 }

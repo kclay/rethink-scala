@@ -1,7 +1,7 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala.{Document, Term, MatchResult}
-import com.rethinkscala.net.{AbstractCursor, DefaultCursor}
+import com.rethinkscala.net.DefaultCursor
 import ql2.Ql2.Term.TermType
 
 /** Append a value to an array.

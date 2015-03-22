@@ -2,7 +2,7 @@ package com.rethinkscala.ast
 
 import com.rethinkscala._
 import com.rethinkscala.ast.All
-import com.rethinkscala.net.{DefaultCursor, AbstractCursor}
+import com.rethinkscala.net.{DefaultCursor}
 
 
 

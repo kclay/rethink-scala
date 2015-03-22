@@ -1,7 +1,7 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala.magnets.GroupFilterMagnet
-import com.rethinkscala.net.AbstractCursor
+
 import com.rethinkscala.{BoundOptions, _}
 
 /**
@@ -105,7 +105,7 @@ trait IndexTyped[T] extends Typed {
 trait Sequence[T, Cursor[_]] extends ArrayTyped[T] with Multiply with Filterable[T, Cursor] with Record with Aggregation[T] with IndexTyped[T] {
 
 
-  type CC[A] = AbstractCursor[A]
+//  type CC[A] = AbstractCursor[A]
   type ElementType = T
 
 
