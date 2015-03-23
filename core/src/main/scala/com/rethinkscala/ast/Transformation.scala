@@ -89,8 +89,8 @@ case class OrderBy[T,C[_]](target: Sequence[T,C], values: Seq[Order], index: Opt
   override lazy val optargs = buildOptArgs(Map("index"->index))
   def termType:TermType = TermType.ORDER_BY
 
-  def withIndex(i: String) = copy(index = Some(i))
-  def withIndex(i: Order) = copy(index = Some(i))
+  def withIndex(i: String):OrderBy[T,C] = copy(index = Some(i))
+  def withIndex(i: Order):OrderBy[T,C] = copy(index = Some(i))
 }
 
 /** Skip a number of elements from the head of the sequence.

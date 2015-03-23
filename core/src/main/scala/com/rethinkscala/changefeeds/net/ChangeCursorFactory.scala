@@ -1,5 +1,7 @@
 package com.rethinkscala.changefeeds.net
 
+import java.util.concurrent.Callable
+
 import com.rethinkscala.net.{CursorFactory, Token}
 
 /**
@@ -9,6 +11,10 @@ import com.rethinkscala.net.{CursorFactory, Token}
  * Time: 8:59 PM
  *
  */
-object ChangeCursorFactory extends CursorFactory{
-  override def apply[T]( token: Token[_],connectionId: Long, completed: Boolean) =  ??? //ChangeCursor[T](connectionId,token)
+object ChangeCursorFactory extends CursorFactory {
+  type CursorType[T] = ChangeCursor[T]
+
+  def newCallable[T](connectionId: Long, token: Token[_]) = new Callable[ChangeCursor[T]] {
+    override def call() = ChangeCursor[T](connectionId, token)
+  }
 }

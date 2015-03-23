@@ -19,11 +19,12 @@ case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] {
       import com.rethinkscala.net.Blocking._
       import cursor.connection
 
-      val more = internal.Continue[T]
+      val more = internal.Continue[T](cursor.token.id)
       // FIXME : Currently this only works for non change feed sequences
       val extractor = cursor.token.extractor
         .asInstanceOf[ResultExtractor[DefaultCursor[T]]]
-      more.withConnection(cursor.connectionId).run(extractor)
+      val response = more.withConnection(cursor.connectionId).run(extractor)
+      println(response)
 
       cursor.chunks(index)
     }

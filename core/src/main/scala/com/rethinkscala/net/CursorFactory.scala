@@ -13,24 +13,31 @@ import com.google.common.cache.{Cache, CacheBuilder}
  */
 trait CursorFactory {
 
-  def apply[T](token:Token[_],connectionId:Long,completed:Boolean):RethinkCursor[T]
+ protected val cache = CacheBuilder.newBuilder()
+    .concurrencyLevel(4)
+
+    .expireAfterAccess(10, TimeUnit.MINUTES)
+    .build().asInstanceOf[Cache[Long,RethinkCursor[_]]]
+
+  type CursorType[T] <:RethinkCursor[_]
+
+  def newCallable[T](connectionId:Long,token:Token[_]):Callable[CursorType[T]]
+
+  def apply[T](token:Token[_],connectionId:Long,completed:Boolean):CursorType[T]={
+    val cursor = cache.get(token.id,newCallable[T](connectionId,token))
+
+    cursor._completed = completed
+
+    cursor.asInstanceOf[CursorType[T]]
+
+  }
 }
 
 object DefaultCursorFactory extends CursorFactory{
 
-  private val cache = CacheBuilder.newBuilder()
-    .concurrencyLevel(4)
-
-    .expireAfterAccess(10, TimeUnit.MINUTES)
-    .build().asInstanceOf[Cache[Long,DefaultCursor[_]]]
-  override def apply[T](token: Token[_],connectionId: Long,completed:Boolean) = {
-
-    val cursor = cache.get(token.id,new Callable[DefaultCursor[T]] {
-      override def call() = DefaultCursor[T](connectionId,token)
-    })
-
-    cursor._completed = completed
-
-    cursor.asInstanceOf[DefaultCursor[T]]
+  type CursorType[T] = RethinkCursor[T]
+  def newCallable[T](connectionId:Long,token:Token[_]) = new Callable[RethinkCursor[T]] {
+    override def call() = DefaultCursor[T](connectionId,token)
   }
+
 }

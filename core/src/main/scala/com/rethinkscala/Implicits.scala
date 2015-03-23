@@ -1,6 +1,7 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
+import com.rethinkscala.changefeeds.ast.Changes
 import com.rethinkscala.magnets.ReceptacleImplicits
 import com.rethinkscala.net._
 
@@ -305,6 +306,10 @@ class PimpedAny(val v: Any) extends AnyVal {
   def optWrap = Some(FuncWrap(v))
 }
 
+
+final class ChangeFeedSupport[T](val target:Typed) extends AnyVal{
+  def changes = new Changes[T](target)
+}
 object Implicits {
 
 
@@ -318,6 +323,7 @@ object Implicits {
 
 
 
+    implicit def toChangeFeed[T](typed:Produce0[T]) = new ChangeFeedSupport[T](typed)
     implicit val numericToDouble = new FromAst[Numeric] {
       type Raw = Double
     }

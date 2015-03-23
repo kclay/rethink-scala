@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import com.google.common.cache.{CacheBuilder, Cache}
 import com.rethinkscala.{ResultExtractor, Term}
-import com.rethinkscala.ast.ProduceSequence
+import com.rethinkscala.ast.{internal, ProduceSequence}
 import com.typesafe.scalalogging.Logging
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import ql2.Ql2.Response
@@ -44,7 +44,16 @@ trait VersionHandler[R] extends LazyLogging {
 
   def newQuery[T](conn: Connection,connectionId:Long, term: Term, promise: Promise[T],
                   db: Option[String] = None, opts: Map[String, Any] = Map())(implicit extractor: ResultExtractor[T]) = {
-    val tokenId = newTokenId.incrementAndGet()
+
+
+    val tokenId = term match{
+      case internal.Continue(token)=> {
+        token
+      }
+
+      case _=> newTokenId.incrementAndGet()
+    }
+
     val query = version.toQuery[T](term, tokenId, db, opts)
     val token = query.asToken(conn,connectionId, term, promise)
     tokensById.put(tokenId, token.asInstanceOf[TokenType])

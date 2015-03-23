@@ -154,7 +154,7 @@ case class FuncCall(function: Predicate, values: Seq[Typed]) extends ProduceAny 
 
 
 object internal{
-  case class Continue[T]() extends ProduceDefaultSequence[T]{
+  case class Continue[T](token:Long) extends ProduceDefaultSequence[T]{
     override def termType =  null
   }
 }

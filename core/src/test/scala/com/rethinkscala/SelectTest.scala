@@ -14,9 +14,12 @@ import org.scalatest.FunSuite
 
 case class SelectFoo(id: Int) extends Document
 
+case class LargeFoo(token:String,created:Long,email:String,firstName:String,lastName:String,mobile:String,id:Option[String]=None)
+
 class SelectTest extends FunSuite with WithBase {
 
   import connection.delegate._
+
 
 
   test("select between") {
@@ -106,24 +109,33 @@ class SelectTest extends FunSuite with WithBase {
   test("5000 results") {
 
 
+    val token = "KJHGFGRTYJHMNBVHJLKJY^TUYGJHBIOHBnkfhdhtyukhj,bmvgjfyutilhkjbvhgkuihjlkyut678965r783945poi2jhkegwryiuopk;lsjdfnbhvgkuiyiopk;rl/qn,.ejrbdfhgluy9ipojkhjgkiuyoijklbhgkuiojhlguiy89uihjajdfhgkjnsfakljhdi;jakdfsnbljhasjd;fljbasdo;fja;dkhvp’aoskdf;lahsdfkjasdkhjasdgfoiauhsdflhasdfhalisdhufliaksbdfljahdgsfkajbsdlfiuhasdfhailusdhfliasduhflaisdhflias"
     val chunks = List.range(0, 50000).chunk(125)
 
 
+    def string = randomAlphanumericString(5)
+    var large = foos.to[LargeFoo]
     chunks.map {
       chunk =>
-        foos.insert(chunk.map(SelectFoo(_))).run
+        large.insert(chunk.map(id=>LargeFoo(token,id,string,string,string,string))).run
     }
 
-    val length = foos.count().run
+    val length = large.count().run
 
-    foos.orderBy("id").toOpt.map {
+    var total = 0
+    large.orderBy().withIndex("id").toOpt.map {
       case seq =>
         val len = seq.length
         val c = seq.chunks
-        val b = c.size
-        seq
+        seq.foreach{
+          c=> total = total+1
+
+
+        }
+
 
     }
+    assert(length == Right(total.toDouble))
 
   }
 

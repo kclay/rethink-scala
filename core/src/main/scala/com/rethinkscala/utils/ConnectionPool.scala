@@ -101,6 +101,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
 
     def execute(connection: Conn): Future[Conn]= Future{
 
+      connections.putIfAbsent(connection.id,connection)
       connectionFactory.configure(connection)
       block(connection, giveBack, invalidate)
       connection
@@ -112,7 +113,7 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
       id =>
         val maybe = Option(connections.get(id))
         maybe match {
-          case Some(c) if c.active => execute(c)
+          case Some(c) if !c.active => execute(c)
           case _ =>
             val p = Promise[Conn]()
             p.future.onSuccess {

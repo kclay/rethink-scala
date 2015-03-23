@@ -177,12 +177,13 @@ case class JsonQueryToken[R](connection: Connection,connectionId:Long, query: Co
       case _ => seq
     }
 
-    val cursor = query.cursor(extractor.cursorFactory)(this,connectionId,responseType match {
-      case SUCCESS_SEQUENCE_VALUE=> true
+    val cursor = query.cursor(this,connectionId,responseType match {
+      case SUCCESS_SEQUENCE_VALUE => true
       case _ => false
-    })
+    })(extractor.cursorFactory)
 
-    cursor << seq2
+
+    cursor << seq2.asInstanceOf[Seq[cursor.ChunkType]]
 
   }
 
@@ -261,12 +262,12 @@ case class QueryToken[R](connection: Connection,connectionId:Long, query: Compil
       }
 
     }
-    val cursor = query.cursor(extractor.cursorFactory)( this,connectionId, response.getType match {
+    val cursor = query.cursor( this,connectionId, response.getType match {
       case ResponseType.SUCCESS_SEQUENCE => true
       case _ => false
-    })
+    })(extractor.cursorFactory)
 
-    cursor << seq.asInstanceOf[Seq[query.Result]]
+    cursor << seq.asInstanceOf[Seq[cursor.ChunkType]]
 
 
   }

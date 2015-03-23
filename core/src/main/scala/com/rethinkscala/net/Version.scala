@@ -40,6 +40,11 @@ trait JsonAst {
 
 }
 
+case class NoneJsonAst() extends JsonAst{
+  override def toValue = None
+}
+
+
 case class DatumJsonAst(datumType: ql2.Datum.DatumType, value: Any) extends JsonAst {
 
 
@@ -84,7 +89,9 @@ trait CompiledQuery {
 
 
   //private val _cursor:RethinkCursor[Result] = None
-  def cursor(factory: CursorFactory) = factory.apply[Result] _
+  def cursor(token:Token[_],connectionId:Long,completed:Boolean)(factory: CursorFactory) = {
+    factory.apply[Result](token,connectionId,completed)
+  }
 }
 
 class ProtoBufCompiledQuery[T](underlying: Query) extends CompiledQuery {
@@ -113,7 +120,15 @@ class ProtoBufCompiledQuery[T](underlying: Query) extends CompiledQuery {
 }
 
 case class JsonQuery(queryType: ql2.Query.QueryType, ast: JsonAst, opts: Map[String, Any]) {
-  def toSeq = Seq(queryType.getNumber, ast.toValue, opts)
+  def toSeq ={
+    var seq:Seq[Any] = Seq(queryType.getNumber)
+
+    if(!ast.isInstanceOf[NoneJsonAst]) seq = seq.:+(ast.toValue)
+   if(opts.nonEmpty) seq = seq.:+(opts)
+    seq
+  }
+
+
 
 }
 
@@ -192,7 +207,7 @@ trait ProvidesQuery {
 
 
     val builder = term match {
-      case internal.Continue() => newQueryBuilder(Query.QueryType.CONTINUE, token, opts)
+      case internal.Continue(tokenId) => newQueryBuilder(Query.QueryType.CONTINUE, token, opts)
       case _ =>
         val builder = newQueryBuilder(Query.QueryType.START, token, opts)
 
@@ -420,6 +435,7 @@ trait ProvidesJsonQuery extends ProvidesQuery {
 
 
     term match {
+      case internal.Continue(_) => NoneJsonAst()
       case d: Datum => DatumJsonAst(d.datumType, d.value)
       case _ => TermJsonAst(term.termType, term match {
         case i: Insert[_, _] => i.argsForJson.map(ast)
