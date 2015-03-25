@@ -35,18 +35,15 @@ case class ProtoBufCompiledAst(underlying: ql2.Term) extends CompiledAst
 
 trait JsonAst {
 
-
   def toValue: Any
-
 }
 
-case class NoneJsonAst() extends JsonAst{
+case class NoneJsonAst() extends JsonAst {
   override def toValue = None
 }
 
 
 case class DatumJsonAst(datumType: ql2.Datum.DatumType, value: Any) extends JsonAst {
-
 
   override def toValue = value
 }
@@ -87,15 +84,12 @@ trait CompiledQuery {
 
   def asToken(conn: Connection, connectionId: Long, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]): TokenType[Result]
 
-
-  //private val _cursor:RethinkCursor[Result] = None
-  def cursor(token:Token[_],connectionId:Long,completed:Boolean)(factory: CursorFactory) = {
-    factory.apply[Result](token,connectionId,completed)
+  def cursor(token: Token[_], connectionId: Long, completed: Boolean)(factory: CursorFactory) = {
+    factory.apply[Result](token, connectionId, completed)
   }
 }
 
 class ProtoBufCompiledQuery[T](underlying: Query) extends CompiledQuery {
-
 
   override type Result = T
 
@@ -115,34 +109,29 @@ class ProtoBufCompiledQuery[T](underlying: Query) extends CompiledQuery {
 
   override type TokenType[R] = QueryToken[R]
 
-  //override def asToken(conn: Connection, term: Term, promise: Promise[T])(implicit mf: Manifest[T]) = QueryToken[T](conn, this, term, promise)
-
 }
 
 case class JsonQuery(queryType: ql2.Query.QueryType, ast: JsonAst, opts: Map[String, Any]) {
-  def toSeq ={
-    var seq:Seq[Any] = Seq(queryType.getNumber)
-
-    if(!ast.isInstanceOf[NoneJsonAst]) seq = seq.:+(ast.toValue)
-   if(opts.nonEmpty) seq = seq.:+(opts)
+  def toSeq = {
+    var seq: Seq[Any] = Seq(queryType.getNumber)
+    if (!ast.isInstanceOf[NoneJsonAst]) seq = seq.:+(ast.toValue)
+    if (opts.nonEmpty) seq = seq.:+(opts)
     seq
   }
-
 
 
 }
 
 case class JsonCompiledQuery[T](tokenId: Long, query: JsonQuery) extends CompiledQuery {
 
-
   override type Result = T
 
   override def asToken(conn: Connection, connectionId: Long, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]) = JsonQueryToken[Result](conn, connectionId, this, term, promise)
 
   lazy val json = Reflector.toJson(query.toSeq)
+
   private val TOKEN_SIZE = 8
 
-  // long
   override def encode = {
     val jsonBytes = json.getBytes
     val jsonSize = jsonBytes.length
@@ -182,6 +171,7 @@ abstract class Version extends LazyLogging {
   def toAst(term: Term): CompiledAst
 
   type Query[T] <: CompiledQuery {type Result = T}
+
   type Ast
 
   def toQuery[T](term: Term, token: Long, db: Option[String] = None, opts: Map[String, Any] = Map()): Query[T]
@@ -245,10 +235,6 @@ trait ProvidesProtoBufQuery extends ProvidesQuery {
 
   def build(ta: TermAssocPair) = ql2.Term.AssocPair.newBuilder.setKey(ta.key).setVal(ast(ta.token)).build()
 
-
-  // def build(da: TermAssocPair) = ql2.Datum.AssocPair.newBuilder.setKey(da.key).setVal(da.token.asInstanceOf[Datum].toMessage).build()
-
-
   type Builder = Query.Builder
 
   private[this] def ast(term: Term): ql2.Term = {
@@ -257,10 +243,6 @@ trait ProvidesProtoBufQuery extends ProvidesQuery {
       case ta: TermAssocPair => build(ta)
       // case da:DatumAssocPair=> build(da)
     }
-
-
-
-
 
     val builder = term match {
       case d: Datum => {
@@ -293,9 +275,7 @@ trait ProvidesProtoBufQuery extends ProvidesQuery {
     }
     q
 
-
   }
-
 
   override type Query[T] = ProtoBufCompiledQuery[T]
 
@@ -303,25 +283,6 @@ trait ProvidesProtoBufQuery extends ProvidesQuery {
 
   def compile[T](builder: Builder, term: Term) = new ProtoBufCompiledQuery[T](builder.setQuery(ast(term)).build())
 }
-
-/*
-@deprecated("Use Version2 or Version3")
-case class Version1(host: String = "localhost", port: Int = 28015, db: Option[String] = None, maxConnections: Int = 5)
-  extends Version with ProvidesProtoBufQuery {
-
-
-  override type ResponseType = ql2.Response
-
-  override def newHandler = ???
-
-  override private[rethinkscala] val pipelineFactory: RethinkPipelineFactory = ProtoPipelineFactory
-
-  def configure(c: Channel) {
-    c.write(VersionDummy.Version.V0_1).await()
-  }
-
-
-}        */
 
 
 abstract class Builder {
@@ -424,14 +385,8 @@ trait ProvidesJsonQuery extends ProvidesQuery {
   private[this] def ast(term: Term): JsonAst = {
 
     val opts = term.optargs.map {
-      case ta: TermAssocPair => {
-        if (ta.token.isInstanceOf[Order]) {
-          val a = ""
-        }
-        ta.key -> ast(ta.token)
-      }
+      case ta: TermAssocPair => ta.key -> ast(ta.token)
     }.toMap
-
 
 
     term match {
@@ -439,11 +394,9 @@ trait ProvidesJsonQuery extends ProvidesQuery {
       case d: Datum => DatumJsonAst(d.datumType, d.value)
       case _ => TermJsonAst(term.termType, term match {
         case i: Insert[_, _] => i.argsForJson.map(ast)
-
         case _ => term.args.map(ast)
       }, opts)
     }
-
 
   }
 

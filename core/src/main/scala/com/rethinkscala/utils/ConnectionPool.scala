@@ -164,7 +164,6 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
     drain()
 
   }
-
   def invalidate(connection: Conn): Unit = {
     logger.debug(s"invalidate(connection:${connection.id}) total = ${size.get()}")
     connectionFactory.destroy(connection)

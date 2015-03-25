@@ -154,12 +154,10 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
           def operationComplete(future: ChannelFuture) {
 
             val query = versionHandler.newQuery(con,c.id, term, p, None, opts)
-            //val query = version.toQuery(term, c.token.getAndIncrement, defaultDB, opts)
-            //val token = query.asToken[T](con, term, p)
+
             // TODO : Check into dropping netty and using sockets for each,
 
             val attachment = new ConnectionAttachment(versionHandler, e => {
-
               logger.debug(s"Invalidating connection (${c.id})")
               invalidate(c)
               p.tryFailure(e)

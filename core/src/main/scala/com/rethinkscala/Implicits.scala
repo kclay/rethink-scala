@@ -115,7 +115,6 @@ trait ToFloatImplicits extends ToFloatLowerImplicits{
 
 class ToFunctional[T, A >: Var,C[_]](val seq: Sequence[T,C]) extends AnyVal{
 
-
   def concatMap[B <: Typed, Result](f: A => B)(implicit cm: CanMap[T, B, Result]) = ConcatMap[T,C,Result](seq.underlying, FuncWrap(f))
   def map[B <: Typed, Result](f: A => B)(implicit cm: CanMap[T, B, Result]) = RMap[T,C,Result](seq.underlying, FuncWrap(f))
   def reduce[P ](f: (A, A) =>Produce0[P]) = Reduce[T,P](seq.underlying, f)
@@ -130,7 +129,11 @@ trait CanMapImplicits {
 
 
   implicit val mapStringToStrings = CanMap[String, Strings, String]
+
   implicit val mapStringToNumeric = CanMap[String, Numeric, Int]
+  implicit val mapStringToDouble = CanMap[String,Numeric,Double]
+  implicit val mapStringToFloat = CanMap[String,Numeric,Float]
+  implicit val mapStringToLong = CanMap[String,Numeric,Long]
 
 
   implicit def mapStringToArray[T,C[_]] = CanMap[String, Sequence[T,C], T]
@@ -144,11 +147,11 @@ trait CanMapImplicits {
   implicit val mapLongToNumeric = CanMap[Long, Numeric, Long]
 
 
-  implicit def mapDocumentToDouble[T <: Document] = CanMap[T, Numeric, Double]
+  implicit def mapDocumentToDouble[T <: AnyRef] = CanMap[T, Numeric, Double]
 
-  implicit def mapDocumentToString[T <: Document] = CanMap[T, Strings, String]
+  implicit def mapDocumentToString[T <: AnyRef] = CanMap[T, Strings, String]
 
-  implicit def mapDocumentToAny[T <: Document] = CanMap[T, Ref, Any]
+  implicit def mapDocumentToAny[T <: AnyRef] = CanMap[T, Ref, Any]
 
 
 }

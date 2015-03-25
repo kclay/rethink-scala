@@ -2,12 +2,11 @@ package com.rethinkscala.net
 
 import com.fasterxml.jackson.annotation._
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.{ObjectNode, ArrayNode}
-import com.rethinkscala.{ResultExtractor, Term, Profile, Document, ConvertFrom}
-
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import com.rethinkscala.ast.Datum
 import com.rethinkscala.net.Translate._
 import com.rethinkscala.reflect.Reflector
+import com.rethinkscala.{ConvertFrom, Document, Profile, ResultExtractor, Term}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import ql2.Ql2.Response
 import ql2.Ql2.Response.ResponseType
@@ -26,13 +25,16 @@ import scala.util.Try
 
 abstract class Token[R] {
   type ResultType
+
   val query: CompiledQuery
+
   val term: Term
+
   val connection: Connection
+
   val extractor: ResultExtractor[ResultType]
 
-  def id:Long
-
+  def id: Long
 
   def toError(response: R): RethinkError
 
@@ -86,9 +88,7 @@ case class JsonErrorResponse(
 case class JsonCursorResponse[T](@JsonProperty("t") responseType: Long,
                                  @JsonProperty("r") result: T,
                                  @JsonProperty("b") backtrace: Option[Seq[Frame]],
-                                 @JsonProperty("p") profile: Option[Profile]) {
-
-}
+                                 @JsonProperty("p") profile: Option[Profile])
 
 
 class JsonResponseExtractor {
@@ -124,15 +124,16 @@ case class JsonResponse[T](@JsonProperty("t") responseType: Long,
                            @JsonProperty("b") backtrace: Option[Seq[Frame]],
                            @JsonProperty("p") profile: Option[Profile]) extends BaseJsonResponse[T]
 
-case class JsonQueryToken[R](connection: Connection,connectionId:Long, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
+case class JsonQueryToken[R](connection: Connection, connectionId: Long, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
   extends Token[String] with LazyLogging {
 
 
   type ResultType = R
   implicit lazy val mf = extractor.manifest
-  def id:Long = query.tokenId
 
-  import ql2.Ql2.Response.ResponseType.{CLIENT_ERROR_VALUE, COMPILE_ERROR_VALUE, RUNTIME_ERROR_VALUE, SUCCESS_SEQUENCE_VALUE,SUCCESS_ATOM_VALUE}
+  def id: Long = query.tokenId
+
+  import ql2.Ql2.Response.ResponseType.{CLIENT_ERROR_VALUE, COMPILE_ERROR_VALUE, RUNTIME_ERROR_VALUE, SUCCESS_SEQUENCE_VALUE}
 
   val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
 
@@ -143,9 +144,6 @@ case class JsonQueryToken[R](connection: Connection,connectionId:Long, query: Co
     val response = Reflector.fromJson[JsonErrorResponse](json)
     val error = response.result.head
     val frames = response.backtrace.getOrElse(Iterable.empty)
-
-
-
 
     response.responseType match {
       case RUNTIME_ERROR_VALUE => RethinkRuntimeError(error, term, frames)
@@ -158,9 +156,7 @@ case class JsonQueryToken[R](connection: Connection,connectionId:Long, query: Co
   val manifest = implicitly[Manifest[JsonResponse[R]]]
   val cursorManifest = implicitly[Manifest[JsonCursorResponse[R]]]
 
-
-  def toCursor( json: String, responseType: Int, atom: Boolean = false) = {
-
+  def toCursor(json: String, responseType: Int, atom: Boolean = false) = {
 
     val seq = (atom match {
       case true => cast(json)(manifest).single
@@ -177,7 +173,7 @@ case class JsonQueryToken[R](connection: Connection,connectionId:Long, query: Co
       case _ => seq
     }
 
-    val cursor = query.cursor(this,connectionId,responseType match {
+    val cursor = query.cursor(this, connectionId, responseType match {
       case SUCCESS_SEQUENCE_VALUE => true
       case _ => false
     })(extractor.cursorFactory)
@@ -195,7 +191,7 @@ case class JsonQueryToken[R](connection: Connection,connectionId:Long, query: Co
 
   def cast[T](json: String)(implicit mf: Manifest[T]): T = {
     term match {
-      case b: BinaryConversion if(mf.typeArguments.headOption.exists(_.runtimeClass == classOf[Boolean])) =>
+      case b: BinaryConversion if (mf.typeArguments.headOption.exists(_.runtimeClass == classOf[Boolean])) =>
         Reflector.fromJson[JsonBinaryResponse](json)
           .convert(b.resultField).asInstanceOf[T]
       case _ => Reflector.fromJson(json)(mf)
@@ -214,18 +210,19 @@ case class JsonQueryToken[R](connection: Connection,connectionId:Long, query: Co
 }
 
 
-case class QueryToken[R](connection: Connection,connectionId:Long, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
+case class QueryToken[R](connection: Connection, connectionId: Long, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
   extends Token[Response] with LazyLogging {
-
-
-  implicit lazy val mf: Manifest[R] = extractor.manifest
-
-  private[rethinkscala] def context = connection
-  def id:Long  = query.tokenId
 
   type ResultType = R
   type MapType = Map[String, _]
   type IterableType = Iterable[MapType]
+
+  implicit lazy val mf: Manifest[R] = extractor.manifest
+
+  private[rethinkscala] def context = connection
+
+  def id: Long = query.tokenId
+
 
   def cast[T](json: String)(implicit mf: Manifest[T]): T = translate[T].read(json, term)
 
@@ -262,7 +259,7 @@ case class QueryToken[R](connection: Connection,connectionId:Long, query: Compil
       }
 
     }
-    val cursor = query.cursor( this,connectionId, response.getType match {
+    val cursor = query.cursor(this, connectionId, response.getType match {
       case ResponseType.SUCCESS_SEQUENCE => true
       case _ => false
     })(extractor.cursorFactory)

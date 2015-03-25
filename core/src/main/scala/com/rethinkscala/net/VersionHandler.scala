@@ -3,17 +3,16 @@ package com.rethinkscala.net
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-import com.google.common.cache.{CacheBuilder, Cache}
+import com.google.common.cache.{Cache, CacheBuilder}
+import com.rethinkscala.ast.{ProduceSequence, internal}
 import com.rethinkscala.{ResultExtractor, Term}
-import com.rethinkscala.ast.{internal, ProduceSequence}
-import com.typesafe.scalalogging.Logging
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import ql2.Ql2.Response
 import ql2.Ql2.Response.ResponseType
 import ql2.Ql2.Response.ResponseType._
 
 import scala.concurrent.Promise
-import scala.util.{Failure, Try, Success}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,7 +33,6 @@ trait VersionHandler[R] extends LazyLogging {
     logger.error("UnCaught Exception token not resolved", e)
   }
 
-
   private[rethinkscala] val tokensById: Cache[Long, TokenType] = CacheBuilder.newBuilder()
     .concurrencyLevel(4)
 
@@ -42,27 +40,24 @@ trait VersionHandler[R] extends LazyLogging {
     .build().asInstanceOf[Cache[Long, TokenType]]
 
 
-  def newQuery[T](conn: Connection,connectionId:Long, term: Term, promise: Promise[T],
-                  db: Option[String] = None, opts: Map[String, Any] = Map())(implicit extractor: ResultExtractor[T]) = {
+  def newQuery[T](conn: Connection, connectionId: Long, term: Term,
+                  promise: Promise[T], db: Option[String] = None, opts: Map[String, Any] = Map())
+                 (implicit extractor: ResultExtractor[T]) = {
 
 
-    val tokenId = term match{
-      case internal.Continue(token)=> {
-        token
-      }
+    val tokenId = term match {
+      case internal.Continue(token) => token
 
-      case _=> newTokenId.incrementAndGet()
+      case _ => newTokenId.incrementAndGet()
     }
 
     val query = version.toQuery[T](term, tokenId, db, opts)
-    val token = query.asToken(conn,connectionId, term, promise)
+    val token = query.asToken(conn, connectionId, term, promise)
     tokensById.put(tokenId, token.asInstanceOf[TokenType])
-    //tokensById.putIfAbsent(tokenId, token.asInstanceOf[TokenType])
     query
   }
 
   def handle[T](id: Long)(f: TokenType => Unit): Unit = {
-
 
     Option(tokensById.getIfPresent(id)) match {
       case Some(token) => Try(f(token)) match {
@@ -91,26 +86,24 @@ case class JsonVersionHandler(version: Version3) extends VersionHandler[String] 
   val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
 
   override def handle(tokenId: Long, json: String) = {
-
-    // logger.debug(s"JSON tokenId =$tokenId json = $json")
     handle(tokenId) {
       token => (json match {
         case ResponseTypeExtractor(responseType) => responseType.toInt match {
           case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE | CLIENT_ERROR_VALUE => token.toError(json)
-          case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => token.toCursor( json, responseType.toInt)
+          case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => token.toCursor(json, responseType.toInt)
           case SUCCESS_ATOM_VALUE => token.term match {
             case x: ProduceSequence[_] => token.toCursor(json, responseType.toInt, atom = true)
             case _ => token.toResult(json)
           }
           case _ => RethinkRuntimeError(s"Invalid response = $json", token.term)
         }
-        case _=> {
+        case _ => {
           token.toResult(json)
         }
       }) match {
         case e: Exception => token.failure(e)
         case e: Any => token.success(e)
-        case null=> token.failure(RethinkNoResultsError("No results found",token.term))
+        case null => token.failure(RethinkNoResultsError("No results found", token.term))
 
       }
     }
