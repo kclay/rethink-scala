@@ -6,12 +6,17 @@ Scala Rethinkdb Driver
 This is a WIP but should be valid for 1.6
 
 FEATURES
+
  - Full Type Safety (still a work in progress, will use macros to support case class type safety, right now all queries should be typed checked against the rules of RQL, )
  - Mapping to and from case classes , this allows you to fetch data to an case class via .as[CaseClass] or insert data from case classes (will be translated to a Map[String,_]
  - Lazy evaluation, all expressions are evaluated in a lazy fashion, meaning that the ast will be build up but the inner `args` and `optargs` wont be resolved until .run/.as or .ast is called for performance.
  - Importing com.rethinkscala.Implicits._ will give you a more normal way to construct your rql so you can write normal scala code without worrying about casting in a `Typed` or via `Expr`
  - Uses Jackson for json mapping via [jackson-module-scala](https://github.com/FasterXML/jackson-module-scala) 
- 
+
+# Guide
+* [Getting Started](https://github.com/kclay/rethink-scala/wiki/Getting-Started)
+* [Type Safety](https://github.com/kclay/rethink-scala/wiki/Type-Safety)
+
 
 TODO
 
@@ -31,9 +36,9 @@ val rethinkscala = "com.rethinkscala" %% "core" % "0.4.7-SNAPSHOT"
 ```
 To get started
 ```scala
-import com.rethinkscala.Implicts.Blocking._ // for blocking api
+import com.rethinkscala.Blocking._ // for blocking api
 implicit val blockingConnection = Blocking(Version2)
-import com.rethinkscala.Implicits.Async._ // for async api
+import com.rethinkscala.Async._ // for async api
 implicit val asyncConnection = Async(Version2)
 ``
 Examples
@@ -43,17 +48,14 @@ scala> r.table("marvel").map(hero=> hero \ "combatPower" + hero \ "combatPower" 
 res2: com.rethinkscala.ast.RMap = RMap(Table(marvel,None,None),Predicate1(<function1>))
 
 
-scala> import com.rethinkscala.ast._
-import com.rethinkscala.ast._
-
 scala> import com.rethinkscala._
 import com.rethinkscala._
 
-scala> val version =new Version1("172.16.2.45")
-version: com.rethinkscala.net.Version1 = Version1(172.16.2.45,28015,None,5)
+scala> val version =new Version2("172.16.2.45")
+version: com.rethinkscala.net.Version2 = Version1(172.16.2.45,28015,None,5)
 
 scala> implicit val connection = new Connection(version)
-connection: com.rethinkscala.Connection = Connection(Version1(172.16.2.45,28015,None,5))
+connection: com.rethinkscala.Connection = Connection(Version2(172.16.2.45,28015,None,5))
 
 scala> val info =DB("foo").table("bar").info
 info: com.rethinkscala.ast.Info = Info(Table(bar,Some(false),Some(DB(foo))))
