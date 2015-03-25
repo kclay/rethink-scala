@@ -42,6 +42,9 @@ trait ProduceSingle[T] extends Produce[T] with Produce0[T] with CastTo {
 
 trait CastTo {
   self: CastTo with Produce0[_] ⇒
+
+  type SeqCast[T] = ToAst.seqToAnySequence.ForType[T]
+
   def field(name: String): ProduceAny
 
   def cast[T](name: String)(implicit ast: ToAst[T]): ast.Cast = field(name).asInstanceOf[ast.Cast]
@@ -54,13 +57,18 @@ trait CastTo {
 
   def string(name: String) = cast[String](name)
 
-  def seq[T](name: String) = field(name).asInstanceOf[Sequence[T, DefaultCursor] with Produce[Seq[T]] with Produce0[T]]
+  def seq[T](name: String) = castSeq[T](field(name))
 
   def map[T](name: String) = cast[Map[String, T]](name)
+
+  def anyMap(name: String) = cast[Map[String, Any]](name)
 
   def anySeq(name: String) = cast[Seq[Any]](name)
 
   private[rethinkscala] def to[T](implicit ast: ToAst[T]): ast.Cast = this.asInstanceOf[ast.Cast]
+
+
+  private def castSeq[T](value: Any) = value.asInstanceOf[SeqCast[T]]
 
   @deprecated("use toInt", "0.4.6")
   def asInt = toInt
@@ -82,12 +90,12 @@ trait CastTo {
   @deprecated("use toAnySeq", "0.4.6")
   def asAnySeq = toAnySeq
 
-  def toAnySeq = toSeq[Any]
+  def toAnySeq: SeqCast[Any] = toSeq[Any]
 
-  def toSeq[T] = to[Seq[Any]]
+  def toSeq[T] =castSeq[T](this)
 
   @deprecated("use toMap", "0.4.6")
-  def asMap[T] = toMap[T]
+  def asMap = toMap[Any]
 
   def toMap[T] = to[Map[String, T]]
 

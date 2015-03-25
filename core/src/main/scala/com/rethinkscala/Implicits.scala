@@ -67,11 +67,11 @@ trait ToAstImplicts {
     type InnerProduce = Produce0[T]
   } */
 
-  implicit lazy val seqToAnySequence= new ToAst[Seq[Any]] {
-    type TypeMember = Sequence[Any,DefaultCursor]
+  implicit lazy val seqToAnySequence = new ToAst[Seq[Any]] {
+    type TypeMember = Sequence[Any, DefaultCursor]
 
     type InnerProduce = Produce0[Any]
-    //type ForType[T] =  Sequence[T] with Produce0[T] with Produce[Seq[T]]
+    type ForType[T] = Sequence[T, DefaultCursor] with Produce[Seq[T]] with Produce0[T]
   }
 }
 
@@ -87,37 +87,42 @@ trait ToAst[A] {
 
 }
 
-trait ToFloat[From,Result]{
+trait ToFloat[From, Result] {
 
-  @deprecated("use toFloat","0.4.6")
-  def asFloat:Result = toFloat
-  def toFloat:Result
+  @deprecated("use toFloat", "0.4.6")
+  def asFloat: Result = toFloat
+
+  def toFloat: Result
 }
 
 
-trait ToFloatLowerImplicits{
-  self: ToAstImplicts=>
+trait ToFloatLowerImplicits {
+  self: ToAstImplicts =>
 
-  implicit  def castToFloat(target:CastTo)=new ToFloat[CastTo,floatToNumeric.Cast]{
+  implicit def castToFloat(target: CastTo) = new ToFloat[CastTo, floatToNumeric.Cast] {
 
 
     override def toFloat = target.asInstanceOf[floatToNumeric.Cast]
   }
 }
-trait ToFloatImplicits extends ToFloatLowerImplicits{
-  self: ToAstImplicts=>
-  type RandomFloat[T,R] =     Random[T,R] with ProduceFloat
-  implicit def  randomToFloat[T,R](target:Random[T,R]) = new ToFloat[Random[T,R],RandomFloat[T,Float]] {
-    override def toFloat =  new Random[T, Float](target.values, Some(true)) with ProduceFloat
+
+trait ToFloatImplicits extends ToFloatLowerImplicits {
+  self: ToAstImplicts =>
+  type RandomFloat[T, R] = Random[T, R] with ProduceFloat
+
+  implicit def randomToFloat[T, R](target: Random[T, R]) = new ToFloat[Random[T, R], RandomFloat[T, Float]] {
+    override def toFloat = new Random[T, Float](target.values, Some(true)) with ProduceFloat
   }
 
 }
 
-class ToFunctional[T, A >: Var,C[_]](val seq: Sequence[T,C]) extends AnyVal{
+class ToFunctional[T, A >: Var, C[_]](val seq: Sequence[T, C]) extends AnyVal {
 
-  def concatMap[B <: Typed, Result](f: A => B)(implicit cm: CanMap[T, B, Result]) = ConcatMap[T,C,Result](seq.underlying, FuncWrap(f))
-  def map[B <: Typed, Result](f: A => B)(implicit cm: CanMap[T, B, Result]) = RMap[T,C,Result](seq.underlying, FuncWrap(f))
-  def reduce[P ](f: (A, A) =>Produce0[P]) = Reduce[T,P](seq.underlying, f)
+  def concatMap[B <: Typed, Result](f: A => B)(implicit cm: CanMap[T, B, Result]) = ConcatMap[T, C, Result](seq.underlying, FuncWrap(f))
+
+  def map[B <: Typed, Result](f: A => B)(implicit cm: CanMap[T, B, Result]) = RMap[T, C, Result](seq.underlying, FuncWrap(f))
+
+  def reduce[P](f: (A, A) => Produce0[P]) = Reduce[T, P](seq.underlying, f)
 
 }
 
@@ -131,14 +136,14 @@ trait CanMapImplicits {
   implicit val mapStringToStrings = CanMap[String, Strings, String]
 
   implicit val mapStringToNumeric = CanMap[String, Numeric, Int]
-  implicit val mapStringToDouble = CanMap[String,Numeric,Double]
-  implicit val mapStringToFloat = CanMap[String,Numeric,Float]
-  implicit val mapStringToLong = CanMap[String,Numeric,Long]
+  implicit val mapStringToDouble = CanMap[String, Numeric, Double]
+  implicit val mapStringToFloat = CanMap[String, Numeric, Float]
+  implicit val mapStringToLong = CanMap[String, Numeric, Long]
 
 
-  implicit def mapStringToArray[T,C[_]] = CanMap[String, Sequence[T,C], T]
+  implicit def mapStringToArray[T, C[_]] = CanMap[String, Sequence[T, C], T]
 
-  implicit def mapMapToArray[T,C[_]] = CanMap[Map[String, _], Sequence[T,C], T]
+  implicit def mapMapToArray[T, C[_]] = CanMap[Map[String, _], Sequence[T, C], T]
 
 
   implicit val mapIntToNumeric = CanMap[Int, Numeric, Int]
@@ -159,34 +164,29 @@ trait CanMapImplicits {
 class CanMap[-From, -To <: Typed, Out]
 
 
-
-
 private[rethinkscala] trait ImplicitConversions {
-
-
 
 
   object r extends RethinkApi
 
 
-
-  implicit def anyToPimpled(v:Any) = new PimpedAny(v)
+  implicit def anyToPimpled(v: Any):PimpedAny = new PimpedAny(v)
 
   //implicit def toTyped[T<:Typed](v:T):Typed = v
 
   implicit def collectionToAst[T](coll: Iterable[T]): MakeArray[T] = Expr[T](coll)
 
-  implicit def intToDatNum(i: Int) = NumberDatum(i)
+  implicit def intToDatNum(i: Int):NumberDatum = NumberDatum(i)
 
-  implicit def longToDatNum(l: Long) = NumberDatum(l)
+  implicit def longToDatNum(l: Long):NumberDatum  = NumberDatum(l)
 
-  implicit def floatToDatNum(f: Float) = NumberDatum(f)
+  implicit def floatToDatNum(f: Float):NumberDatum  = NumberDatum(f)
 
-  implicit def doubleToDatNum(d: Double) = NumberDatum(d)
+  implicit def doubleToDatNum(d: Double):NumberDatum  = NumberDatum(d)
 
-  implicit def string2DatNum(s: String) = StringDatum(s)
+  implicit def string2DatNum(s: String):StringDatum = StringDatum(s)
 
-  implicit def boolean2Datum(b: Boolean) = BooleanDatum(b)
+  implicit def boolean2Datum(b: Boolean):BooleanDatum = BooleanDatum(b)
 
   /*
  implicit def intToDatNum0(i: Int): Datum = NumberDatum(i)
@@ -204,15 +204,15 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def toOptFromDatum[T <% Datum](v: T): Option[T] = Some(v)
 
-  implicit def toOptFromWrappedValue[T <: WrappedValue[_]](v: T) = Some(v)
+  implicit def toOptFromWrappedValue[T <: WrappedValue[_]](v: T):Option[T] = Some(v)
 
-  implicit def toPredicate1Opt(f: (Var) => Typed) = Some(new ScalaPredicate1(f))
+  implicit def toPredicate1Opt(f: (Var) => Typed):Option[Predicate1] = Some(new ScalaPredicate1(f))
 
-  implicit def toPredicate2Opt(f: (Var, Var) => Typed) = Some(new ScalaPredicate2(f))
+  implicit def toPredicate2Opt(f: (Var, Var) => Typed):Option[Predicate2] = Some(new ScalaPredicate2(f))
 
- // implicit def toPredicated1TypedOpt(f:(Var)=>Typed):Option[Typed] = toPredicate1Opt(f)
+  // implicit def toPredicated1TypedOpt(f:(Var)=>Typed):Option[Typed] = toPredicate1Opt(f)
 
-  implicit def toPredicate1(f: Var => Typed):Predicate1 = new ScalaPredicate1(f)
+  implicit def toPredicate1(f: Var => Typed): Predicate1 = new ScalaPredicate1(f)
 
   implicit def toPredicate2(f: (Var, Var) => Typed): ScalaPredicate2 = new ScalaPredicate2(f)
 
@@ -222,10 +222,10 @@ private[rethinkscala] trait ImplicitConversions {
   implicit def untypedPredicateToTyped(f: Var => Map[String, Any]): Predicate1 = (v: Var) => Expr(f(v))
 
 
-  implicit def toBooleanPredicate1(f: Var => Binary) = new ScalaBooleanPredicate1(f)
+  implicit def toBooleanPredicate1(f: Var => Binary):BooleanPredicate1 = new ScalaBooleanPredicate1(f)
 
 
-  implicit def toBooleanPredicate2(f: (Var, Var) => Binary) = new ScalaBooleanPredicate2(f)
+  implicit def toBooleanPredicate2(f: (Var, Var) => Binary):BooleanPredicate2 = new ScalaBooleanPredicate2(f)
 
 
   //implicit def seq2Datum(s:Seq[Datum]) = MakeArray(s)
@@ -250,15 +250,15 @@ private[rethinkscala] trait ImplicitConversions {
 
   private def p2t(p: Product): MakeArray[Any] = Expr(p.productIterator.toSeq)
 
-  implicit def tuple2Typed(t: (Typed, Typed)) = p2t(t)
+  implicit def tuple2Typed(t: (Typed, Typed)):MakeArray[Any] = p2t(t)
 
-  implicit def tuple3Typed(t: (Typed, Typed, Typed)) = p2t(t)
+  implicit def tuple3Typed(t: (Typed, Typed, Typed)):MakeArray[Any] = p2t(t)
 
-  implicit def tuple4Typed(t: (Typed, Typed, Typed, Typed)) = p2t(t)
+  implicit def tuple4Typed(t: (Typed, Typed, Typed, Typed)):MakeArray[Any] = p2t(t)
 
-  implicit def string2Ast(name: String) = String2Ast(name)
+  implicit def string2Ast(name: String):String2Ast = String2Ast(name)
 
-  implicit def string2Ordering(name: String) = name.asc
+  implicit def string2Ordering(name: String):Asc = name.asc
 
   implicit def intWithTildyArrow(start: Int) = new {
     def ~>(end: Int) = SliceRange(start, end)
@@ -310,9 +310,10 @@ class PimpedAny(val v: Any) extends AnyVal {
 }
 
 
-final class ChangeFeedSupport[T](val target:Typed) extends AnyVal{
+final class ChangeFeedSupport[T](val target: Typed) extends AnyVal {
   def changes = new Changes[T](target)
 }
+
 object Implicits {
 
 
@@ -325,8 +326,8 @@ object Implicits {
   with GeometryImplicits {
 
 
+    implicit def toChangeFeed[T](typed: Produce0[T]):ChangeFeedSupport[T] = new ChangeFeedSupport[T](typed)
 
-    implicit def toChangeFeed[T](typed:Produce0[T]) = new ChangeFeedSupport[T](typed)
     implicit val numericToDouble = new FromAst[Numeric] {
       type Raw = Double
     }
@@ -334,19 +335,24 @@ object Implicits {
       type Raw = String
     }
 
-    implicit def arrayToSeq[T](seq: ProduceSequence[T]) = new FromAst[ProduceSequence[T]] {
+    implicit def arrayToSeq[T](seq: ProduceSequence[T]):FromAst[ProduceSequence[T]] = new FromAst[ProduceSequence[T]] {
       type Raw = Seq[T]
     }
 
-    implicit def binaryToBoolean = new FromAst[Binary] {
+    implicit def binaryToBoolean:FromAst[Binary] = new FromAst[Binary] {
       type Raw = Boolean
     }
 
 
+  }
 
+
+  object Blocking extends net.BlockingImplicits with Common {
+
+    object functional extends net.BlockingFunctionalImplicits with Common
 
   }
-  object Blocking extends net.BlockingImplicits with Common
+
 
   object Async extends net.AsyncImplicits with Common
 

@@ -4,6 +4,7 @@ import com.rethinkscala.ast.Produce
 import com.rethinkscala.net.{AsyncResultQuery, BlockingResultQuery, _}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Success, Try}
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,20 +32,22 @@ object Delegate {
 
 
 trait Delegate[T] {
-  self=>
+  self =>
 
   type Extractor[R] = ResultExtractor[R]
   type Result[O]
-  type Query[Q] <: ResultResolver[Result[Q]]
+  type ResolverResult[R]
+  type Query[Q] <: ResultResolver[ResolverResult[Q]]
   type Opt[R]
-  val connectionId:Option[Long]
-  def withConnection(id:Long):Delegate[T]
+  val connectionId: Option[Long]
+
+  def withConnection(id: Long): Delegate[T]
 
   def toQuery[R](extractor: Extractor[R]): Query[R]
 
-  def run(implicit extractor: Extractor[T]) = toQuery(extractor).toResult
+  def run(implicit extractor: Extractor[T]):Result[T] = toQuery(extractor).toResult.asInstanceOf[Result[T]]
 
-  def as[R <: T](implicit extractor: Extractor[R]) = toQuery(extractor).toResult
+  def as[R <: T](implicit extractor: Extractor[R]):Result[R] = toQuery(extractor).toResult.asInstanceOf[Result[R]]
 
   def toOpt(implicit extractor: Extractor[T]): Opt[T]
 
@@ -52,16 +55,48 @@ trait Delegate[T] {
 }
 
 
-case class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection,connectionId:Option[Long]=None) extends Delegate[T] {
+case class BlockingTryDelegate[T](delegate: BlockingDelegate[T], connectionId: Option[Long] = None) extends Delegate[T] {
+
+  import scala.util.{Try, Success, Failure}
+
+  type Result[O] = Try[T]
+  type ResolverResult[R] = ResultResolver.Blocking[R]
+  type Query[R] = BlockingResultQuery[R]
+  type Opt[R] = Try[R]
+
+
+  def withConnection(id: Long) = copy(connectionId = Some(id), delegate = delegate.withConnection(id))
+
+  def toQuery[R](extractor: Extractor[R]): BlockingResultQuery[R] = delegate.toQuery(extractor)
+
+  override def run(implicit extractor: Extractor[T]):Try[T] = toQuery(extractor).toResult match {
+    case Left(e: RethinkError) => Failure(e)
+    case Right(o) => Success(o)
+  }
+
+  override def as[R <: T](implicit extractor: Extractor[R]):Try[R] = toQuery(extractor).toResult match {
+    case Left(e: RethinkError) => Failure(e)
+    case Right(o) => Success(o)
+  }
+
+  def toOpt(implicit extractor: Extractor[T]): Opt[T] = run(extractor)
+
+  def asOpt[R <: T](implicit extractor: Extractor[R]): Opt[R] = as[R](extractor)
+
+
+}
+
+case class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection, connectionId: Option[Long] = None) extends Delegate[T] {
 
   type Result[O] = ResultResolver.Blocking[O]
+  type ResolverResult[R]  = Result[R]
   type Query[R] = BlockingResultQuery[R]
-  type Opt[T] = Option[T]
+  type Opt[R] = Option[R]
 
 
-  def withConnection(id:Long) = copy(connectionId=Some(id))
+  def withConnection(id: Long) = copy(connectionId = Some(id))
 
-  def toQuery[R](extractor: Extractor[R]):BlockingResultQuery[R] = BlockingResultQuery[R](producer.underlyingTerm, connection, extractor, producer.underlyingOptions,connectionId)
+  def toQuery[R](extractor: Extractor[R]): BlockingResultQuery[R] = BlockingResultQuery[R](producer.underlyingTerm, connection, extractor, producer.underlyingOptions, connectionId)
 
   def toOpt(implicit extractor: Extractor[T]): Option[T] = as[T].fold(x => None, x => Option(x))
 
@@ -72,21 +107,22 @@ case class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnect
 }
 
 
-case class AsyncDelegate[T](producer: Produce[T], connection: AsyncConnection,connectionId:Option[Long]=None) extends Delegate[T] {
+case class AsyncDelegate[T](producer: Produce[T], connection: AsyncConnection, connectionId: Option[Long] = None) extends Delegate[T] {
 
   implicit val exc: ExecutionContext = connection.version.executionContext
   type Result[O] = ResultResolver.Async[O]
+  type ResolverResult[R]  = Result[R]
   type Query[R] = AsyncResultQuery[R]
   type Opt[T] = Future[Option[T]]
 
-  def withConnection(id:Long) = copy(connectionId=Some(id))
+  def withConnection(id: Long) = copy(connectionId = Some(id))
 
-  def toQuery[R](extractor: Extractor[R]):AsyncResultQuery[R] = AsyncResultQuery[R](producer.underlyingTerm, connection, extractor,
-    producer.underlyingOptions,connectionId)
+  def toQuery[R](extractor: Extractor[R]): AsyncResultQuery[R] = AsyncResultQuery[R](producer.underlyingTerm, connection, extractor,
+    producer.underlyingOptions, connectionId)
 
-  def toOpt(implicit extractor: Extractor[T]):Future[Option[T]] = as[T] transform(x => Option(x), t => t)
+  def toOpt(implicit extractor: Extractor[T]): Future[Option[T]] = as[T] transform(x => Option(x), t => t)
 
-  def asOpt[R <: T](implicit extractor: Extractor[R]):Future[Option[R]] = as[R] transform(x => Option(x), t => t)
+  def asOpt[R <: T](implicit extractor: Extractor[R]): Future[Option[R]] = as[R] transform(x => Option(x), t => t)
 
 
   def block: BlockingDelegate[T] = Delegate(producer, BlockingConnection(connection))

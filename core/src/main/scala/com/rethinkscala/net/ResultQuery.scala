@@ -13,6 +13,7 @@ import scala.concurrent.Future
 object ResultResolver {
   type Async[T] = Future[T]
   type Blocking[T] = Either[RethinkError, T]
+
 }
 
 trait ResultResolver[Result] {

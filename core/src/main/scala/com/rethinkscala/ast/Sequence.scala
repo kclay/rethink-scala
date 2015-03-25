@@ -230,8 +230,8 @@ trait Filterable[T, C[_]] extends Typed {
 
   def filter(value: ProduceBinary, default: Typed): Filter[T, C] = Filter[T, C](underlying, FuncWrap(value), Some(default))
 
-  def filter(f: Var => Binary): Filter[T, C] = Filter[T, C](underlying, FuncWrap(f: ScalaBooleanPredicate1), None)
+  def filter(f: Var => Binary): Filter[T, C] = Filter[T, C](underlying, FuncWrap(f: BooleanPredicate1), None)
 
-  def filter(f: Var => Binary, default: Typed): Filter[T, C] = Filter[T, C](underlying, FuncWrap(f: ScalaBooleanPredicate1), Some(default))
+  def filter(f: Var => Binary, default: Typed): Filter[T, C] = Filter[T, C](underlying, FuncWrap(f: BooleanPredicate1), Some(default))
 
 }

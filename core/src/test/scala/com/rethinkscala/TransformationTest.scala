@@ -58,7 +58,9 @@ class TransformationTest extends FunSuite with WithBase {
     val a = Map("a"->Seq(1,2,3,4,5,6))
     val e = Expr(Seq(a,a))
 
-    val term = e.concatMap(v=> v.seq[Int]("a"))
+
+    val term = e.concatMap(v=>v.seq[Int]("a"))
+
     val query = version3.toQuery(term,1,None,Map.empty)
     val json = query.json
 
