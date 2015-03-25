@@ -21,8 +21,6 @@ FEATURES
 TODO
 
   - Complete Test Suite
-  - Implement Cursor Response (this should have the same interface as a Seq/Iterable),not that the `Connection` class will need
-  to be updated so that it knows which connection to reuse to fetch more data.
   - Fix compile warns
   - Allow type safety for `Predicate` classes via macros
 
