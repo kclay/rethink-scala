@@ -1,6 +1,7 @@
 package com.rethinkscala.net
 
 
+import java.lang.reflect.{GenericArrayType, ParameterizedType}
 import java.net.InetSocketAddress
 import java.nio.ByteOrder
 import java.util.concurrent.Executors
@@ -50,6 +51,11 @@ class ConnectionAttachment[T](versionHandler: VersionHandler[T], restore: Throwa
   def failure(e: Throwable) = {
     versionHandler.failure(e)
     restore(e)
+  }
+
+  override def toString = {
+    import scala.collection.JavaConversions._
+    s"ConnectionAttachment($versionHandler)"
   }
 }
 
@@ -135,13 +141,13 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 
     def destroy(wrapper: ChannelWrapper) {
       logger.debug("Destroying Channel")
-      wrapper.invalidated=true
+      wrapper.invalidated = true
       wrapper.channel.close()
     }
   }, max = version.maxConnections)
 
 
-  def write[T](term: Term, opts: Map[String, Any],connectionId:Option[Long]=None)(implicit extractor: ResultExtractor[T]): Promise[T] = {
+  def write[T](term: Term, opts: Map[String, Any], connectionId: Option[Long] = None)(implicit extractor: ResultExtractor[T]): Promise[T] = {
     val p = Promise[T]()
     val f = p.future
     logger.debug(s"Writing $term")
@@ -152,8 +158,10 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
         // add a channel future to ensure that all setup has been done
         c.cf.addListener(new ChannelFutureListener {
           def operationComplete(future: ChannelFuture) {
+            logger.debug("Channel Future completed")
 
-            val query = versionHandler.newQuery(con,c.id, term, p, None, opts)
+            logger.debug("Creating query")
+            val query = versionHandler.newQuery(con, c.id, term, p, None, opts)
 
             // TODO : Check into dropping netty and using sockets for each,
 
@@ -162,6 +170,8 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
               invalidate(c)
               p.tryFailure(e)
             })
+
+            logger.debug(s"Creating connection attachment ")
             // Or find a way so that we can store the token for the netty handler to complete
             c.channel.setAttachment(attachment)
             logger.debug("Writing query")
@@ -170,7 +180,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
           }
         })
         f onComplete {
-          case _=> if(!c.invalidated){
+          case _ => if (!c.invalidated) {
             logger.debug(s"Restoring connection (${c.id})")
             restore(c)
           }
@@ -190,7 +200,7 @@ trait Connection {
 
   def toAst(term: Term): CompiledAst = version.toAst(term)
 
-  def write[T](term: Term, opts: Map[String, Any],connectionId:Option[Long]= None)(implicit extractor: ResultExtractor[T]): Promise[T]
+  def write[T](term: Term, opts: Map[String, Any], connectionId: Option[Long] = None)(implicit extractor: ResultExtractor[T]): Promise[T]
 }
 
 

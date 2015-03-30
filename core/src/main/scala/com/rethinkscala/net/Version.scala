@@ -157,6 +157,7 @@ abstract class Version extends LazyLogging {
   val db: Option[String]
   val timeout: Int = 10
 
+
   private[rethinkscala] val pipelineFactory: RethinkPipelineFactory
 
 
@@ -358,6 +359,8 @@ case class Version2(host: String = "localhost", port: Int = 28015,
   override type ResponseType = ql2.Response
 
   override def newHandler = new ProtoVersionHandler(this)
+
+  override def toString = "Version3"
 }
 
 

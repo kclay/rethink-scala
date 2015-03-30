@@ -53,7 +53,7 @@ class ExprTest extends FunSuite with WithBase {
     val results = table.to[ExprCase].insert(ExprCase()).toOpt.flatMap{
       ir=>
         val id = ir.generatedKeys.head
-        table.to[ExprCase].get(id).update(Map("value" -> r.row("value").append("foo"))).withChanges.toOpt
+        table.to[ExprCase].get(id).update(Map("value" -> List("foo"))).withChanges.toOpt
     }
 
     assert(results.flatMap(c=> c.returnedValue[ExprCase]).map(_.value == List("foo")).getOrElse(false))

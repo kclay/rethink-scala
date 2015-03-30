@@ -79,9 +79,9 @@ case class BlockingTryDelegate[T](delegate: BlockingDelegate[T], connectionId: O
     case Right(o) => Success(o)
   }
 
-  def toOpt(implicit extractor: Extractor[T]): Opt[T] = run(extractor)
+  def toOpt(implicit extractor: Extractor[T]): Try[T] = run(extractor)
 
-  def asOpt[R <: T](implicit extractor: Extractor[R]): Opt[R] = as[R](extractor)
+  def asOpt[R <: T](implicit extractor: Extractor[R]): Try[R] = as[R](extractor)
 
 
 }

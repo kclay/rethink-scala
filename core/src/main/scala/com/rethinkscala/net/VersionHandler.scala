@@ -29,6 +29,11 @@ trait VersionHandler[R] extends LazyLogging {
 
   type TokenType <: Token[_]
 
+
+  override def toString = {
+    s"VersionHandler($version)"
+  }
+
   def failure(e: Throwable) = {
     logger.error("UnCaught Exception token not resolved", e)
   }
@@ -86,6 +91,7 @@ case class JsonVersionHandler(version: Version3) extends VersionHandler[String] 
   val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
 
   override def handle(tokenId: Long, json: String) = {
+    logger.debug(s"handle($tokenId) = $json")
     handle(tokenId) {
       token => (json match {
         case ResponseTypeExtractor(responseType) => responseType.toInt match {
@@ -97,9 +103,9 @@ case class JsonVersionHandler(version: Version3) extends VersionHandler[String] 
           }
           case _ => RethinkRuntimeError(s"Invalid response = $json", token.term)
         }
-        case _ => {
-          token.toResult(json)
-        }
+        case _ => token.toResult(json)
+
+
       }) match {
         case e: Exception => token.failure(e)
         case e: Any => token.success(e)

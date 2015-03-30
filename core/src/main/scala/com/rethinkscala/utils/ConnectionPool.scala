@@ -93,34 +93,50 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
     connection
   }
 
-  case class ScopedPromised(promise:Promise[Conn],exc:ExecutionContext)
+  case class ScopedPromised(promise: Promise[Conn], exc: ExecutionContext)
 
   private val pending: Map[Long, ArrayBuffer[ScopedPromised]] = Map.empty.withDefault(_ => ArrayBuffer.empty)
 
   def take(connectionId: Option[Long])(block: (Conn, Conn => Unit, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Conn] = {
 
-    def execute(connection: Conn): Future[Conn]= Future{
+    def execute(connection: Conn): Future[Conn] = Future {
 
-      connections.putIfAbsent(connection.id,connection)
+      connections.putIfAbsent(connection.id, connection)
       connectionFactory.configure(connection)
+      logger.debug(s"Entering executing block for (${connection.id}})")
       block(connection, giveBack, invalidate)
+      logger.debug(s"Exiting executing block for (${connection.id}")
       connection
 
     }
 
     connectionId
-      .fold(execute(borrow())) {
+      .fold({
+
+      logger.debug("No connectionId executing")
+      execute(borrow())
+    }) {
       id =>
         val maybe = Option(connections.get(id))
         maybe match {
-          case Some(c) if !c.active => execute(c)
+          case Some(c) if !c.active => {
+            logger.debug("Connection found and not active")
+            execute(c)
+          }
           case _ =>
             val p = Promise[Conn]()
+            if (maybe.isDefined) logger.debug(s"Connection ($id) found but currently active")
+            else logger.debug(s"No connection found for ($id) so creating promise")
+
             p.future.onSuccess {
-              case conn => execute(conn)
+              case conn =>
+                logger.debug("Promise resolved for ($id)  executing")
+                execute(conn)
             }
 
-            pending(id) += ScopedPromised(p,exc)
+            pending(id) += ScopedPromised(p, exc)
+
+            logger.debug(s"Connection ($id) now has ${pending(id).size} pending queries")
 
             p.future
 
@@ -128,9 +144,6 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
         }
 
     }
-
-
-
 
 
   }
@@ -152,18 +165,22 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
 
     val hasPending = pending(connection.id)
     def drain(): Unit = if (hasPending.nonEmpty) {
+      logger.debug(s"drain(connection:${connection.id}, pending : ${hasPending.size}})")
+
       val current = hasPending.remove(0)
       current.promise.future.onComplete {
         case _ => drain()
       }(current.exc)
       current.promise.trySuccess(connection)
     } else {
+      logger.debug(s"drain(connection:${connection.id}) empty ")
       connection.active = false
       pool.offer(connection)
     }
     drain()
 
   }
+
   def invalidate(connection: Conn): Unit = {
     logger.debug(s"invalidate(connection:${connection.id}) total = ${size.get()}")
     connectionFactory.destroy(connection)

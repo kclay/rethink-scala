@@ -43,7 +43,7 @@ class JsonFrameDecoder extends RethinkFrameDecoder(12) with LazyLogging {
 
     val json = new String(buffer.readBytes(length).array(), "US-ASCII")
     logger.debug(s"Decoding Frame TOKEN = $token LENGTH = $length ")
-    logger.debug(s"JSON = $json");
+    logger.debug(s"JSON = $json")
     (token, json)
 
   }
