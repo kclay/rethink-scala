@@ -29,6 +29,11 @@ trait VersionHandler[R] extends LazyLogging {
 
   type TokenType <: Token[_]
 
+
+  override def toString = {
+    s"VersionHandler($version)"
+  }
+
   def failure(e: Throwable) = {
     logger.error("UnCaught Exception token not resolved", e)
   }
