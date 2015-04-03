@@ -31,7 +31,7 @@ trait Message[T] {
 
 }
 
-trait DatumMessage extends Message[ql2.Datum] with Term {
+trait DatumMessage extends  Term {
   def termType = TermType.DATUM
 
   def datumType: DatumType

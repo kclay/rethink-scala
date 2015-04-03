@@ -209,10 +209,10 @@ trait Expr {
       case f: Any if !f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction1] ⇒ new ScalaPredicate1(f.asInstanceOf[OfFunction1]).apply()
       case f: Any if !f.isInstanceOf[Iterable[_]] && f.isInstanceOf[OfFunction2] ⇒ new ScalaPredicate2(f.asInstanceOf[OfFunction2]).apply()
       case s: Seq[_] ⇒ MakeArray(s, depth - 1)
-      case m: Map[_, _] ⇒ MakeObj(m.asInstanceOf[Map[String, Option[Any]]])
+      case m: Map[_, _] ⇒ MakeObj(m.asInstanceOf[Map[String, Any]])
       case Some(a: Any) ⇒ apply(a, depth - 1)
       case InsertExpr(value) ⇒ apply(value._1, depth - 1, value._2)
-      case d: Document ⇒ MakeObj2(d, writeNulls)
+      case d: Document ⇒ MakeObj2(d)
       case c: Character ⇒ StringDatum(c.toString)
       case None | null ⇒ NoneDatum()
       case s: String ⇒ StringDatum(s)
@@ -221,7 +221,7 @@ trait Expr {
       case l: Long ⇒ NumberDatum(l)
       case b: Boolean ⇒ BooleanDatum(b)
       case d: Double ⇒ NumberDatum(d)
-      case a: AnyRef ⇒ MakeObj2(a, writeNulls)
+      case a: AnyRef ⇒ MakeObj2(a)
       case _ ⇒ throw RethinkDriverError(s"Can not determine rethink datatype : ${a.getClass.getName}")
 
     }

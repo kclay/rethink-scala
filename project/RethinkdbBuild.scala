@@ -45,6 +45,8 @@ object BuildSettings {
   val buildWithRelease = buildSettings ++ releaseSettings ++ Seq(
     releaseProcess := releaseSteps,
     publishArtifact in Test := false,
+    javacOptions ++= Seq("-source", "1.6", "-target", "1.6"),
+    scalacOptions += "-target:jvm-1.6",
 
     publishTo <<= version {
       (v: String) ⇒ Some(Resolver.file("file", repo / (if (v.trim.endsWith("SNAPSHOT")) "snapshots" else "releases")))
@@ -100,7 +102,7 @@ object RethinkdbBuild extends Build {
         "org.slf4j" % "slf4j-log4j12" % "1.7.6",
 
         "io.netty" % "netty" % "3.9.3.Final",
-        "com.google.protobuf" % "protobuf-java" % "2.5.0",
+
         "joda-time" % "joda-time" % "2.3",
         "org.joda" % "joda-convert" % "1.5",
         "org.scala-lang" % "scala-reflect" % sv,
