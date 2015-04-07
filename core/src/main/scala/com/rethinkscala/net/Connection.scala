@@ -1,34 +1,21 @@
 package com.rethinkscala.net
 
 
-import java.lang.reflect.{GenericArrayType, ParameterizedType}
 import java.net.InetSocketAddress
-import java.nio.ByteOrder
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
+import java.util.concurrent.atomic.AtomicLong
 
-import com.rethinkscala.ConvertFrom._
-
-import com.rethinkscala.{ResultExtractor, Term}
 import com.rethinkscala.ast._
-import com.rethinkscala.net.Translate._
-import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.utils.{ConnectionWithId, ConnectionFactory, SimpleConnectionPool}
+import com.rethinkscala.utils.{ConnectionFactory, ConnectionWithId, SimpleConnectionPool}
+import com.rethinkscala.{ResultExtractor, Term}
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import org.jboss.netty.bootstrap.ClientBootstrap
-import org.jboss.netty.buffer.ChannelBuffers._
-import org.jboss.netty.buffer.{ChannelBuffer, HeapChannelBufferFactory}
-import org.jboss.netty.channel.Channels.pipeline
-import org.jboss.netty.channel._
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
-import org.jboss.netty.handler.codec.frame.FrameDecoder
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
+import io.netty.bootstrap.Bootstrap
+import io.netty.channel._
+import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.socket.nio.NioSocketChannel
 import ql2.{Ql2 => ql2}
-import ql2.Response.ResponseType
-import ql2.{Response, VersionDummy}
 
-import scala.concurrent.{Promise, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Future, Promise}
 
 
 /** Created by IntelliJ IDEA.
@@ -54,7 +41,6 @@ class ConnectionAttachment[T](versionHandler: VersionHandler[T], restore: Throwa
   }
 
   override def toString = {
-    import scala.collection.JavaConversions._
     s"ConnectionAttachment($versionHandler)"
   }
 }
@@ -69,17 +55,22 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 
   lazy val bootstrap = {
 
-    val factory =
-      new NioClientSocketChannelFactory(
-        Executors.newCachedThreadPool(),
-        Executors.newCachedThreadPool())
+    // Configure the client.
+    val group = new NioEventLoopGroup()
 
-    val b = new ClientBootstrap(factory)
-    b.setPipelineFactory(version.pipelineFactory)
-    b.setOption("tcpNoDelay", true)
-    //b.setOption("keepAlive", true)
-    b.setOption("bufferFactory", new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN))
+
+    val b = new Bootstrap()
+    val option = ChannelOption.TCP_NODELAY.asInstanceOf[ChannelOption[Any]]
+    b.group(group)
+      .channel(classOf[NioSocketChannel])
+      .handler(version.channelInitializer)
+      .option(option, true)
+
     b
+    // b.setOption("tcpNoDelay", true)
+    //b.setOption("keepAlive", true)
+    //b.setOption("bufferFactory", new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN))
+
 
   }
 
@@ -104,7 +95,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     @volatile
     @volatile
     var configured: Boolean = false
-    lazy val channel = cf.getChannel
+    lazy val channel = cf.channel()
     @volatile
     override var active: Boolean = false
   }
@@ -119,7 +110,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     def create(): ChannelWrapper = {
 
       logger.debug("Creating new ChannelWrapper")
-      val c = bootstrap.connect(new InetSocketAddress(version.host, version.port)).await()
+      val c = bootstrap.connect(new InetSocketAddress(version.host, version.port)).sync()
 
       new ChannelWrapper(c)
     }
@@ -173,10 +164,12 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 
             logger.debug(s"Creating connection attachment ")
             // Or find a way so that we can store the token for the netty handler to complete
-            c.channel.setAttachment(attachment)
+            ChannelAttribute.Handler.set(c.channel, attachment)
             logger.debug("Writing query")
-            c.channel.write(query)
+            c.channel.writeAndFlush(query)
+            logger.debug("Wrote query")
             future.removeListener(this)
+
           }
         })
         f onComplete {

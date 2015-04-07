@@ -1,8 +1,7 @@
 package com.rethinkscala.net
 
-import com.typesafe.scalalogging.slf4j.LazyLogging
-import org.jboss.netty.channel.{ChannelHandlerContext, ExceptionEvent, MessageEvent, SimpleChannelUpstreamHandler}
-import org.jboss.netty.handler.queue.BufferedWriteHandler
+import io.netty.channel.{ChannelHandler, ChannelHandlerContext, Channel, ChannelInboundHandlerAdapter}
+import io.netty.util.AttributeKey
 import ql2.Ql2.Response
 
 /**
@@ -14,19 +13,41 @@ import ql2.Ql2.Response
  */
 
 
-class RethinkChannelHandler[T] extends SimpleChannelUpstreamHandler {
-  type Handler = ConnectionAttachment[T]
+object ChannelAttribute {
+  private[this] val _handlerAttr = AttributeKey.valueOf[Any]("Rethink.handler")
 
-  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext) = Some(ctx.getChannel.getAttachment.asInstanceOf[Handler])
+  object Handler {
+    def get[T](channel: Channel) = channel.attr(handlerAttr[T]).get()
 
-  override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-    val (tokenId, response) = e.getMessage.asInstanceOf[(Long, T)]
+    def set[T](channel: Channel, attachment: ConnectionAttachment[T]) = {
+      channel.attr(handlerAttr(attachment)).set(attachment)
+    }
+  }
+
+  def handlerAttr[T] = _handlerAttr.asInstanceOf[AttributeKey[ConnectionAttachment[T]]]
+
+  def handlerAttr[T](value: T) = _handlerAttr.asInstanceOf[AttributeKey[T]]
+}
+
+@ChannelHandler.Sharable
+class RethinkChannelHandler[T] extends ChannelInboundHandlerAdapter {
+
+  import ChannelAttribute.Handler
+
+  implicit def channelHandlerContext2Promise(ctx: ChannelHandlerContext) = Some(Handler.get[T](ctx.channel()))
+
+
+  override def channelRead(ctx: ChannelHandlerContext, msg: scala.Any) = {
+    val (tokenId, response) = msg.asInstanceOf[(Long, T)]
     ctx.map(_.handle(tokenId, response))
   }
 
-  override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-    ctx.map(_.failure(e.getCause))
+
+  override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) = {
+    ctx.map(_.failure(cause))
   }
+
+
 }
 
 class ProtoChannelHandler extends RethinkChannelHandler[Response]

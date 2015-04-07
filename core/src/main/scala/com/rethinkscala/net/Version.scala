@@ -9,12 +9,10 @@ import com.rethinkscala.ast._
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{ResultExtractor, Term, TermAssocPair}
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import org.jboss.netty.buffer.ChannelBuffer
-import org.jboss.netty.buffer.ChannelBuffers._
-import org.jboss.netty.channel.Channel
-import org.jboss.netty.handler.queue.{BlockingReadHandler, BlockingReadTimeoutException}
 import ql2.Ql2.{Query, VersionDummy}
+import io.netty.buffer.{Unpooled, ByteBuf}
 import ql2.{Ql2 => ql2}
+import io.netty.channel.Channel
 
 import scala.beans.BeanProperty
 import scala.concurrent.{ExecutionContext, Promise}
@@ -76,9 +74,9 @@ trait CompiledQuery {
   type Result
   val tokenId: Long
 
-  protected final def newBuffer(size: Int) = buffer(ByteOrder.LITTLE_ENDIAN, size)
+  protected final def newBuffer(size: Int) = Unpooled.buffer(size).order(ByteOrder.LITTLE_ENDIAN)
 
-  def encode: ChannelBuffer
+  def encode(out: ByteBuf): Unit
 
   type TokenType[R]
 
@@ -98,13 +96,12 @@ class ProtoBufCompiledQuery[T](underlying: Query) extends CompiledQuery {
 
   override val tokenId: Long = underlying.getToken
 
-  override def encode = {
+  override def encode(out: ByteBuf) = {
     val size = underlying.getSerializedSize
-    val b = newBuffer(size + 4)
-    b.writeInt(size)
+    out.capacity(size + 4)
+      .writeInt(size)
+      .writeBytes(underlying.toByteArray)
 
-    b.writeBytes(underlying.toByteArray)
-    b
   }
 
   override type TokenType[R] = QueryToken[R]
@@ -132,15 +129,15 @@ case class JsonCompiledQuery[T](tokenId: Long, query: JsonQuery) extends Compile
 
   private val TOKEN_SIZE = 8
 
-  override def encode = {
+  override def encode(out: ByteBuf) = {
     val jsonBytes = json.getBytes
     val jsonSize = jsonBytes.length
     val size = TOKEN_SIZE + 4 + jsonSize // token + json len + json string
-    val b = newBuffer(size)
-    b.writeLong(tokenId)
-    b.writeInt(jsonSize)
-    b.writeBytes(jsonBytes)
-    b
+    out.capacity(size)
+      .writeLong(tokenId)
+      .writeInt(jsonSize)
+      .writeBytes(jsonBytes)
+
   }
 
 
@@ -158,7 +155,7 @@ abstract class Version extends LazyLogging {
   val timeout: Int = 10
 
 
-  private[rethinkscala] val pipelineFactory: RethinkPipelineFactory
+  private[rethinkscala] val channelInitializer: RethinkChannelInitializer
 
 
   val executionContext: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(5))
@@ -315,14 +312,14 @@ trait ConfigureAuth {
 
   protected def write(c: Channel): Unit = {
     c.write(version)
-    c.write(authKey).await()
+    c.writeAndFlush(authKey).await()
   }
 
   def configure(c: Channel) {
 
     logger.debug("Configuring channel")
-    val pipeline = c.getPipeline
-    val authHandler = new BlockingReadHandler[ChannelBuffer]()
+    val pipeline = c.pipeline()
+    val authHandler = new BlockingReadHandler[ByteBuf]
     pipeline.addFirst("authHandler", authHandler)
 
     write(c)
@@ -355,7 +352,7 @@ trait ConfigureAuth {
 case class Version2(host: String = "localhost", port: Int = 28015,
                     db: Option[String] = None, maxConnections: Int = 5,
                     authKey: String = "") extends Version with ProvidesProtoBufQuery with ConfigureAuth {
-  override private[rethinkscala] val pipelineFactory: RethinkPipelineFactory = ProtoPipelineFactory
+  override private[rethinkscala] val channelInitializer = ProtoChannelInitializer
   override type ResponseType = ql2.Response
 
   override def newHandler = new ProtoVersionHandler(this)
@@ -414,7 +411,7 @@ case class Version3(host: String = "localhost", port: Int = 28015,
 
   override def newHandler = new JsonVersionHandler(this)
 
-  override private[rethinkscala] val pipelineFactory: RethinkPipelineFactory = JsonPipelineFactory
+  override private[rethinkscala] val channelInitializer = JsonChannelInitializer
   override val version = VersionDummy.Version.V0_3
 
   override protected def write(c: Channel) = {

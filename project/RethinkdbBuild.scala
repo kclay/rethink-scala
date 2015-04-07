@@ -13,7 +13,7 @@ import sbtrelease._
 import ReleasePlugin._
 import sbtrelease.ReleasePlugin.ReleaseKeys._
 import ReleaseStateTransformations._
-import sbtprotobuf.{ ProtobufPlugin ⇒ PB }
+import sbtprotobuf.{ProtobufPlugin ⇒ PB}
 
 object BuildSettings {
 
@@ -28,7 +28,7 @@ object BuildSettings {
     setNextVersion, // : ReleaseStep
     commitNextVersion, // : ReleaseStep
     pushChanges // : ReleaseStep, also checks that an upstream branch is properly configured
-    )
+  )
   val buildSettings = Project.defaultSettings ++ Boilerplate.settings ++ defaultScalariformSettings ++ Seq(
     organization := "com.rethinkscala",
     testOptions in Test := Seq(Tests.Filter(s ⇒ s.endsWith("Test"))),
@@ -67,6 +67,7 @@ object RethinkdbBuild extends Build {
 
   val jacksonVersion = "2.4.1"
   val jacksonScalaVersion = "2.4.1"
+
   def jackson = Seq(
     "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
     "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
@@ -84,7 +85,7 @@ object RethinkdbBuild extends Build {
   lazy val root = Project(
     "root",
     file("."),
-    settings = buildWithRelease) aggregate (core, changeFeed)
+    settings = buildWithRelease) aggregate (core)
   lazy val core = Project(
     id = "core",
     base = file("core"),
@@ -101,32 +102,32 @@ object RethinkdbBuild extends Build {
         "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.0.3",
         "org.slf4j" % "slf4j-log4j12" % "1.7.6",
 
-        "io.netty" % "netty" % "3.9.3.Final",
+        "io.netty" % "netty" % "4.0.27.Final",
 
         "joda-time" % "joda-time" % "2.3",
         "org.joda" % "joda-convert" % "1.5",
         "org.scala-lang" % "scala-reflect" % sv,
         "org.scala-lang.modules" %% "scala-xml" % "1.0.1" % "test" // "net.sandrogrzicic" %% "scalabuff`-runtime" % scalaBuffVersion
-        ) ++ jackson),
+      ) ++ jackson),
 
       ScalariformKeys.preferences := FormattingPreferences()
         .setPreference(RewriteArrowSymbols, true)
         .setPreference(AlignParameters, true)
         .setPreference(AlignSingleLineCaseStatements, true)) ++ protobuf) //.configs(ScalaBuff)
 
-  lazy val changeFeed = Project("change-feed",
+  /*lazy val changeFeed = Project("change-feed",
     file("change-feed"),
-    settings = buildWithRelease).dependsOn(core).aggregate(core)
-  lazy val lifted = Project(
-    "lifted",
-    file("lifted"),
-    settings = buildWithRelease ++ Seq(
-      // NOTE: macros are compiled with macro paradise 2.10
-      // scalaVersion := "2.10.2-SNAPSHOT",
-      //scalaOrganization := "org.scala-lang.macro-paradise",
-      libraryDependencies <++= (scalaVersion)(sv ⇒ Seq(
-        "org.scala-lang" % "scala-reflect" % sv,
-        "org.scala-lang" % "scala-compiler" % sv,
-        "org.scala-lang" % "scala-library" % sv)))) dependsOn (core)
+    settings = buildWithRelease).dependsOn(core).aggregate(core)*/
+  /* lazy val lifted = Project(
+     "lifted",
+     file("lifted"),
+     settings = buildWithRelease ++ Seq(
+       // NOTE: macros are compiled with macro paradise 2.10
+       // scalaVersion := "2.10.2-SNAPSHOT",
+       //scalaOrganization := "org.scala-lang.macro-paradise",
+       libraryDependencies <++= (scalaVersion)(sv ⇒ Seq(
+         "org.scala-lang" % "scala-reflect" % sv,
+         "org.scala-lang" % "scala-compiler" % sv,
+         "org.scala-lang" % "scala-library" % sv)))) dependsOn (core) */
 
 }

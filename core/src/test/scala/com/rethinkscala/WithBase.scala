@@ -30,7 +30,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
     case _ => "127.0.0.1"
   }).get
   val port = 28015
-  val authKey = ""
+  val authKey = "foobar"
 
   val version2 = new Version2(host, port, authKey = authKey)
   val version3 = new Version3(host, port, authKey = authKey)

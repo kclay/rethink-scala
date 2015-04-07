@@ -31,10 +31,10 @@ class JoinTest extends FunSuite with WithBase {
 
     // println(foos.run)
 
-    val joins = Seq(foos.eqJoin("value", bars),foos.eqJoin(f=> f\"value",bars))
+    val joins = Seq(foos.eqJoin("value", bars), foos.eqJoin(f => f \ "value", bars))
 
 
-    for(join <- joins){
+    for (join <- joins) {
       val results = join.toOpt
 
 
@@ -49,12 +49,10 @@ class JoinTest extends FunSuite with WithBase {
     }
 
 
-
-
   }
 
   test("inner join") {
-    val join = foos.innerJoin(bars, (f,b) => f \ "value" === b \ "value")
+    val join = foos.innerJoin(bars, (f, b) => f \ "value" === b \ "value")
 
 
 
@@ -64,10 +62,18 @@ class JoinTest extends FunSuite with WithBase {
   }
 
   test("outer join") {
+
     val join = foos.outerJoin(bars, (f: Var, b: Var) => f \ "value" === b \ "value")
 
     assert(join, {
-      f: Iterable[R] => f.size == 1 && f.head.left == FooJ(1, 1)
+      f: Iterable[R] => {
+        val size = f.size
+        val left = f.head.left
+        val check = FooJ(1, 1)
+        val compared = left == check
+        val answer = f.size == 1 && f.head.left == FooJ(1, 1)
+        answer
+      }
     })
   }
 

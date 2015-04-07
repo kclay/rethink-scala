@@ -2,14 +2,11 @@ package com.rethinkscala.net
 
 import java.nio.ByteOrder
 
-import org.jboss.netty.buffer.ChannelBuffers._
-import org.jboss.netty.channel.{Channel, ChannelHandlerContext}
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
-import ql2.Ql2
-import ql2.Ql2.VersionDummy
+import io.netty.buffer.ByteBuf
+import io.netty.channel.{ChannelHandler, ChannelHandlerContext}
+import io.netty.handler.codec.MessageToByteEncoder
 import ql2.{Ql2 => ql2}
-import ql2.Response.ResponseType
-import ql2.{Response, VersionDummy}
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,37 +16,40 @@ import ql2.{Response, VersionDummy}
  *
  */
 
-class RethinkDBEncoder extends OneToOneEncoder {
 
-  def encode(ctx: ChannelHandlerContext, channel: Channel, msg: Any): AnyRef = {
+@ChannelHandler.Sharable
+class RethinkDBEncoder extends MessageToByteEncoder[Any] {
+
+
+  override def encode(ctx: ChannelHandlerContext, msg: Any, buffer: ByteBuf) = {
+
+    val out = buffer.order(ByteOrder.LITTLE_ENDIAN)
 
     msg match {
-      case v: VersionDummy.Version => {
-        val b = buffer(ByteOrder.LITTLE_ENDIAN, 4)
-        b.writeInt(v.getNumber)
-        b
+      case v: ql2.VersionDummy.Version =>
+
+        out.capacity(4).writeInt(v.getNumber)
+
+      case p: ql2.VersionDummy.Protocol =>
+        out.capacity(4).writeInt(p.getNumber)
+
+      case q: CompiledQuery => {
+        q.encode(out)
       }
-      case p:ql2.VersionDummy.Protocol=>{
-        val b = buffer(ByteOrder.LITTLE_ENDIAN,4)
-        b.writeInt(p.getNumber)
-        b
-      }
-      case q: CompiledQuery => q.encode
       case s: String =>
-        val b = buffer(ByteOrder.LITTLE_ENDIAN, s.length + 4)
-        b.writeInt(s.length)
-        b.writeBytes(s.getBytes("ascii"))
-        b
+        out.capacity(s.length + 4)
+          .writeInt(s.length)
+          .writeBytes(s.getBytes("ascii"))
+
       case q: ql2.Query =>
         val size = q.getSerializedSize
-        val b = buffer(ByteOrder.LITTLE_ENDIAN, size + 4)
-        b.writeInt(size)
+        out.capacity(size + 4)
+          .writeInt(size)
+          .writeBytes(q.toByteArray)
 
-        b.writeBytes(q.toByteArray)
-        b
     }
-
-
   }
+
+
 }
 
