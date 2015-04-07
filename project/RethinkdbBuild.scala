@@ -102,7 +102,7 @@ object RethinkdbBuild extends Build {
         "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.0.3",
         "org.slf4j" % "slf4j-log4j12" % "1.7.6",
 
-        "io.netty" % "netty" % "4.0.27.Final",
+        "io.netty" % "netty-all" % "4.0.27.Final",
 
         "joda-time" % "joda-time" % "2.3",
         "org.joda" % "joda-convert" % "1.5",
