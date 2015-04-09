@@ -69,6 +69,8 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   lazy val table = db.table[Document](tableName)
 
 
+
+  val dropDB = true
   override protected def beforeAll() {
 
 
@@ -82,7 +84,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
 
   override protected def afterAll() {
     super.afterAll()
-    if (setupDB) {
+    if (setupDB && dropDB) {
       db.drop.run
     }
   }

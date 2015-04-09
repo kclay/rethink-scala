@@ -45,7 +45,7 @@ class JsonFrameDecoder extends RethinkFrameDecoder(12) with LazyLogging {
 
     } else {
 
-      val json = new String(buffer.readBytes(length).array(), "US-ASCII")
+      val json = new String(buffer.readBytes(length).array(), "UTF-8")
       logger.debug(s"Decoding Frame TOKEN = $token LENGTH = $length ")
       if (json.length > 500) {
         logger.debug(s"JSON = ${json.substring(0, 499)}")
