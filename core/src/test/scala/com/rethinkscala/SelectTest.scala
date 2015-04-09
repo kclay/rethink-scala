@@ -72,7 +72,7 @@ class SelectTest extends FunSuite with WithBase {
     })
   }
   test("get_all") {
-    assert(foos.getAll("id", 1, 2), {
+    assert(foos.getAll( 1, 2).withIndex("id"), {
       a: Seq[SelectFoo] => a.size == 2
     })
   }

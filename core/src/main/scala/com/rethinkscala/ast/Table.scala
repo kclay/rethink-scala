@@ -53,7 +53,7 @@ case class Table[T <: AnyRef](name: String, useOutDated: Option[Boolean] = None,
   def get(attribute: Typed) = Get[T](this, attribute)
 
 
-  def getAll(index: String, attr: Any*): GetAll[T] = GetAll[T](this, attr, index)
+  //def getAll(index: String, attr: Any*): GetAll[T] = GetAll[T](this, attr, index)
 
   def getAll(attr: Any*): GetAll[T] = GetAll[T](this, attr, None)
 
