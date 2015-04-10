@@ -1,10 +1,11 @@
 package com.rethinkscala.utils
 
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{ArrayBlockingQueue, TimeUnit}
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
+import java.util.concurrent.{LinkedBlockingDeque, ConcurrentHashMap, ArrayBlockingQueue, TimeUnit}
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
+import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -36,7 +37,7 @@ trait ConnectionWithId {
 
 
   val id: Long
-  var active: Boolean
+  var active: AtomicBoolean
 }
 
 trait LowLevelConnectionPool[Connection] {
@@ -95,7 +96,9 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
 
   case class ScopedPromised(promise: Promise[Conn], exc: ExecutionContext)
 
-  private val pending: Map[Long, ArrayBuffer[ScopedPromised]] = Map.empty.withDefault(_ => ArrayBuffer.empty)
+  private val pending = TrieMap
+    .empty[Long, LinkedBlockingDeque[ScopedPromised]]
+
 
   def take(connectionId: Option[Long])(block: (Conn, Conn => Unit, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Conn] = {
 
@@ -103,9 +106,9 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
 
       connections.putIfAbsent(connection.id, connection)
       connectionFactory.configure(connection)
-      logger.debug(s"Entering executing block for (${connection.id}})")
+      logger.debug(s"Entering executing block for (${connection.id})")
       block(connection, giveBack, invalidate)
-      logger.debug(s"Exiting executing block for (${connection.id}")
+      logger.debug(s"Exiting executing block for (${connection.id})")
       connection
 
     }
@@ -119,10 +122,10 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
       id =>
         val maybe = Option(connections.get(id))
         maybe match {
-          case Some(c) if !c.active => {
+          case Some(c) if !c.active.get() =>
             logger.debug("Connection found and not active")
             execute(c)
-          }
+
           case _ =>
             val p = Promise[Conn]()
             if (maybe.isDefined) logger.debug(s"Connection ($id) found but currently active")
@@ -130,11 +133,14 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
 
             p.future.onSuccess {
               case conn =>
-                logger.debug("Promise resolved for ($id)  executing")
+                logger.debug(s"Promise resolved for ($id)  executing")
                 execute(conn)
             }
 
-            pending(id) += ScopedPromised(p, exc)
+            pending.getOrElseUpdate(1, new LinkedBlockingDeque[ScopedPromised]()).add(ScopedPromised(p, exc))
+
+
+
 
             logger.debug(s"Connection ($id) now has ${pending(id).size} pending queries")
 
@@ -159,23 +165,26 @@ class SimpleConnectionPool[Conn <: ConnectionWithId](connectionFactory: Connecti
 
   def available = pool.size()
 
+  private[this] val emptyConnectionQueue = new LinkedBlockingDeque[ScopedPromised]()
+
   def giveBack(connection: Conn): Unit = {
     logger.debug(s"giveBack(connection:${connection.id})")
 
 
-    val hasPending = pending(connection.id)
-    def drain(): Unit = if (hasPending.nonEmpty) {
+    val hasPending = pending.getOrElse(connection.id, emptyConnectionQueue)
+    def drain(): Unit = if (emptyConnectionQueue.isEmpty) {
       logger.debug(s"drain(connection:${connection.id}, pending : ${hasPending.size}})")
 
-      val current = hasPending.remove(0)
+      val current = hasPending.remove()
       current.promise.future.onComplete {
         case _ => drain()
       }(current.exc)
       current.promise.trySuccess(connection)
     } else {
       logger.debug(s"drain(connection:${connection.id}) empty ")
-      connection.active = false
+      connection.active.compareAndSet(true, false)
       pool.offer(connection)
+
     }
     drain()
 

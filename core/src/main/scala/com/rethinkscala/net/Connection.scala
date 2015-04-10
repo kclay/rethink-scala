@@ -2,7 +2,7 @@ package com.rethinkscala.net
 
 
 import java.net.InetSocketAddress
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.rethinkscala.ast._
 import com.rethinkscala.utils.{ConnectionFactory, ConnectionWithId, SimpleConnectionPool}
@@ -97,7 +97,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     var configured: Boolean = false
     lazy val channel = cf.channel()
     @volatile
-    override var active: Boolean = false
+    override var active: AtomicBoolean = new AtomicBoolean(false)
   }
 
 
@@ -116,7 +116,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     }
 
     def configure(wrapper: ChannelWrapper) = {
-      wrapper.active = true
+      wrapper.active.compareAndSet(false, true)
       if (!wrapper.configured) {
         logger.debug("Configuring ChannelWrapper")
         version.configure(wrapper.channel)
