@@ -3,6 +3,8 @@ package com.rethinkscala
 import com.rethinkscala.ast.{Asc, BooleanDatum, Branch, ByAvg, BySum, DB, DBCreate, DBDrop, DBList, Desc, FuncCall, JavaScript, NumberDatum, ScalaBooleanPredicate1, StringDatum, Table, TableCreate, UserError, _}
 import org.joda.time.{DateTime, ReadableInstant}
 
+import scala.collection.Iterable
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,6 +40,8 @@ trait RethinkApi extends TimeNames with GeometryApi {
 
   def expr(v: Any) = Expr(v)
 
+  def expr[T](value: Iterable[T]) = Expr(value)
+
   // TODO Fix me, clashes with Sequence and Hash
   def row: ImplicitVar = _row
 
@@ -71,19 +75,19 @@ trait RethinkApi extends TimeNames with GeometryApi {
 
   def tableCreate(name: String, options: Option[TableOptions] = None): TableCreate = test.tableCreate(name, options.getOrElse(TableOptions()))
 
-  def tableDrop(name: String):TableDrop = test.tableDrop(name)
+  def tableDrop(name: String): TableDrop = test.tableDrop(name)
 
-  def tables:TableList = test.tables
+  def tables: TableList = test.tables
 
   def branch(predicate: (Var) => Binary, passed: Typed, failed: Typed): Branch = branch(ScalaBooleanPredicate1(predicate), passed, failed)
 
   def branch(predicate: Binary, passed: Typed, failed: Typed): Branch = Branch(predicate, passed, failed)
 
   @deprecated("Call .sum on collection")
-  def sum(attr: String):BySum = BySum(attr)
+  def sum(attr: String): BySum = BySum(attr)
 
   @deprecated("Call .avg on collection")
-  def avg(attr: String):ByAvg = ByAvg(attr)
+  def avg(attr: String): ByAvg = ByAvg(attr)
 
   def random = Random[Double](Seq.empty)
 
@@ -93,13 +97,13 @@ trait RethinkApi extends TimeNames with GeometryApi {
 
   val count = ByCount
 
-  def asc(attr: String):Asc = Asc(attr.wrap)
+  def asc(attr: String): Asc = Asc(attr.wrap)
 
-  def asc(attr: Typed):Asc = Asc(attr.wrap)
+  def asc(attr: Typed): Asc = Asc(attr.wrap)
 
-  def desc(attr: String):Desc = Desc(attr.wrap)
+  def desc(attr: String): Desc = Desc(attr.wrap)
 
-  def desc(attr: Typed):Desc = Desc(attr.wrap)
+  def desc(attr: Typed): Desc = Desc(attr.wrap)
 
   private[this] def compute[T](v: T*)(a: (T, T) => T) = v.drop(1).foldLeft(v.head)(a)
 

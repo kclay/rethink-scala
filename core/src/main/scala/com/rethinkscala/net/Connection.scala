@@ -5,7 +5,7 @@ import java.net.InetSocketAddress
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.rethinkscala.ast._
-import com.rethinkscala.utils.{ConnectionFactory, ConnectionWithId, SimpleConnectionPool}
+import com.rethinkscala.utils.{RethinkConnectionPool, ConnectionFactory, ConnectionWithId, SimpleConnectionPool}
 import com.rethinkscala.{ResultExtractor, Term}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import io.netty.bootstrap.Bootstrap
@@ -45,6 +45,22 @@ class ConnectionAttachment[T](versionHandler: VersionHandler[T], restore: Throwa
   }
 }
 
+case class ConnectionChannel(cf: ChannelFuture, id: Long) extends ConnectionWithId {
+  type Id = Int
+
+  val token: AtomicLong = new AtomicLong()
+
+  @volatile
+  var invalidated = false
+
+  @volatile
+  @volatile
+  var configured: Boolean = false
+  lazy val channel = cf.channel()
+  @volatile
+  override var active: AtomicBoolean = new AtomicBoolean(false)
+}
+
 abstract class AbstractConnection(val version: Version) extends LazyLogging with Connection {
 
   private val defaultDB = Some(version.db.getOrElse("test"))
@@ -75,48 +91,22 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
   }
 
 
-  case class ChannelWrapper(cf: ChannelFuture) extends ConnectionWithId {
-    type Id = Int
-    val id = connectionId.incrementAndGet()
-    val token: AtomicLong = new AtomicLong()
-
-    @volatile
-    var invalidated = false
-
-    private[rethinkscala] val tokensToCursor = new com.google.common.collect.MapMaker()
-      .concurrencyLevel(4)
-      .weakKeys()
-      .makeMap[Long, RethinkCursor[_]]
-
-    private[rethinkscala] val tokensById = new com.google.common.collect.MapMaker()
-      .concurrencyLevel(4)
-      .weakKeys()
-      .makeMap[Long, Token[_]]
-    @volatile
-    @volatile
-    var configured: Boolean = false
-    lazy val channel = cf.channel()
-    @volatile
-    override var active: AtomicBoolean = new AtomicBoolean(false)
-  }
-
-
   lazy val versionHandler = version.newHandler
 
   private[rethinkscala] def get(connectionId: Int)(implicit timeout: Duration): Future[Connection] = ???
 
-  protected[rethinkscala] val channel = new SimpleConnectionPool(new ConnectionFactory[ChannelWrapper] {
+  protected[rethinkscala] val pool = new RethinkConnectionPool(new ConnectionFactory[ConnectionChannel] {
 
-    def create(): ChannelWrapper = {
+    def create(): ConnectionChannel = {
 
       logger.debug("Creating new ChannelWrapper")
       val c = bootstrap.connect(new InetSocketAddress(version.host, version.port)).sync()
 
-      new ChannelWrapper(c)
+      new ConnectionChannel(c, connectionId.incrementAndGet())
     }
 
-    def configure(wrapper: ChannelWrapper) = {
-      wrapper.active.compareAndSet(false, true)
+    def configure(wrapper: ConnectionChannel) = {
+      wrapper.active.set(true)
       if (!wrapper.configured) {
         logger.debug("Configuring ChannelWrapper")
         version.configure(wrapper.channel)
@@ -126,11 +116,11 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
       }
     }
 
-    def validate(wrapper: ChannelWrapper): Boolean = {
+    def validate(wrapper: ConnectionChannel): Boolean = {
       wrapper.channel.isOpen
     }
 
-    def destroy(wrapper: ChannelWrapper) {
+    def destroy(wrapper: ConnectionChannel) {
       logger.debug("Destroying Channel")
       wrapper.invalidated = true
       wrapper.channel.close()
@@ -142,7 +132,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     val p = Promise[T]()
     val f = p.future
     logger.debug(s"Writing $term")
-    channel.take(connectionId) {
+    pool.take(connectionId) {
       case (c, restore, invalidate) =>
         logger.debug("Received connection from pool")
         val con = this
@@ -189,7 +179,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 trait Connection {
   val underlying: Connection
   val version: Version
-  protected[rethinkscala] val channel: SimpleConnectionPool[_]
+  protected[rethinkscala] val pool: RethinkConnectionPool
 
   def toAst(term: Term): CompiledAst = version.toAst(term)
 

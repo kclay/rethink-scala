@@ -34,7 +34,7 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
     val queue = new LinkedBlockingQueue[Boolean]
     val conn = blockingConnection("foobar")
-    conn.channel.take(None) {
+    conn.pool.take(None) {
       case (c, restore, invalidate) =>
         restore(c)
         queue.put(true)
@@ -50,7 +50,7 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
     val queue = new LinkedBlockingQueue[Boolean]
     val conn = BlockingConnection(new Version3(host, port, authKey = "foobar"))
-    conn.channel.take(None) {
+    conn.pool.take(None) {
       case (c, restore, invalidate) =>
         restore(c)
         queue.put(true)
@@ -78,7 +78,7 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
 
     val s: MakeArray[Any] = Expr(Seq(1, 2))
-    assert(connection.channel.available == 0)
+    assert(connection.pool.available == 0)
 
     val futureResult = async(s.asInstanceOf[MakeArray[Hello]])
 
@@ -87,7 +87,7 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
 
     whenReady(futureResult.failed, Timeout(30 seconds)) { result =>
-      assert(connection.channel.available == 0)
+      assert(connection.pool.available == 0)
       result should be(asInstanceOf[RethinkRuntimeError])
     }
 

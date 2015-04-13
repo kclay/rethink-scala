@@ -107,6 +107,7 @@ object RethinkdbBuild extends Build {
         "joda-time" % "joda-time" % "2.3",
         "org.joda" % "joda-convert" % "1.5",
         "org.scala-lang" % "scala-reflect" % sv,
+        "com.googlecode.thread-weaver" % "threadweaver" % "0.2" % "test",
         "org.scala-lang.modules" %% "scala-xml" % "1.0.1" % "test" // "net.sandrogrzicic" %% "scalabuff`-runtime" % scalaBuffVersion
       ) ++ jackson),
 

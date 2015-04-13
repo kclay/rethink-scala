@@ -45,9 +45,11 @@ trait Delegate[T] {
 
   def toQuery[R](extractor: Extractor[R]): Query[R]
 
-  def run(implicit extractor: Extractor[T]):Result[T] = toQuery(extractor).toResult.asInstanceOf[Result[T]]
 
-  def as[R <: T](implicit extractor: Extractor[R]):Result[R] = toQuery(extractor).toResult.asInstanceOf[Result[R]]
+
+  def run(implicit extractor: Extractor[T]): Result[T] = toQuery(extractor).toResult.asInstanceOf[Result[T]]
+
+  def as[R <: T](implicit extractor: Extractor[R]): Result[R] = toQuery(extractor).toResult.asInstanceOf[Result[R]]
 
   def toOpt(implicit extractor: Extractor[T]): Opt[T]
 
@@ -69,12 +71,12 @@ case class BlockingTryDelegate[T](delegate: BlockingDelegate[T], connectionId: O
 
   def toQuery[R](extractor: Extractor[R]): BlockingResultQuery[R] = delegate.toQuery(extractor)
 
-  override def run(implicit extractor: Extractor[T]):Try[T] = toQuery(extractor).toResult match {
+  override def run(implicit extractor: Extractor[T]): Try[T] = toQuery(extractor).toResult match {
     case Left(e: RethinkError) => Failure(e)
     case Right(o) => Success(o)
   }
 
-  override def as[R <: T](implicit extractor: Extractor[R]):Try[R] = toQuery(extractor).toResult match {
+  override def as[R <: T](implicit extractor: Extractor[R]): Try[R] = toQuery(extractor).toResult match {
     case Left(e: RethinkError) => Failure(e)
     case Right(o) => Success(o)
   }
@@ -89,7 +91,7 @@ case class BlockingTryDelegate[T](delegate: BlockingDelegate[T], connectionId: O
 case class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection, connectionId: Option[Long] = None) extends Delegate[T] {
 
   type Result[O] = ResultResolver.Blocking[O]
-  type ResolverResult[R]  = Result[R]
+  type ResolverResult[R] = Result[R]
   type Query[R] = BlockingResultQuery[R]
   type Opt[R] = Option[R]
 
@@ -111,7 +113,7 @@ case class AsyncDelegate[T](producer: Produce[T], connection: AsyncConnection, c
 
   implicit val exc: ExecutionContext = connection.version.executionContext
   type Result[O] = ResultResolver.Async[O]
-  type ResolverResult[R]  = Result[R]
+  type ResolverResult[R] = Result[R]
   type Query[R] = AsyncResultQuery[R]
   type Opt[T] = Future[Option[T]]
 
