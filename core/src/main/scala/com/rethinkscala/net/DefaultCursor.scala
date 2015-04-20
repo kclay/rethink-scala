@@ -1,12 +1,13 @@
 package com.rethinkscala.net
 
 
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import com.rethinkscala.ResultExtractor
 import com.rethinkscala.ast.{internal, Aggregation}
 
 
 
-case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] {
+case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] with LazyLogging {
 
   var index = 0
 
@@ -24,8 +25,7 @@ case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] {
       val extractor = cursor.token.extractor
         .asInstanceOf[ResultExtractor[DefaultCursor[T]]]
       val response = more.withConnection(cursor.connectionId).run(extractor)
-      println(response)
-
+      logger.info(response.toString)      
       cursor.chunks(index)
     }
     index += 1
