@@ -36,9 +36,10 @@ abstract class GetField(target: Typed, name: String) extends Term {
 
 object GetField {
 
-  def apply[T,C[_]](target: Sequence[T,C], name: String) = new GetField(target, name) with ProduceArray[T]
+  def apply[T,C[_]](target: Sequence[T,C], name: String):ProduceArray[T] = new GetField(target, name) with ProduceArray[T]
 
-  def apply(target: Typed, name: String) = new GetField(target, name) with ProduceAny
+  def apply(target: Typed, name: String):ProduceAny = new GetField(target, name) with ProduceAny
+  def any(target: Typed, name: String):ProduceAny = new GetField(target, name) with ProduceAny
 }
 
 

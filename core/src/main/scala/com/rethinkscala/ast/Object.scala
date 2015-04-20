@@ -43,7 +43,7 @@ trait Hash {
 
   def field(name: String):FieldProduce
 
-  def apply(name: String)= field(name)
+  def apply(name: String):FieldProduce= field(name)
 
   def \(name: String) = field(name)
 }

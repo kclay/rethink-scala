@@ -34,9 +34,9 @@ trait Produce0[T] extends Typed {
 trait ProduceSingle[T] extends Produce[T] with Produce0[T] with CastTo {
   type FieldProduce = ProduceAny
 
-  def apply(name: String) = field(name)
+  def apply(name: String): ProduceAny = field(name)
 
-  def field(name: String): ProduceAny = GetField(this, name)
+  def field(name: String): ProduceAny = GetField.any(this, name)
 
 }
 
@@ -52,6 +52,7 @@ trait CastTo {
   def int(name: String) = cast[Int](name)
 
   def double(name: String) = cast[Double](name)
+  def long(name:String) = cast[Long](name)
 
   def float(name: String) = cast[Float](name)
 
@@ -59,7 +60,7 @@ trait CastTo {
 
   def seq[T](name: String) = castSeq[T](field(name))
 
-  def map[T](name: String) = cast[Map[String, T]](name)
+  def mapOf[T](name: String) = cast[Map[String, T]](name)
 
   def anyMap(name: String) = cast[Map[String, Any]](name)
 
@@ -80,6 +81,8 @@ trait CastTo {
 
   def toDouble = to[Double]
 
+  def toLong= to[Long]
+
   // def toFloat[R](implicit tf:ToCast[CastTo ,Float,R]) = tf.cast
 
   @deprecated("use toInt", "0.4.6")
@@ -92,7 +95,7 @@ trait CastTo {
 
   def toAnySeq: SeqCast[Any] = toSeq[Any]
 
-  def toSeq[T] =castSeq[T](this)
+  def toSeq[T] = castSeq[T](this)
 
   @deprecated("use toMap", "0.4.6")
   def asMap = toMap[Any]
@@ -143,7 +146,7 @@ trait ProduceSingleSelection[T] extends SingleSelection[T] with Produce[T] with 
   override val underlying = this
   type FieldProduce = ProduceAny
 
-  def field(name: String): FieldProduce = GetField(underlying, name)
+  def field(name: String): ProduceAny = GetField.any(underlying, name)
 
   def merge[R](other: SingleSelection[R]) = Merge.selection(underlying, other)
 
@@ -242,6 +245,9 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo {
 
   override def \(name: String): ProduceAny = field(name)
 
+
+  override def apply(name: String): ProduceAny = field(name)
+
   def +(other: ProduceAny) = add(other)
 
   def +=(other: ProduceAny) = add(other)
@@ -250,7 +256,7 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo {
 
   def asArray[T](name: String) = field(name).array[T]
 
-  def field(name: String) = GetField(this.asInstanceOf[Typed], name)
+  def field(name: String): ProduceAny = GetField.any(this, name)
 }
 
 class MapToDocument[T <: Document](from: Record) extends ProduceTypedDocument[T] {

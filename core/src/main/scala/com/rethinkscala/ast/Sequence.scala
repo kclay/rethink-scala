@@ -17,7 +17,7 @@ object Sequence {
 
   implicit def docToFunctional[T <: Document, C[_]](seq: Sequence[T, C]) = new ToFunctional[T, Var, C](seq)
 
-  implicit def toFunctional[T, C[_]](seq: Sequence[T, C])(implicit ast: ToAst[T]): ToFunctional[T, ast.TypeMember, C] = new ToFunctional[T, ast.TypeMember, C](seq)
+ implicit def toFunctional[T, C[_]](seq: Sequence[T, C])(implicit ast: ToAst[T]): ToFunctional[T, ast.TypeMember, C] = new ToFunctional[T, ast.TypeMember, C](seq)
 
 
   implicit class ScalaSequence[T, C[_]](underlying: Sequence[T, C]) {
