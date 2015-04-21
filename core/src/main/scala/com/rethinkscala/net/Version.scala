@@ -411,7 +411,7 @@ case class Version3(host: String = "localhost", port: Int = 28015,
 
   override def newHandler = new JsonVersionHandler(this)
 
-  override private[rethinkscala] val channelInitializer = JsonChannelInitializer
+  override private[rethinkscala] val channelInitializer = JsonChannelInitializer(this)
   override val version = VersionDummy.Version.V0_3
 
   override protected def write(c: Channel) = {

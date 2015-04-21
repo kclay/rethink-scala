@@ -2,7 +2,7 @@ package com.rethinkscala.net
 
 import java.util.concurrent.{TimeUnit, LinkedTransferQueue}
 
-import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter, ChannelInboundHandler}
+import io.netty.channel.{SimpleChannelInboundHandler, ChannelHandlerContext, ChannelInboundHandlerAdapter, ChannelInboundHandler}
 
 /**
  * Created by IntelliJ IDEA.
@@ -10,12 +10,17 @@ import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter, Ch
  * Date: 4/7/2015
  * Time: 11:56 AM 
  */
-class BlockingReadTimeoutException extends Exception
+trait BlockingException extends Exception
+
+class BlockingReadTimeoutException extends BlockingException
+
+
+class BlockingChannelClosedException extends BlockingException
 
 class BlockingReadHandler[T] extends ChannelInboundHandlerAdapter {
 
   val queue = new LinkedTransferQueue[Any]()
-
+  @volatile
   var closed = false
 
   def read(timeout: Long, unit: TimeUnit): T = {
@@ -57,6 +62,13 @@ class BlockingReadHandler[T] extends ChannelInboundHandlerAdapter {
 
   override def channelRead(ctx: ChannelHandlerContext, msg: scala.Any) = {
     queue.put(msg)
+  }
+
+
+  override def channelInactive(ctx: ChannelHandlerContext) = {
+    super.channelInactive(ctx)
+    queue.put(new BlockingChannelClosedException)
+    closed = true
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) = {

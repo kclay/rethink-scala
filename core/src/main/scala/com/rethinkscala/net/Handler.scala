@@ -1,6 +1,6 @@
 package com.rethinkscala.net
 
-import io.netty.channel.{ChannelHandler, ChannelHandlerContext, Channel, ChannelInboundHandlerAdapter}
+import io.netty.channel._
 import io.netty.util.AttributeKey
 import ql2.Ql2.Response
 
@@ -15,6 +15,7 @@ import ql2.Ql2.Response
 
 object ChannelAttribute {
   private[this] val _handlerAttr = AttributeKey.valueOf[Any]("Rethink.handler")
+  private[this] val _futureAttr = AttributeKey.valueOf[ChannelPromise]("Rethink.auth.handler")
 
   object Handler {
     def get[T](channel: Channel) = channel.attr(handlerAttr[T]).get()
@@ -23,6 +24,15 @@ object ChannelAttribute {
       channel.attr(handlerAttr(attachment)).set(attachment)
     }
   }
+
+  object Future {
+    def get(channel: Channel) = channel.attr(_futureAttr).get()
+
+    def set[T](channel: Channel, future: ChannelPromise) = {
+      channel.attr(_futureAttr).set(future)
+    }
+  }
+
 
   def handlerAttr[T] = _handlerAttr.asInstanceOf[AttributeKey[ConnectionAttachment[T]]]
 

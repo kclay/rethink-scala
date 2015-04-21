@@ -102,14 +102,16 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
       logger.debug("Creating new ChannelWrapper")
       val c = bootstrap.connect(new InetSocketAddress(version.host, version.port)).sync()
 
-      new ConnectionChannel(c, connectionId.incrementAndGet())
+      val cf = ChannelAttribute.Future.get(c.channel())
+
+      new ConnectionChannel(cf, connectionId.incrementAndGet())
     }
 
     def configure(wrapper: ConnectionChannel) = {
       wrapper.active.set(true)
       if (!wrapper.configured) {
         logger.debug("Configuring ChannelWrapper")
-        version.configure(wrapper.channel)
+      //  version.configure(wrapper.channel)
         wrapper.configured = true
       } else {
         logger.debug("Logger already configured")
