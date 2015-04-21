@@ -38,8 +38,10 @@ import com.rethinkscala.Blocking._ // for blocking api
 implicit val blockingConnection = Blocking(Version2)
 import com.rethinkscala.Async._ // for async api
 implicit val asyncConnection = Async(Version2)
-``
+```
+
 Examples
+
 ```scala
 
 scala> r.table("marvel").map(hero=> hero \ "combatPower" + hero \ "combatPower" * 2)
