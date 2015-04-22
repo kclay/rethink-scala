@@ -76,16 +76,23 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 
 
     val b = new Bootstrap()
-    val option = ChannelOption.TCP_NODELAY.asInstanceOf[ChannelOption[Any]]
+
+    version.connectTimeout.foreach(timeout => b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS.asInstanceOf[ChannelOption[Any]], timeout))
     b.group(group)
       .channel(classOf[NioSocketChannel])
       .handler(version.channelInitializer)
-      .option(option, true)
 
-    b
-    // b.setOption("tcpNoDelay", true)
-    //b.setOption("keepAlive", true)
-    //b.setOption("bufferFactory", new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN))
+
+      /**
+       * Error:(83, 29) type mismatch;
+       found   : io.netty.channel.ChannelOption[Boolean]
+       required: io.netty.channel.ChannelOption[Any]
+      Note: Boolean <: Any, but Java-defined class ChannelOption is invariant in type T.
+      You may wish to investigate a wildcard type such as `_ <: Any`. (SLS 3.2.10)
+            .option(ChannelOption.TCP_NODELAY, true)
+
+       */
+      .option(ChannelOption.TCP_NODELAY.asInstanceOf[ChannelOption[Any]], true) // fixed an scala compiler bug
 
 
   }
@@ -111,7 +118,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
       wrapper.active.set(true)
       if (!wrapper.configured) {
         logger.debug("Configuring ChannelWrapper")
-      //  version.configure(wrapper.channel)
+        //  version.configure(wrapper.channel)
         wrapper.configured = true
       } else {
         logger.debug("Logger already configured")

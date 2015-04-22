@@ -105,7 +105,7 @@ class Debug extends FunSuite with WithBase {
 
         doc("messages").filter(msg => msg("created").eq(message))(0).merge(
           Map("unread" -> doc("messages").filter(msg =>
-            msg("created").eq(message))(0)("unread").filter(id => id.ne(partId))
+            msg("created").eq(message))(0)("unread").filter(id => id =!= partId)
           )
         )
       ))

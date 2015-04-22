@@ -3,10 +3,10 @@ package com.rethinkscala.net
 
 import com.rethinkscala.ResultExtractor
 import com.rethinkscala.ast.{internal, Aggregation}
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
-
-case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] {
+case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] with LazyLogging{
 
   var index = 0
 

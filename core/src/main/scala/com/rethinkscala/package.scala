@@ -16,10 +16,10 @@ package object rethinkscala extends ImplicitConversions with Helpers {
 
   private[rethinkscala] val changeCursorClass = classOf[ChangeCursor[_]]
 
-  implicit def toResultExtractor[T: Manifest] = {
+  implicit def toResultExtractor[T: Manifest]:ResultExtractor[T] = {
 
     val mf = implicitly[Manifest[T]]
-    val isChangeCursor = mf.runtimeClass isAssignableFrom (changeCursorClass)
+    val isChangeCursor = mf.runtimeClass isAssignableFrom changeCursorClass
     val factory = if (isChangeCursor) ChangeCursorFactory else DefaultCursorFactory
     new ResultExtractor[T](factory, mf)
   }

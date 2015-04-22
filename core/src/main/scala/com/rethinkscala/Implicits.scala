@@ -294,7 +294,6 @@ trait Helpers {
   val Async = com.rethinkscala.Implicits.Async
   type BlockingConnection = com.rethinkscala.net.BlockingConnection
   type AsyncConnection = com.rethinkscala.net.AsyncConnection
-
   type BlockResult[T] = ResultResolver.Blocking[T]
   type AsyncResult[T] = ResultResolver.Async[T]
 

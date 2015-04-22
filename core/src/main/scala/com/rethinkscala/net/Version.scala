@@ -154,6 +154,8 @@ abstract class Version extends LazyLogging {
   val db: Option[String]
   val timeout: Int = 10
 
+  val version: VersionDummy.Version = VersionDummy.Version.V0_2
+
 
   private[rethinkscala] val channelInitializer: RethinkChannelInitializer
 
@@ -164,7 +166,7 @@ abstract class Version extends LazyLogging {
 
   def newHandler: VersionHandler[ResponseType]
 
-  def configure(c: Channel)
+  private[rethinkscala] var connectTimeout: Option[Long] = None
 
   def toAst(term: Term): CompiledAst
 
@@ -301,57 +303,10 @@ abstract class Builder {
 }
 
 
-trait ConfigureAuth {
-  self: Version =>
-
-  val authKey: String
-
-  private[this] val AUTH_RESPONSE = "SUCCESS"
-
-  val version: VersionDummy.Version = VersionDummy.Version.V0_2
-
-  protected def write(c: Channel): Unit = {
-    c.write(version)
-    c.writeAndFlush(authKey).await()
-  }
-
-  def configure(c: Channel) {
-
-    logger.debug("Configuring channel")
-    val pipeline = c.pipeline()
-    val authHandler = new BlockingReadHandler[ByteBuf]
-    pipeline.addFirst("authHandler", authHandler)
-
-    write(c)
-
-
-
-    try {
-      val response = Option(authHandler.read(timeout, TimeUnit.SECONDS)).map(b => b.toString(Charset.forName("US-ASCII"))).getOrElse("")
-
-      logger.debug(s"Server auth responsed with : -$response-")
-
-      if (!response.startsWith(AUTH_RESPONSE))
-        throw new RethinkDriverError(s"Server dropped connection with message: '$response'")
-
-
-    } catch {
-      case e: BlockingReadTimeoutException => logger.error("Timeout error", e)
-      case e: IOException => logger.error("Unable to read from socket", e)
-    } finally {
-      pipeline.remove(authHandler)
-    }
-
-
-  }
-
-
-}
-
 @deprecated("Use Version3")
 case class Version2(host: String = "localhost", port: Int = 28015,
                     db: Option[String] = None, maxConnections: Int = 5,
-                    authKey: String = "") extends Version with ProvidesProtoBufQuery with ConfigureAuth {
+                    authKey: String = "") extends Version with ProvidesProtoBufQuery {
   override private[rethinkscala] val channelInitializer = ProtoChannelInitializer
   override type ResponseType = ql2.Response
 
@@ -405,7 +360,7 @@ trait ProvidesJsonQuery extends ProvidesQuery {
 
 case class Version3(host: String = "localhost", port: Int = 28015,
                     db: Option[String] = None, maxConnections: Int = 5,
-                    authKey: String = "") extends Version with ConfigureAuth with ProvidesJsonQuery {
+                    authKey: String = "") extends Version with ProvidesJsonQuery {
 
   override type ResponseType = String
 
@@ -414,12 +369,10 @@ case class Version3(host: String = "localhost", port: Int = 28015,
   override private[rethinkscala] val channelInitializer = JsonChannelInitializer(this)
   override val version = VersionDummy.Version.V0_3
 
-  override protected def write(c: Channel) = {
-    super.write(c)
-    c.write(ql2.VersionDummy.Protocol.JSON)
-
+  def withConnectTimeout(timeout: Long) = {
+    connectTimeout = Some(timeout)
+    this
   }
-
 
 }
 
@@ -428,4 +381,8 @@ trait Versions {
   def Version2(host: String = "localhost", port: Int = 28015,
                db: Option[String] = None, maxConnections: Int = 5,
                authKey: String = "") = new Version2(host, port, db, maxConnections, authKey)
+
+  def Version3(host: String = "localhost", port: Int = 28015,
+               db: Option[String] = None, maxConnections: Int = 5,
+               authKey: String = "") = new Version3(host, port, db, maxConnections, authKey)
 }

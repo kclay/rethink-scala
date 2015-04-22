@@ -20,14 +20,15 @@ case class ResultExtractor[T](cursorFactory: CursorFactory, manifest: Manifest[T
 }
 
 object Delegate {
+
   def apply[T](produce: Produce[T], connection: Connection): Delegate[T] = connection match {
     case c: BlockingConnection => apply(produce, c)
     case c: AsyncConnection => apply(produce, c)
   }
 
-  def apply[T](producer: Produce[T], connection: BlockingConnection) = new BlockingDelegate(producer, connection)
+  def apply[T](producer: Produce[T], connection: BlockingConnection): BlockingDelegate[T] = new BlockingDelegate(producer, connection)
 
-  def apply[T](producer: Produce[T], connection: AsyncConnection) = new AsyncDelegate(producer, connection)
+  def apply[T](producer: Produce[T], connection: AsyncConnection): AsyncDelegate[T] = new AsyncDelegate(producer, connection)
 }
 
 
@@ -44,8 +45,6 @@ trait Delegate[T] {
   def withConnection(id: Long): Delegate[T]
 
   def toQuery[R](extractor: Extractor[R]): Query[R]
-
-
 
   def run(implicit extractor: Extractor[T]): Result[T] = toQuery(extractor).toResult.asInstanceOf[Result[T]]
 
