@@ -98,6 +98,7 @@ object RethinkdbBuild extends Build {
       libraryDependencies <++= (scalaVersion)(sv ⇒ Seq(
 
         "org.scalatest" %% "scalatest" % "2.1.3" % "test",
+        "junit" % "junit" % "4.8.1" % Test,
         //"com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
         "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.0.3",
         "org.slf4j" % "slf4j-log4j12" % "1.7.6",
@@ -110,6 +111,9 @@ object RethinkdbBuild extends Build {
         "com.googlecode.thread-weaver" % "threadweaver" % "0.2" % "test",
         "org.scala-lang.modules" %% "scala-xml" % "1.0.1" % "test" // "net.sandrogrzicic" %% "scalabuff`-runtime" % scalaBuffVersion
       ) ++ jackson),
+
+      fork in Test := true,
+      parallelExecution in Test := false,
 
       ScalariformKeys.preferences := FormattingPreferences()
         .setPreference(RewriteArrowSymbols, true)
