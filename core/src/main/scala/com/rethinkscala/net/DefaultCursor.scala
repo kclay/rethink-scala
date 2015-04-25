@@ -24,7 +24,7 @@ case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] with
       val extractor = cursor.token.extractor
         .asInstanceOf[ResultExtractor[DefaultCursor[T]]]
       val response = more.withConnection(cursor.connectionId).run(extractor)
-      println(response)
+//      println(response)
 
       cursor.chunks(index)
     }
