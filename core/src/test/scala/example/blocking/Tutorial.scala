@@ -69,7 +69,7 @@ class Tutorial extends FunSuite with Matchers with BeforeAndAfterAll {
     val version = Version3() // assumes rethink db runs in localhost and listens to the default driver port
     connection = Blocking(version)
     
-    table = r.tableAs[Author]("authos")
+    table = r.tableAs[Author]("authors")
   } 
   
   test ("the driver can create table") {
