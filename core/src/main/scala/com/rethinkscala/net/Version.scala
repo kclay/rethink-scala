@@ -382,7 +382,9 @@ trait Versions {
                db: Option[String] = None, maxConnections: Int = 5,
                authKey: String = "") = new Version2(host, port, db, maxConnections, authKey)
 
+  
   def Version3(host: String = "localhost", port: Int = 28015,
                db: Option[String] = None, maxConnections: Int = 5,
-               authKey: String = "") = new Version3(host, port, db, maxConnections, authKey)
+               authKey: String = "") = new Version3(host, port, db, maxConnections, authKey)  
+
 }

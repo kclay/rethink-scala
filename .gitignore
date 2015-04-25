@@ -23,4 +23,8 @@ rethinkdb-driver-development/
 .idea/
 .vagrant
 
-
+# Eclipse project files
+*.classpath
+*.project
+*.cache
+*.settings
