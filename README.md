@@ -29,15 +29,15 @@ SBT Users
 ```scala
 val main = Project(....).settings(resolvers ++= Seq("RethinkScala Repository" at "http://kclay.github.io/releases"))
 
-val rethinkscala = "com.rethinkscala" %% "core" % "0.4.6",
-val rethinkscala = "com.rethinkscala" %% "core" % "0.4.7-SNAPSHOT"
+val rethinkscala = "com.rethinkscala" %% "core" % "0.4.7",
+val rethinkscala = "com.rethinkscala" %% "core" % "0.4.8-SNAPSHOT"
 ```
 To get started
 ```scala
 import com.rethinkscala.Blocking._ // for blocking api
-implicit val blockingConnection = Blocking(Version2)
+implicit val blockingConnection = Blocking(Version3)
 import com.rethinkscala.Async._ // for async api
-implicit val asyncConnection = Async(Version2)
+implicit val asyncConnection = Async(Version3)
 ```
 
 Examples
@@ -51,8 +51,8 @@ res2: com.rethinkscala.ast.RMap = RMap(Table(marvel,None,None),Predicate1(<funct
 scala> import com.rethinkscala._
 import com.rethinkscala._
 
-scala> val version =new Version2("172.16.2.45")
-version: com.rethinkscala.net.Version2 = Version1(172.16.2.45,28015,None,5)
+scala> val version =new Version3("172.16.2.45")
+version: com.rethinkscala.net.Version3 = Version3(172.16.2.45,28015,None,5)
 
 scala> implicit val connection = new Connection(version)
 connection: com.rethinkscala.Connection = Connection(Version2(172.16.2.45,28015,None,5))
@@ -91,6 +91,9 @@ results: Either[com.rethinkscala.net.RethinkError,Seq[SelectFoo]] = Right(Cursor
 
 ```
 
+More found at [here](https://github.com/kclay/rethink-scala/blob/master/core/src/test/scala/example/blocking/Tutorial.scala)
+Be sure to check out the [wiki](https://github.com/kclay/rethink-scala/wiki)
+
 
 
 Installation
@@ -109,14 +112,27 @@ sbt compile
 
 Version
 -
+###0.4.6 - 05/12/15
+- Polymorphism support #23
+- No need to extend `Document` anymore #19
+- Breaking Change - table.getAll(indes:String,attr:Any*) is now table.getAll(attr:Any*).withIndex(index:String)
+- Breaking Change - Updated table.indexCreate defination
+- Support for Continuing a stream
+- Added functional blocking delegate which uses `Try`
+- Updated Netty.io to 4.0.27.Final
+- Fixed issues with connection pooling where results wouldn't resolve and timeout.
+- Breaking Change - casting an Var to map is now done with `mapOf[T]`
+- Made connection setup sequence fully async
+- Blocking._ and Async._ now has Version3 visible
+- Added more [examples/tutorial](https://github.com/kclay/rethink-scala/blob/master/core/src/test/scala/example/blocking/Tutorial.scala) (thanks @Shegnc )
 ###0.4.6 - 01/29/15
 - Geo Support
 - Uuid Support
-- Fixed resotring connection on failed quries (thanks @mick-h)
+- Fixed restoring connection on failed quries (thanks @mick-h)
 - Fixed Option support (thanks @mick-h)
-- Fixed issuse were null results were not handle properly (thanks @mick-h)
+- Fixed issue were null results were not handle properly (thanks @mick-h)
 - Fixed nested document insert (thanks @maohde)
-- Fixed expection being thrown when query returns back empty results (thanks @mick-h)
+- Fixed exception being thrown when query returns back empty results (thanks @mick-h)
 
 ###0.4.5 - 10/12/14
 - Fixing Nested documents for json
