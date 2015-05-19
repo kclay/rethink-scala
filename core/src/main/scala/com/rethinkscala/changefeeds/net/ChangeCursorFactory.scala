@@ -2,7 +2,8 @@ package com.rethinkscala.changefeeds.net
 
 import java.util.concurrent.Callable
 
-import com.rethinkscala.net.{CursorFactory, Token}
+import com.google.common.cache.Cache
+import com.rethinkscala.net.{RethinkCursor, CursorFactory, Token}
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,7 +12,7 @@ import com.rethinkscala.net.{CursorFactory, Token}
  * Time: 8:59 PM
  *
  */
-object ChangeCursorFactory extends CursorFactory {
+case class ChangeCursorFactory(cache: Cache[Long, RethinkCursor[_]]) extends CursorFactory {
   type CursorType[T] = ChangeCursor[T]
 
   def newCallable[T](connectionId: Long, token: Token[_]) = new Callable[ChangeCursor[T]] {

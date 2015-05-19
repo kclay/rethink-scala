@@ -29,6 +29,14 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
   def asyncConnection(authKey: String) = AsyncConnection(new Version3(host, port, authKey = authKey))
 
+
+  test("switching connection context") {
+
+    val b = blockingConnection("foobar")
+    val a = AsyncConnection(b)
+    assert(b.pool == a.pool)
+
+  }
   test("v2 auth success") {
 
 

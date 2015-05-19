@@ -63,7 +63,7 @@ case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, extracto
   protected def run[T] = {
 
 
-    val p = connection.underlying.write(term, opts,connectionId)(extractor)
+    val p = connection.write(term, opts,connectionId)(extractor)
     // FIXME : Write this better
     p.future.transform(t => resolve(t).right.get, e => resolve(e).left.get)
 
@@ -81,7 +81,7 @@ case class BlockingResultQuery[R](term: Term, connection: BlockingConnection, ex
 
   def toResult[T](atMost: Duration): Either[RethinkError, R] = {
 
-    val p = connection.underlying.write(term, opts,connectionId)(extractor)
+    val p = connection.write(term, opts,connectionId)(extractor)
 
 
     try {

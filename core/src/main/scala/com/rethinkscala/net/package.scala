@@ -1,5 +1,6 @@
 package com.rethinkscala
 
+import com.rethinkscala._
 import com.rethinkscala.ast.Produce
 
 
@@ -29,12 +30,18 @@ package object net {
     def apply(version: Version) = AsyncConnection(version)
   }
 
-  trait AsyncImplicits extends Async {
+  trait AsyncImplicits extends Async with AsyncCommonImplicits {
     implicit def toDelegate[T](produce: Produce[T])(implicit connection: AsyncConnection): AsyncDelegate[T] = Delegate(produce, connection)
 
     type D[T] = AsyncDelegate[T]
 
     override def apply[T](produce: Produce[T])(implicit connection: AsyncConnection): AsyncDelegate[T] = toDelegate(produce)
+  }
+
+  trait AsyncCommonImplicits {
+    implicit def toAsyncResultExtractor[T: Manifest](implicit connection: AsyncConnection): ResultExtractor[T] = connection
+      .resultExtractorFactory
+      .create[T]
   }
 
   object Async extends AsyncImplicits
@@ -45,7 +52,7 @@ package object net {
     def apply(version: Version) = BlockingConnection(version)
   }
 
-  trait BlockingImplicits extends Blocking {
+  trait BlockingImplicits extends Blocking with BlockingCommonImplicits {
     implicit def toDelegate[T](produce: Produce[T])(implicit connection: BlockingConnection): BlockingDelegate[T] = Delegate(produce, connection)
 
     type D[T] = BlockingDelegate[T]
@@ -53,7 +60,14 @@ package object net {
     override def apply[T](produce: Produce[T])(implicit connection: BlockingConnection): BlockingDelegate[T] = toDelegate(produce)
   }
 
-  trait BlockingFunctionalImplicits extends Blocking {
+  trait BlockingCommonImplicits {
+    implicit def toBlockingResultExtractor[T: Manifest](implicit connection: BlockingConnection): ResultExtractor[T] = connection
+      .resultExtractorFactory
+      .create[T]
+
+  }
+
+  trait BlockingFunctionalImplicits extends Blocking with BlockingCommonImplicits {
     implicit def toDelegate[T](produce: Produce[T])(implicit connection: BlockingConnection): BlockingTryDelegate[T] = BlockingTryDelegate(Delegate(produce, connection))
 
     type D[T] = BlockingTryDelegate[T]

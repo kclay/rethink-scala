@@ -13,10 +13,8 @@ import com.google.common.cache.{Cache, CacheBuilder}
  */
 trait CursorFactory {
 
-  protected val cache = CacheBuilder.newBuilder()
-    .concurrencyLevel(4)
-    .expireAfterAccess(10, TimeUnit.MINUTES)
-    .build().asInstanceOf[Cache[Long, RethinkCursor[_]]]
+
+  val cache: Cache[Long, RethinkCursor[_]]
 
   type CursorType[T] <: RethinkCursor[_]
 
@@ -33,7 +31,7 @@ trait CursorFactory {
   }
 }
 
-object DefaultCursorFactory extends CursorFactory {
+case class DefaultCursorFactory(cache: Cache[Long, RethinkCursor[_]]) extends CursorFactory {
 
   type CursorType[T] = RethinkCursor[T]
 

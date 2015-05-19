@@ -61,12 +61,25 @@ case class ConnectionChannel(cf: ChannelFuture, id: Long) extends ConnectionWith
   override var active: AtomicBoolean = new AtomicBoolean(false)
 }
 
+
+abstract class ForwardingConnection(val underlying: Connection) extends Connection {
+  override val version: Version = underlying.version
+
+  override def write[T](term: Term, opts: Map[String, Any], connectionId: Option[Long])(implicit extractor: ResultExtractor[T]) =
+    underlying.write[T](term, opts, connectionId)(extractor)
+
+  override protected[rethinkscala] val pool: RethinkConnectionPool = underlying.pool
+}
+
 abstract class AbstractConnection(val version: Version) extends LazyLogging with Connection {
 
   private val defaultDB = Some(version.db.getOrElse("test"))
   private[this] val connectionId = new AtomicLong()
 
   implicit val exc = version.executionContext
+
+
+
 
 
   lazy val bootstrap = {
@@ -186,13 +199,15 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 }
 
 trait Connection {
-  val underlying: Connection
+
   val version: Version
   protected[rethinkscala] val pool: RethinkConnectionPool
 
   def toAst(term: Term): CompiledAst = version.toAst(term)
 
   def write[T](term: Term, opts: Map[String, Any], connectionId: Option[Long] = None)(implicit extractor: ResultExtractor[T]): Promise[T]
+
+  private[rethinkscala] val resultExtractorFactory:ResultExtractorFactory = new ResultExtractorFactory
 }
 
 
@@ -219,6 +234,8 @@ trait BlockingConnection extends Connection with ConnectionOps[BlockingConnectio
   def toOpt[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).toOpt
 
   val timeoutDuration: Duration
+
+  def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = BlockingResultQuery[R](term, this, extractor, opts)
 }
 
 trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Async] {
@@ -230,6 +247,8 @@ trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Asy
 
   def toOpt[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).toOpt
 
+  def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, extractor, opts)
+
 }
 
 object AsyncConnection {
@@ -237,27 +256,19 @@ object AsyncConnection {
   def apply(version: Version) = build(version, None)
 
 
-  def apply(connection: Connection) = connection match {
+  def apply(connection: Connection): AsyncConnection = connection match {
     case c: AsyncConnection => c
     case c: BlockingConnection => build(connection.version, Some(connection))
   }
 
 
-  private def build(v: Version, under: Option[Connection]) = new AbstractConnection(v) with AsyncConnection {
-    val underlying: Connection = under.getOrElse(this)
-    override val version = v
+  private def build(v: Version, under: Option[Connection]): AsyncConnection = under match {
+    case Some(c) => new ForwardingConnection(c) with AsyncConnection
 
-    def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, extractor, opts)
-
+    case _ => new AbstractConnection(v) with AsyncConnection
   }
 }
 
-private class ConnectionWithAsync(v: Version, under: Option[Connection]) extends AbstractConnection(v) with AsyncConnection {
-  val underlying: Connection = under.getOrElse(this)
-  override val version = v
-
-  def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, extractor, opts)
-}
 
 object BlockingConnection {
   val defaultTimeoutDuration = Duration(30, "seconds")
@@ -270,13 +281,16 @@ object BlockingConnection {
 
   def apply(version: Version, timeoutDuration: Duration = defaultTimeoutDuration) = build(version, timeoutDuration, None)
 
-  private def build(v: Version, t: Duration, under: Option[Connection]) = new AbstractConnection(v) with BlockingConnection {
-    val timeoutDuration = t
-    val underlying: Connection = under.getOrElse(this)
-    override val version = v
-
-    def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = BlockingResultQuery[R](term, this, extractor, opts)
+  private def build(v: Version, t: Duration, under: Option[Connection]) = under match {
+    case Some(c) => new ForwardingConnection(c) with BlockingConnection {
+      val timeoutDuration = t
+    }
+    case _ => new AbstractConnection(v) with BlockingConnection {
+      val timeoutDuration = t
+    }
   }
+
+
 }
 
 

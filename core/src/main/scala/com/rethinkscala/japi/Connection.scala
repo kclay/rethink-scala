@@ -32,7 +32,9 @@ case class Connection(version: Version, timeoutInMilliseconds: Long = 5000) {
       val t = producer.getClass.getGenericSuperclass.asInstanceOf[ParameterizedType]
       t.getActualTypeArguments()(0).asInstanceOf[Class[_]]
     }
-    val extractor = ResultExtractor[T](DefaultCursorFactory,Manifest.classType(clazz))
+    //underlying.resultExtractorFactory.create[T]
+    val extractor = null
+    //ResultExtractor[T](DefaultCursorFactory,Manifest.classType(clazz))
     QueryResult(Delegate(producer, underlying).run(extractor)).asInstanceOf[Result[T]]
   }
 
