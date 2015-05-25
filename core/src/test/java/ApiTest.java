@@ -6,18 +6,6 @@
  */
 
 
-import com.rethinkscala.japi.Connection;
-import com.rethinkscala.japi.Result;
-import com.rethinkscala.japi.r;
-
-import com.rethinkscala.net.Version;
-import com.rethinkscala.net.Version2;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
-
 public class ApiTest {
 
 

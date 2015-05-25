@@ -44,13 +44,21 @@ class AggregationTest extends FunSuite with WithBase {
 
     val seq = testSeq
     val check = {
-      g:Seq[GroupResultRecord[String]]=> g.size == 2 && g.head.group == "Alice" && g.head.values.head.get("id") == Some(5)
+      g:GroupResult[String]=> g.size == 2 && g.head.group == "Alice" && g.head.values.head.get("id") == Some(5)
     }
 
 
-   val s =Seq(GroupResultRecord[Int](1,Seq(Map.empty)))
 
-    assert(seq.group("player").run,check)
+
+    val query  = seq.group("player").max("points")
+    val res = query.toOpt
+
+    println(res)
+
+
+
+
+    //assert(seq.group("player").run,check)
 
 
    /* val func = {

@@ -65,8 +65,9 @@ object RethinkdbBuild extends Build {
     "Sonatype OSS Repository" at "https://oss.sonatype.org/content/groups/public/",
     "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")
 
-  val jacksonVersion = "2.4.1"
-  val jacksonScalaVersion = "2.4.1"
+  val jacksonVersion = "2.5.3"
+  val jacksonScalaVersion = "2.5.2"
+  val guava = "com.google.guava" % "guava" % "18.0"
 
   def jackson = Seq(
     "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
@@ -105,10 +106,12 @@ object RethinkdbBuild extends Build {
 
         "io.netty" % "netty-all" % "4.0.27.Final",
 
+
         "joda-time" % "joda-time" % "2.3",
         "org.joda" % "joda-convert" % "1.5",
         "org.scala-lang" % "scala-reflect" % sv,
-        "com.googlecode.thread-weaver" % "threadweaver" % "0.2" % "test",
+          guava,
+  "com.googlecode.thread-weaver" % "threadweaver" % "0.2" % "test",
         "org.scala-lang.modules" %% "scala-xml" % "1.0.1" % "test" // "net.sandrogrzicic" %% "scalabuff`-runtime" % scalaBuffVersion
       ) ++ jackson),
 
