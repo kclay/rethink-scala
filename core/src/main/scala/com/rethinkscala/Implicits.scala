@@ -305,9 +305,12 @@ trait Helpers {
 
   def block[T](f: BlockingConnection => BlockResult[T])(implicit c: Connection): BlockResult[T] = f(BlockingConnection(c))
 
-  def block[T](p: Produce[T])(implicit c: Connection, extractor: ResultExtractor[T]): BlockResult[T] = {
+  def block[T: Manifest](p: Produce[T])(implicit c: Connection): BlockResult[T] = {
 
-    block { c: BlockingConnection => c.apply(p)}
+    block { bc: BlockingConnection =>
+      implicit val extractor = bc.resultExtractorFactory.create[T]
+      bc.apply(p)
+    }
   }
 
 }
@@ -358,9 +361,7 @@ object Implicits {
   }
 
 
-
   object Blocking extends net.BlockingImplicits with Common {
-
 
 
     object functional extends net.BlockingFunctionalImplicits with Common

@@ -44,9 +44,9 @@ case class FuncWrap(value: Any) {
 
   def apply(): Term = {
     val expressed = Expr(value)
-    expressed match{
-      case f:Func=> f
-      case _=> if (scan(expressed)) new ScalaPredicate1((v: Var) ⇒ expressed.asInstanceOf[Typed]).apply() else expressed
+    expressed match {
+      case f: Func => f
+      case _ => if (scan(expressed)) new ScalaPredicate1((v: Var) ⇒ expressed.asInstanceOf[Typed]).apply() else expressed
     }
   }
 }
@@ -92,6 +92,13 @@ case class JavaScript(code: String, timeout: Option[Int] = None) extends TopLeve
   def termType: TermType = TermType.JAVASCRIPT
 }
 
+case class Range(start: Int, end: Option[Int] = None) extends ProduceDefaultSequence[Int] {
+
+  override lazy val args = buildArgs(end.map(e => Seq(start, e)).getOrElse(Seq(start)): _*)
+
+  override def termType = TermType.RANGE
+}
+
 case class Default(value: Any) extends MethodQuery {
 
   def termType: TermType = TermType.DEFAULT
@@ -107,7 +114,6 @@ case class UserError(error: String) extends TopLevelQuery {
 class ImplicitVar extends ProduceAny {
 
   def termType: TermType = TermType.IMPLICIT_VAR
-
 
 
   override private[rethinkscala] def print(args: Seq[String], opt: Map[String, String]) = "r.row"
@@ -153,10 +159,12 @@ case class FuncCall(function: Predicate, values: Seq[Typed]) extends ProduceAny 
 }
 
 
-object internal{
-  case class Continue[T](token:Long) extends ProduceDefaultSequence[T]{
-    override def termType =  null
+object internal {
+
+  case class Continue[T](token: Long) extends ProduceDefaultSequence[T] {
+    override def termType = null
   }
+
 }
 
 trait Expr {
@@ -193,7 +201,7 @@ trait Expr {
 
   }
 
-  private[rethinkscala] def mapForInsert(doc: AnyRef): Map[String, Any] =Reflector.toMap(doc)
+  private[rethinkscala] def mapForInsert(doc: AnyRef): Map[String, Any] = Reflector.toMap(doc)
 
 
   def apply(a: Any, depth: Int = 20, writeNulls: Boolean = false): Term = {

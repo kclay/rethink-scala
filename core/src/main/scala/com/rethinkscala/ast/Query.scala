@@ -30,7 +30,7 @@ trait Query extends Term {
 }
 
 
-trait TopLevelQuery extends Query {
+trait TopLevelQuery extends Query with Typed {
 
 }
 

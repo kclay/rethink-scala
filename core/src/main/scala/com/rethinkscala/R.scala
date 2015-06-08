@@ -118,6 +118,8 @@ trait RethinkApi extends TimeNames with GeometryApi {
   def json(str: String) = Json(str)
 
   def uuid = new ast.UUID()
+  def range(start:Int):Range = Range(start)
+  def range(start:Int,end:Int):Range = Range(start,end)
 
 
 }

@@ -119,7 +119,7 @@ case class JsonQuery(queryType: ql2.Query.QueryType, ast: JsonAst, opts: Map[Str
 
 }
 
-case class JsonCompiledQuery[T](tokenId: Long, query: JsonQuery) extends CompiledQuery {
+case class JsonCompiledQuery[T](tokenId: Long, query: JsonQuery) extends CompiledQuery with LazyLogging {
 
   override type Result = T
 
@@ -131,6 +131,7 @@ case class JsonCompiledQuery[T](tokenId: Long, query: JsonQuery) extends Compile
 
   override def encode(out: ByteBuf) = {
     val jsonBytes = json.getBytes
+    logger.debug(s"Json($tokenId)->  $json")
     val jsonSize = jsonBytes.length
     val size = TOKEN_SIZE + 4 + jsonSize // token + json len + json string
     out.capacity(size)
@@ -382,9 +383,9 @@ trait Versions {
                db: Option[String] = None, maxConnections: Int = 5,
                authKey: String = "") = new Version2(host, port, db, maxConnections, authKey)
 
-  
+
   def Version3(host: String = "localhost", port: Int = 28015,
                db: Option[String] = None, maxConnections: Int = 5,
-               authKey: String = "") = new Version3(host, port, db, maxConnections, authKey)  
+               authKey: String = "") = new Version3(host, port, db, maxConnections, authKey)
 
 }

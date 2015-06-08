@@ -6,7 +6,7 @@ import com.rethinkscala.ast.{internal, Aggregation}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
-case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] with LazyLogging{
+case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] with LazyLogging {
 
   var index = 0
 
@@ -19,12 +19,13 @@ case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] with
       import com.rethinkscala.net.Blocking._
       import cursor.connection
 
+      val cursorLength = cursor.chunks.length
       val more = internal.Continue[T](cursor.token.id)
       // FIXME : Currently this only works for non change feed sequences
       val extractor = cursor.token.extractor
         .asInstanceOf[ResultExtractor[DefaultCursor[T]]]
       val response = more.withConnection(cursor.connectionId).run(extractor)
-//      println(response)
+      //      println(response)
 
       cursor.chunks(index)
     }

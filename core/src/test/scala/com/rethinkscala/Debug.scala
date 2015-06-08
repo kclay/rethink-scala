@@ -1,7 +1,11 @@
 package com.rethinkscala
 
-import org.scalatest.FunSuite
-import com.rethinkscala.Blocking.functional._
+
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
+import org.scalatest.{Matchers, FunSuite}
+import com.rethinkscala.Async._
+import org.scalatest.concurrent.ScalaFutures
+import scala.concurrent.duration._
 import ql2.Ql2
 
 
@@ -42,9 +46,10 @@ case class Conversation(
                          addedTo: Long,
                          hidden: Option[Boolean] = Some(false)) extends Document
 
-class Debug extends FunSuite with WithBase {
+class Debug extends FunSuite with WithBase with ScalaFutures with Matchers {
 
 
+  implicit val asyncConnection = connection.toAsync
   test("debug") {
 
 
@@ -60,6 +65,7 @@ class Debug extends FunSuite with WithBase {
     val convo = Conversation(id = None, addedTo = 1425441210548L, checkinId = "54759d24712f1c09a8a76dd3",
       created = 1425441210548L, messages = messages, participants = participants,
       status = "normal")
+
     val updated = convos.insert(convo).run.flatMap {
       res =>
         val id = res.generatedKeys.head
@@ -67,8 +73,10 @@ class Debug extends FunSuite with WithBase {
           Participant("546557ad49c1ca1900c1f4b7", "store", "Industrie Bankstwon", 0))
         convos.get(id)
           .update(Map("participants" -> newParts)).run
+    }(asyncConnection.executionContext)
+    whenReady(updated, Timeout(10 seconds)) {
+      v => println(v)
     }
-    println(updated)
 
   }
   test("nosuch elm") {
@@ -111,7 +119,7 @@ class Debug extends FunSuite with WithBase {
       ))
     }).run
 
-    println(results)
+    whenReady(results)(println)
 
   }
 }

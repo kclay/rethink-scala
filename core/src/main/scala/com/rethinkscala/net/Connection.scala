@@ -15,7 +15,7 @@ import io.netty.channel.socket.nio.NioSocketChannel
 import ql2.{Ql2 => ql2}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 
 /** Created by IntelliJ IDEA.
@@ -77,9 +77,6 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
   private[this] val connectionId = new AtomicLong()
 
   implicit val exc = version.executionContext
-
-
-
 
 
   lazy val bootstrap = {
@@ -207,7 +204,7 @@ trait Connection {
 
   def write[T](term: Term, opts: Map[String, Any], connectionId: Option[Long] = None)(implicit extractor: ResultExtractor[T]): Promise[T]
 
-  private[rethinkscala] val resultExtractorFactory:ResultExtractorFactory = new ResultExtractorFactory
+  private[rethinkscala] val resultExtractorFactory: ResultExtractorFactory = new ResultExtractorFactory
 }
 
 
@@ -235,6 +232,12 @@ trait BlockingConnection extends Connection with ConnectionOps[BlockingConnectio
 
   val timeoutDuration: Duration
 
+  def toAsync: AsyncConnection = AsyncConnection(this)
+
+  def async[T](p: Produce[T])(implicit extractor: ResultExtractor[T]): ResultResolver.Async[T] = async(_.apply(p))
+
+  def async[T](f: AsyncConnection => Future[T]): ResultResolver.Async[T] = f(toAsync)
+
   def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = BlockingResultQuery[R](term, this, extractor, opts)
 }
 
@@ -242,12 +245,25 @@ trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Asy
 
   val delegate = Async
 
+  val executionContext: ExecutionContext = version.executionContext
+
   // FIXME : Need to place here to help out Intellij with async(_.apply(res))
   def apply[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).run
 
   def toOpt[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).toOpt
 
   def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, extractor, opts)
+
+  def toBlocking: BlockingConnection = BlockingConnection(this)
+
+  def block[T](f: BlockingConnection => Unit): Unit = f(toBlocking)
+
+  def block[T](f: BlockingConnection => ResultResolver.Blocking[T]): ResultResolver.Blocking[T] = f(toBlocking)
+
+  def block[T](p: Produce[T])(implicit extractor: ResultExtractor[T]): ResultResolver.Blocking[T] = {
+
+    block { c: BlockingConnection => c.apply(p)(extractor)}
+  }
 
 }
 
