@@ -16,21 +16,18 @@ trait TableTyped extends Typed
 trait MapTyped extends Typed
 
 
-
-
-
 trait Record extends Typed with Hash {
 
 
   override val underlying = this
 
-  def mapTo[T<:Document] =  new MapToDocument[T](underlying)
+  def mapTo[T <: Document] = new MapToDocument[T](underlying)
 
-  def merge(other:Any) = Merge.record(underlying,other)
+  def merge(other: Any): ProduceAnyDocument = Merge.record(underlying, other)
+
   def hasFields(values: String*) = HasFields(underlying, values)
 
   def keys = Keys(underlying)
-
 
 
 }
@@ -41,9 +38,9 @@ trait Hash {
 
   override val underlying = this
 
-  def field(name: String):FieldProduce
+  def field(name: String): FieldProduce
 
-  def apply(name: String):FieldProduce= field(name)
+  def apply(name: String): FieldProduce = field(name)
 
   def \(name: String) = field(name)
 }

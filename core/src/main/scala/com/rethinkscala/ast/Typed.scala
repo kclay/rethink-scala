@@ -3,6 +3,7 @@ package com.rethinkscala.ast
 import com.rethinkscala._
 import com.rethinkscala.net.DefaultCursor
 
+import scala.reflect.ClassTag
 
 
 sealed trait DataType {
@@ -11,23 +12,24 @@ sealed trait DataType {
 }
 
 
-trait CanManipulate[P<:Pluck,M<:Merge,W<:Without] extends Typed{
+trait CanManipulate[P <: Pluck, M <: Merge, W <: Without] extends Typed {
 
 
-  type CM = CanManipulate[P,M,W]
+  type CM = CanManipulate[P, M, W]
 
   //def pluck(attrs: String*):P
 
-  def pluck(m: Map[String, Any]):P
+  def pluck(m: Map[String, Any]): P
 
-  def without(attrs: String*):W
+  def without(attrs: String*): W
 
 
-  def merge(other: CM):M
+  def merge(other: CM): M
 
-  def merge(other: Map[String, Any]):M
+  def merge(other: Map[String, Any]): M
 
 }
+
 case object ObjectData extends DataType {
   def name = "object"
 }
@@ -41,8 +43,7 @@ case object ArrayData extends DataType {
 }
 
 
-
-private[rethinkscala] trait Typed extends ImplicitConversions{
+private[rethinkscala] trait Typed extends ImplicitConversions {
 
   // TODO : Fix me
   def term: Term = this.asInstanceOf[Term]
@@ -56,7 +57,9 @@ private[rethinkscala] trait Typed extends ImplicitConversions{
   def coerceTo(dataType: DataType) = CoerceTo(underlying, dataType)
 
   def unary_~ = not
+
   def ===(other: Typed) = eq(other)
+
   def !=(other: Typed) = ne(other)
 
   def =!=(other: Typed) = ne(other)
@@ -64,31 +67,44 @@ private[rethinkscala] trait Typed extends ImplicitConversions{
   def <(other: Typed) = lt(other)
 
   def <=(other: Typed) = lte(other)
+
   def >=(other: Typed) = gte(other)
+
   def >(other: Typed) = gt(other)
 
 
   def not = Not(underlying)
 
   def eq(other: Typed) = Eq(underlying, other)
+
   def ne(other: Typed) = Ne(underlying, other)
+
   def lt(other: Typed) = Lt(underlying, other)
+
   def lte(other: Typed) = Le(underlying, other)
+
   def gt(other: Typed) = Gt(underlying, other)
+
   def gte(other: Typed) = Ge(underlying, other)
+
+  def default[T](value: T)(implicit ast: ToAst[T]): ast.ProduceDefault = ast.default(this, value)
+
+
 }
 
 
-object Ref{
-  implicit class ScalaRef(underlying:Ref){
-     def +(other: Numeric) = underlying.add(other)
+object Ref {
 
-     def +=(other: Numeric) = underlying.add(other)
+  implicit class ScalaRef(underlying: Ref) {
+    def +(other: Numeric) = underlying.add(other)
+
+    def +=(other: Numeric) = underlying.add(other)
   }
+
 }
 
 
-trait Ref extends Sequence[Any,DefaultCursor] with Numeric with Binary with Record with Literal with Strings{
+trait Ref extends Sequence[Any, DefaultCursor] with Numeric with Binary with Record with Literal with Strings {
 
 
   override val underlying = this
@@ -98,14 +114,9 @@ trait Ref extends Sequence[Any,DefaultCursor] with Numeric with Binary with Reco
   //def add(other: Ref): Add = Add(underlying, other)
 
 
+  def merge(other: Typed) = Merge.typed(underlying, other)
 
-
-
-    def merge(other: Typed) = Merge.typed(underlying,other)
-    def merge[R,CR[_]](other:Sequence[R,CR]) = Merge.seq(underlying,other)
-
-
-
+  def merge[R, CR[_]](other: Sequence[R, CR]) = Merge.seq(underlying, other)
 
 
   def pluck(attrs: String*) = Pluck(underlying, attrs)
@@ -115,7 +126,7 @@ trait Ref extends Sequence[Any,DefaultCursor] with Numeric with Binary with Reco
   def pluck(m: Map[String, Any]) = Pluck(underlying, m)
 }
 
-trait JoinTyped[L, R,C[_]] extends Typed {
+trait JoinTyped[L, R, C[_]] extends Typed {
 
   override val underlying = this
 
@@ -136,7 +147,7 @@ trait Multiply extends Typed {
   def mul(other: Double): Mul = Mul(underlying, other)
 }
 
-object Binary{
+object Binary {
 
 }
 
@@ -164,10 +175,11 @@ trait BinaryOps{
 }*/
 trait Binary extends Typed {
 
-  override  val underlying = this
+  override val underlying = this
 
 
   def &&(other: Binary) = and(other)
+
   def and(other: Binary) = All(underlying, other)
 
   def rand(other: Binary) = All(other, underlying)

@@ -52,7 +52,8 @@ trait CastTo {
   def int(name: String) = cast[Int](name)
 
   def double(name: String) = cast[Double](name)
-  def long(name:String) = cast[Long](name)
+
+  def long(name: String) = cast[Long](name)
 
   def float(name: String) = cast[Float](name)
 
@@ -81,7 +82,7 @@ trait CastTo {
 
   def toDouble = to[Double]
 
-  def toLong= to[Long]
+  def toLong = to[Long]
 
   // def toFloat[R](implicit tf:ToCast[CastTo ,Float,R]) = tf.cast
 
@@ -183,6 +184,7 @@ trait ProduceDocument[T] extends ProduceSingle[T] with Record with DocumentConve
 
 }
 
+
 trait ProduceAnyDocument extends ProduceDocument[Document] with Record
 
 trait ProduceTypedDocument[T <: Document] extends ProduceDocument[T] with Record
@@ -239,7 +241,7 @@ trait ProduceAny extends Produce[Any] with Ref with Produce0[Any] with CastTo {
 
   def array[T]: ArrayTyped[T] = this.asInstanceOf[ArrayTyped[T]]
 
-  override def merge(other: Any) = Merge.record(underlying, other)
+  override def merge(other: Any): ProduceAnyDocument = Merge.record(underlying, other)
 
   type FieldProduce = ProduceAny
 
@@ -267,6 +269,13 @@ class MapToDocument[T <: Document](from: Record) extends ProduceTypedDocument[T]
   override private[rethinkscala] val underlyingTerm: Term = from.underlying.asInstanceOf[Term]
 
   def termType: TermType = underlyingTerm.termType
+}
+
+trait ProduceTypedObject[T] extends Produce[Map[String, T]] with Record {
+  override type FieldProduce = ProduceAny
+
+
+  override def field(name: String): ProduceAny = GetField.any(this, name)
 }
 
 trait ProduceObject extends Produce[Map[String, Any]] with Record {

@@ -99,10 +99,6 @@ case class Range(start: Int, end: Option[Int] = None) extends ProduceDefaultSequ
   override def termType = TermType.RANGE
 }
 
-case class Default(value: Any) extends MethodQuery {
-
-  def termType: TermType = TermType.DEFAULT
-}
 
 case class UserError(error: String) extends TopLevelQuery {
 
@@ -307,6 +303,14 @@ case class LazyJson(value: Any) extends Produce[JsonDocument] with JsonDocumentC
 
 case class Json(value: String) extends Produce[JsonDocument] with JsonDocumentConversion with JsonLike {
   def termType: TermType = TermType.JSON
+}
+
+class Default[T](target: Typed, defaultValue: T) extends MethodQuery {
+
+
+  override lazy val args = buildArgs(target, defaultValue)
+
+  def termType: TermType = TermType.DEFAULT
 }
 
 object Json {

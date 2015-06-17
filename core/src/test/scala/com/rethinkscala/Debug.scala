@@ -122,4 +122,63 @@ class Debug extends FunSuite with WithBase with ScalaFutures with Matchers {
     whenReady(results)(println)
 
   }
+
+  test("timeout") {
+    val convos = table.to[Conversation]
+    val messages = Seq(
+      Message(authorId = "54757e32712f1c24005881e2", authorType = "user", content = "Hi there - what's your sign?",
+        created = 1423714230176L, `type` = "text"),
+      Message("booodl", "booodl", "text", "boodle ere", 1428641056382L, Seq("54757e32712f1c24005881e2"))
+    )
+    val participants = Seq(
+      Participant(id = "54757e32712f1c24005881e2", name = "mick", `type` = "user",
+        unreadCount = 0), Participant(id = "546557ad49c1ca1900c1f4b7", name = "Industrie Bankstwon", `type` = "store", unreadCount = 1)
+    )
+    val convId = "962c7fc3-0ed1-4fd6-b4fd-2956e8f0c8aa"
+    val convo = Conversation(id = Some(convId), addedTo = 1425441210548L, checkinId = "54759d24712f1c09a8a76dd3",
+      created = 1425441210548L, messages = messages, participants = participants,
+      status = "normal")
+
+    convos.insert(convo).run
+
+    val message = 1428641056382L
+    val partId = "5465402d49c1ca1800003a40"
+
+
+
+
+
+    val result = convos
+      .get(convId)
+      .update(doc => {
+      Map("message" ->
+        doc("message").toSeq[Message].map((msg: Var) =>
+          msg.merge(Map("unread" -> msg("unread")
+            .default(Seq.empty[String]).filter(u => u =!= partId)))
+        )
+      )
+
+    }).run
+
+  }
+
+  test("default") {
+
+    import asyncConnection.executionContext
+    import scala.concurrent.Future
+    val defaultValue: Seq[Int] = 1 to 10
+
+    val result = for {
+      id <- table.insertMap(Map("a" -> 1)).run.map(_.generatedKeys.head)
+
+      change <- table.get(id).update(d => d.merge(Map("b" -> d("b").default(defaultValue)))).run
+      doc <- table.get(id).run
+
+
+    } yield doc.apply("b").as[Seq[Int]]
+    whenReady(result, Timeout(10 seconds)) {
+      b => assert(b.contains(defaultValue))
+    }
+  }
+
 }

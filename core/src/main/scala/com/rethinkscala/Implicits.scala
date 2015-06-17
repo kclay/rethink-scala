@@ -23,61 +23,85 @@ trait ToAstImplicts {
 
   implicit val stringToStrings = new ToAst[String] {
     type TypeMember = Strings
+    type ProduceDefault = ProduceString
 
     type InnerProduce = Produce0[String]
+
+    override def default(target: Typed, value: String) = new Default(target, value) with ProduceString
   }
   implicit val doubleToNumeric = new ToAst[Double] {
     type TypeMember = Numeric
 
     type InnerProduce = Produce0[Double]
+    type ProduceDefault = ProduceTypedNumeric[Double]
 
+    override def default(target: Typed, value: Double) = new Default(target, value) with ProduceTypedNumeric[Double]
 
   }
   implicit val longToNumeric = new ToAst[Long] {
     type TypeMember = Numeric
 
     type InnerProduce = Produce0[Long]
+    type ProduceDefault = ProduceTypedNumeric[Long]
+
+    override def default(target: Typed, value: Long) = new Default(target, value) with ProduceTypedNumeric[Long]
 
   }
   implicit val intToNumeric = new ToAst[Int] {
     type TypeMember = Numeric
 
     type InnerProduce = Produce0[Int]
+    type ProduceDefault = ProduceTypedNumeric[Int]
+
+    override def default(target: Typed, value: Int) = new Default(target, value) with ProduceTypedNumeric[Int]
 
   }
   implicit val floatToNumeric = new ToAst[Float] {
     type TypeMember = Numeric
 
+    type ProduceDefault = ProduceTypedNumeric[Float]
     type InnerProduce = Produce0[Float]
 
+    override def default(target: Typed, value: Float) = new Default(target, value) with ProduceTypedNumeric[Float]
   }
 
 
   implicit def arrayMapToTyped[T] = new ToAst[Map[String, T]] {
     type TypeMember = Var
 
+    type ProduceDefault = ProduceTypedObject[T]
     type InnerProduce = Produce0[Map[String, T]]
+
+    override def default(target: Typed, value: Map[String, T]) = new Default(target, value) with ProduceTypedObject[T]
   }
 
   implicit def docToTyped[T <: Document] = new ToAst[T] {
     type TypeMember = Var
 
     type InnerProduce = Produce0[T]
+    type ProduceDefault = ProduceDocument[T]
 
+    override def default(target: Typed, value: T) = new Default(target, value) with ProduceDocument[T]
   }
 
-  /*
-  implicit def seqToSequence[T>:Any] = new ToAst[Seq[T]] {
-    type TypeMember = Sequence[T]
 
+  implicit def seqToSequence[T] = new ToAst[Seq[T]] {
+    type TypeMember = Sequence[Any, DefaultCursor]
     type InnerProduce = Produce0[T]
-  } */
+    type ProduceDefault = ProduceDefaultSequence[T]
+
+    //type ForType[T] = Sequence[T, DefaultCursor] with Produce[Seq[T]] with Produce0[T]
+    override def default(target: Typed, value: Seq[T]) = new Default(target, value) with ProduceDefaultSequence[T]
+  }
 
   implicit lazy val seqToAnySequence = new ToAst[Seq[Any]] {
     type TypeMember = Sequence[Any, DefaultCursor]
 
     type InnerProduce = Produce0[Any]
     type ForType[T] = Sequence[T, DefaultCursor] with Produce[Seq[T]] with Produce0[T]
+    type ProduceDefault = ProduceDefaultSequence[Any]
+
+    override def default(target: Typed, value: Seq[Any]) = new Default(target, value) with ProduceDefaultSequence[Any]
   }
 }
 
@@ -90,6 +114,9 @@ trait ToAst[A] {
   type Producer = Produce[A]
   type InnerProduce <: Produce0[_]
   type Cast = TypeMember with InnerProduce with Producer
+  type ProduceDefault <: Typed
+
+  def default(target: Typed, value: A): ProduceDefault
 
 }
 
@@ -165,7 +192,9 @@ trait CanMapImplicits {
   implicit def mapDocumentToDouble[T <: AnyRef] = CanMap[T, Numeric, Double]
 
 
-  implicit def mapDocumentToString[T <: AnyRef] = CanMap[T, Strings, String]
+  implicit def mapDocumentToString[T <: AnyRef]  = CanMap[T, Strings, String]
+
+  implicit def mapDocumentToDocument[T <: AnyRef, D <: Document]: CanMap[T, ProduceDocument[D], T] = CanMap[T, ProduceDocument[D], T]
 
 
   implicit def mapDocumentToAny[T <: AnyRef] = CanMap[T, Ref, Any]
@@ -174,6 +203,10 @@ trait CanMapImplicits {
 }
 
 class CanMap[-From, -To <: Typed, Out]
+
+trait DefaultValue[T] {
+  type Produce
+}
 
 
 private[rethinkscala] trait ImplicitConversions {

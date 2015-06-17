@@ -19,6 +19,7 @@ case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] with
       import com.rethinkscala.net.Blocking._
       import cursor.connection
 
+
       val cursorLength = cursor.chunks.length
       val more = internal.Continue[T](cursor.token.id)
       // FIXME : Currently this only works for non change feed sequences
