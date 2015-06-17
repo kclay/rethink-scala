@@ -245,7 +245,7 @@ trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Asy
 
   val delegate = Async
 
-  val executionContext: ExecutionContext = version.executionContext
+  implicit val executionContext: ExecutionContext = version.executionContext
 
   // FIXME : Need to place here to help out Intellij with async(_.apply(res))
   def apply[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).run
