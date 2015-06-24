@@ -33,3 +33,4 @@ case class Filter[T, C[_]](target: Filterable[T, C], wrap: FuncWrap, default: Op
 
   def termType: TermType = TermType.FILTER
 }
+

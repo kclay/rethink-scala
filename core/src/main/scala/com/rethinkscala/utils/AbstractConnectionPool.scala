@@ -35,7 +35,7 @@ trait AbstractConnectionPool[Connection] {
 
   def getConnectionById(id: Long): Option[Connection]
 
-  def take(connectionId: Option[Long])(block: (Connection, Connection => Unit, Connection => Unit) => Unit)(implicit exc: ExecutionContext): Future[Connection]
+  def take(connectionId: Option[Long], name: Option[String] = None)(block: (Connection, Connection => Unit, Connection => Unit) => Unit)(implicit exc: ExecutionContext): Future[Connection]
 
 }
 
@@ -107,6 +107,7 @@ class RethinkConnectionPool(connectionFactory: ConnectionFactory[ConnectionChann
   def getConnectionById(id: Long): Option[Conn] = Option(connections.get(id))
 
   trait ScopedPromised {
+    val tag: Option[String]
     val future: Future[Conn]
 
     def trySuccess(value: Conn): Unit
@@ -117,7 +118,7 @@ class RethinkConnectionPool(connectionFactory: ConnectionFactory[ConnectionChann
 
   private val pending: TrieMap[Long, LinkedBlockingDeque[ScopedPromised]] = TrieMap.empty
 
-  def take(connectionId: Option[Long])(block: (Conn, Conn => Unit, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Conn] = {
+  def take(connectionId: Option[Long], name: Option[String] = None)(block: (Conn, Conn => Unit, Conn => Unit) => Unit)(implicit exc: ExecutionContext): Future[Conn] = {
 
     def execute(connection: Conn): Future[Conn] = Future {
 
@@ -147,8 +148,9 @@ class RethinkConnectionPool(connectionFactory: ConnectionFactory[ConnectionChann
 
 
           val scoped = new ScopedPromised {
+            val tag = name
             override val future: Future[Conn] = p.future.flatMap(conn => {
-              logger.debug(s"Promise resolved for ($id)  executing")
+              logger.debug(s"Promise resolved for ($id)  executing name={$tag}")
               execute(conn)
             })
 
@@ -196,6 +198,7 @@ class RethinkConnectionPool(connectionFactory: ConnectionFactory[ConnectionChann
       logger.debug(s"drain(connection:${connection.id}, pending : ${hasPending.size}})")
 
       val current = hasPending.remove()
+      logger.debug(s"Removing promise nam=${current.tag}")
       current.onComplete {
         case _ =>
           logger.debug(s"Processed ScopedPromised for (${connection.id})")

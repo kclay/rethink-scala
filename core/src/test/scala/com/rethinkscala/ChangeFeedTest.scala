@@ -1,7 +1,10 @@
 package com.rethinkscala
 
+import com.rethinkscala.ast.Produce
+import com.rethinkscala.changefeeds.net.ChangeCursor
 import org.scalatest.FunSuite
 import Blocking._
+import scalaz.stream.io
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,14 +14,32 @@ import Blocking._
  *
  */
 
-case class ChangeFeedEntity(id:Option[String],value:String)
-class ChangeFeedTest  extends FunSuite with WithBase{
+case class ChangeFeedEntity(id: Option[String], value: String)
 
+class ChangeFeedTest extends FunSuite with WithBase {
 
-  test("change feeds"){
+  test("change feeds") {
 
     val feed = table.to[ChangeFeedEntity]
 
-    //feed.changes.ru
+
+    val changes: Produce[ChangeCursor[CursorChange[ChangeFeedEntity]]] = feed.changes
+    val process = changes.run.map(_.toString).run.run
+
+    Thread.sleep(2 * 1000)
+
+    println(feed.insert(ChangeFeedEntity(None, "foo")).toOpt)
+
+    Thread.sleep(2 * 1000)
+    import scalaz.concurrent.Task
+    import scalaz._
+    import scalaz.\/._
+    import scalaz.stream.Process
+    // Process.range(1,10,2).toSource.runLog.run
+
   }
+
+  override lazy val dbName: String = "test"
+  override lazy val tableName: String = "changefeeds"
 }
+

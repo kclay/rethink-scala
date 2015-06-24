@@ -135,7 +135,8 @@ trait ProduceSeq[E, C[_]] extends ProduceSequenceLike[E, C] with Produce[C[E]] w
   override type Collection[A] = C[A]
 }
 
-trait ProduceDefaultSequence[E] extends ProduceSeq[E, DefaultCursor]
+
+trait ProduceDefaultSequence[E] extends ProduceSeq[E, RethinkCursor]
 
 // FIXME support changes ???
 trait ProduceAnySequence extends ProduceDefaultSequence[Any]
@@ -160,9 +161,13 @@ trait ProduceSingleDocumentSelection[T] extends SingleSelection[T] with ProduceD
 // FIXME support changes ???
 trait ProduceStreamSelection[T, C[_]] extends ProduceSeq[T, C] with StreamSelection[T, C]
 
-trait ProduceDefaultStreamSelection[T] extends ProduceStreamSelection[T, DefaultCursor]
+trait ProduceDefaultStreamSelection[T] extends ProduceStreamSelection[T, RethinkCursor]
 
-trait ProduceChangeStream[T] extends ProduceStreamSelection[CursorChange[T], ChangeCursor]
+trait ProduceChangesSeq[E, C[_]] extends Produce[C[E]] with ProduceSequence[E] /*with Filterable[E, C] */ {
+  override type Collection[A] = C[A]
+}
+
+trait ProduceChangeStream[T] extends ProduceChangesSeq[CursorChange[T], ChangeCursor]
 
 trait ProduceArray[T] extends ProduceDefaultSequence[T] with ArrayTyped[T]
 

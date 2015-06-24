@@ -35,18 +35,26 @@ object Delegate {
 trait Delegate[T] {
   self =>
 
-  type Extractor[R] = ResultExtractor[R]
+  type Extractor[R]
   type Result[O]
   type ResolverResult[R]
   type Query[Q] <: ResultResolver[ResolverResult[Q]]
-  type Opt[R]
+
   val connectionId: Option[Long]
 
   def withConnection(id: Long): Delegate[T]
 
   def toQuery[R](extractor: Extractor[R]): Query[R]
 
-  def run(implicit extractor: Extractor[T]): Result[T] = toQuery(extractor).toResult.asInstanceOf[Result[T]]
+  def run(implicit extractor: Extractor[T]): Result[T] = toQuery(extractor)
+    .toResult.asInstanceOf[Result[T]]
+
+
+}
+
+trait CastAbleDelegate[T] {
+  self: Delegate[T] =>
+  type Opt[R]
 
   def as[R <: T](implicit extractor: Extractor[R]): Result[R] = toQuery(extractor).toResult.asInstanceOf[Result[R]]
 
@@ -56,10 +64,12 @@ trait Delegate[T] {
 }
 
 
-case class BlockingTryDelegate[T](delegate: BlockingDelegate[T], connectionId: Option[Long] = None) extends Delegate[T] {
+case class BlockingTryDelegate[T](delegate: BlockingDelegate[T], connectionId: Option[Long] = None)
+  extends Delegate[T] with CastAbleDelegate[T] {
 
   import scala.util.{Try, Success, Failure}
 
+  type Extractor[R] = ResultExtractor[R]
   type Result[O] = Try[T]
   type ResolverResult[R] = ResultResolver.Blocking[R]
   type Query[R] = BlockingResultQuery[R]
@@ -87,8 +97,10 @@ case class BlockingTryDelegate[T](delegate: BlockingDelegate[T], connectionId: O
 
 }
 
-case class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection, connectionId: Option[Long] = None) extends Delegate[T] {
+case class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnection, connectionId: Option[Long] = None)
+  extends Delegate[T] with CastAbleDelegate[T] {
 
+  type Extractor[R] = ResultExtractor[R]
   type Result[O] = ResultResolver.Blocking[O]
   type ResolverResult[R] = Result[R]
   type Query[R] = BlockingResultQuery[R]
@@ -108,9 +120,11 @@ case class BlockingDelegate[T](producer: Produce[T], connection: BlockingConnect
 }
 
 
-case class AsyncDelegate[T](producer: Produce[T], connection: AsyncConnection, connectionId: Option[Long] = None) extends Delegate[T] {
+case class AsyncDelegate[T](producer: Produce[T], connection: AsyncConnection, connectionId: Option[Long] = None)
+  extends Delegate[T] with CastAbleDelegate[T] {
 
   implicit val exc: ExecutionContext = connection.version.executionContext
+  type Extractor[R] = ResultExtractor[R]
   type Result[O] = ResultResolver.Async[O]
   type ResolverResult[R] = Result[R]
   type Query[R] = AsyncResultQuery[R]

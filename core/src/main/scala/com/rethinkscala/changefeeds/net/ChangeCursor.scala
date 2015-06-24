@@ -1,7 +1,9 @@
 package com.rethinkscala.changefeeds.net
 
-import com.rethinkscala.CursorChange
-import com.rethinkscala.net.{RethinkCursor, Token}
+import com.rethinkscala.{ResultExtractor, CursorChange}
+import com.rethinkscala.ast.internal
+import com.rethinkscala.net.{RethinkIterator, RethinkCursor, Token}
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,43 +14,67 @@ import com.rethinkscala.net.{RethinkCursor, Token}
  */
 
 
-class ChangeWatcher[T](f: CursorChange[T] => Unit, cursor: ChangeCursor[T]) {
-  def cancel: Unit = cursor.watchers - this
+case class RethinkChangesIterator[T](cursor: ChangeCursor[T]) extends Iterator[CursorChange[T]] {
 
-  def apply() = cancel
 
-  private[rethinkscala] def apply(change: CursorChange[T]) = f(change)
+  override def hasNext = true
+
+
+  def fetch(): Unit = {
+    import com.rethinkscala.net.Blocking._
+    import cursor.connection
+
+    val more = internal.Continue[CursorChange[T]](cursor.token.id)
+
+    // FIXME : Currently this only works for non change feed sequences
+    val extractor = cursor.token.extractor
+      .asInstanceOf[ResultExtractor[RethinkCursor[CursorChange[T]]]]
+
+    val result = more.withConnection(cursor.connectionId).toOpt(extractor)
+    println(result)
+
+  }
+
+
+  override def next() = {
+    try {
+      cursor.queue.dequeue()
+    } catch {
+      case t: NoSuchElementException => fetch()
+        cursor.queue.dequeue()
+      case t: Throwable => throw t
+
+    }
+  }
+
+
 }
 
 case class ChangeCursor[T](connectionId: Long, token: Token[_]) extends RethinkCursor[CursorChange[T]] {
 
 
-  private[rethinkscala] var watchers = collection.mutable.ArrayBuffer.empty[ChangeWatcher[T]]
+  override val isChangeFeed: Boolean = true
+
+  val queue = new scala.collection.mutable.Queue[CursorChange[T]]
 
 
-  override private[rethinkscala] def <<(chunks: Seq[ChunkType]) = {
-    chunks.foreach(chunk => watchers.foreach(_.apply(chunk)))
-    this
-  }
-
-  override private[rethinkscala] def <(chunk: ChunkType) = {
-    watchers.foreach(_.apply(chunk))
-    this
-  }
-
-
+  override def iterator: Iterator[CursorChange[T]] = new RethinkChangesIterator[T](this)
 
   def stop = synchronized {
     _completed = true
   }
 
- override def completed = synchronized(_completed)
-
-  def foreach(f: ChunkType => Unit) = {
-    val watcher = new ChangeWatcher(f, this)
-    watchers :+ watcher
-    watcher
+  override private[rethinkscala] def <<(more: Seq[ChunkType]) = {
+    chunks ++= more
+    this
   }
 
-  def apply(f: ChunkType => Unit) = foreach(f)
+  override private[rethinkscala] def <(chunk: ChunkType) = {
+    queue += chunk
+    this
+  }
+
+  override def completed = synchronized(_completed)
+
+  override def toString() = s"ChangeCursor($connectionId,$token)"
 }

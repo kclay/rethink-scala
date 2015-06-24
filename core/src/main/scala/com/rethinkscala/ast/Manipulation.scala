@@ -1,7 +1,8 @@
 package com.rethinkscala.ast
 
+import com.rethinkscala.changefeeds.net.RethinkChangesIterator
 import com.rethinkscala.{Document, Term, MatchResult}
-import com.rethinkscala.net.DefaultCursor
+import com.rethinkscala.net.{RethinkCursor, DefaultCursor}
 import ql2.Ql2.Term.TermType
 
 /** Append a value to an array.
@@ -260,7 +261,7 @@ case class Keys(target: Record) extends ProduceArray[String] {
 }
 
 // FIXME support change cursor split
-case class Split(target: Strings, delimiter: Option[String] = None, limit: Option[Int] = None) extends ProduceSeq[String, DefaultCursor] {
+case class Split(target: Strings, delimiter: Option[String] = None, limit: Option[Int] = None) extends ProduceSeq[String, RethinkCursor] {
 
   override lazy val args = buildArgs(Seq(Some(target), delimiter, limit).flatten: _*)
 

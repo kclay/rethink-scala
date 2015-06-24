@@ -151,7 +151,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
     val p = Promise[T]()
     val f = p.future
     logger.debug(s"Writing $term")
-    pool.take(connectionId) {
+    pool.take(connectionId, Some(term.toString)) {
       case (c, restore, invalidate) =>
         logger.debug("Received connection from pool")
         val con = this
@@ -174,7 +174,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
             logger.debug(s"Creating connection attachment ")
             // Or find a way so that we can store the token for the netty handler to complete
             ChannelAttribute.Handler.set(c.channel, attachment)
-            logger.debug("Writing query")
+            logger.debug("Writing query Token = " + query.tokenId)
             c.channel.writeAndFlush(query)
             logger.debug("Wrote query")
             future.removeListener(this)
@@ -262,7 +262,7 @@ trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Asy
 
   def block[T](p: Produce[T])(implicit extractor: ResultExtractor[T]): ResultResolver.Blocking[T] = {
 
-    block { c: BlockingConnection => c.apply(p)(extractor)}
+    block { c: BlockingConnection => c.apply(p)(extractor) }
   }
 
 }

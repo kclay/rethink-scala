@@ -54,6 +54,7 @@ trait VersionHandler[R] extends LazyLogging {
       case internal.Continue(token) => token
 
       case _ => newTokenId.incrementAndGet()
+
     }
 
     val query = version.toQuery[T](term, tokenId, db, opts)
@@ -109,6 +110,7 @@ case class JsonVersionHandler(version: Version3) extends VersionHandler[String] 
       }) match {
         case e: Exception => token.failure(e)
         case e: Any => token.success(e)
+
         case null => token.failure(RethinkNoResultsError("No results found", token.term))
 
       }

@@ -1,7 +1,8 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
-import com.rethinkscala.changefeeds.ast.Changes
+import com.rethinkscala.changefeeds.ast.{ChangeFeedDelegate, Changes}
+import com.rethinkscala.changefeeds.net.ChangeCursor
 import com.rethinkscala.magnets.ReceptacleImplicits
 import com.rethinkscala.net._
 
@@ -86,7 +87,7 @@ trait ToAstImplicts {
 
 
   implicit def seqToSequence[T] = new ToAst[Seq[T]] {
-    type TypeMember = Sequence[Any, DefaultCursor]
+    type TypeMember = Sequence[Any, RethinkCursor]
     type InnerProduce = Produce0[T]
     type ProduceDefault = ProduceDefaultSequence[T]
 
@@ -95,10 +96,10 @@ trait ToAstImplicts {
   }
 
   implicit lazy val seqToAnySequence = new ToAst[Seq[Any]] {
-    type TypeMember = Sequence[Any, DefaultCursor]
+    type TypeMember = Sequence[Any, RethinkCursor]
 
     type InnerProduce = Produce0[Any]
-    type ForType[T] = Sequence[T, DefaultCursor] with Produce[Seq[T]] with Produce0[T]
+    type ForType[T] = Sequence[T, RethinkCursor] with Produce[Seq[T]] with Produce0[T]
     type ProduceDefault = ProduceDefaultSequence[Any]
 
     override def default(target: Typed, value: Seq[Any]) = new Default(target, value) with ProduceDefaultSequence[Any]
@@ -192,7 +193,7 @@ trait CanMapImplicits {
   implicit def mapDocumentToDouble[T <: AnyRef] = CanMap[T, Numeric, Double]
 
 
-  implicit def mapDocumentToString[T <: AnyRef]  = CanMap[T, Strings, String]
+  implicit def mapDocumentToString[T <: AnyRef] = CanMap[T, Strings, String]
 
   implicit def mapDocumentToDocument[T <: AnyRef, D <: Document]: CanMap[T, ProduceDocument[D], T] = CanMap[T, ProduceDocument[D], T]
 
@@ -395,7 +396,10 @@ object Implicits {
 
 
   object Blocking extends net.BlockingImplicits with Common {
+    type ChangeProducer[T] = Produce[ChangeCursor[CursorChange[T]]]
 
+    implicit def toChangeFeedDelegate[T](produce: ChangeProducer[T])(implicit connection: BlockingConnection): ChangeFeedDelegate[T]
+    = ChangeFeedDelegate(produce, connection)
 
     object functional extends net.BlockingFunctionalImplicits with Common
 

@@ -1,7 +1,7 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala._
-import com.rethinkscala.net.DefaultCursor
+import com.rethinkscala.net.{RethinkCursor, DefaultCursor}
 
 import scala.reflect.ClassTag
 
@@ -104,7 +104,7 @@ object Ref {
 }
 
 
-trait Ref extends Sequence[Any, DefaultCursor] with Numeric with Binary with Record with Literal with Strings {
+trait Ref extends Sequence[Any, RethinkCursor] with Numeric with Binary with Record with Literal with Strings {
 
 
   override val underlying = this

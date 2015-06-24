@@ -12,22 +12,18 @@ case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] with
 
   override def hasNext = index < cursor.length
 
+
   override def next() = {
     val value = if (index < cursor.chunks.length) cursor.chunks(index)
     else {
-
       import com.rethinkscala.net.Blocking._
       import cursor.connection
 
-
-      val cursorLength = cursor.chunks.length
       val more = internal.Continue[T](cursor.token.id)
       // FIXME : Currently this only works for non change feed sequences
       val extractor = cursor.token.extractor
-        .asInstanceOf[ResultExtractor[DefaultCursor[T]]]
-      val response = more.withConnection(cursor.connectionId).run(extractor)
-      //      println(response)
-
+        .asInstanceOf[ResultExtractor[RethinkCursor[T]]]
+      more.withConnection(cursor.connectionId).run(extractor)
       cursor.chunks(index)
     }
     index += 1
@@ -40,6 +36,7 @@ case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] with
 trait RethinkCursor[T] extends Seq[T] {
   type ChunkType = T
 
+  val isChangeFeed = false
   private[rethinkscala] val token: Token[_]
 
   // TODO need to assocate collection with the connectionid it came from
@@ -71,7 +68,7 @@ trait RethinkCursor[T] extends Seq[T] {
   override def apply(idx: Int) = chunks.apply(idx)
 
 
-  override def iterator = new RethinkIterator[T](this)
+  override def iterator: Iterator[T] = new RethinkIterator[T](this)
 
   val connectionId: Long
 

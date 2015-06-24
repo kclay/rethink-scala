@@ -63,8 +63,11 @@ object RethinkdbBuild extends Build {
     "Mandubian repository snapshots" at "https://github.com/mandubian/mandubian-mvn/raw/master/snapshots/",
     "Mandubian repository releases" at "https://github.com/mandubian/mandubian-mvn/raw/master/releases/",
     "Sonatype OSS Repository" at "https://oss.sonatype.org/content/groups/public/",
-    "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")
+    "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
+    "Scalaz Bintray Repo" at "https://dl.bintray.com/scalaz/releases"
+  )
 
+  val scalazStream = "0.7.1"
   val jacksonVersion = "2.5.3"
   val jacksonScalaVersion = "2.5.2"
   val guava = "com.google.guava" % "guava" % "18.0"
@@ -110,8 +113,9 @@ object RethinkdbBuild extends Build {
         "joda-time" % "joda-time" % "2.3",
         "org.joda" % "joda-convert" % "1.5",
         "org.scala-lang" % "scala-reflect" % sv,
-          guava,
-  "com.googlecode.thread-weaver" % "threadweaver" % "0.2" % "test",
+        guava,
+        "com.googlecode.thread-weaver" % "threadweaver" % "0.2" % "test",
+        "org.scalaz.stream" %% "scalaz-stream" % scalazStream,
         "org.scala-lang.modules" %% "scala-xml" % "1.0.1" % "test" // "net.sandrogrzicic" %% "scalabuff`-runtime" % scalaBuffVersion
       ) ++ jackson),
 

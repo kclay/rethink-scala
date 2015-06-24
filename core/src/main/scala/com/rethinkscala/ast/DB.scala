@@ -1,7 +1,7 @@
 package com.rethinkscala.ast
 
 import com.rethinkscala._
-import com.rethinkscala.net.{BinaryConversion, DefaultCursor}
+import com.rethinkscala.net.{RethinkCursor, BinaryConversion, DefaultCursor}
 import ql2.Ql2.Term.TermType
 
 trait WithDB {
@@ -62,7 +62,7 @@ case class DBCreateWithChanges(override val term: DBCreate) extends ForwardTyped
 
 case class DBDropWithChanges(override val term: DBDrop) extends ForwardTyped(term) with ProduceDocument[DBDropResults]
 
-case class DBList(db: Option[DB] = None) extends ProduceSeq[String, DefaultCursor] with WithDB {
+case class DBList(db: Option[DB] = None) extends ProduceSeq[String, RethinkCursor] with WithDB {
 
   override protected val extractArgs = false
 

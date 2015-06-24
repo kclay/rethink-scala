@@ -31,7 +31,7 @@ trait ResultQuery[T] {
   val term: Term
 
 
-  protected def resolve(t: Any): ResolveType = {
+  protected def resolve(t: Any): ResolveType =
     t match {
 
       case Some(Failure(e: Exception)) => resolve(e)
@@ -47,12 +47,12 @@ trait ResultQuery[T] {
       }
       case value => Right(value.asInstanceOf[T])
     }
-  }
+
 }
 
 
 case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, extractor: ResultExtractor[R],
-                               opts: Map[String, Any],connectionId:Option[Long]=None)
+                               opts: Map[String, Any], connectionId: Option[Long] = None)
   extends ResultQuery[R] with ResultResolver[Future[R]] {
 
 
@@ -63,7 +63,7 @@ case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, extracto
   protected def run[T] = {
 
 
-    val p = connection.write(term, opts,connectionId)(extractor)
+    val p = connection.write(term, opts, connectionId)(extractor)
     // FIXME : Write this better
     p.future.transform(t => resolve(t).right.get, e => resolve(e).left.get)
 
@@ -73,7 +73,7 @@ case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, extracto
 
 
 case class BlockingResultQuery[R](term: Term, connection: BlockingConnection, extractor: ResultExtractor[R],
-                                  opts: Map[String, Any],connectionId:Option[Long]=None)
+                                  opts: Map[String, Any], connectionId: Option[Long] = None)
   extends ResultQuery[R] with ResultResolver[Either[RethinkError, R]] {
 
 
@@ -81,7 +81,7 @@ case class BlockingResultQuery[R](term: Term, connection: BlockingConnection, ex
 
   def toResult[T](atMost: Duration): Either[RethinkError, R] = {
 
-    val p = connection.write(term, opts,connectionId)(extractor)
+    val p = connection.write(term, opts, connectionId)(extractor)
 
 
     try {

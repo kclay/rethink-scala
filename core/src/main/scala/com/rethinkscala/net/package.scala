@@ -20,7 +20,9 @@ package object net {
 
     def apply(version: Version): C
 
-    def apply[T](produce: Produce[T])(implicit connection: C): D[T]
+    type Producer[T] <: Produce[_]
+
+    def apply[T](produce: Producer[T])(implicit connection: C): D[T]
 
 
   }
@@ -35,6 +37,7 @@ package object net {
 
     type D[T] = AsyncDelegate[T]
 
+    type Producer[T] = Produce[T]
     override def apply[T](produce: Produce[T])(implicit connection: AsyncConnection): AsyncDelegate[T] = toDelegate(produce)
   }
 
@@ -56,11 +59,14 @@ package object net {
     implicit def toDelegate[T](produce: Produce[T])(implicit connection: BlockingConnection): BlockingDelegate[T] = Delegate(produce, connection)
 
     type D[T] = BlockingDelegate[T]
+    type Producer[T] = Produce[T]
 
     override def apply[T](produce: Produce[T])(implicit connection: BlockingConnection): BlockingDelegate[T] = toDelegate(produce)
   }
 
   trait BlockingCommonImplicits {
+
+
     implicit def toBlockingResultExtractor[T: Manifest](implicit connection: BlockingConnection): ResultExtractor[T] = connection
       .resultExtractorFactory
       .create[T]
@@ -71,6 +77,7 @@ package object net {
     implicit def toDelegate[T](produce: Produce[T])(implicit connection: BlockingConnection): BlockingTryDelegate[T] = BlockingTryDelegate(Delegate(produce, connection))
 
     type D[T] = BlockingTryDelegate[T]
+    type Producer[T] = Produce[T]
 
     override def apply[T](produce: Produce[T])(implicit connection: BlockingConnection) = toDelegate(produce)
 
