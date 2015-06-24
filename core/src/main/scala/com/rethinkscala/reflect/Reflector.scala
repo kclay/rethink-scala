@@ -33,6 +33,7 @@ object Reflector {
   mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   mapper.setVisibility(PropertyAccessor.FIELD, Visibility.PUBLIC_ONLY)
 
+ // mapper.enableDefaultTyping()
   //mapper.setDefaultTyping(new RethinkTypeResolverBuilder)
 
   //mapper.setAnnotationIntrospector()

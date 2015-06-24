@@ -19,8 +19,20 @@ abstract class TimeExtractor(tt: TermType) extends ProduceNumeric {
   def termType: TermType = tt
 }
 
+
+object ISO8601Serializer {
+  val key = "@com.rethinkscala.ISO860:"
+
+  def apply(value: String) = key + value
+
+  def unapply(value: String) = if (value.contains(key)) Some(ISO8601(value.replace(key, ""))) else None
+}
+
 case class ISO8601(value: String) extends ProduceTime {
   def termType: TermType = TermType.ISO8601
+
+
+  private[rethinkscala] def serialize = ISO8601Serializer(value)
 }
 
 case class ToISO8601(value: TimeTyped) extends ProduceString {
