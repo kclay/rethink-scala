@@ -1,5 +1,6 @@
 package com.rethinkscala
 
+import org.joda.time.format.ISODateTimeFormat
 import org.scalatest.FunSuite
 import org.joda.time.{DateTimeZone, DateTime}
 import Blocking._
@@ -11,6 +12,9 @@ import Blocking._
  * Time: 10:56 AM
  *
  */
+
+case class DateTimeSerializer(value: DateTime)
+
 class TimeTest extends FunSuite with WithBase {
 
 
@@ -41,5 +45,15 @@ class TimeTest extends FunSuite with WithBase {
     val now = new DateTime(DateTimeZone.UTC)
 
     assert(r.now.day.eq(now.getDayOfMonth))
+  }
+  test("datetime serializer") {
+
+
+    val now = DateTime.now()
+    val iso8601 = ISODateTimeFormat.dateTime().print(now)
+    val expectedJson = "{\"value\":[99,[\"" + iso8601 + "\"]]}"
+    val json = toJson(r.expr(DateTimeSerializer(now)))
+    assert(json.contains(expectedJson))
+
   }
 }

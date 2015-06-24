@@ -163,6 +163,7 @@ object internal {
 
 }
 
+
 trait Expr {
   def apply(term: Term): Term = term
 
@@ -219,7 +220,10 @@ trait Expr {
       case d: Document ⇒ MakeObj2(d)
       case c: Character ⇒ StringDatum(c.toString)
       case None | null ⇒ NoneDatum()
-      case s: String ⇒ StringDatum(s)
+      case s: String ⇒ s match {
+        case ISO8601Serializer(date) => date
+        case _ => StringDatum(s)
+      }
       case i: Int ⇒ NumberDatum(i)
       case f: Float ⇒ NumberDatum(f)
       case l: Long ⇒ NumberDatum(l)

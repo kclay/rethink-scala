@@ -1,6 +1,6 @@
 package com.rethinkscala.reflect
 
-import com.fasterxml.jackson.databind.module.{SimpleAbstractTypeResolver, SimpleDeserializers}
+import com.fasterxml.jackson.databind.module.{SimpleSerializers, SimpleAbstractTypeResolver, SimpleDeserializers}
 import com.fasterxml.jackson.module.scala._
 import com.rethinkscala._
 import org.joda.time._
@@ -25,16 +25,20 @@ class RethinkModule extends DefaultScalaModule {
   _deserializers.addDeserializer(classOf[Line], LineDeserializer)
   _deserializers.addDeserializer(classOf[PolygonSubResults], PolygonSubResultsDeserializer)
   _deserializers.addDeserializer(classOf[ConfigChanges], ConfigChangesDeserializer)
-  _deserializers.addDeserializer(classOf[Durability.Kind],DurabilityDeserializer)
+  _deserializers.addDeserializer(classOf[Durability.Kind], DurabilityDeserializer)
 
 
   private val _resolver = new SimpleAbstractTypeResolver
   _resolver.addMapping(classOf[Document], classOf[BasicDocument])
   //_resolver.addMapping(classOf[Seq[GroupResultRecord[_]]],)
 
+  private val _serializers = new SimpleSerializers
+  _serializers.addSerializer(classOf[ReadableInstant], RethinkDateTimeSerializer)
+
 
   //dd//
   // this += { _.addDeserializers(Date) }
+  this += (_ addSerializers _serializers)
   this += (_ addDeserializers _deserializers)
   this += (_ addAbstractTypeResolver _resolver)
 
