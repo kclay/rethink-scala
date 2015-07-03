@@ -24,6 +24,10 @@ import scalaz.stream.Process
 
 
 case class Changes[T](target: Typed) extends ProduceChangeStream[T] {
+
+
+  //override lazy val optargs: Iterable[AssocPair] = buildOptArgs(Map("include_states" -> Some(true)))
+
   override def termType = TermType.CHANGES
 }
 
@@ -56,36 +60,24 @@ case class ChangeFeedDelegate[T](producer: Produce[ChangeCursor[CursorChange[T]]
 
 case class ChangeFeedResult[T](delegate: ChangeFeedDelegate[T],
                                extractor: ResultExtractor[ChangeCursor[T]]) {
-  var first = true
 
-  val count = new AtomicInteger
   var iterator: Option[Iterator[CursorChange[T]]] = None
 
   def task: Task[Option[CursorChange[T]]] = {
 
     def work(callback: Throwable \/ Option[CursorChange[T]] => Unit): Unit = {
       try {
-        println("Work Pass = " + count.incrementAndGet())
+
         iterator = iterator.orElse(
           delegate.toQuery(extractor)
             .toResult.fold(_ => None, Some(_)).map(_.iterator)
         )
-
-        iterator.foreach {
-
-          it =>
-            val value = it.next()
-            println("Value = " + value)
-            callback(right(Some(value)))
-        }
+        iterator.foreach(it => callback(right(Some(it.next()))))
 
 
       }
       catch {
-        case nse: NoSuchElementException => {
-
-          callback(right(None))
-        }
+        case nse: NoSuchElementException => callback(right(None))
         case t: Throwable => callback(left(t))
       }
     }

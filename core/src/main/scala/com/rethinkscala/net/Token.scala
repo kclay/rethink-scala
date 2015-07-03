@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation._
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import com.rethinkscala.ast.Datum
+import com.rethinkscala.changefeeds.net.ChangeCursor
 import com.rethinkscala.net.Translate._
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{ConvertFrom, Document, Profile, ResultExtractor, Term}
@@ -59,24 +60,11 @@ case class JsonBinaryResponse(@JsonProperty("t") responseType: Long,
                               @JsonProperty("b") backtrace: Option[Seq[Frame]],
                               @JsonProperty("p") profile: Option[Profile]) extends BaseJsonResponse[Map[String, Int]] {
   def convert(resultField: String) = JsonResponse(
-    responseType, Seq(result.head.get(resultField).getOrElse(0) == 1),
+    responseType, Seq(result.head.getOrElse(resultField, 0) == 1),
     backtrace,
     profile)
 }
 
-
-case class ResultFolder[T](json: String)(implicit mf: Manifest[T]) {
-  lazy val value = {
-    val result = Reflector.fromJson(json)(mf)
-    result match {
-      case d: Document => {
-        d.raw = json
-        d
-      }
-      case _ => result
-    }
-  }
-}
 
 case class JsonErrorResponse(
                               @JsonProperty("t") responseType: Long,
@@ -100,7 +88,7 @@ class JsonResponseExtractor {
   def apply(node: JsonNode) = {
     node match {
       case a: ArrayNode => result = (for (i <- 0 to a.size() - 1) yield a.get(i) match {
-        case o: ObjectNode if (o.get("$reql_type$") != null) => {
+        case o: ObjectNode if o.get("$reql_type$") != null => {
           Try({
 
 
@@ -124,7 +112,8 @@ case class JsonResponse[T](@JsonProperty("t") responseType: Long,
                            @JsonProperty("b") backtrace: Option[Seq[Frame]],
                            @JsonProperty("p") profile: Option[Profile]) extends BaseJsonResponse[T]
 
-case class JsonQueryToken[R](connection: Connection, connectionId: Long, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
+case class JsonQueryToken[R](connection: Connection, connectionId: Long, query: CompiledQuery,
+                             term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
   extends Token[String] with LazyLogging {
 
 
@@ -156,8 +145,12 @@ case class JsonQueryToken[R](connection: Connection, connectionId: Long, query: 
   val manifest = implicitly[Manifest[JsonResponse[R]]]
   val cursorManifest = implicitly[Manifest[JsonCursorResponse[R]]]
 
+
   def toCursor(json: String, responseType: Int, atom: Boolean = false) = {
 
+    if (json.contains("new_val")) {
+      val b = json
+    }
     val seq = (atom match {
       case true => cast(json)(manifest).single
       case _ => cast(json)(cursorManifest).result
@@ -191,7 +184,7 @@ case class JsonQueryToken[R](connection: Connection, connectionId: Long, query: 
 
   def cast[T](json: String)(implicit mf: Manifest[T]): T = {
     term match {
-      case b: BinaryConversion if (mf.typeArguments.headOption.exists(_.runtimeClass == classOf[Boolean])) =>
+      case b: BinaryConversion if mf.typeArguments.headOption.exists(_.runtimeClass == classOf[Boolean]) =>
         Reflector.fromJson[JsonBinaryResponse](json)
           .convert(b.resultField).asInstanceOf[T]
       case _ => Reflector.fromJson(json)(mf)
@@ -227,12 +220,10 @@ case class QueryToken[R](connection: Connection, connectionId: Long, query: Comp
   def cast[T](json: String)(implicit mf: Manifest[T]): T = translate[T].read(json, term)
 
   def toResult(response: Response) = {
-    logger.debug(s"Processing result : $response")
-    val json: String = Datum.unwrap(response.getResponse(0))
 
+    val json: String = Datum.unwrap(response.getResponse(0))
     val rtn = json match {
       case "" => None
-
       case _ => cast[ResultType](json)
     }
     rtn
@@ -255,7 +246,8 @@ case class QueryToken[R](connection: Connection, connectionId: Long, query: Comp
         cast[ResultType](Datum.unwrap(results(0)))
       case _ => for (d <- results) yield Datum.unwrap(d) match {
 
-        case json: String => if (mf.typeArguments.nonEmpty) cast(json)(mf.typeArguments(0)) else cast[ResultType](json)
+        case json: String => if (mf.typeArguments.nonEmpty) cast(json)(mf.typeArguments.head)
+        else cast[ResultType](json)
       }
 
     }

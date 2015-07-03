@@ -2,6 +2,8 @@ package com.rethinkscala
 
 import com.rethinkscala.ast.Produce
 import com.rethinkscala.changefeeds.net.ChangeCursor
+import com.rethinkscala.net.JsonCursorResponse
+import com.rethinkscala.reflect.Reflector
 import org.scalatest.FunSuite
 import Blocking._
 import scalaz.stream.io
@@ -17,6 +19,7 @@ import scalaz.stream.io
 case class ChangeFeedEntity(id: Option[String], value: String)
 
 class ChangeFeedTest extends FunSuite with WithBase {
+
 
   test("change feeds") {
 

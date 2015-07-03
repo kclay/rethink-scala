@@ -26,12 +26,17 @@ case class RethinkChangesIterator[T](cursor: ChangeCursor[T]) extends Iterator[C
 
     val more = internal.Continue[CursorChange[T]](cursor.token.id)
 
+   /* val changeExtractor = cursor.token.extractor.to[ChangeCursor[CursorChange[T]]]
+      .asInstanceOf[ResultExtractor[RethinkCursor[CursorChange[T]]]]*/
     // FIXME : Currently this only works for non change feed sequences
+    val mf = cursor.token.extractor.manifest
     val extractor = cursor.token.extractor
-      .asInstanceOf[ResultExtractor[RethinkCursor[CursorChange[T]]]]
+       .asInstanceOf[ResultExtractor[RethinkCursor[CursorChange[T]]]]
 
     val result = more.withConnection(cursor.connectionId).toOpt(extractor)
-    println(result)
+    result.foreach {
+      case res: ChangeCursor[_] => println("Queue Size = " + res.queue.size)
+    }
 
   }
 
@@ -65,7 +70,7 @@ case class ChangeCursor[T](connectionId: Long, token: Token[_]) extends RethinkC
   }
 
   override private[rethinkscala] def <<(more: Seq[ChunkType]) = {
-    chunks ++= more
+    queue ++= more
     this
   }
 

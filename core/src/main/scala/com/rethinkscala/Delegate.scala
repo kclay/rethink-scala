@@ -17,6 +17,7 @@ import scala.util.{Success, Try}
 case class ResultExtractor[T](cursorFactory: CursorFactory, manifest: Manifest[T]) {
 
   def to[R: Manifest] = ResultExtractor[R](cursorFactory, implicitly[Manifest[R]])
+
 }
 
 object Delegate {
