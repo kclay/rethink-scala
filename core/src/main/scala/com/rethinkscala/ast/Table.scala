@@ -8,73 +8,66 @@ import ql2.Ql2.Term.TermType
 // TODO FuncCall
 
 
-case class Table[T <: AnyRef](name: String, useOutDated: Option[Boolean] = None,
-                              db: Option[DB] = None)
-
-  extends ProduceStreamSelection[T, RethinkCursor]
-  with WithDB with TableTyped {
+case class Table[T <: AnyRef](name: String,
+                              useOutDated: Option[Boolean] = None,
+                              db: Option[DB] = None) extends ProduceStreamSelection[T, RethinkCursor] with WithDB with TableTyped {
 
   override lazy val args = buildArgs(db.map(Seq(_, name)).getOrElse(Seq(name)): _*)
   override lazy val optargs = buildOptArgs(Map("use_outdated" -> useOutDated))
 
   def termType: TermType = TermType.TABLE
 
-  def drop = TableDrop(name, db)
+  def drop: TableDrop = TableDrop(name, db)
 
-  def to[R <: AnyRef] = this.asInstanceOf[Table[R]]
+  def to[R <: AnyRef]: Table[R] = this.asInstanceOf[Table[R]]
 
   def create: TableCreate = create(TableOptions())
 
   def create(options: TableOptions): TableCreate = TableCreate(name, options, db)
 
-  def insertMap(records: Seq[Map[String, Any]]) = Insert[T, T](this, Left(records), InsertOptions())
+  def insertMap(records: Seq[Map[String, Any]]): Insert[T, T] = Insert[T, T](this, Left(records), InsertOptions())
 
-  def insertMap(records: Seq[Map[String, Any]], options: InsertOptions) = Insert[T, T](this, Left(records), options)
+  def insertMap(records: Seq[Map[String, Any]], options: InsertOptions): Insert[T, T] = Insert[T, T](this, Left(records), options)
 
-  def insertMap(record: Map[String, Any]) = Insert[T, T](this, Left(Seq(record)), InsertOptions())
+  def insertMap(record: Map[String, Any]): Insert[T, T] = Insert[T, T](this, Left(Seq(record)), InsertOptions())
 
-  def insert[R <: T](records: Seq[R], options: InsertOptions) = Insert[T, R](this, Right(records), options)
+  def insert[R <: T](records: Seq[R], options: InsertOptions): Insert[T, R] = Insert[T, R](this, Right(records), options)
 
-  def insert[R <: T](records: Seq[R]) = Insert(this, Right(records), InsertOptions())
+  def insert[R <: T](records: Seq[R]): Insert[T, R] = Insert(this, Right(records), InsertOptions())
 
-  def insert[R <: T](record: R) = Insert(this, Right(Seq(record)), InsertOptions())
+  def insert[R <: T](record: R): Insert[T, R] = Insert(this, Right(Seq(record)), InsertOptions())
 
   def insert[R <: T](record: R, options: InsertOptions): Insert[T, R] = insert[R](Seq(record), options)
 
-  def ++=(record: T) = insert(record)
+  def ++=(record: T): Insert[T, T] = insert(record)
 
-  def ++=(records: Seq[Map[String, Any]]) = this insertMap(records, InsertOptions())
+  def ++=(records: Seq[Map[String, Any]]): Insert[T, T] = this insertMap(records, InsertOptions())
 
-  def ++=(records: Seq[T])(implicit d: DummyImplicit) = this insert records
+  def ++=(records: Seq[T])(implicit d: DummyImplicit): Insert[T, T] = this insert records
 
-  def \\(attribute: Typed) = get(attribute)
-
+  def \\(attribute: Typed): Get[T] = get(attribute)
 
   def get(attribute: Typed) = Get[T](this, attribute)
 
-
-  //def getAll(index: String, attr: Any*): GetAll[T] = GetAll[T](this, attr, index)
-
   def getAll(attr: Any*): GetAll[T] = GetAll[T](this, attr, None)
 
-  def indexes = IndexList(this)
-
-  def indexCreate(name: String, indexFunction:Option[Typed]=None, geo: Option[Boolean]=None, multi: Option[Boolean] = None) = {
+  def indexCreate(name: String, indexFunction: Option[Typed] = None, geo: Option[Boolean] = None, multi: Option[Boolean] = None) = {
     IndexCreate(this, name, indexFunction.map(_.wrap), geo = geo, multi = multi)
   }
 
+  def indexDrop(name: String): IndexDrop = IndexDrop(this, name)
 
-  def indexDrop(name: String) = IndexDrop(this, name)
+  def indexes: IndexList = IndexList(this)
 
-  def indexStatus(indexes: String*) = IndexStatus(this, indexes)
+  def indexRename(oldName: String, newName: String, overwrite: Option[Boolean] = None): IndexRename = IndexRename(this, oldName, newName, overwrite)
 
-  def indexWait(indexes: String*) = IndexWait(this, indexes)
+  def indexStatus(indexes: String*): IndexStatus = IndexStatus(this, indexes)
 
-  def indexRename(oldName: String, newName: String, overwrite: Option[Boolean] = None) = IndexRename(this, oldName, newName, overwrite)
+  def indexWait(indexes: String*): IndexWait = IndexWait(this, indexes)
 
-  def sync = Sync(this)
+  def sync: Sync = Sync(this)
 
-  def sync(durability: Durability.Kind) = Sync(this, Some(durability))
+  def sync(durability: Durability.Kind): Sync = Sync(this, Some(durability))
 
 }
 
@@ -175,7 +168,7 @@ case class IndexWait(target: TableTyped, indexes: Seq[String]) extends ProduceDe
 case class IndexRename(target: TableTyped, oldName: String, newName: String, overwrite: Option[Boolean] = None)
   extends ProduceBinary with BinaryConversion {
   val resultField = "renamed"
-  override lazy val args = buildArgs(target,oldName,newName)
+  override lazy val args = buildArgs(target, oldName, newName)
   override lazy val optargs = buildOptArgs(Map("overwrite" -> overwrite))
 
   override def termType: TermType = TermType.INDEX_RENAME

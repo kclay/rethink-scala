@@ -15,9 +15,7 @@ case class DB(name: String) extends Term {
 
   def tableCreate(name: String): TableCreate = tableCreate(name, TableOptions())
 
-  def tableCreate(name: String, options: TableOptions): TableCreate = {
-    TableCreate(name, options, Some(this))
-  }
+  def tableCreate(name: String, options: TableOptions): TableCreate = TableCreate(name, options, Some(this))
 
   def tables: TableList = TableList(Some(this))
 
@@ -37,9 +35,7 @@ case class DB(name: String) extends Term {
 
 }
 
-case class DBCreate(name: String)
-
-  extends ProduceBinary with BinaryConversion {
+case class DBCreate(name: String) extends ProduceBinary with BinaryConversion {
   override lazy val args = buildArgs(name)
   val resultField = "dbs_created"
 
@@ -48,7 +44,7 @@ case class DBCreate(name: String)
   def termType: TermType = TermType.DB_CREATE
 }
 
-case class DBDrop(name: String) extends Term with ProduceBinary with BinaryConversion {
+case class DBDrop(name: String) extends ProduceBinary with BinaryConversion {
   override lazy val args = buildArgs(name)
   val resultField = "dbs_dropped"
 
