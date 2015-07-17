@@ -3,6 +3,7 @@ package com.rethinkscala.net
 
 import com.rethinkscala.ResultExtractor
 import com.rethinkscala.ast.{internal, Aggregation}
+import com.rethinkscala.backend.netty.blocking.BlockingConnection
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 
@@ -16,7 +17,7 @@ case class RethinkIterator[T](cursor: RethinkCursor[T]) extends Iterator[T] with
   override def next() = {
     val value = if (index < cursor.chunks.length) cursor.chunks(index)
     else {
-      import com.rethinkscala.net.Blocking._
+      import com.rethinkscala.Blocking._
       import cursor.connection
 
       val more = internal.Continue[T](cursor.token.id)
@@ -54,7 +55,7 @@ trait RethinkCursor[T] extends Seq[T] {
     else {
       val seq = token.term.asInstanceOf[Aggregation[_]]
 
-      import com.rethinkscala.net.Blocking._
+      import com.rethinkscala.Blocking._
 
       seq.count.run(token.extractor.to[Double]) match {
         case Left(e: RethinkError) => chunks.size

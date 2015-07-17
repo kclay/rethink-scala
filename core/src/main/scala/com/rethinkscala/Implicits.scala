@@ -1,8 +1,7 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
-import com.rethinkscala.changefeeds.ast.{ChangeFeedDelegate, Changes}
-import com.rethinkscala.changefeeds.net.ChangeCursor
+import com.rethinkscala.changefeeds.ast.Changes
 import com.rethinkscala.magnets.ReceptacleImplicits
 import com.rethinkscala.net._
 
@@ -212,9 +211,7 @@ trait DefaultValue[T] {
 
 private[rethinkscala] trait ImplicitConversions {
 
-
-  object r extends RethinkApi
-
+  object RethinkApi extends RethinkApi
 
   implicit def anyToPimpled(v: Any): PimpedAny = new PimpedAny(v)
 
@@ -287,7 +284,7 @@ private[rethinkscala] trait ImplicitConversions {
   implicit def string2DB(name: String): DB = DB(name)
 
   case class String2Ast(name: String) {
-    def row = r.row(name)
+    def row = RethinkApi.row(name)
 
     def asc = Asc(name.wrap)
 
@@ -322,14 +319,25 @@ trait FromAst[T] {
 
 trait Helpers {
 
+
+  object backends {
+
+    import com.rethinkscala.backend.netty
+
+    val Blocking = netty.blocking.BlockingBackend
+    val Async = netty.async.AsyncBackend
+  }
+
   type Var = com.rethinkscala.ast.Var
   val Expr = com.rethinkscala.ast.Expr
-  val Blocking = com.rethinkscala.Implicits.Blocking
-  val Async = com.rethinkscala.Implicits.Async
-  type BlockingConnection = com.rethinkscala.net.BlockingConnection
-  type AsyncConnection = com.rethinkscala.net.AsyncConnection
-  type BlockResult[T] = ResultResolver.Blocking[T]
-  type AsyncResult[T] = ResultResolver.Async[T]
+  val Blocking = backends.Blocking.profile
+  val Async = backends.Async.profile
+  type BlockingConnection = backends.Blocking.ConnectionDef
+  type AsyncConnection = backends.Async.ConnectionDef
+  val AsyncConnection = backends.Async.Connection
+  val BlockingConnection = backends.Blocking.Connection
+  type BlockResult[T] = backends.Blocking.Result[T]
+  type AsyncResult[T] = backends.Async.Result[T]
 
   def async[T](p: Produce[T])(implicit c: Connection, extractor: ResultExtractor[T]): AsyncResult[T] = async(_.apply(p))
 
@@ -362,6 +370,7 @@ final class ChangeFeedSupport[T](val target: Typed) extends AnyVal {
   def changes = new Changes[T](target)
 }
 
+
 object Implicits {
 
 
@@ -373,6 +382,7 @@ object Implicits {
   with ToFloatImplicits
   with GeometryImplicits {
 
+    object r extends RethinkApi
 
     implicit def toChangeFeed[T](typed: Produce0[T]): ChangeFeedSupport[T] = new ChangeFeedSupport[T](typed)
 
@@ -394,19 +404,6 @@ object Implicits {
 
   }
 
-
-  object Blocking extends net.BlockingImplicits with Common {
-    type ChangeProducer[T] = Produce[ChangeCursor[CursorChange[T]]]
-
-    implicit def toChangeFeedDelegate[T](produce: ChangeProducer[T])(implicit connection: BlockingConnection): ChangeFeedDelegate[T]
-    = ChangeFeedDelegate(produce, connection)
-
-    object functional extends net.BlockingFunctionalImplicits with Common
-
-  }
-
-
-  object Async extends net.AsyncImplicits with Common
 
   object Quick {
 

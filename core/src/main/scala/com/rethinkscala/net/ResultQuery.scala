@@ -10,11 +10,7 @@ import scala.Some
 import scala.concurrent.Future
 
 
-object ResultResolver {
-  type Async[T] = Future[T]
-  type Blocking[T] = Either[RethinkError, T]
 
-}
 
 trait ResultResolver[Result] {
 
@@ -47,56 +43,6 @@ trait ResultQuery[T] {
       }
       case value => Right(value.asInstanceOf[T])
     }
-
-}
-
-
-case class AsyncResultQuery[R](term: Term, connection: AsyncConnection, extractor: ResultExtractor[R],
-                               opts: Map[String, Any], connectionId: Option[Long] = None)
-  extends ResultQuery[R] with ResultResolver[Future[R]] {
-
-
-  implicit val exc: ExecutionContext = connection.version.executionContext
-
-  def toResult[T] = run[T]
-
-  protected def run[T] = {
-
-
-    val p = connection.write(term, opts, connectionId)(extractor)
-    // FIXME : Write this better
-    p.future.transform(t => resolve(t).right.get, e => resolve(e).left.get)
-
-
-  }
-}
-
-
-case class BlockingResultQuery[R](term: Term, connection: BlockingConnection, extractor: ResultExtractor[R],
-                                  opts: Map[String, Any], connectionId: Option[Long] = None)
-  extends ResultQuery[R] with ResultResolver[Either[RethinkError, R]] {
-
-
-  def toResult[T] = toResult(connection.timeoutDuration)
-
-  def toResult[T](atMost: Duration): Either[RethinkError, R] = {
-
-    val p = connection.write(term, opts, connectionId)(extractor)
-
-
-    try {
-      Await.ready(p.future, atMost)
-    } catch {
-      case e: TimeoutException => p failure RethinkTimeoutError(e.getMessage, term)
-      case e: InterruptedException => p failure RethinkClientError(e.getMessage, term)
-
-
-    }
-
-    resolve(p.future.value)
-
-
-  }
 
 }
 

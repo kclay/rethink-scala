@@ -17,6 +17,4 @@ package object rethinkscala extends ImplicitConversions with Helpers {
 
 
 
-
-
 }

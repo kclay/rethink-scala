@@ -21,17 +21,17 @@ case class RethinkChangesIterator[T](cursor: ChangeCursor[T]) extends Iterator[C
 
 
   def fetch(): Unit = {
-    import com.rethinkscala.net.Blocking._
+    import com.rethinkscala.Blocking._
     import cursor.connection
 
     val more = internal.Continue[CursorChange[T]](cursor.token.id)
 
-   /* val changeExtractor = cursor.token.extractor.to[ChangeCursor[CursorChange[T]]]
-      .asInstanceOf[ResultExtractor[RethinkCursor[CursorChange[T]]]]*/
+    /* val changeExtractor = cursor.token.extractor.to[ChangeCursor[CursorChange[T]]]
+       .asInstanceOf[ResultExtractor[RethinkCursor[CursorChange[T]]]]*/
     // FIXME : Currently this only works for non change feed sequences
     val mf = cursor.token.extractor.manifest
     val extractor = cursor.token.extractor
-       .asInstanceOf[ResultExtractor[RethinkCursor[CursorChange[T]]]]
+      .asInstanceOf[ResultExtractor[RethinkCursor[CursorChange[T]]]]
 
     val result = more.withConnection(cursor.connectionId).toOpt(extractor)
     result.foreach {

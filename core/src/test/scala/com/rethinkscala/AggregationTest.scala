@@ -1,9 +1,8 @@
 package com.rethinkscala
 
-import com.rethinkscala.Implicits.Blocking._
+import com.rethinkscala.Blocking._
 import com.rethinkscala.net.{RethinkCursor, DefaultCursor}
 import org.scalatest.FunSuite
-
 
 
 /**
@@ -44,13 +43,13 @@ class AggregationTest extends FunSuite with WithBase {
 
     val seq = testSeq
     val check = {
-      g:GroupResult[String]=> g.size == 2 && g.head.group == "Alice" && g.head.values.head.get("id") == Some(5)
+      g: GroupResult[String] => g.size == 2 && g.head.group == "Alice" && g.head.values.head.get("id") == Some(5)
     }
 
 
 
 
-    val query  = seq.group("player").max("points")
+    val query = seq.group("player").max("points")
     val res = query.toOpt
 
     println(res)
@@ -61,30 +60,24 @@ class AggregationTest extends FunSuite with WithBase {
     //assert(seq.group("player").run,check)
 
 
-   /* val func = {
-      v:Var=> v.pluck("player")
-    }.as[String]
+    /* val func = {
+       v:Var=> v.pluck("player")
+     }.as[String]
 
 
-    val res = seq.group(func,"id")
+     val res = seq.group(func,"id")
 
-    def mf[T](v:T)(implicit m:Manifest[T]) = m
-
-
-    println(mf(res))
-
-    res.run*/
+     def mf[T](v:T)(implicit m:Manifest[T]) = m
 
 
+     println(mf(res))
 
-
-
-
+     res.run*/
 
 
   }
 
-  test("ungroup"){
+  test("ungroup") {
     val seq = testSeq
 
     val m = seq.group("player").max("points")
@@ -92,12 +85,12 @@ class AggregationTest extends FunSuite with WithBase {
 
   }
 
-  test("count"){
+  test("count") {
 
     assert(testSeq.count().toOpt == Some(4))
     assert(testSeq("points").count(15).toOpt == Some(1))
-    assert(testSeq("points").count(p=>p >=10 ).toOpt == Some(2))
-    assert(testSeq.count((p:Var)=> p("points") >=10).toOpt == Some(2))
+    assert(testSeq("points").count(p => p >= 10).toOpt == Some(2))
+    assert(testSeq.count((p: Var) => p("points") >= 10).toOpt == Some(2))
     val seq = Expr(Seq(1, 2, 3, 3, 3, 4, 5, 6, 7))
 
 
@@ -113,21 +106,21 @@ class AggregationTest extends FunSuite with WithBase {
     })
   }
 
-  test("max"){
+  test("max") {
 
     val res = testSeq.max("points").int("points")
 
 
-   assert(res.run,{
-    p:Int=> p == 15
+    assert(res.run, {
+      p: Int => p == 15
 
-   })
+    })
 
-    assert(testSeq.max(x=> x("points")).int("points").toOpt == Some(15))
+    assert(testSeq.max(x => x("points")).int("points").toOpt == Some(15))
   }
 
 
-  test("sum"){
+  test("sum") {
     val seq = 1 to 10 by 1
     val sum = seq.sum
 
@@ -135,14 +128,14 @@ class AggregationTest extends FunSuite with WithBase {
 
     assert(testSeq.sum("points").toOpt == Some(34))
 
-    assert(testSeq.sum(v=> v("id") + v("points")).toOpt ==  Some(64))
+    assert(testSeq.sum(v => v("id") + v("points")).toOpt == Some(64))
 
   }
-  test("avg"){
+  test("avg") {
 
     assert(Expr(1 to 10 by 1).avg.toOpt == Some(5.5))
-    assert( testSeq.avg("points").toOpt == Some(8.5))
-    assert(testSeq.avg(v=> v \ "points" + v\"id").toOpt == Some(16))
+    assert(testSeq.avg("points").toOpt == Some(8.5))
+    assert(testSeq.avg(v => v \ "points" + v \ "id").toOpt == Some(16))
   }
   test("contains") {
 
@@ -158,11 +151,11 @@ class AggregationTest extends FunSuite with WithBase {
 
 
 
-     Expr(1 to 10).filter(f=> f("industries").contains(i=> i \ "userId" ==="700"))
-    Expr(1 to 10).filter(r.row("hello") > 10 )
-  //  Expr(1 to 10).filter(f=> f.anySeq("industries").contains(i=> i \ "userId" ==="700"))
+    Expr(1 to 10).filter(f => f("industries").contains(i => i \ "userId" === "700"))
+    Expr(1 to 10).filter(r.row("hello") > 10)
+    //  Expr(1 to 10).filter(f=> f.anySeq("industries").contains(i=> i \ "userId" ==="700"))
     val res = Expr('a' to 'd').contains("b")
-     print(res.ast)
+    print(res.ast)
     assert(res)
 
 

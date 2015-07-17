@@ -65,6 +65,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
 
   def setupDB = true
 
+
   lazy val db = r.db(dbName)
   lazy val table = db.table[Document](tableName)
 

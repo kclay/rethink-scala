@@ -132,7 +132,7 @@ class Schema extends Helpers{
     _tableViews.append(view)
   }
 
-  def db(name: String) = r.db(name)
+  def db(name: String) = RethinkApi.db(name)
   /*
   def setup(implicit c: Connection) = {
     block {

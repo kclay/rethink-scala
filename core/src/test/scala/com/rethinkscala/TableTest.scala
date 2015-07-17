@@ -1,6 +1,6 @@
 package com.rethinkscala
 
-import com.rethinkscala.net.Blocking._
+import com.rethinkscala.Blocking._
 import org.scalatest.FunSuite
 
 /** Created with IntelliJ IDEA.
@@ -46,7 +46,7 @@ class TableTest extends FunSuite with WithBase {
     val index4 = table.indexCreate("foo4").withMulti
     assert(index4)
 
-    val index5 = table.indexCreate("foo5", (b:Var) => r.branch(
+    val index5 = table.indexCreate("foo5", (b: Var) => r.branch(
       b.hasFields("updated_at"),
       b("updated_at"),
       b("created_at")
@@ -57,9 +57,9 @@ class TableTest extends FunSuite with WithBase {
 
   }
 
-  test("index rename"){
+  test("index rename") {
 
-    assert(r.table(tableName).indexRename("foo4","_foo4"))
+    assert(r.table(tableName).indexRename("foo4", "_foo4"))
   }
 
   test("list index") {

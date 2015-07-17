@@ -5,6 +5,7 @@ import java.net.InetSocketAddress
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.rethinkscala.ast._
+import com.rethinkscala.backend.RethinkConnection
 import com.rethinkscala.utils.{RethinkConnectionPool, ConnectionFactory, ConnectionWithId, SimpleConnectionPool}
 import com.rethinkscala.{ResultExtractor, Term}
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -195,119 +196,16 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
   }
 }
 
-trait Connection {
 
-  val version: Version
-  protected[rethinkscala] val pool: RethinkConnectionPool
-
-  def toAst(term: Term): CompiledAst = version.toAst(term)
-
-  def write[T](term: Term, opts: Map[String, Any], connectionId: Option[Long] = None)(implicit extractor: ResultExtractor[T]): Promise[T]
-
-  private[rethinkscala] val resultExtractorFactory: ResultExtractorFactory = new ResultExtractorFactory
-}
+trait Connection extends RethinkConnection
 
 
-trait ConnectionOps[C <: Connection, D <: Mode[C]] {
-  self: C =>
 
 
-  val delegate: D
 
 
-  def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]): ResultQuery[R]
-
-}
 
 
-trait BlockingConnection extends Connection with ConnectionOps[BlockingConnection, Blocking] {
-
-
-  val delegate = Blocking
-
-  // FIXME : Need to place here to help out Intellijd
-  def apply[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).run
-
-  def toOpt[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).toOpt
-
-  val timeoutDuration: Duration
-
-  def toAsync: AsyncConnection = AsyncConnection(this)
-
-  def async[T](p: Produce[T])(implicit extractor: ResultExtractor[T]): ResultResolver.Async[T] = async(_.apply(p))
-
-  def async[T](f: AsyncConnection => Future[T]): ResultResolver.Async[T] = f(toAsync)
-
-  def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = BlockingResultQuery[R](term, this, extractor, opts)
-}
-
-trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, Async] {
-
-  val delegate = Async
-
-  implicit val executionContext: ExecutionContext = version.executionContext
-
-  // FIXME : Need to place here to help out Intellij with async(_.apply(res))
-  def apply[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).run
-
-  def toOpt[T](produce: Produce[T])(implicit extractor: ResultExtractor[T]) = delegate(produce)(this).toOpt
-
-  def newQuery[R](term: Term, extractor: ResultExtractor[R], opts: Map[String, Any]) = AsyncResultQuery[R](term, this, extractor, opts)
-
-  def toBlocking: BlockingConnection = BlockingConnection(this)
-
-  def block[T](f: BlockingConnection => Unit): Unit = f(toBlocking)
-
-  def block[T](f: BlockingConnection => ResultResolver.Blocking[T]): ResultResolver.Blocking[T] = f(toBlocking)
-
-  def block[T](p: Produce[T])(implicit extractor: ResultExtractor[T]): ResultResolver.Blocking[T] = {
-
-    block { c: BlockingConnection => c.apply(p)(extractor) }
-  }
-
-}
-
-object AsyncConnection {
-
-  def apply(version: Version) = build(version, None)
-
-
-  def apply(connection: Connection): AsyncConnection = connection match {
-    case c: AsyncConnection => c
-    case c: BlockingConnection => build(connection.version, Some(connection))
-  }
-
-
-  private def build(v: Version, under: Option[Connection]): AsyncConnection = under match {
-    case Some(c) => new ForwardingConnection(c) with AsyncConnection
-
-    case _ => new AbstractConnection(v) with AsyncConnection
-  }
-}
-
-
-object BlockingConnection {
-  val defaultTimeoutDuration = Duration(30, "seconds")
-
-
-  def apply(connection: Connection) = connection match {
-    case c: BlockingConnection => c
-    case c: AsyncConnection => build(connection.version, defaultTimeoutDuration, Some(connection))
-  }
-
-  def apply(version: Version, timeoutDuration: Duration = defaultTimeoutDuration) = build(version, timeoutDuration, None)
-
-  private def build(v: Version, t: Duration, under: Option[Connection]) = under match {
-    case Some(c) => new ForwardingConnection(c) with BlockingConnection {
-      val timeoutDuration = t
-    }
-    case _ => new AbstractConnection(v) with BlockingConnection {
-      val timeoutDuration = t
-    }
-  }
-
-
-}
 
 
 

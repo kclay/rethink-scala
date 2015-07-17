@@ -2,12 +2,15 @@ package com.rethinkscala.japi
 
 ;
 
-import com.rethinkscala.net.{DefaultCursorFactory, RethinkError, BlockingConnection, Version}
-import com.rethinkscala.ast.Produce
-import scala.concurrent.duration.Duration
-import com.rethinkscala.{ResultExtractor, Delegate}
 import java.lang.reflect.ParameterizedType
-import java.util.{Map => JMap, List => JList}
+import java.util.{List => JList, Map => JMap}
+
+import com.rethinkscala.Delegate
+import com.rethinkscala.ast.Produce
+import com.rethinkscala.backend.netty.blocking.BlockingConnection
+import com.rethinkscala.net.{RethinkError, Version}
+
+import scala.concurrent.duration.Duration
 
 /**
  * Created by IntelliJ IDEA.
