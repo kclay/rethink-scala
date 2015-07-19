@@ -14,9 +14,9 @@ import scala.concurrent.Future
 object AsyncBackend extends RethinkBackend {
   override type ConnectionDef = AsyncConnection
   override type ProfileDef = AsyncProfile
-  override type Factory = AsyncConnectionFactory
+  override type Creator = AsyncConnectionCreator
   override val profile: ProfileDef = AsyncProfile
-  override val Connection: Factory = AsyncConnection
+  override val Connection: Creator = AsyncConnection
 
   type Result[T] =  Future[T]
 

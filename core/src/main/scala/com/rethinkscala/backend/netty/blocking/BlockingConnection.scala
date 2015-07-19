@@ -2,8 +2,9 @@ package com.rethinkscala.backend.netty.blocking
 
 import com.rethinkscala.ast.Produce
 import com.rethinkscala.backend.netty.async.{AsyncBackend, AsyncConnection}
-import com.rethinkscala.backend.{ConnectionFactory, ConnectionOps}
-import com.rethinkscala.net._
+import com.rethinkscala.backend.netty.{AbstractConnection, ForwardingConnection}
+import com.rethinkscala.backend.{Connection, ConnectionCreator, ConnectionOps}
+import com.rethinkscala.net.Version
 import com.rethinkscala.{ResultExtractor, Term}
 
 import scala.concurrent.Future
@@ -16,18 +17,18 @@ import scala.concurrent.duration.Duration
  * Time: 4:24 PM 
  */
 
-trait BlockingConnectionFactory extends ConnectionFactory {
+trait BlockingConnectionCreator extends ConnectionCreator {
 
 
   override type ConnectionType = BlockingConnection
   val defaultTimeoutDuration = Duration(30, "seconds")
 
-  def apply(connection: Connection) = connection match {
+  def apply(connection: Connection): BlockingConnection = connection match {
     case c: BlockingConnection => c
     case c: AsyncConnection => build(connection.version, defaultTimeoutDuration, Some(connection))
   }
 
-  def apply(version: Version, timeoutDuration: Duration = defaultTimeoutDuration) = build(version, timeoutDuration, None)
+  def apply(version: Version, timeoutDuration: Duration = defaultTimeoutDuration):BlockingConnection = build(version, timeoutDuration, None)
 
   private def build(v: Version, t: Duration, under: Option[Connection]): BlockingConnection = under match {
     case Some(c) => new ForwardingConnection(c) with BlockingConnection {
@@ -39,7 +40,7 @@ trait BlockingConnectionFactory extends ConnectionFactory {
   }
 }
 
-object BlockingConnection extends BlockingConnectionFactory
+object BlockingConnection extends BlockingConnectionCreator
 
 
 trait BlockingConnection extends Connection with ConnectionOps[BlockingConnection, BlockingProfile] {

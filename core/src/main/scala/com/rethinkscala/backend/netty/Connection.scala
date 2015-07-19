@@ -1,12 +1,11 @@
-package com.rethinkscala.net
+package com.rethinkscala.backend.netty
 
 
-import java.net.InetSocketAddress
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
-import com.rethinkscala.ast._
-import com.rethinkscala.backend.RethinkConnection
-import com.rethinkscala.utils.{RethinkConnectionPool, ConnectionFactory, ConnectionWithId, SimpleConnectionPool}
+import com.rethinkscala.backend.Connection
+import com.rethinkscala.net.{Version, VersionHandler}
+import com.rethinkscala.utils.ConnectionWithId
 import com.rethinkscala.{ResultExtractor, Term}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import io.netty.bootstrap.Bootstrap
@@ -16,7 +15,7 @@ import io.netty.channel.socket.nio.NioSocketChannel
 import ql2.{Ql2 => ql2}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 
 
 /** Created by IntelliJ IDEA.
@@ -63,15 +62,6 @@ case class ConnectionChannel(cf: ChannelFuture, id: Long) extends ConnectionWith
 }
 
 
-abstract class ForwardingConnection(val underlying: Connection) extends Connection {
-  override val version: Version = underlying.version
-
-  override def write[T](term: Term, opts: Map[String, Any], connectionId: Option[Long])(implicit extractor: ResultExtractor[T]) =
-    underlying.write[T](term, opts, connectionId)(extractor)
-
-  override protected[rethinkscala] val pool: RethinkConnectionPool = underlying.pool
-}
-
 abstract class AbstractConnection(val version: Version) extends LazyLogging with Connection {
 
   private val defaultDB = Some(version.db.getOrElse("test"))
@@ -113,39 +103,7 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 
   private[rethinkscala] def get(connectionId: Int)(implicit timeout: Duration): Future[Connection] = ???
 
-  protected[rethinkscala] val pool = new RethinkConnectionPool(new ConnectionFactory[ConnectionChannel] {
-
-    def create(): ConnectionChannel = {
-
-      logger.debug("Creating new ChannelWrapper")
-      val c = bootstrap.connect(new InetSocketAddress(version.host, version.port)).sync()
-
-      val cf = ChannelAttribute.Future.get(c.channel())
-
-      new ConnectionChannel(cf, connectionId.incrementAndGet())
-    }
-
-    def configure(wrapper: ConnectionChannel) = {
-      wrapper.active.set(true)
-      if (!wrapper.configured) {
-        logger.debug("Configuring ChannelWrapper")
-        //  version.configure(wrapper.channel)
-        wrapper.configured = true
-      } else {
-        logger.debug("Logger already configured")
-      }
-    }
-
-    def validate(wrapper: ConnectionChannel): Boolean = {
-      wrapper.channel.isOpen
-    }
-
-    def destroy(wrapper: ConnectionChannel) {
-      logger.debug("Destroying Channel")
-      wrapper.invalidated = true
-      wrapper.channel.close()
-    }
-  }, max = version.maxConnections)
+  protected[rethinkscala] val pool = new ConnectionPool(NettyConnectionFactory(version, bootstrap, connectionId), max = version.maxConnections)
 
 
   def write[T](term: Term, opts: Map[String, Any], connectionId: Option[Long] = None)(implicit extractor: ResultExtractor[T]): Promise[T] = {
@@ -197,15 +155,15 @@ abstract class AbstractConnection(val version: Version) extends LazyLogging with
 }
 
 
-trait Connection extends RethinkConnection
 
 
+abstract class ForwardingConnection(val underlying: Connection) extends Connection {
+  override val version: Version = underlying.version
 
+  override def write[T](term: Term, opts: Map[String, Any], connectionId: Option[Long])(implicit extractor: ResultExtractor[T]) =
+    underlying.write[T](term, opts, connectionId)(extractor)
 
-
-
-
-
-
+  override protected[rethinkscala] val pool: ConnectionPool = underlying.pool
+}
 
 

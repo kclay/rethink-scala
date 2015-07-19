@@ -1,7 +1,8 @@
-package com.rethinkscala.net
+package com.rethinkscala.backend.netty
 
 import java.nio.ByteOrder
 
+import com.rethinkscala.net.CompiledQuery
 import io.netty.buffer.ByteBuf
 import io.netty.channel.{ChannelHandler, ChannelHandlerContext}
 import io.netty.handler.codec.MessageToByteEncoder

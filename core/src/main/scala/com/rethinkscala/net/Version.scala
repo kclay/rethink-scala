@@ -6,6 +6,7 @@ import java.nio.charset.Charset
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.rethinkscala.ast._
+import com.rethinkscala.backend.netty.{ProtoChannelInitializer, JsonChannelInitializer, RethinkChannelInitializer}
 import com.rethinkscala.reflect.Reflector
 import com.rethinkscala.{ResultExtractor, Term, TermAssocPair}
 import com.typesafe.scalalogging.slf4j.LazyLogging

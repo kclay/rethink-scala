@@ -1,7 +1,8 @@
-package com.rethinkscala.net
+package com.rethinkscala.backend.netty
 
+import com.rethinkscala.net.Version3
+import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
-import io.netty.channel.{ChannelHandlerAdapter, ChannelInitializer}
 
 /**
  * Created with IntelliJ IDEA.

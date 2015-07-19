@@ -2,7 +2,7 @@ package com.rethinkscala.backend
 
 import com.rethinkscala.backend.netty.async.AsyncDelegate
 import com.rethinkscala.backend.netty.blocking.BlockingDelegate
-import com.rethinkscala.utils.RethinkConnectionPool
+import com.rethinkscala.backend.netty.ConnectionPool
 
 import scala.concurrent.Promise
 import scala.language.{implicitConversions, higherKinds}
@@ -22,13 +22,13 @@ trait RethinkBackend {
 
   type Result[T]
   type ConnectionDef <: Connection
-  type Factory <: ConnectionFactory {type ConnectionType = ConnectionDef}
+  type Creator <: ConnectionCreator {type ConnectionType = ConnectionDef}
 
   type ProfileDef <: Common with QueryMode[ConnectionDef]
   val profile: ProfileDef
 
 
-  val Connection: Factory
+  val Connection: Creator
 }
 
 trait QueryMode[C <: Connection] {
@@ -42,16 +42,6 @@ trait QueryMode[C <: Connection] {
   def apply[T](produce: Producer[T])(implicit connection: C): DelegateDef[T]
 
 
-}
-
-
-abstract class ForwardingConnection(val underlying: Connection) extends Connection {
-  override val version: Version = underlying.version
-
-  override def write[T](term: Term, opts: Map[String, Any], connectionId: Option[Long])(implicit extractor: ResultExtractor[T]) =
-    underlying.write[T](term, opts, connectionId)(extractor)
-
-  override protected[rethinkscala] val pool: RethinkConnectionPool = underlying.pool
 }
 
 
@@ -101,7 +91,7 @@ trait CastAbleDelegate[T] {
 trait RethinkConnection {
   self: Connection =>
 
-  protected[rethinkscala] val pool: RethinkConnectionPool
+  protected[rethinkscala] val pool: ConnectionPool
   val version: Version
 
   def toAst(term: Term): CompiledAst = version.toAst(term)
@@ -123,8 +113,10 @@ trait ConnectionOps[C <: Connection, D <: QueryMode[C]] {
 }
 
 
-trait ConnectionFactory {
+trait ConnectionCreator {
   type ConnectionType <: Connection
 
   def apply(connection: Connection): ConnectionType
 }
+
+trait Connection extends RethinkConnection

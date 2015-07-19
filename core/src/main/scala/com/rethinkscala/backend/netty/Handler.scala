@@ -1,4 +1,4 @@
-package com.rethinkscala.net
+package com.rethinkscala.backend.netty
 
 import io.netty.channel._
 import io.netty.util.AttributeKey

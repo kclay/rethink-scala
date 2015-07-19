@@ -1,10 +1,11 @@
 package com.rethinkscala.backend.netty.async
 
-import com.rethinkscala.backend.{ConnectionOps, ConnectionFactory}
-import com.rethinkscala.backend.netty.blocking.{BlockingBackend, BlockingConnection}
-import com.rethinkscala.{Term, ResultExtractor}
 import com.rethinkscala.ast.Produce
-import com.rethinkscala.net._
+import com.rethinkscala.backend.netty.{ForwardingConnection, AbstractConnection}
+import com.rethinkscala.backend.netty.blocking.{BlockingBackend, BlockingConnection}
+import com.rethinkscala.backend.{Connection, ConnectionCreator, ConnectionOps}
+import com.rethinkscala.net.Version
+import com.rethinkscala.{ResultExtractor, Term}
 
 import scala.concurrent.ExecutionContext
 
@@ -16,7 +17,7 @@ import scala.concurrent.ExecutionContext
  */
 
 
-trait AsyncConnectionFactory extends ConnectionFactory {
+trait AsyncConnectionCreator extends ConnectionCreator {
 
   override type ConnectionType = AsyncConnection
 
@@ -37,7 +38,7 @@ trait AsyncConnectionFactory extends ConnectionFactory {
 }
 
 
-object AsyncConnection extends AsyncConnectionFactory
+object AsyncConnection extends AsyncConnectionCreator
 
 trait AsyncConnection extends Connection with ConnectionOps[AsyncConnection, AsyncProfile] {
 

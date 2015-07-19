@@ -15,4 +15,7 @@ package object net {
   val Blocking = BlockingBackend.profile
   @deprecated("import com.rethinkscala.Async._", "0.4.8")
   val Async = AsyncBackend.profile
+
+  @deprecated("use com.rethinkscala.backend.Connection", "0.4.8")
+  type Connection = backend.Connection
 }

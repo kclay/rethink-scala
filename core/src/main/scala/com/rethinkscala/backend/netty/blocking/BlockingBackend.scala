@@ -12,7 +12,7 @@ import com.rethinkscala.net.RethinkError
 object BlockingBackend extends RethinkBackend {
 
   override type ConnectionDef = BlockingConnection
-  override type Factory = BlockingConnectionFactory
+  override type Creator = BlockingConnectionCreator
 
   override type ProfileDef = BlockingProfile
   override val profile = BlockingProfile

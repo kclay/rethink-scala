@@ -1,4 +1,4 @@
-package com.rethinkscala.net
+package com.rethinkscala.backend.netty
 
 import java.nio.ByteOrder
 import java.util

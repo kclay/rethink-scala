@@ -1,10 +1,11 @@
-package com.rethinkscala.net
+package com.rethinkscala.backend.netty
 
 import java.nio.charset.Charset
 
+import com.rethinkscala.net.{RethinkDriverError, Version3}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import io.netty.buffer.ByteBuf
-import io.netty.channel.{SimpleChannelInboundHandler, ChannelHandlerContext, ChannelInboundHandlerAdapter}
+import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
 
 /**
  * Created by IntelliJ IDEA.

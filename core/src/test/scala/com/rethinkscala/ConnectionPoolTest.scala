@@ -1,17 +1,13 @@
 package com.rethinkscala
 
-import com.google.testing.threadtester.{SecondaryRunnableImpl, InterleavedRunner, MainRunnableImpl}
-import com.rethinkscala.net.{ConnectionChannel, AbstractConnection}
-import com.rethinkscala.test.utils.BlockingProxy
-import com.rethinkscala.utils.{AbstractConnectionPool, RethinkConnectionPool}
-
+import com.google.testing.threadtester.{MainRunnableImpl, SecondaryRunnableImpl}
+import com.rethinkscala.backend.netty.ConnectionChannel
+import com.rethinkscala.utils.AbstractConnectionPool
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.util.Success
 
 /**
  * Created by IntelliJ IDEA.
