@@ -12,10 +12,14 @@ import ql2.Ql2.Term.TermType
  */
 
 
-case class Changes[T](target: Typed) extends ProduceChangeStream[T] {
+case class Changes[T](target: Typed, squash: Option[Boolean] = None,
+                      includeStates: Option[Boolean] = None) extends ProduceChangeStream[T] {
 
 
-  //override lazy val optargs: Iterable[AssocPair] = buildOptArgs(Map("include_states" -> Some(true)))
+  override lazy val optargs = buildOptArgs(Map("include_states" -> includeStates, "squash" -> squash))
+
+  def withStates = copy(includeStates = Option(true))
+
 
   override def termType = TermType.CHANGES
 }

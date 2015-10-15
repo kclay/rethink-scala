@@ -88,26 +88,7 @@ trait CompiledQuery {
   }
 }
 
-class ProtoBufCompiledQuery[T](underlying: Query) extends CompiledQuery {
 
-  override type Result = T
-
-  override def asToken(conn: Connection, connectionId: Long, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]) =
-    QueryToken[Result](conn, connectionId, this, term, promise)
-
-  override val tokenId: Long = underlying.getToken
-
-  override def encode(out: ByteBuf) = {
-    val size = underlying.getSerializedSize
-    out.capacity(size + 4)
-      .writeInt(size)
-      .writeBytes(underlying.toByteArray)
-
-  }
-
-  override type TokenType[R] = QueryToken[R]
-
-}
 
 case class JsonQuery(queryType: ql2.Query.QueryType, ast: JsonAst, opts: Map[String, Any]) {
   def toSeq = {
@@ -226,65 +207,6 @@ trait ProvidesQuery {
   }
 }
 
-trait ProvidesProtoBufQuery extends ProvidesQuery {
-
-  self: Version =>
-
-  import scala.collection.JavaConversions.{asJavaCollection, seqAsJavaList}
-
-
-  def toAst(term: Term) = ProtoBufCompiledAst(ast(term))
-
-  def build(ta: TermAssocPair) = ql2.Term.AssocPair.newBuilder.setKey(ta.key).setVal(ast(ta.token)).build()
-
-  type Builder = Query.Builder
-
-  private[this] def ast(term: Term): ql2.Term = {
-
-    val opts = term.optargs.map {
-      case ta: TermAssocPair => build(ta)
-      // case da:DatumAssocPair=> build(da)
-    }
-
-    val builder = term match {
-      case d: Datum => {
-        val db = ql2.Datum.newBuilder.setType(d.datumType)
-        d match {
-          case s: StringDatum => db.setRStr(s.value)
-          case b: BooleanDatum => db.setRBool(b.value)
-          case n: NoneDatum =>
-          case n: NumberDatum => db.setRNum(n.value)
-        }
-        ql2.Term.newBuilder().setDatum(db.build())
-
-
-      }
-      case _ => ql2.Term.newBuilder()
-    }
-
-
-
-    builder.setType(term.termType)
-      .addAllArgs(term.args.map(ast))
-      .addAllOptargs(opts).build()
-  }
-
-
-  def newQueryBuilder(queryType: ql2.Query.QueryType, token: Long, opts: Map[String, Any]): Builder = {
-    val q = Query.newBuilder().setType(Query.QueryType.START).setToken(token).setAcceptsRJson(true)
-    opts.foreach {
-      case (key, value) => q.addGlobalOptargs(ql2.Query.AssocPair.newBuilder.setKey(key).setVal(ast(Expr(value))))
-    }
-    q
-
-  }
-
-  override type Query[T] = ProtoBufCompiledQuery[T]
-
-  def withDB(q: Builder, db: DB) = q.addGlobalOptargs(Query.AssocPair.newBuilder.setKey("db").setVal(ast(db)))
-
-  def compile[T](builder: Builder, term: Term) = new ProtoBufCompiledQuery[T](builder.setQuery(ast(term)).build())
-}
 
 
 abstract class Builder {
@@ -305,17 +227,6 @@ abstract class Builder {
 }
 
 
-@deprecated("Use Version3")
-case class Version2(host: String = "localhost", port: Int = 28015,
-                    db: Option[String] = None, maxConnections: Int = 5,
-                    authKey: String = "") extends Version with ProvidesProtoBufQuery {
-  override private[rethinkscala] val channelInitializer = ProtoChannelInitializer
-  override type ResponseType = ql2.Response
-
-  override def newHandler = new ProtoVersionHandler(this)
-
-  override def toString = "Version3"
-}
 
 
 trait ProvidesJsonQuery extends ProvidesQuery {
@@ -380,9 +291,7 @@ case class Version3(host: String = "localhost", port: Int = 28015,
 
 trait Versions {
 
-  def Version2(host: String = "localhost", port: Int = 28015,
-               db: Option[String] = None, maxConnections: Int = 5,
-               authKey: String = "") = new Version2(host, port, db, maxConnections, authKey)
+
 
 
   def Version3(host: String = "localhost", port: Int = 28015,

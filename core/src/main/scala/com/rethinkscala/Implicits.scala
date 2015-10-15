@@ -367,7 +367,9 @@ class PimpedAny(val v: Any) extends AnyVal {
 
 
 final class ChangeFeedSupport[T](val target: Typed) extends AnyVal {
-  def changes = new Changes[T](target)
+  def changes(squash: Option[Boolean] = None, includeStates: Option[Boolean] = None) = new Changes[T](target, squash, includeStates)
+
+  def changes() = new Changes[T](target)
 }
 
 

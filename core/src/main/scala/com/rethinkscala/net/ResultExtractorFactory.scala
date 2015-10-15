@@ -34,7 +34,7 @@ class ResultExtractorFactory {
     // this will cause the jackson deseralizer to fail and return an empty/default instance for the change
     // Since we have all the type information needed we can construct the correct manifest at runtime and
     // still provide type safety
-    val isChangeCursor = mf.runtimeClass isAssignableFrom changeCursorClass
+    val isChangeCursor = changeCursorClass isAssignableFrom mf.runtimeClass
     val manifest = if (isChangeCursor) {
       Manifest.classType(classOf[RethinkCursor[_]],
         Manifest.classType(classOf[CursorChange[_]], mf.typeArguments.head))

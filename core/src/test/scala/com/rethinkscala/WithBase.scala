@@ -32,17 +32,18 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   val port = 28015
   val authKey = "foobar"
 
-  val version2 = new Version2(host, port, authKey = authKey)
+
   val version3 = new Version3(host, port, authKey = authKey)
 
   lazy val testSeq = {
 
-    val json = """[
-                 |    {"id": 2, "player": "Bob", "points": 15, "type": "ranked"},
-                 |    {"id": 5, "player": "Alice", "points": 7, "type": "free"},
-                 |    {"id": 11, "player": "Bob", "points": 10, "type": "free"},
-                 |    {"id": 12, "player": "Alice", "points": 2, "type": "free"}
-                 |]""".stripMargin
+    val json =
+      """[
+        |    {"id": 2, "player": "Bob", "points": 15, "type": "ranked"},
+        |    {"id": 5, "player": "Alice", "points": 7, "type": "free"},
+        |    {"id": 11, "player": "Bob", "points": 10, "type": "free"},
+        |    {"id": 12, "player": "Alice", "points": 2, "type": "free"}
+        |]""".stripMargin
     val map = Reflector.fromJson[Seq[Map[String, Any]]](json)
 
 
@@ -70,8 +71,8 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   lazy val table = db.table[Document](tableName)
 
 
-
   val dropDB = true
+
   override protected def beforeAll() {
 
 
@@ -109,7 +110,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   type IS = Iterable[String]
   type IA = Iterable[Any]
 
-  type Return[T] = Either[RethinkError, T]
+  type Return[T] = Either[ReqlError, T]
 
 
   def assert(t: ql2.Term, tt: Term.TermType) {
@@ -124,7 +125,7 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
     assert(d.str == value)
   }
 
-  private def assert_[Result](f: () => Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
+  private def assert_[Result](f: () => Return[Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
     val (condition, cause) = f() match {
       case Left(e) => (false, e.getMessage)
       case Right(r) => (check(r), s"Successful query but invalid response = $r")
@@ -134,14 +135,14 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
   }
 
   def assert[Result](query: Produce[Result], testValue: Result)(implicit mf: Manifest[Result]) {
-    assert_[Result](() => query.run.asInstanceOf[Return[Result]], {
+    assert_[Result](() => query.run, {
       r: Result => r == testValue
     })
 
   }
 
   def assert1[Result](query: Produce[Result], testValue: Result)(implicit mf: Manifest[Result]) {
-    assert_[Result](() => query.run.asInstanceOf[Return[Result]], {
+    assert_[Result](() => query.run, {
       r: Result => r == testValue
     })
 
@@ -153,19 +154,19 @@ trait WithBase extends BeforeAndAfterAll with ShouldMatchers {
 
 
   def assert[Result](query: Produce[Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
-    assert_[Result](() => query.run.asInstanceOf[Return[Result]], check)
+    assert_[Result](() => query.run, check)
 
   }
 
 
   def assertAs[Result <: Document](query: Produce[Document], check: Result => Boolean)(implicit mf: Manifest[Result]) {
 
-    assert_[Result](() => query.as[Result].asInstanceOf[Return[Result]], check)
+    assert_[Result](() => query.as[Result], check)
 
   }
 
 
-  def assert[Result](result: Either[RethinkError, Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
+  def assert[Result](result: Return[Result], check: Result => Boolean)(implicit mf: Manifest[Result]) {
     assert_[Result](() => result, check)
   }
 

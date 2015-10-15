@@ -19,7 +19,7 @@ trait ResultResolver[Result] {
 
 trait ResultQuery[T] {
 
-  type ResolveType = Either[RethinkError, T]
+  type ResolveType = Either[ReqlError, T]
 
   val connection: Connection
 
@@ -32,11 +32,11 @@ trait ResultQuery[T] {
 
       case Some(Failure(e: Exception)) => resolve(e)
 
-      case Failure(e: RethinkError) => resolve(e)
+      case Failure(e: ReqlError) => resolve(e)
       case Failure(e: Exception) => Left(RethinkRuntimeError(e.getMessage, term))
-      case e: RethinkError => Left(e)
+      case e: ReqlError=> Left(e)
       case Some(Success(res)) => res match {
-        case x: None.type => Left(RethinkNoResultsError("No results found for " + extractor.manifest.runtimeClass.getSimpleName, term))
+        case x: None.type => Left(ReqlNoResultsError("No results found for " + extractor.manifest.runtimeClass.getSimpleName, term))
         case _ => Right(res.asInstanceOf[T])
 
 

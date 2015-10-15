@@ -147,6 +147,7 @@ case class IsEmpty[T,C[_]](target: Sequence[T,C]) extends ProduceBinary {
   * @param target
   * @param filter
   */
+@deprecated("Use OffsetsOf","0.4.8")
 case class IndexesOf[T,C[_]](target: Sequence[T,C], filter: FuncWrap) extends ProduceSeq[Long,C] {
 
   override lazy val args = buildArgs(target, filter)
@@ -154,6 +155,13 @@ case class IndexesOf[T,C[_]](target: Sequence[T,C], filter: FuncWrap) extends Pr
   def termType:TermType = TermType.INDEXES_OF
 }
 
+
+case class OffsetsOf[T,C[_]](target: Sequence[T,C], filter: FuncWrap) extends ProduceSeq[Long,C] {
+
+  override lazy val args = buildArgs(target, filter)
+
+  def termType:TermType = TermType.INDEXES_OF
+}
 case class Nth[T](target: IndexTyped[T], index: Int) extends ProduceSingleSelection[T] {
   def termType:TermType = TermType.NTH
 }

@@ -352,3 +352,11 @@ class UUID extends Produce[java.util.UUID] {
 
   }
 }
+
+class MinVal extends Produce[Any] {
+  override def termType = TermType.MIN
+}
+
+class MaxVal extends Produce[Any] {
+  override def termType = TermType.MAX
+}

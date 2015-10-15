@@ -57,9 +57,9 @@ trait RethinkCursor[T] extends Seq[T] {
 
       import com.rethinkscala.Blocking._
 
-      seq.count.run(token.extractor.to[Double]) match {
-        case Left(e: RethinkError) => chunks.size
-        case Right(b: Double) => b.toInt
+      seq.count().run(token.extractor.to[Double]) match {
+        case Left(e) => chunks.size
+        case Right(b) => b.toInt
       }
     }
 

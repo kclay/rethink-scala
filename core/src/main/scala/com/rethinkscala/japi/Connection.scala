@@ -8,7 +8,7 @@ import java.util.{List => JList, Map => JMap}
 import com.rethinkscala.Delegate
 import com.rethinkscala.ast.Produce
 import com.rethinkscala.backend.netty.blocking.BlockingConnection
-import com.rethinkscala.net.{RethinkError, Version}
+import com.rethinkscala.net.{ReqlError, RethinkError, Version}
 
 import scala.concurrent.duration.Duration
 
@@ -18,7 +18,7 @@ import scala.concurrent.duration.Duration
  * Date: 3/2/14
  * Time: 8:37 PM 
  */
-
+ /*
 case class Connection(version: Version, timeoutInMilliseconds: Long = 5000) {
 
 
@@ -45,7 +45,7 @@ case class Connection(version: Version, timeoutInMilliseconds: Long = 5000) {
 }
 
 
-private case class QueryResult[T <: AnyRef](underlying: Either[RethinkError, T]) extends Result[T] {
+private case class QueryResult[T <: AnyRef](underlying: Either[ReqlError, T]) extends Result[T] {
   def hasError = underlying.isLeft
 
   def getError = underlying.left.get
@@ -66,4 +66,4 @@ trait Result[T <: AnyRef] {
   def getResults: T
 }
 
-
+               */

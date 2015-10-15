@@ -1,7 +1,7 @@
 package com.rethinkscala.backend.netty.blocking
 
 import com.rethinkscala.backend.RethinkBackend
-import com.rethinkscala.net.RethinkError
+import com.rethinkscala.net.{ReqlError, RethinkError}
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,7 +17,7 @@ object BlockingBackend extends RethinkBackend {
   override type ProfileDef = BlockingProfile
   override val profile = BlockingProfile
   override val Connection = BlockingConnection
-  type Result[T] = Either[RethinkError, T]
+  type Result[T] = Either[ReqlError, T]
 }
 
 

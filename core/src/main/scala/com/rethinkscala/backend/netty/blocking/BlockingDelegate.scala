@@ -4,7 +4,7 @@ import com.rethinkscala._
 import com.rethinkscala.ast.Produce
 import com.rethinkscala.backend.netty.async.{AsyncConnection, AsyncDelegate}
 import com.rethinkscala.backend.{CastAbleDelegate, Delegate}
-import com.rethinkscala.net.RethinkError
+import com.rethinkscala.net.{ReqlError, RethinkError}
 
 /**
  * Created by IntelliJ IDEA.
@@ -51,12 +51,12 @@ case class BlockingTryDelegate[T](delegate: BlockingDelegate[T], connectionId: O
   def toQuery[R](extractor: Extractor[R]): BlockingQuery[R] = delegate.toQuery(extractor)
 
   override def run(implicit extractor: Extractor[T]): Try[T] = toQuery(extractor).toResult match {
-    case Left(e: RethinkError) => Failure(e)
+    case Left(e) => Failure(e)
     case Right(o) => Success(o)
   }
 
   override def as[R <: T](implicit extractor: Extractor[R]): Try[R] = toQuery(extractor).toResult match {
-    case Left(e: RethinkError) => Failure(e)
+    case Left(e) => Failure(e)
     case Right(o) => Success(o)
   }
 

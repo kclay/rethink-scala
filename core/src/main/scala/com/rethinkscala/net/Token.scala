@@ -37,7 +37,7 @@ abstract class Token[R] {
 
   def id: Long
 
-  def toError(response: R): RethinkError
+  def toError(response: R): ReqlError
 
   def failure(e: Throwable)
 
@@ -202,64 +202,3 @@ case class JsonQueryToken[R](connection: Connection, connectionId: Long, query: 
   }
 }
 
-
-case class QueryToken[R](connection: Connection, connectionId: Long, query: CompiledQuery, term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
-  extends Token[Response] with LazyLogging {
-
-  type ResultType = R
-  type MapType = Map[String, _]
-  type IterableType = Iterable[MapType]
-
-  implicit lazy val mf: Manifest[R] = extractor.manifest
-
-  private[rethinkscala] def context = connection
-
-  def id: Long = query.tokenId
-
-
-  def cast[T](json: String)(implicit mf: Manifest[T]): T = translate[T].read(json, term)
-
-  def toResult(response: Response) = {
-
-    val json: String = Datum.unwrap(response.getResponse(0))
-    val rtn = json match {
-      case "" => None
-      case _ => cast[ResultType](json)
-    }
-    rtn
-  }
-
-
-  def toError(response: Response) = ConvertFrom.toError(response, term)
-
-  def success(value: Any) = p.tryComplete(Try(value.asInstanceOf[R]))
-
-  def failure(e: Throwable) = p.tryFailure(e)
-
-  def toCursor(id: Int, response: Response) = {
-
-    import scala.collection.JavaConverters._
-
-    val results = response.getResponseList.asScala
-    val seq = results.length match {
-      case 1 if response.getType == ResponseType.SUCCESS_ATOM =>
-        cast[ResultType](Datum.unwrap(results(0)))
-      case _ => for (d <- results) yield Datum.unwrap(d) match {
-
-        case json: String => if (mf.typeArguments.nonEmpty) cast(json)(mf.typeArguments.head)
-        else cast[ResultType](json)
-      }
-
-    }
-    val cursor = query.cursor(this, connectionId, response.getType match {
-      case ResponseType.SUCCESS_SEQUENCE => true
-      case _ => false
-    })(extractor.cursorFactory)
-
-    cursor << seq.asInstanceOf[Seq[cursor.ChunkType]]
-
-
-  }
-
-
-}

@@ -15,12 +15,12 @@ import scala.concurrent.duration.Duration
 
 case class BlockingQuery[R](term: Term, connection: BlockingConnection, extractor: ResultExtractor[R],
                     opts: Map[String, Any], connectionId: Option[Long] = None)
-  extends ResultQuery[R] with ResultResolver[Either[RethinkError, R]] {
+  extends ResultQuery[R] with ResultResolver[Either[ReqlError, R]] {
 
 
   def toResult[T] = toResult(connection.timeoutDuration)
 
-  def toResult[T](atMost: Duration): Either[RethinkError, R] = {
+  def toResult[T](atMost: Duration): Either[ReqlError, R] = {
 
     val p = connection.write(term, opts, connectionId)(extractor)
 
@@ -28,8 +28,8 @@ case class BlockingQuery[R](term: Term, connection: BlockingConnection, extracto
     try {
       Await.ready(p.future, atMost)
     } catch {
-      case e: TimeoutException => p failure RethinkTimeoutError(e.getMessage, term)
-      case e: InterruptedException => p failure RethinkClientError(e.getMessage, term)
+      case e: TimeoutException => p failure ReqlTimeoutError(e.getMessage, term)
+      case e: InterruptedException => p failure ReqlClientError(e.getMessage, term)
 
 
     }

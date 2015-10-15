@@ -1,6 +1,6 @@
 package com.rethinkscala
 
-import com.rethinkscala.net.{UnknownFrame, OptionalFrame, PositionFrame, RethinkError}
+import com.rethinkscala.net._
 import com.rethinkscala.ast.StringDatum
 import com.rethinkscala.ast.BooleanDatum
 import com.rethinkscala.ast.DB
@@ -42,28 +42,6 @@ object ConvertFrom {
 
   implicit def datumToString(d: ql2.Ql2.Datum): String = Option(d.getRStr).getOrElse("")
 
-  //implicit def datnumCollection2Iterable(d:JList[p.Datum]):Iterable[]
-
-  def toError(response: Response, term: Term): RethinkError = {
-
-    val message: String = response.getResponse(0)
-    val frames: Iterable[Frame] = Option(response.getBacktrace)
-
-    response.getType match {
-      case RUNTIME_ERROR => RethinkRuntimeError(message, term, frames)
-      case COMPILE_ERROR => RethinkCompileError(message, term, frames)
-      case CLIENT_ERROR => RethinkClientError(message, term, frames)
-      case _ => RethinkRuntimeError(message, term, frames)
-    }
-  }
-
-  /*
-
-   val typ=typeOf[T]
-   val constructor=typ.declaration(nme.CONSTRUCTOR).asMethod
-   val instance = currentMirror reflectClass typ.typeSymbol.asClass reflectConstructor constructor apply (message,term,frames)
-   instance.asInstanceOf[T]
-   */
 
 }
 

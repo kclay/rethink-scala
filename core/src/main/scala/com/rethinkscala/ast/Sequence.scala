@@ -17,7 +17,7 @@ object Sequence {
 
   implicit def docToFunctional[T <: Document, C[_]](seq: Sequence[T, C]) = new ToFunctional[T, Var, C](seq)
 
- implicit def toFunctional[T, C[_]](seq: Sequence[T, C])(implicit ast: ToAst[T]): ToFunctional[T, ast.TypeMember, C] = new ToFunctional[T, ast.TypeMember, C](seq)
+  implicit def toFunctional[T, C[_]](seq: Sequence[T, C])(implicit ast: ToAst[T]): ToFunctional[T, ast.TypeMember, C] = new ToFunctional[T, ast.TypeMember, C](seq)
 
 
   implicit class ScalaSequence[T, C[_]](underlying: Sequence[T, C]) {
@@ -105,19 +105,26 @@ trait IndexTyped[T] extends Typed {
 trait Sequence[T, Cursor[_]] extends ArrayTyped[T] with Multiply with Filterable[T, Cursor] with Record with Aggregation[T] with IndexTyped[T] {
 
 
-//  type CC[A] = AbstractCursor[A]
+  //  type CC[A] = AbstractCursor[A]
   type ElementType = T
 
 
   override val underlying = this
 
-  def indexesOf[R >: Datum](value: R): ProduceSeq[Long, Cursor] = IndexesOf[T, Cursor](underlying, value.wrap)
+
+  @deprecated("Use offestsOf", "0.4.8")
+  def indexesOf[R >: Datum](value: R): ProduceSeq[Long, Cursor] = OffsetsOf[T, Cursor](underlying, value.wrap)
+
+  def offsetsOf[R >: Datum](value: R): ProduceSeq[Long, Cursor] = OffsetsOf[T, Cursor](underlying, value.wrap)
 
   def isEmpty: ProduceBinary = IsEmpty(underlying)
 
   def sample(amount: Int): ProduceSeq[T, Cursor] = Sample[T, Cursor](underlying, amount)
 
-  def indexesOf(p: Var => Binary): ProduceSeq[Long, Cursor] = IndexesOf[T, Cursor](underlying, p.wrap)
+  @deprecated("Use offestsOf", "0.4.8")
+  def indexesOf(p: Var => Binary): ProduceSeq[Long, Cursor] = OffsetsOf[T, Cursor](underlying, p.wrap)
+
+  def offsetsOf(p: Var => Binary): ProduceSeq[Long, Cursor] = OffsetsOf[T, Cursor](underlying, p.wrap)
 
   def skip(amount: Int): ProduceSeq[T, Cursor] = Skip[T, Cursor](underlying, amount)
 
@@ -158,7 +165,7 @@ trait Sequence[T, Cursor[_]] extends ArrayTyped[T] with Multiply with Filterable
 
   def merge[B >: T](other: Sequence[B, Cursor]): ProduceSeq[T, Cursor] = MergeSequence(underlying, other)
 
-  def foreach(f: Var => Typed):ForEach[T,Cursor] = ForEach(underlying, f)
+  def foreach(f: Var => Typed): ForEach[T, Cursor] = ForEach(underlying, f)
 
 }
 
@@ -176,9 +183,9 @@ trait Selection[T] extends Typed {
 
   def update(attributes: Map[String, Any], options: UpdateOptions) = Update[T](underlying, attributes.wrap, options)
 
-  def update(p: Var=>Typed): Update[T] = update(p, UpdateOptions())
+  def update(p: Var => Typed): Update[T] = update(p, UpdateOptions())
 
-  def update(p: Var=>Typed, options: UpdateOptions) = Update[T](underlying, p.wrap, options)
+  def update(p: Var => Typed, options: UpdateOptions) = Update[T](underlying, p.wrap, options)
 
   def update(d: Document): Update[T] = update((x: Var) => MakeObj2(d))
 
@@ -206,7 +213,7 @@ trait StreamSelection[T, C[_]] extends Selection[T] with Stream[T, C] {
   self: ProduceSequence[T] =>
   override val underlying = this
 
- // def between(start: Int, stop: Int): Between[T, C] = between(start, stop, BetweenOptions())
+  // def between(start: Int, stop: Int): Between[T, C] = between(start, stop, BetweenOptions())
 
   def between(start: Typed, stop: Typed): Between[T, C] = between(start, stop, BetweenOptions())
 

@@ -118,26 +118,6 @@ case class JsonVersionHandler(version: Version3) extends VersionHandler[String] 
   }
 }
 
-case class ProtoVersionHandler(version: Version2) extends VersionHandler[ql2.Ql2.Response] {
-  override def handle(tokenId: Long, response: Response) = handle(tokenId) {
-    token => (response.getType match {
 
-      case ResponseType.RUNTIME_ERROR | ResponseType.COMPILE_ERROR | ResponseType.CLIENT_ERROR => token.toError(response)
-      case ResponseType.SUCCESS_PARTIAL | ResponseType.SUCCESS_SEQUENCE => token.toCursor(0, response)
-      case ResponseType.SUCCESS_ATOM => token.term match {
-        case x: ProduceSequence[_] => token.toCursor(0, response)
-        case _ => token.toResult(response)
-      }
-      // case ResponseType.SUCCESS_ATOM => toResult(response)
-      case _ =>
-
-    }) match {
-      case e: Exception => token.failure(e)
-      case e: Any => token.success(e)
-    }
-  }
-
-  override type TokenType = QueryToken[_]
-}
 
 

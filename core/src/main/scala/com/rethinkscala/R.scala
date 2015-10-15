@@ -118,8 +118,14 @@ trait RethinkApi extends TimeNames with GeometryApi {
   def json(str: String) = Json(str)
 
   def uuid = new ast.UUID()
-  def range(start:Int):Range = Range(start)
-  def range(start:Int,end:Int):Range = Range(start,end)
+
+  def range(start: Int): Range = Range(start)
+
+  def range(start: Int, end: Int): Range = Range(start, end)
+
+  def minval = new ast.MinVal()
+
+  def maxval = new ast.MaxVal()
 
 
 }
@@ -132,28 +138,28 @@ trait TimeNames {
 
   private def apply(tt: TermType) = TimeName(tt)
 
-  val monday = this(TermType.MONDAY)
-  val tuesday = this(TermType.TUESDAY)
-  val wednesday = this(TermType.WEDNESDAY)
-  val thursday = this(TermType.THURSDAY)
-  val friday = this(TermType.FRIDAY)
-  val saturday = this(TermType.SATURDAY)
-  val sunday = this(TermType.SUNDAY)
+  val monday = this (TermType.MONDAY)
+  val tuesday = this (TermType.TUESDAY)
+  val wednesday = this (TermType.WEDNESDAY)
+  val thursday = this (TermType.THURSDAY)
+  val friday = this (TermType.FRIDAY)
+  val saturday = this (TermType.SATURDAY)
+  val sunday = this (TermType.SUNDAY)
   val weekdays = Seq(monday, tuesday, wednesday, thursday, friday, saturday, sunday)
 
-  val january = this(TermType.JANUARY)
-  val february = this(TermType.FEBRUARY)
-  val march = this(TermType.MARCH)
-  val april = this(TermType.APRIL)
-  val may = this(TermType.MAY)
-  val june = this(TermType.JUNE)
-  val july = this(TermType.JULY)
-  val august = this(TermType.AUGUST)
-  val september = this(TermType.SEPTEMBER)
+  val january = this (TermType.JANUARY)
+  val february = this (TermType.FEBRUARY)
+  val march = this (TermType.MARCH)
+  val april = this (TermType.APRIL)
+  val may = this (TermType.MAY)
+  val june = this (TermType.JUNE)
+  val july = this (TermType.JULY)
+  val august = this (TermType.AUGUST)
+  val september = this (TermType.SEPTEMBER)
 
-  val october = this(TermType.OCTOBER)
-  val november = this(TermType.NOVEMBER)
-  val december = this(TermType.DECEMBER)
+  val october = this (TermType.OCTOBER)
+  val november = this (TermType.NOVEMBER)
+  val december = this (TermType.DECEMBER)
 
   val months = Seq(january, february, march, april, june, july, august, september, october, november, december)
 

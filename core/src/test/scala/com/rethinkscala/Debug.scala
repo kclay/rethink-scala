@@ -16,6 +16,10 @@ import ql2.Ql2
  * Time: 7:56 AM
  */
 
+case class TestRecord(
+                       id: String,
+                       test: Option[Float]
+                       ) extends Document
 
 case class Participant(
                         id: String,
@@ -179,6 +183,22 @@ class Debug extends FunSuite with WithBase with ScalaFutures with Matchers {
     whenReady(result, Timeout(10 seconds)) {
       b => assert(b.contains(defaultValue))
     }
+  }
+
+  test("double") {
+    import asyncConnection.executionContext
+    val tbl = table.to[TestRecord]
+    val result = for {
+      _ <- tbl.insert(TestRecord("asdf", Some(1))).run
+      record <- tbl.get("asdf").run
+    } yield record
+
+    whenReady(result, Timeout(10 seconds)) {
+      record =>
+        println(record)
+        assert(record.id == "asdf")
+    }
+
   }
 
 }
