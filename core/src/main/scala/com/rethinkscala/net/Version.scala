@@ -20,12 +20,12 @@ import scala.concurrent.{ExecutionContext, Promise}
 
 
 /**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 7/3/13
- * Time: 5:22 PM
- *
- */
+  * Created with IntelliJ IDEA.
+  * User: keyston
+  * Date: 7/3/13
+  * Time: 5:22 PM
+  *
+  */
 
 trait CompiledAst
 
@@ -89,7 +89,6 @@ trait CompiledQuery {
 }
 
 
-
 case class JsonQuery(queryType: ql2.Query.QueryType, ast: JsonAst, opts: Map[String, Any]) {
   def toSeq = {
     var seq: Seq[Any] = Seq(queryType.getNumber)
@@ -138,6 +137,7 @@ abstract class Version extends LazyLogging {
   val timeout: Int = 10
 
   val version: VersionDummy.Version = VersionDummy.Version.V0_2
+  val authKey: String
 
 
   private[rethinkscala] val channelInitializer: RethinkChannelInitializer
@@ -208,7 +208,6 @@ trait ProvidesQuery {
 }
 
 
-
 abstract class Builder {
 
   @BeanProperty
@@ -227,8 +226,6 @@ abstract class Builder {
 }
 
 
-
-
 trait ProvidesJsonQuery extends ProvidesQuery {
 
   self: Version =>
@@ -239,7 +236,7 @@ trait ProvidesJsonQuery extends ProvidesQuery {
 
   override type Builder = QueryBuilder
 
-  override def withDB(builder: Builder, db: DB) = builder.copy(opts = (builder.opts /: Map("db" -> db.name))(_ + _))
+  override def withDB(builder: Builder, db: DB) = builder.copy(opts = (builder.opts /: Map("db" -> db.name)) (_ + _))
 
   override def newQueryBuilder(queryType: ql2.Query.QueryType, token: Long, opts: Map[String, Any]) =
     QueryBuilder(queryType, token, opts)
@@ -271,31 +268,41 @@ trait ProvidesJsonQuery extends ProvidesQuery {
 }
 
 
-case class Version3(host: String = "localhost", port: Int = 28015,
-                    db: Option[String] = None, maxConnections: Int = 5,
-                    authKey: String = "") extends Version with ProvidesJsonQuery {
-
+trait AbstractJsonVersion extends Version with ProvidesJsonQuery {
   override type ResponseType = String
 
-  override def newHandler = new JsonVersionHandler(this)
+  override def newHandler: JsonVersionHandler = new JsonVersionHandler(this)
 
   override private[rethinkscala] val channelInitializer = JsonChannelInitializer(this)
   override val version = VersionDummy.Version.V0_3
 
-  def withConnectTimeout(timeout: Long) = {
+  def withConnectTimeout(timeout: Long): this.type = {
     connectTimeout = Some(timeout)
     this
   }
+}
+
+case class Version3(host: String = "localhost", port: Int = 28015,
+                    db: Option[String] = None, maxConnections: Int = 5,
+                    authKey: String = "") extends AbstractJsonVersion {
+
 
 }
 
+case class Version4(host: String = "localhost", port: Int = 28015,
+                    db: Option[String] = None, maxConnections: Int = 5,
+                    authKey: String = "") extends AbstractJsonVersion {
+  override val version = VersionDummy.Version.V0_4
+}
+
 trait Versions {
-
-
 
 
   def Version3(host: String = "localhost", port: Int = 28015,
                db: Option[String] = None, maxConnections: Int = 5,
                authKey: String = "") = new Version3(host, port, db, maxConnections, authKey)
 
+  def Version4(host: String = "localhost", port: Int = 28015,
+               db: Option[String] = None, maxConnections: Int = 5,
+               authKey: String = "") = new Version4(host, port, db, maxConnections, authKey)
 }

@@ -1,7 +1,8 @@
 package com.rethinkscala.ast
 
+
 import com.rethinkscala._
-import com.rethinkscala.net.{RethinkCursor, BinaryConversion, DefaultCursor}
+import com.rethinkscala.net.{BinaryConversion, RethinkCursor}
 import ql2.Ql2.Term.TermType
 
 trait WithDB {
@@ -29,9 +30,15 @@ case class DB(name: String) extends Term {
 
   def ^-(name: String): TableDrop = this tableDrop (name)
 
-  def table[T <: Document](name: String, useOutDated: Option[Boolean] = None): Table[T] = Table[T](name, useOutDated, Some(this))
+  @deprecated("use table(name,ReadMode.Kind)", "0.4.8")
+  def table[T <: Document](name: String, useOutDated: Option[Boolean]): Table[T] = Table[T](name, ReadMode.Single, Some(this))
 
-  def ^(name: String, useOutDated: Boolean = false) = table[Document](name, Some(useOutDated))
+  def table[T <: Document](name: String, readMode: ReadMode.Kind = ReadMode.Single): Table[T] = Table[T](name, readMode, Some(this))
+
+  @deprecated("use ^able(name,ReadMode.Kind)", "0.4.8")
+  def ^(name: String, useOutDated: Boolean) = table[Document](name, ReadMode.Single)
+
+  def ^(name: String, readMode: ReadMode.Kind) = table[Document](name, readMode)
 
 }
 

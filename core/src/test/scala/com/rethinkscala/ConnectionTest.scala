@@ -11,11 +11,11 @@ import org.scalatest.concurrent.{ScalaFutures, Futures}
 
 
 /**
- * Created by IntelliJ IDEA.
- * User: Keyston
- * Date: 12/16/13
- * Time: 11:46 AM 
- */
+  * Created by IntelliJ IDEA.
+  * User: Keyston
+  * Date: 12/16/13
+  * Time: 11:46 AM
+  */
 
 case class Hello(a: Boolean)
 
@@ -95,8 +95,9 @@ class ConnectionTest extends FunSuite with WithBase with ScalaFutures {
 
 
     whenReady(futureResult.failed, Timeout(30 seconds)) { result =>
-      assert(connection.pool.available == 0)
-      result should be(asInstanceOf[RethinkRuntimeError])
+      connection.pool.available should be === 0
+
+      result shouldBe a[ReqlClientError]
     }
 
 

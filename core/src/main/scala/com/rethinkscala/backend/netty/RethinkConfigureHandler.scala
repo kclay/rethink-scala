@@ -2,24 +2,24 @@ package com.rethinkscala.backend.netty
 
 import java.nio.charset.Charset
 
-import com.rethinkscala.net.{RethinkDriverError, Version3}
+import com.rethinkscala.net.{AbstractJsonVersion, RethinkDriverError}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import io.netty.buffer.ByteBuf
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
 
 /**
- * Created by IntelliJ IDEA.
- * User: Keyston
- * Date: 4/21/2015
- * Time: 2:48 PM 
- */
-case class RethinkConfigureHandler(version: Version3)
+  * Created by IntelliJ IDEA.
+  * User: Keyston
+  * Date: 4/21/2015
+  * Time: 2:48 PM
+  */
+case class RethinkConfigureHandler(version: AbstractJsonVersion)
   extends SimpleChannelInboundHandler[ByteBuf] with LazyLogging {
 
 
   private[this] val AUTH_RESPONSE = "SUCCESS"
 
-  override def channelActive(ctx: ChannelHandlerContext) = {
+  override def channelActive(ctx: ChannelHandlerContext): Unit = {
 
     val channel = ctx.channel()
 
@@ -29,7 +29,7 @@ case class RethinkConfigureHandler(version: Version3)
 
   }
 
-  override def channelRead0(ctx: ChannelHandlerContext, msg: ByteBuf) = {
+  override def channelRead0(ctx: ChannelHandlerContext, msg: ByteBuf): Unit = {
 
     val promise = ChannelAttribute.Future.get(ctx.channel())
 

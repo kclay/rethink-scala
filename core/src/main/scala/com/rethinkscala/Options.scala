@@ -23,7 +23,7 @@ case class TableOptions(
                          replicas: Either[Int, Map[String, Any]] = Left(1),
                          primaryReplicaTag: Option[String] = None
 
-                         ) extends Options {
+                       ) extends Options {
   def toMap = Map("primary_key" -> primaryKey, "shards" -> shards,
     "datacenter" -> dataCenter,
     "replicas" -> Some(replicas.fold[Any](identity, identity)),
@@ -34,7 +34,7 @@ case class TableOptions(
 case class QueryOptions(
                          useOutdated: Option[Boolean] = None,
                          noreply: Option[Boolean] = None
-                         ) extends Options {
+                       ) extends Options {
   def toMap = ???
 }
 
@@ -45,7 +45,7 @@ case class InsertOptions(
                           upsert: Option[Boolean] = None,
                           returnChanges: Option[Boolean] = None,
                           conflict: Option[Conflict.Kind] = None
-                          ) extends Options {
+                        ) extends Options {
   def toMap = Map("upsert" -> upsert,
     "conflict" -> conflict,
     "durability" -> durability, "return_changes" -> returnChanges)
@@ -57,7 +57,7 @@ case class UpdateOptions(
                           durability: Option[Durability.Value] = None,
 
                           returnChanges: Option[Boolean] = None
-                          ) extends Options {
+                        ) extends Options {
   def toMap = Map("non_atomic" -> nonAtomic, "durability" -> durability, "return_changes" -> returnChanges)
 }
 
@@ -72,7 +72,7 @@ case class BetweenOptions(index: Option[String] = None,
 case class BoundOptions(
                          leftBound: Option[Bound.Value] = None,
                          rightBound: Option[Bound.Value] = None
-                         ) extends Options {
+                       ) extends Options {
   def toMap = Map("left_bound" -> leftBound, "right_bound" -> rightBound)
 }
 
@@ -95,6 +95,13 @@ object Conflict extends Enumeration {
   val Error = Value("error")
   val Replace = Value("replace")
   val Update = Value("update")
+}
+
+object ReadMode extends Enumeration {
+  type Kind = Value
+  val Majority = Value("majority")
+  val Single = Value("single")
+  val Outdated = Value("outdated")
 }
 
 
@@ -144,7 +151,7 @@ case class RequestOptions(method: Option[HttpMethod.Value] = None,
                           auth: Option[HttpAuth] = None, params: Map[String, Any] = Map.empty,
                           headers: HttpHeaders = HttpHeaders.empty,
                           data: Option[HttpBody[_]] = None
-                           ) extends Options with RequestOptionsOps {
+                         ) extends Options with RequestOptionsOps {
 
   override type OptionType = RequestOptions
 
@@ -187,7 +194,7 @@ case class HttpOptions(
                         resultFormat: Option[ResultFormat.Kind] = None,
                         request: RequestOptions = RequestOptions(),
                         pagination: PaginationOptions = PaginationOptions()
-                        ) extends Options with RequestOptionsOps with PaginationOptionsOps {
+                      ) extends Options with RequestOptionsOps with PaginationOptionsOps {
 
   lazy val mapValue = Map("timeout" -> timeout, "reattempts" -> reattempts,
     "redirect" -> redirect, "verify" -> verify, "result_format" -> resultFormat

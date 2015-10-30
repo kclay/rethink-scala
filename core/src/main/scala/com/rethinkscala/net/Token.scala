@@ -70,8 +70,9 @@ case class JsonErrorResponse(
                               @JsonProperty("t") responseType: Long,
                               @JsonProperty("r") result: Seq[String],
                               @JsonProperty("b") backtrace: Option[Seq[Frame]],
-                              @JsonProperty("p") profile: Option[Profile]
-                              ) extends BaseJsonResponse[String]
+                              @JsonProperty("p") profile: Option[Profile],
+                              @JsonProperty("e") errorType: Int
+                            ) extends BaseJsonResponse[String]
 
 case class JsonCursorResponse[T](@JsonProperty("t") responseType: Long,
                                  @JsonProperty("r") result: T,
@@ -110,7 +111,8 @@ class JsonResponseExtractor {
 case class JsonResponse[T](@JsonProperty("t") responseType: Long,
                            @JsonProperty("r") result: Seq[T],
                            @JsonProperty("b") backtrace: Option[Seq[Frame]],
-                           @JsonProperty("p") profile: Option[Profile]) extends BaseJsonResponse[T]
+                           @JsonProperty("p") profile: Option[Profile]
+                          ) extends BaseJsonResponse[T]
 
 case class JsonQueryToken[R](connection: Connection, connectionId: Long, query: CompiledQuery,
                              term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
@@ -134,6 +136,8 @@ case class JsonQueryToken[R](connection: Connection, connectionId: Long, query: 
     val error = response.result.head
     val frames = response.backtrace.getOrElse(Iterable.empty)
 
+
+   // response.errorType
     response.responseType match {
       case RUNTIME_ERROR_VALUE => RethinkRuntimeError(error, term, frames)
       case COMPILE_ERROR_VALUE => RethinkCompileError(error, term, frames)

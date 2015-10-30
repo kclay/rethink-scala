@@ -15,22 +15,22 @@ import scala.concurrent.Promise
 import scala.util.{Failure, Success, Try}
 
 /**
- * Created by IntelliJ IDEA.
- * User: Keyston
- * Date: 8/22/2014
- * Time: 2:22 PM 
- */
+  * Created by IntelliJ IDEA.
+  * User: Keyston
+  * Date: 8/22/2014
+  * Time: 2:22 PM
+  */
 trait VersionHandler[R] extends LazyLogging {
   val version: Version
 
   private val newTokenId: AtomicLong = new AtomicLong()
 
-  def handle(tokenId: Long, response: R)
+  def handle(tokenId: Long, response: R): Unit
 
   type TokenType <: Token[_]
 
 
-  override def toString = {
+  override def toString: String = {
     s"VersionHandler($version)"
   }
 
@@ -69,14 +69,15 @@ trait VersionHandler[R] extends LazyLogging {
       case Some(token) => Try(f(token)) match {
         case Failure(e) => logger.error("Error in trying to handle token", e)
 
+          throw ReqlClientError(e.getMessage, token.term, Iterable.empty, Some(e))//)
           // FIXME : Find a better way to invalidate the connection before resolving token
-          try {
+        /*  try {
             throw e
           } catch {
-            case _: Throwable => throw e
+            case _: Throwable => //throw e
           } finally {
-            token.failure(RethinkRuntimeError(e.getMessage, token.term, Iterable.empty, Some(e)))
-          }
+
+          }*/
         case Success(res) => logger.debug(s"Results = $res")
       }
       case _ => logger.error(s"No Token found for $id")
@@ -86,29 +87,31 @@ trait VersionHandler[R] extends LazyLogging {
   }
 }
 
-case class JsonVersionHandler(version: Version3) extends VersionHandler[String] {
+case class JsonVersionHandler(version: Version) extends VersionHandler[String] {
 
   type TokenType = JsonQueryToken[_]
   val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored
 
-  override def handle(tokenId: Long, json: String) = {
-    logger.debug(s"handle($tokenId) = $json")
+  private def process(token: TokenType, json: String, responseType: Int) = responseType match {
+    case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE | CLIENT_ERROR_VALUE => token.toError(json)
+    case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => token.toCursor(json, responseType.toInt)
+    case SUCCESS_ATOM_VALUE => token.term match {
+      case x: ProduceSequence[_] => token.toCursor(json, responseType.toInt, atom = true)
+      case _ => token.toResult(json)
+    }
+    case _ => RethinkRuntimeError(s"Invalid response = $json", token.term)
+  }
+
+  override def handle(tokenId: Long, json: String): Unit = {
     handle(tokenId) {
       token => (json match {
-        case ResponseTypeExtractor(responseType) => responseType.toInt match {
-          case RUNTIME_ERROR_VALUE | COMPILE_ERROR_VALUE | CLIENT_ERROR_VALUE => token.toError(json)
-          case SUCCESS_PARTIAL_VALUE | SUCCESS_SEQUENCE_VALUE => token.toCursor(json, responseType.toInt)
-          case SUCCESS_ATOM_VALUE => token.term match {
-            case x: ProduceSequence[_] => token.toCursor(json, responseType.toInt, atom = true)
-            case _ => token.toResult(json)
-          }
-          case _ => RethinkRuntimeError(s"Invalid response = $json", token.term)
-        }
+        case ResponseTypeExtractor(responseType) => process(token, json, responseType.toInt)
         case _ => token.toResult(json)
 
 
       }) match {
-        case e: Exception => token.failure(e)
+        case e: ReqlError => token.failure(e)
+        case e: Exception => token.failure(ReqlClientError(e.getMessage, token.term))
         case e: Any => token.success(e)
 
         case null => token.failure(RethinkNoResultsError("No results found", token.term))

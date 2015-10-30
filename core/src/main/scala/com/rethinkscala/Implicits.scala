@@ -132,7 +132,7 @@ trait ToFloat[From, Result] {
 trait ToFloatLowerImplicits {
   self: ToAstImplicts =>
 
-  implicit def castToFloat(target: CastTo) = new ToFloat[CastTo, floatToNumeric.Cast] {
+  implicit def castToFloat(target: CastTo): ToFloat[CastTo, floatToNumeric.Cast] = new ToFloat[CastTo, floatToNumeric.Cast] {
 
 
     override def toFloat = target.asInstanceOf[floatToNumeric.Cast]
@@ -142,8 +142,9 @@ trait ToFloatLowerImplicits {
 trait ToFloatImplicits extends ToFloatLowerImplicits {
   self: ToAstImplicts =>
   type RandomFloat[T, R] = Random[T, R] with ProduceFloat
+  type RandomType[T] = Random[T, T] with ProduceTypedNumeric[T]
 
-  implicit def randomToFloat[T, R](target: Random[T, R]) = new ToFloat[Random[T, R], RandomFloat[T, Float]] {
+  implicit def randomToFloat[T](target: RandomType[T]): ToFloat[RandomType[T], RandomFloat[T, Float]] = new ToFloat[RandomType[T], RandomFloat[T, Float]] {
     override def toFloat = new Random[T, Float](target.values, Some(true)) with ProduceFloat
   }
 
@@ -215,7 +216,6 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def anyToPimpled(v: Any): PimpedAny = new PimpedAny(v)
 
-  //implicit def toTyped[T<:Typed](v:T):Typed = v
 
   implicit def collectionToAst[T](coll: Iterable[T]): MakeArray[T] = Expr[T](coll)
 
@@ -231,17 +231,6 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def boolean2Datum(b: Boolean): BooleanDatum = BooleanDatum(b)
 
-  /*
- implicit def intToDatNum0(i: Int): Datum = NumberDatum(i)
-
- implicit def longToDatNum0(l: Long): Datum = NumberDatum(l)
-
- implicit def floatToDatNum0(f: Float): Datum = NumberDatum(f)
-
- implicit def doubleToDatNum0(d: Double):Datum = NumberDatum(d)
-
- implicit def string2DatNum0(s: String): Datum= StringDatum(s)
-    */
 
   implicit def toOptLiteral[T <% Literal](v: T): Option[T] = Some(v)
 
@@ -253,13 +242,12 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def toPredicate2Opt(f: (Var, Var) => Typed): Option[Predicate2] = Some(new ScalaPredicate2(f))
 
-  // implicit def toPredicated1TypedOpt(f:(Var)=>Typed):Option[Typed] = toPredicate1Opt(f)
 
   implicit def toPredicate1(f: Var => Typed): Predicate1 = new ScalaPredicate1(f)
 
   implicit def toPredicate2(f: (Var, Var) => Typed): ScalaPredicate2 = new ScalaPredicate2(f)
 
-  //implicit def map2Typed(m:Map[String,Any]):Typed = MakeObj(m)
+
   implicit def map2Typed(m: Map[String, Any]): Typed = Expr(m)
 
   implicit def untypedPredicateToTyped(f: Var => Map[String, Any]): Predicate1 = (v: Var) => Expr(f(v))
@@ -270,8 +258,6 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def toBooleanPredicate2(f: (Var, Var) => Binary): BooleanPredicate2 = new ScalaBooleanPredicate2(f)
 
-
-  //implicit def seq2Datum(s:Seq[Datum]) = MakeArray(s)
 
   implicit def bool2Option(value: Boolean): Option[Boolean] = Some(value)
 

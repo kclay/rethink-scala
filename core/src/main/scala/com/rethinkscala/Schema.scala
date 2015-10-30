@@ -6,18 +6,18 @@ import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.rethinkscala.ast._
-import com.rethinkscala.net.Connection
+import com.rethinkscala.net.{ReqlClientError, ReqlRuntimeError, ReqlError, Connection}
 import com.rethinkscala.reflect.Reflector
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 7/13/13
- * Time: 11:00 AM
- *
- */
+  * Created with IntelliJ IDEA.
+  * User: keyston
+  * Date: 7/13/13
+  * Time: 11:00 AM
+  *
+  */
 
 
 object CurrentSchema {
@@ -33,7 +33,7 @@ object CurrentSchema {
 
 }
 
-class Schema extends Helpers{
+class Schema extends Helpers {
 
 
   protected implicit def thisSchema = this
@@ -65,15 +65,15 @@ class Schema extends Helpers{
   def liftAs[T <: Document, R](f: PartialFunction[Table[T], R])(implicit mf: Manifest[T]): Option[R] = get[T] map (f(_))
 
 
-  implicit def doc2Active[A <: Document](a: A)(implicit extractor:ResultExtractor[A], c: Connection) =
+  implicit def doc2Active[A <: Document](a: A)(implicit extractor: ResultExtractor[A], c: Connection): ActiveRecord[A] =
     new ActiveRecord(a)
 
-  class ActiveRecord[T <: Document](o: T)(implicit c: Connection, extractor:ResultExtractor[T]) {
-    private def _performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] ={
+  class ActiveRecord[T <: Document](o: T)(implicit c: Connection, extractor: ResultExtractor[T]) {
+    private def performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] = {
 
       val m = extractor.manifest
       implicit val extractor2 = extractor.to[R]
-      val result =  CurrentSchema.getOrElse(thisSchema)._tableTypes get (m.runtimeClass) map {
+      val result = CurrentSchema.getOrElse(thisSchema)._tableTypes get (m.runtimeClass) map {
         table: Table[_] => block(action(table.asInstanceOf[Table[T]]))
 
       }
@@ -82,16 +82,17 @@ class Schema extends Helpers{
     }
 
     /**
-     * Same as {{{table.insert(a)}}}
-     */
-    def save =
-      _performAction(_.insert(o) withResults)
+      * Same as {{{table.insert(a)}}}
+      */
+    def save: Either[Exception, InsertResult] =
+      performAction(_.insert(o).withChanges)
 
     /**
-     * Same as {{{table.update(a)}}}
-     */
-    def replace =
-      _performAction(_.get(o.asInstanceOf[ {val id: Any}].id match {
+      * Same as {{{table.update(a)}}}
+      */
+    def replace: Either[Exception, ChangeResult] =
+
+      performAction(_.get(o.asInstanceOf[ {val id: Any}].id match {
         case Some(v: Any) => Expr(v).asInstanceOf[Typed]
         case v: Any => Expr(v).asInstanceOf[Typed]
       }).replace(o))
@@ -113,12 +114,20 @@ class Schema extends Helpers{
     table(tableNameFromClass(manifestT.runtimeClass))(manifestT)
 
 
-  protected def table[T <: Document](name: String, useOutDated: Option[Boolean] = None, db: Option[String] = None
-                                      )(implicit manifestT: Manifest[T]): Table[T] = {
+  @deprecated("use table(String,ReadMode.Kind,Option[String])")
+  protected def table[T <: Document](name: String, useOutDated: Option[Boolean], db: Option[String]
+                                    )(implicit manifestT: Manifest[T]): Table[T] = {
+
+
+    table[T](name, ReadMode.Single, db)(manifestT)
+  }
+
+  protected def table[T <: Document](name: String, readMode: ReadMode.Kind = ReadMode.Single, db: Option[String] = None
+                                    )(implicit manifestT: Manifest[T]): Table[T] = {
 
 
     val typeT = manifest.runtimeClass
-    val t = new Table[T](name, useOutDated, db.map(DB(_)))
+    val t = new Table[T](name, readMode, db.map(DB))
     tables.append(t)
     _addTableType[T](typeT, t)
     t
@@ -126,13 +135,14 @@ class Schema extends Helpers{
 
   private val _tableViews = ArrayBuffer.empty[TableView[_]]
 
-  def on[T <: Document](table: Table[T])(f: TableView[T] => Unit)(implicit mf: Manifest[T]) = {
+  def on[T <: Document](table: Table[T])(f: TableView[T] => Unit)(implicit mf: Manifest[T]): Unit = {
     val view = new TableView[T](table)
     f(view)
     _tableViews.append(view)
   }
 
   def db(name: String) = RethinkApi.db(name)
+
   /*
   def setup(implicit c: Connection) = {
     block {
@@ -159,7 +169,7 @@ class Schema extends Helpers{
 
 }
 
-class TableView[T <: Document](table: Table[T]) extends Helpers{
+class TableView[T <: Document](table: Table[T]) extends Helpers {
 
   private[rethinkscala] val _indexes = ArrayBuffer.empty[ProduceBinary]
   /*

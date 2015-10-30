@@ -180,9 +180,9 @@ trait Binary extends Typed {
 
   def &&(other: Binary) = and(other)
 
-  def and(other: Binary) = All(underlying, other)
+  def and(other: Binary) = And(underlying, other)
 
-  def rand(other: Binary) = All(other, underlying)
+  def rand(other: Binary) = And(other, underlying)
 
   def &>(other: Binary) = rand(other)
 

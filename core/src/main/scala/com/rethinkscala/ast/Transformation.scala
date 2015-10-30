@@ -152,7 +152,7 @@ case class IndexesOf[T,C[_]](target: Sequence[T,C], filter: FuncWrap) extends Pr
 
   override lazy val args = buildArgs(target, filter)
 
-  def termType:TermType = TermType.INDEXES_OF
+  def termType:TermType = TermType.OFFSETS_OF
 }
 
 
@@ -160,7 +160,7 @@ case class OffsetsOf[T,C[_]](target: Sequence[T,C], filter: FuncWrap) extends Pr
 
   override lazy val args = buildArgs(target, filter)
 
-  def termType:TermType = TermType.INDEXES_OF
+  def termType:TermType = TermType.OFFSETS_OF
 }
 case class Nth[T](target: IndexTyped[T], index: Int) extends ProduceSingleSelection[T] {
   def termType:TermType = TermType.NTH

@@ -227,6 +227,8 @@ message Datum {
         optional Datum val = 2;
     }
     repeated AssocPair r_object = 6;
+
+    extensions 10000 to 20000;
 }
 
 // A [Term] is either a piece of data (see **Datum** above), or an operator and
@@ -381,8 +383,6 @@ message Term {
                          // | Sequence, STRING -> Sequence
         // Return an array containing the keys of the object.
         KEYS = 94; // OBJECT -> ARRAY
-        // Return an array containing the values of the object.
-        VALUES = 186; // OBJECT -> ARRAY
         // Creates an object
         OBJECT = 143; // STRING, DATUM, ... -> OBJECT
         // Check whether an object contains all the specified fields,
@@ -779,6 +779,8 @@ message Term {
     repeated AssocPair optargs = 4; // Holds the optional arguments of the query.
     // (Note that the order of the optional arguments doesn't matter; think of a
     // Hash.)
+
+    extensions 10000 to 20000;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

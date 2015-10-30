@@ -129,10 +129,10 @@ object Core {
 }
 
 /**
- * Loop over a sequence, evaluating the given write query for each element.
- * @param target
- * @param function
- */
+  * Loop over a sequence, evaluating the given write query for each element.
+  * @param target
+  * @param function
+  */
 case class ForEach[T, C[_]](target: Sequence[T, C], function: Predicate1) extends ProduceAnyDocument {
 
   override lazy val args = buildArgs(target, FuncWrap(function))
@@ -331,12 +331,16 @@ class Random[@specialized(Int, Double, Long) T, R](val values: Seq[T], float: Op
 }
 
 final class RandomSupport[T, R](val target: Random[T, R]) extends AnyVal {
-  def toFloat = new Random[T, Float](target.values, Some(true)) with ProduceFloat
+  def toFloat: ProduceFloat = new Random[T, Float](target.values, Some(true)) with ProduceFloat
 }
 
 object Random {
 
-  def apply[T](values: Seq[T]) = new Random[T, T](values) with ProduceNumeric
+  type RandomType[T] = Random[T, T] with ProduceTypedNumeric[T]
+
+  //implicit def toRandomSupport[T, R](value: Random[T, R]): RandomSupport[T, R] = new RandomSupport[T, R](value)
+
+  def apply[T](values: Seq[T]): RandomType[T] = new Random[T, T](values) with ProduceTypedNumeric[T]
 
 }
 

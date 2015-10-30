@@ -198,7 +198,9 @@ trait ProduceNumeric extends ProduceTypedNumeric[Double]
 
 trait ProduceFloat extends ProduceTypedNumeric[Float]
 
-trait ProduceTypedNumeric[@specialized(Int, Double, Long) T] extends ProduceSingle[T] with Numeric with Produce0[T]
+trait ProduceTypedNumeric[@specialized(Int, Double, Long) T] extends Produce[T]  with Numeric with Produce0[T]
+
+
 
 trait ProduceString extends ProduceSingle[String] with Strings with Produce0[String] {
   override val underlying = this

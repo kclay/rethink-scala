@@ -1,22 +1,22 @@
 package com.rethinkscala.backend.netty
 
-import com.rethinkscala.net.Version3
+import com.rethinkscala.net.AbstractJsonVersion
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
 
 /**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 8/16/14
- * Time: 11:52 AM
- *
- */
+  * Created with IntelliJ IDEA.
+  * User: keyston
+  * Date: 8/16/14
+  * Time: 11:52 AM
+  *
+  */
 
 
 trait RethinkChannelInitializer extends ChannelInitializer[SocketChannel]
 
 object JsonChannelInitializer {
-  def apply(version: Version3) = new RethinkChannelInitializer {
+  def apply(version: AbstractJsonVersion): RethinkChannelInitializer = new RethinkChannelInitializer {
 
     override def initChannel(ch: SocketChannel) = {
       val pipe = ch.pipeline()

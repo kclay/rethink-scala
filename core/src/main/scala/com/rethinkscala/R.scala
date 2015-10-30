@@ -7,19 +7,64 @@ import scala.collection.Iterable
 
 
 /**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 9/12/13
- * Time: 3:14 PM
- *
- */
+  * Created with IntelliJ IDEA.
+  * User: keyston
+  * Date: 9/12/13
+  * Time: 3:14 PM
+  *
+  */
 
 
-trait RethinkApi extends TimeNames with GeometryApi {
-  def getInstance = this
+trait DBApi {
+  lazy val test = db("test")
 
-  private lazy val _row = new ImplicitVar
+  def db(name: String): DB = DB(name)
 
+  def dbCreate(name: String): DBCreate = DBCreate(name)
+
+  def dbDrop(name: String): DBDrop = DBDrop(name)
+
+  def dbs: DBList = DBList()
+
+}
+
+trait TableApi extends DBApi {
+
+
+  def table(name: String): Table[Document] = table(name, None)
+
+  @deprecated("use table(String,ReadMode.Kind)")
+  def table(name: String, useOutDated: Boolean): Table[Document] = table(name)
+
+  @deprecated("use table(String,ReadMode.Kind)")
+  def table(name: String, useOutDated: Option[Boolean]): Table[Document] = table(name)
+
+  def table(name: String, readMode: ReadMode.Kind = ReadMode.Single): Table[Document] = Table[Document](name, readMode)
+
+  def tableAs[T <: AnyRef](name: String): Table[T] = tableAs[T](name, ReadMode.Single)
+
+  @deprecated("use tableAs(String,ReadMode.Kind)")
+  def tableAs[T <: AnyRef](name: String, useOutDated: Boolean): Table[T] = tableAs[T](name)
+
+  @deprecated("use tableAs(String,ReadMode.Kind)")
+  def tableAs[T <: AnyRef](name: String, useOutDated: Option[Boolean]): Table[T] = tableAs[T](name)
+
+  def tableAs[T <: AnyRef](name: String, readMode: ReadMode.Kind): Table[T] = Table[T](name, readMode)
+
+
+  def tableCreate(name: String): TableCreate = tableCreate(name, None)
+
+  def tableCreate(name: String, options: TableOptions): TableCreate = tableCreate(name, Some(options))
+
+  def tableCreate(name: String, options: Option[TableOptions] = None): TableCreate = test.tableCreate(name, options.getOrElse(TableOptions()))
+
+  def tableDrop(name: String): TableDrop = test.tableDrop(name)
+
+  def tables: TableList = test.tables
+
+}
+
+trait ExprApi {
   def expr(term: Term): Term = term
 
   def expr(value: String): StringDatum = Expr(value)
@@ -41,43 +86,18 @@ trait RethinkApi extends TimeNames with GeometryApi {
   def expr(v: Any) = Expr(v)
 
   def expr[T](value: Iterable[T]) = Expr(value)
+}
+
+trait RethinkApi extends TableApi with TimeNames with GeometryApi with ExprApi {
+  def getInstance = this
+
+  private lazy val _row = new ImplicitVar
+
 
   // TODO Fix me, clashes with Sequence and Hash
   def row: ImplicitVar = _row
 
   def string = row.string
-
-  lazy val test = db("test")
-
-  def table(name: String): Table[Document] = table(name, None)
-
-  def table(name: String, useOutDated: Boolean): Table[Document] = table(name, Some(useOutDated))
-
-  def table(name: String, useOutDated: Option[Boolean] = None): Table[Document] = Table[Document](name, useOutDated)
-
-  def tableAs[T <: AnyRef](name: String): Table[T] = tableAs[T](name, None)
-
-  def tableAs[T <: AnyRef](name: String, useOutDated: Boolean): Table[T] = tableAs[T](name, Some(useOutDated))
-
-  def tableAs[T <: AnyRef](name: String, useOutDated: Option[Boolean] = None): Table[T] = Table[T](name, useOutDated)
-
-  def db(name: String) = DB(name)
-
-  def dbCreate(name: String) = DBCreate(name)
-
-  def dbDrop(name: String) = DBDrop(name)
-
-  def dbs = DBList()
-
-  def tableCreate(name: String): TableCreate = tableCreate(name, None)
-
-  def tableCreate(name: String, options: TableOptions): TableCreate = tableCreate(name, Some(options))
-
-  def tableCreate(name: String, options: Option[TableOptions] = None): TableCreate = test.tableCreate(name, options.getOrElse(TableOptions()))
-
-  def tableDrop(name: String): TableDrop = test.tableDrop(name)
-
-  def tables: TableList = test.tables
 
   def branch(predicate: (Var) => Binary, passed: Typed, failed: Typed): Branch = branch(ScalaBooleanPredicate1(predicate), passed, failed)
 
@@ -89,11 +109,10 @@ trait RethinkApi extends TimeNames with GeometryApi {
   @deprecated("Call .avg on collection")
   def avg(attr: String): ByAvg = ByAvg(attr)
 
-  def random = Random[Double](Seq.empty)
+  def random: Random.RandomType[Double] = Random[Double](Seq.empty)
 
-  def random[@specialized(Int, Double, Long) T](values: T*) = Random[T](values)
+  def random[@specialized(Int, Double, Long) T](values: T*): Random.RandomType[T] = Random[T](values)
 
-  // def random(values:Float*) = Random[Float,Float](values,true)
 
   val count = ByCount
 
@@ -107,25 +126,32 @@ trait RethinkApi extends TimeNames with GeometryApi {
 
   private[this] def compute[T](v: T*)(a: (T, T) => T) = v.drop(1).foldLeft(v.head)(a)
 
-  def sub(v: Numeric*) = compute[Numeric](v: _*)(_ - _)
 
-  def call(f: Predicate, values: Typed*) = FuncCall(f, values)
+  def call(f: Predicate, values: Typed*): FuncCall = FuncCall(f, values)
 
-  def error(msg: String) = UserError(msg)
+  def error(msg: String): UserError = UserError(msg)
 
-  def js(code: String, timeout: Option[Int] = None) = JavaScript(code, timeout)
+  def js(code: String, timeout: Option[Int] = None): JavaScript = JavaScript(code, timeout)
 
-  def json(str: String) = Json(str)
+  def json(str: String): Json = Json(str)
 
-  def uuid = new ast.UUID()
+  def sub(v: Numeric*): Numeric = compute[Numeric](v: _*)(_ - _)
+
+  def uuid: ast.UUID = new ast.UUID()
 
   def range(start: Int): Range = Range(start)
 
   def range(start: Int, end: Int): Range = Range(start, end)
 
-  def minval = new ast.MinVal()
+  def minval: ast.MinVal = new ast.MinVal()
 
-  def maxval = new ast.MaxVal()
+  def maxval: ast.MaxVal = new ast.MaxVal()
+
+  def ceil(value: Numeric): ast.Ceil = ast.Ceil(value)
+
+  def floor(value: Numeric): ast.Floor = ast.Floor(value)
+
+  def round(value: Numeric): ast.Round = ast.Round(value)
 
 
 }
@@ -136,7 +162,7 @@ trait TimeNames {
   import com.rethinkscala.ast.TimeName
   import ql2.Ql2.Term.TermType
 
-  private def apply(tt: TermType) = TimeName(tt)
+  private def apply(tt: TermType): TimeName = TimeName(tt)
 
   val monday = this (TermType.MONDAY)
   val tuesday = this (TermType.TUESDAY)
@@ -163,9 +189,9 @@ trait TimeNames {
 
   val months = Seq(january, february, march, april, june, july, august, september, october, november, december)
 
-  def weekday(dt: DateTime) = weekdays(dt.dayOfWeek().get() - 1)
+  def weekday(dt: DateTime): TimeName = weekdays(dt.dayOfWeek().get() - 1)
 
-  def month(dt: DateTime) = months(dt.monthOfYear().get())
+  def month(dt: DateTime): TimeName = months(dt.monthOfYear().get())
 
-  def now = new Now()
+  def now: Now = new Now()
 }
