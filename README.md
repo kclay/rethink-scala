@@ -3,7 +3,7 @@
 Scala Rethinkdb Driver
 =========
 
-This is a WIP but should be valid for 1.6
+_Work in progress for RethinkDB 2.0 release._
 
 FEATURES
 
@@ -112,6 +112,9 @@ sbt compile
 
 Version
 -
+###0.5.0 - 11/08/15
+- Update to Scala 2.11.7, SBT 0.13.8, and target JVM 1.8
+
 ###0.4.6 - 05/12/15
 - Polymorphism support #23
 - No need to extend `Document` anymore #19

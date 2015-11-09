@@ -1,7 +1,5 @@
 resolvers += "Sonatype snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
-
-
 resolvers += "gseitz@github" at "http://gseitz.github.com/maven/"
 
 resolvers += Resolver.url(
