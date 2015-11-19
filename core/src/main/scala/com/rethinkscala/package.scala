@@ -11,10 +11,4 @@ import com.rethinkscala.net._
   */
 package object rethinkscala extends ImplicitConversions with Helpers {
 
-
-  private[rethinkscala] trait FilterTyped
-
-
-
-
 }
