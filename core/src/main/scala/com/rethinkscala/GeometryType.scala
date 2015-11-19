@@ -6,11 +6,11 @@ import ql2.Ql2.Term.TermType
 import scala.collection.generic.SeqForwarder
 
 /**
- * Created by IntelliJ IDEA.
- * User: Keyston
- * Date: 11/3/2014
- * Time: 12:10 PM 
- */
+  * Created by IntelliJ IDEA.
+  * User: Keyston
+  * Date: 11/3/2014
+  * Time: 12:10 PM
+  */
 
 
 trait GeometryType
@@ -51,7 +51,7 @@ case class Point(long: Double, lat: Double) extends GeometryType with ProducePoi
 
   override lazy val args = buildArgs(long, lat)
 
-  override def termType:TermType = TermType.POINT
+  override def termType: TermType = TermType.POINT
 
   def this(l: List[Double]) {
     this(l(0), l(1))
@@ -59,18 +59,13 @@ case class Point(long: Double, lat: Double) extends GeometryType with ProducePoi
 }
 
 
-class Polygon(val points: Seq[Point]) extends GeometryType with ProducePolygon {
+case class Polygon(points: Seq[Point]) extends GeometryType with ProducePolygon {
 
   override lazy val args = buildArgs(points: _*)
 
-  override def termType:TermType = TermType.POLYGON
+  override def termType: TermType = TermType.POLYGON
 
 
-}
-
-object Polygon {
-
-  def apply(points: Seq[Point]):Polygon = new Polygon(points)
 }
 
 
@@ -124,15 +119,15 @@ trait GeoCastDelegate[R[_ <: GeometryType]] extends Any {
 }
 
 final class AnyGeoCastSupport(val target: CastTo) extends AnyVal with GeoCastDelegate[ProduceGeometry] {
-  override def cast[T <: GeometryType](name: String) = target.field(name).asInstanceOf[ProduceGeometry[T]]
+  override def cast[T <: GeometryType](name: String): ProduceGeometry[T] = target.field(name).asInstanceOf[ProduceGeometry[T]]
 
-  override def to[T <: GeometryType] = target.asInstanceOf[ProduceGeometry[T]]
+  override def to[T <: GeometryType]: ProduceGeometry[T] = target.asInstanceOf[ProduceGeometry[T]]
 }
 
 final class GetFieldCastSupport(val target: ProduceArray[_]) extends AnyVal with GeoCastDelegate[ProduceGeometryArray] {
-  override def cast[R <: GeometryType](name: String) = ???
+  override def cast[R <: GeometryType](name: String): ProduceGeometryArray[R] = new ForwardTyped(target.field(name)) with ProduceGeometryArray[R]
 
-  override def to[R <: GeometryType] = new ForwardTyped(target) with ProduceGeometryArray[R]
+  override def to[R <: GeometryType]: ProduceGeometryArray[R] = new ForwardTyped(target) with ProduceGeometryArray[R]
 }
 
 final class GeoCastSupport[R[_ <: GeometryType]](val delegate: GeoCastDelegate[R]) extends AnyVal {
@@ -238,9 +233,10 @@ trait GeometryImplicits {
 
   implicit def toLineSupport(line: Line): LineSupport = new LineSupport(line)
 
-  implicit def anyToGeoSupport(any: CastTo) = new GeoCastSupport[ProduceGeometry](new AnyGeoCastSupport(any))
+  implicit def anyToGeoSupport(any: CastTo): GeoCastSupport[ProduceGeometry] = new GeoCastSupport[ProduceGeometry](new AnyGeoCastSupport(any))
 
-  implicit def toGetFieldCastSupport[T](target: ProduceArray[T]): GeoCastSupport[ProduceGeometryArray] = new GeoCastSupport[ProduceGeometryArray](new GetFieldCastSupport(target))
+  implicit def toGetFieldCastSupport[T](target: ProduceArray[T]): GeoCastSupport[ProduceGeometryArray] =
+    new GeoCastSupport[ProduceGeometryArray](new GetFieldCastSupport(target))
 
   implicit def tableToGeometry[T <: AnyRef](table: Table[T]): TableGeoSupport[T] = new TableGeoSupport[T](table)
 
