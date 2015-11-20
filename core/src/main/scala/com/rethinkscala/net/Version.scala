@@ -17,6 +17,7 @@ import io.netty.channel.Channel
 
 import scala.beans.BeanProperty
 import scala.concurrent.{ExecutionContext, Promise}
+import com.rethinkscala.backend.{Connection => BackendConnection}
 
 
 /**
@@ -81,16 +82,16 @@ trait CompiledQuery {
 
   type TokenType[R]
 
-  def asToken(conn: Connection, connectionId: Long, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]): TokenType[Result]
+  def asToken(conn: BackendConnection, connectionId: Long, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]): TokenType[Result]
 
-  def cursor(token: Token[_], connectionId: Long, completed: Boolean)(factory: CursorFactory) = {
+  def cursor(token: Token[_], connectionId: Long, completed: Boolean)(factory: CursorFactory): factory.CursorType[Result] = {
     factory.apply[Result](token, connectionId, completed)
   }
 }
 
 
 case class JsonQuery(queryType: ql2.Query.QueryType, ast: JsonAst, opts: Map[String, Any]) {
-  def toSeq = {
+  def toSeq: Seq[Any] = {
     var seq: Seq[Any] = Seq(queryType.getNumber)
     if (!ast.isInstanceOf[NoneJsonAst]) seq = seq.:+(ast.toValue)
     if (opts.nonEmpty) seq = seq.:+(opts)
@@ -104,13 +105,13 @@ case class JsonCompiledQuery[T](tokenId: Long, query: JsonQuery) extends Compile
 
   override type Result = T
 
-  override def asToken(conn: Connection, connectionId: Long, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]) = JsonQueryToken[Result](conn, connectionId, this, term, promise)
+  override def asToken(conn: BackendConnection, connectionId: Long, term: Term, promise: Promise[Result])(implicit extractor: ResultExtractor[Result]) = JsonQueryToken[Result](conn, connectionId, this, term, promise)
 
   lazy val json = Reflector.toJson(query.toSeq)
 
   private val TOKEN_SIZE = 8
 
-  override def encode(out: ByteBuf) = {
+  override def encode(out: ByteBuf): Unit = {
     val jsonBytes = json.getBytes
     logger.debug(s"Json($tokenId)->  $json")
     val jsonSize = jsonBytes.length
@@ -147,7 +148,7 @@ abstract class Version extends LazyLogging {
 
   type ResponseType
 
-  def newHandler: VersionHandler[ResponseType]
+  def newHandler: ProtocolHandler[ResponseType]
 
   private[rethinkscala] var connectTimeout: Option[Long] = None
 
@@ -176,7 +177,7 @@ trait ProvidesQuery {
   def compile[T](builder: Builder, term: Term): Query[T]
 
 
-  def toQuery[T](term: Term, token: Long, db: Option[String] = None, opts: Map[String, Any] = Map.empty) = {
+  def toQuery[T](term: Term, token: Long, db: Option[String] = None, opts: Map[String, Any] = Map.empty): Query[T] = {
 
 
     val builder = term match {

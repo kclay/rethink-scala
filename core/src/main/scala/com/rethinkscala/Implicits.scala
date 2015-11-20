@@ -1,12 +1,14 @@
 package com.rethinkscala
 
 import com.rethinkscala.ast._
+import com.rethinkscala.backend.netty
 import com.rethinkscala.changefeeds.ast.Changes
 import com.rethinkscala.magnets.ReceptacleImplicits
 import com.rethinkscala.net._
 
 import scala.collection.Iterable
 import scala.concurrent.Future
+import com.rethinkscala.backend.{Connection => BackendConnection}
 
 
 /** Created with IntelliJ IDEA.
@@ -210,15 +212,7 @@ trait DefaultValue[T] {
 }
 
 
-private[rethinkscala] trait ImplicitConversions {
-
-  object RethinkApi extends RethinkApi
-
-  implicit def anyToPimpled(v: Any): PimpedAny = new PimpedAny(v)
-
-
-  implicit def collectionToAst[T](coll: Iterable[T]): MakeArray[T] = Expr[T](coll)
-
+trait LiteralConversions {
   implicit def intToDatNum(i: Int): NumberDatum = NumberDatum(i)
 
   implicit def longToDatNum(l: Long): NumberDatum = NumberDatum(l)
@@ -235,20 +229,17 @@ private[rethinkscala] trait ImplicitConversions {
   implicit def toOptLiteral[T <% Literal](v: T): Option[T] = Some(v)
 
   implicit def toOptFromDatum[T <% Datum](v: T): Option[T] = Some(v)
+}
 
-  implicit def toOptFromWrappedValue[T <: WrappedValue[_]](v: T): Option[T] = Some(v)
+trait FunctionConversions {
 
   implicit def toPredicate1Opt(f: (Var) => Typed): Option[Predicate1] = Some(new ScalaPredicate1(f))
 
   implicit def toPredicate2Opt(f: (Var, Var) => Typed): Option[Predicate2] = Some(new ScalaPredicate2(f))
 
-
   implicit def toPredicate1(f: Var => Typed): Predicate1 = new ScalaPredicate1(f)
 
   implicit def toPredicate2(f: (Var, Var) => Typed): ScalaPredicate2 = new ScalaPredicate2(f)
-
-
-  implicit def map2Typed(m: Map[String, Any]): Typed = Expr(m)
 
   implicit def untypedPredicateToTyped(f: Var => Map[String, Any]): Predicate1 = (v: Var) => Expr(f(v))
 
@@ -258,6 +249,28 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def toBooleanPredicate2(f: (Var, Var) => Binary): BooleanPredicate2 = new ScalaBooleanPredicate2(f)
 
+}
+
+final class SliceSupport(val start: Int) extends AnyVal {
+  def ~>(end: Int): SliceRange = SliceRange(start, end)
+}
+
+private[rethinkscala] trait ImplicitConversions extends LiteralConversions with FunctionConversions {
+
+
+  implicit def anyToPimpled(v: Any): PimpedAny = new PimpedAny(v)
+
+
+  implicit def collectionToAst[T](coll: Iterable[T]): MakeArray[T] = Expr[T](coll)
+
+
+  implicit def toOptFromWrappedValue[T <: WrappedValue[_]](v: T): Option[T] = Some(v)
+
+
+  implicit def map2Typed(m: Map[String, Any]): Typed = Expr(m)
+
+
+  implicit def string2DB(name: String): DB = DB(name)
 
   implicit def bool2Option(value: Boolean): Option[Boolean] = Some(value)
 
@@ -267,14 +280,12 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def int2Option(value: Int): Option[Int] = Some(value)
 
-  implicit def string2DB(name: String): DB = DB(name)
-
   case class String2Ast(name: String) {
-    def row = RethinkApi.row(name)
+    def row: ProduceAny = RethinkApi.row(name)
 
-    def asc = Asc(name.wrap)
+    def asc: Asc = Asc(name.wrap)
 
-    def desc = Desc(name.wrap)
+    def desc: Desc = Desc(name.wrap)
   }
 
   private def p2t(p: Product): MakeArray[Any] = Expr(p.productIterator.toSeq)
@@ -289,9 +300,9 @@ private[rethinkscala] trait ImplicitConversions {
 
   implicit def string2Ordering(name: String): Asc = name.asc
 
-  implicit def intWithTildyArrow(start: Int) = new {
-    def ~>(end: Int) = SliceRange(start, end)
-  }
+
+  implicit def intWithTildyArrow(start: Int): SliceSupport = new SliceSupport(start)
+
 
   implicit def func2Order(f: Var => Typed): Order = new FuncWrap(new ScalaPredicate1(f)) with Order
 
@@ -306,9 +317,9 @@ trait FromAst[T] {
 trait Helpers {
 
 
-  object backends {
+  object Backends {
 
-    import com.rethinkscala.backend.netty
+
 
     val Blocking = netty.blocking.BlockingBackend
     val Async = netty.async.AsyncBackend
@@ -316,24 +327,24 @@ trait Helpers {
 
   type Var = com.rethinkscala.ast.Var
   val Expr = com.rethinkscala.ast.Expr
-  val Blocking = backends.Blocking.profile
-  val Async = backends.Async.profile
-  type BlockingConnection = backends.Blocking.ConnectionDef
-  type AsyncConnection = backends.Async.ConnectionDef
-  val AsyncConnection = backends.Async.Connection
-  val BlockingConnection = backends.Blocking.Connection
-  type BlockResult[T] = backends.Blocking.Result[T]
-  type AsyncResult[T] = backends.Async.Result[T]
+  val Blocking = Backends.Blocking.profile
+  val Async = Backends.Async.profile
+  type BlockingConnection = Backends.Blocking.ConnectionDef
+  type AsyncConnection = Backends.Async.ConnectionDef
+  val AsyncConnection = Backends.Async.Connection
+  val BlockingConnection = Backends.Blocking.Connection
+  type BlockResult[T] = Backends.Blocking.Result[T]
+  type AsyncResult[T] = Backends.Async.Result[T]
 
-  def async[T](p: Produce[T])(implicit c: Connection, extractor: ResultExtractor[T]): AsyncResult[T] = async(_.apply(p))
+  def async[T](p: Produce[T])(implicit c: BackendConnection, extractor: ResultExtractor[T]): AsyncResult[T] = async(_.apply(p))
 
-  def async[T](f: AsyncConnection => Future[T])(implicit c: Connection): AsyncResult[T] = f(AsyncConnection(c))
+  def async[T](f: AsyncConnection => Future[T])(implicit c: BackendConnection): AsyncResult[T] = f(AsyncConnection(c))
 
-  def block[T](f: BlockingConnection => Unit)(implicit c: Connection): Unit = f(BlockingConnection(c))
+  def block[T](f: BlockingConnection => Unit)(implicit c: BackendConnection): Unit = f(BlockingConnection(c))
 
-  def block[T](f: BlockingConnection => BlockResult[T])(implicit c: Connection): BlockResult[T] = f(BlockingConnection(c))
+  def block[T](f: BlockingConnection => BlockResult[T])(implicit c: BackendConnection): BlockResult[T] = f(BlockingConnection(c))
 
-  def block[T: Manifest](p: Produce[T])(implicit c: Connection): BlockResult[T] = {
+  def block[T: Manifest](p: Produce[T])(implicit c: BackendConnection): BlockResult[T] = {
 
     block { bc: BlockingConnection =>
       implicit val extractor = bc.resultExtractorFactory.create[T]
@@ -345,17 +356,17 @@ trait Helpers {
 
 class PimpedAny(val v: Any) extends AnyVal {
   @inline
-  def wrap = FuncWrap(v)
+  def wrap: FuncWrap = FuncWrap(v)
 
   @inline
-  def optWrap = Some(FuncWrap(v))
+  def optWrap: Option[FuncWrap] = Some(FuncWrap(v))
 }
 
 
 final class ChangeFeedSupport[T](val target: Typed) extends AnyVal {
-  def changes(squash: Option[Boolean] = None, includeStates: Option[Boolean] = None) = new Changes[T](target, squash, includeStates)
+  def changes(squash: Option[Boolean] = None, includeStates: Option[Boolean] = None): Changes[T] = new Changes[T](target, squash, includeStates)
 
-  def changes() = new Changes[T](target)
+  def changes(): Changes[T] = new Changes[T](target)
 }
 
 
@@ -363,12 +374,12 @@ object Implicits {
 
 
   trait Common extends CanMapImplicits
-  with ToAstImplicts
-  with ReceptacleImplicits with ImplicitConversions
-  with net.Versions
-  with Helpers
-  with ToFloatImplicits
-  with GeometryImplicits {
+    with ToAstImplicts
+    with ReceptacleImplicits with ImplicitConversions
+    with net.Versions
+    with Helpers
+    with ToFloatImplicits
+    with GeometryImplicits {
 
     object r extends RethinkApi
 

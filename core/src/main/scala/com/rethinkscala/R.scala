@@ -33,20 +33,20 @@ trait TableApi extends DBApi {
 
   def table(name: String): Table[Document] = table(name, None)
 
-  @deprecated("use table(String,ReadMode.Kind)")
+  @deprecated("use table(String,ReadMode.Kind)","0.5.0")
   def table(name: String, useOutDated: Boolean): Table[Document] = table(name)
 
-  @deprecated("use table(String,ReadMode.Kind)")
+  @deprecated("use table(String,ReadMode.Kind)","0.5.0")
   def table(name: String, useOutDated: Option[Boolean]): Table[Document] = table(name)
 
   def table(name: String, readMode: ReadMode.Kind = ReadMode.Single): Table[Document] = Table[Document](name, readMode)
 
   def tableAs[T <: AnyRef](name: String): Table[T] = tableAs[T](name, ReadMode.Single)
 
-  @deprecated("use tableAs(String,ReadMode.Kind)")
+  @deprecated("use tableAs(String,ReadMode.Kind)","0.5.0")
   def tableAs[T <: AnyRef](name: String, useOutDated: Boolean): Table[T] = tableAs[T](name)
 
-  @deprecated("use tableAs(String,ReadMode.Kind)")
+  @deprecated("use tableAs(String,ReadMode.Kind)","0.5.0")
   def tableAs[T <: AnyRef](name: String, useOutDated: Option[Boolean]): Table[T] = tableAs[T](name)
 
   def tableAs[T <: AnyRef](name: String, readMode: ReadMode.Kind): Table[T] = Table[T](name, readMode)
@@ -88,6 +88,8 @@ trait ExprApi {
   def expr[T](value: Iterable[T]) = Expr(value)
 }
 
+object RethinkApi extends RethinkApi
+
 trait RethinkApi extends TableApi with TimeNames with GeometryApi with ExprApi {
   def getInstance = this
 
@@ -103,10 +105,10 @@ trait RethinkApi extends TableApi with TimeNames with GeometryApi with ExprApi {
 
   def branch(predicate: Binary, passed: Typed, failed: Typed): Branch = Branch(predicate, passed, failed)
 
-  @deprecated("Call .sum on collection")
+  @deprecated("Call .sum on collection","0.5.0")
   def sum(attr: String): BySum = BySum(attr)
 
-  @deprecated("Call .avg on collection")
+  @deprecated("Call .avg on collection","0.5.0")
   def avg(attr: String): ByAvg = ByAvg(attr)
 
   def random: Random.RandomType[Double] = Random[Double](Seq.empty)

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.rethinkscala.ast._
-import com.rethinkscala.net.{ReqlClientError, ReqlRuntimeError, ReqlError, Connection}
+import com.rethinkscala.backend.{Connection => BackendConnection}
 import com.rethinkscala.reflect.Reflector
 
 import scala.collection.mutable.ArrayBuffer
@@ -39,7 +39,7 @@ class Schema extends Helpers {
   protected implicit def thisSchema = this
 
 
-  def defaultConnection: Option[Connection] = None
+  def defaultConnection: Option[BackendConnection] = None
 
 
   protected def defineMapper = {
@@ -65,10 +65,10 @@ class Schema extends Helpers {
   def liftAs[T <: Document, R](f: PartialFunction[Table[T], R])(implicit mf: Manifest[T]): Option[R] = get[T] map (f(_))
 
 
-  implicit def doc2Active[A <: Document](a: A)(implicit extractor: ResultExtractor[A], c: Connection): ActiveRecord[A] =
+  implicit def doc2Active[A <: Document](a: A)(implicit extractor: ResultExtractor[A], c: BackendConnection): ActiveRecord[A] =
     new ActiveRecord(a)
 
-  class ActiveRecord[T <: Document](o: T)(implicit c: Connection, extractor: ResultExtractor[T]) {
+  class ActiveRecord[T <: Document](o: T)(implicit c: BackendConnection, extractor: ResultExtractor[T]) {
     private def performAction[R](action: (Table[T]) => Produce[R])(implicit mf: Manifest[R]): Either[Exception, R] = {
 
       val m = extractor.manifest
@@ -114,7 +114,7 @@ class Schema extends Helpers {
     table(tableNameFromClass(manifestT.runtimeClass))(manifestT)
 
 
-  @deprecated("use table(String,ReadMode.Kind,Option[String])")
+  @deprecated("use table(String,ReadMode.Kind,Option[String])","0.4.8")
   protected def table[T <: Document](name: String, useOutDated: Option[Boolean], db: Option[String]
                                     )(implicit manifestT: Manifest[T]): Table[T] = {
 

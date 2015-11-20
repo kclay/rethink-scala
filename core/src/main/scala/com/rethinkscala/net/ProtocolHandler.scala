@@ -10,9 +10,11 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import ql2.Ql2.Response
 import ql2.Ql2.Response.ResponseType
 import ql2.Ql2.Response.ResponseType._
+import com.rethinkscala.backend.{Connection => BackendConnection}
 
 import scala.concurrent.Promise
 import scala.util.{Failure, Success, Try}
+
 
 /**
   * Created by IntelliJ IDEA.
@@ -20,7 +22,7 @@ import scala.util.{Failure, Success, Try}
   * Date: 8/22/2014
   * Time: 2:22 PM
   */
-trait VersionHandler[R] extends LazyLogging {
+trait ProtocolHandler[R] extends LazyLogging {
   val version: Version
 
   private val newTokenId: AtomicLong = new AtomicLong()
@@ -34,7 +36,7 @@ trait VersionHandler[R] extends LazyLogging {
     s"VersionHandler($version)"
   }
 
-  def failure(e: Throwable) = {
+  def failure(e: Throwable): Unit = {
     logger.error("UnCaught Exception token not resolved", e)
   }
 
@@ -45,9 +47,9 @@ trait VersionHandler[R] extends LazyLogging {
     .build().asInstanceOf[Cache[Long, TokenType]]
 
 
-  def newQuery[T](conn: Connection, connectionId: Long, term: Term,
+  def newQuery[T](conn: BackendConnection, connectionId: Long, term: Term,
                   promise: Promise[T], db: Option[String] = None, opts: Map[String, Any] = Map())
-                 (implicit extractor: ResultExtractor[T]) = {
+                 (implicit extractor: ResultExtractor[T]): version.Query[T] = {
 
 
     val tokenId = term match {
@@ -69,8 +71,8 @@ trait VersionHandler[R] extends LazyLogging {
       case Some(token) => Try(f(token)) match {
         case Failure(e) => logger.error("Error in trying to handle token", e)
 
-          throw ReqlClientError(e.getMessage, token.term, Iterable.empty, Some(e))//)
-          // FIXME : Find a better way to invalidate the connection before resolving token
+          throw ReqlClientError(e.getMessage, token.term, Iterable.empty, Some(e)) //)
+        // FIXME : Find a better way to invalidate the connection before resolving token
         /*  try {
             throw e
           } catch {
@@ -87,7 +89,7 @@ trait VersionHandler[R] extends LazyLogging {
   }
 }
 
-case class JsonVersionHandler(version: Version) extends VersionHandler[String] {
+case class JsonVersionHandler(version: Version) extends ProtocolHandler[String] {
 
   type TokenType = JsonQueryToken[_]
   val ResponseTypeExtractor = """"t":(\d+)""".r.unanchored

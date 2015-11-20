@@ -14,14 +14,15 @@ import ql2.Ql2.Response.ResponseType
 
 import scala.concurrent.Promise
 import scala.util.Try
+import com.rethinkscala.backend.{Connection => BackendConnection}
 
 /**
- * Created with IntelliJ IDEA.
- * User: keyston
- * Date: 7/6/14
- * Time: 3:37 PM
- *
- */
+  * Created with IntelliJ IDEA.
+  * User: keyston
+  * Date: 7/6/14
+  * Time: 3:37 PM
+  *
+  */
 
 
 abstract class Token[R] {
@@ -31,7 +32,7 @@ abstract class Token[R] {
 
   val term: Term
 
-  val connection: Connection
+  val connection: BackendConnection
 
   val extractor: ResultExtractor[ResultType]
 
@@ -114,7 +115,7 @@ case class JsonResponse[T](@JsonProperty("t") responseType: Long,
                            @JsonProperty("p") profile: Option[Profile]
                           ) extends BaseJsonResponse[T]
 
-case class JsonQueryToken[R](connection: Connection, connectionId: Long, query: CompiledQuery,
+case class JsonQueryToken[R](connection: BackendConnection, connectionId: Long, query: CompiledQuery,
                              term: Term, p: Promise[R])(implicit val extractor: ResultExtractor[R])
   extends Token[String] with LazyLogging {
 
@@ -137,7 +138,7 @@ case class JsonQueryToken[R](connection: Connection, connectionId: Long, query: 
     val frames = response.backtrace.getOrElse(Iterable.empty)
 
 
-   // response.errorType
+    // response.errorType
     response.responseType match {
       case RUNTIME_ERROR_VALUE => RethinkRuntimeError(error, term, frames)
       case COMPILE_ERROR_VALUE => RethinkCompileError(error, term, frames)

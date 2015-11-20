@@ -6,7 +6,8 @@ import ql2.{Ql2 => ql2}
 import ql2.Term.TermType
 import ql2.Datum.DatumType
 import com.rethinkscala.reflect.Reflector
-import com.rethinkscala.net.Connection
+
+import com.rethinkscala.backend.{Connection => BackendConnection}
 
 trait AssocPair {
 
@@ -65,7 +66,7 @@ trait Term extends WithAst {
     .addAllOptargs(optargs.map(_.pair.asInstanceOf[ql2.Term.AssocPair])).build()
 
   */
-  def ast(implicit connection: Connection) = connection toAst underlyingTerm
+  def ast(implicit connection: BackendConnection) = connection toAst underlyingTerm
 
   lazy val args: Seq[Term] = if (extractArgs) buildArgs(Reflector.fields(this).map(_.get(this)): _*) else Seq.empty[Term]
 

@@ -4,7 +4,7 @@ package com.rethinkscala.backend.netty
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.rethinkscala.backend.Connection
-import com.rethinkscala.net.{Version, VersionHandler}
+import com.rethinkscala.net.{Version, ProtocolHandler}
 import com.rethinkscala.utils.ConnectionWithId
 import com.rethinkscala.{ResultExtractor, Term}
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -32,7 +32,7 @@ case class SingleConnection(version: Version) extends Connection {
   override def write[T](term: Term, opts: Map[String, Any])(implicit mf: Manifest[T]) = ???
 } */
 
-class ConnectionAttachment[T](versionHandler: VersionHandler[T], restore: Throwable => Unit) {
+class ConnectionAttachment[T](versionHandler: ProtocolHandler[T], restore: Throwable => Unit) {
   def handle(tokenId: Long, response: T) = versionHandler.handle(tokenId, response)
 
   def failure(e: Throwable) = {

@@ -5,7 +5,8 @@ import com.rethinkscala._
 import com.rethinkscala.ast.Produce
 import com.rethinkscala.backend.Delegate
 import com.rethinkscala.changefeeds.net.ChangeCursor
-import com.rethinkscala.net.Connection
+
+import com.rethinkscala.backend.{Connection => BackendConnection}
 
 import scalaz.\/._
 import scalaz._
@@ -19,7 +20,7 @@ import scalaz.stream.Process
  * Time: 9:09 AM 
  */
 case class ChangeFeedDelegate[T](producer: Produce[ChangeCursor[CursorChange[T]]],
-                                 connection: Connection, connectionId: Option[Long] = None)
+                                 connection: BackendConnection, connectionId: Option[Long] = None)
   extends Delegate[T] {
   lazy val underlying = BlockingDelegate(producer, BlockingConnection(connection), connectionId)
 

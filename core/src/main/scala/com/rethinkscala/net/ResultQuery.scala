@@ -8,8 +8,7 @@ import scala.util.Success
 import scala.util.Failure
 import scala.Some
 import scala.concurrent.Future
-
-
+import com.rethinkscala.backend.{Connection => BackendConnection}
 
 
 trait ResultResolver[Result] {
@@ -21,7 +20,7 @@ trait ResultQuery[T] {
 
   type ResolveType = Either[ReqlError, T]
 
-  val connection: Connection
+  val connection: BackendConnection
 
   val extractor: ResultExtractor[T]
   val term: Term
@@ -34,7 +33,7 @@ trait ResultQuery[T] {
 
       case Failure(e: ReqlError) => resolve(e)
       case Failure(e: Exception) => Left(RethinkRuntimeError(e.getMessage, term))
-      case e: ReqlError=> Left(e)
+      case e: ReqlError => Left(e)
       case Some(Success(res)) => res match {
         case x: None.type => Left(ReqlNoResultsError("No results found for " + extractor.manifest.runtimeClass.getSimpleName, term))
         case _ => Right(res.asInstanceOf[T])

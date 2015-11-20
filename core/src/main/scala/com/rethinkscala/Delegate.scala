@@ -5,6 +5,7 @@ import com.rethinkscala.backend.netty.async.AsyncDelegate
 import com.rethinkscala.backend.netty.blocking.BlockingDelegate
 import com.rethinkscala.net._
 
+import com.rethinkscala.backend.{Connection => BackendConnection}
 /**
  * Created by IntelliJ IDEA.
  * User: Keyston
@@ -20,7 +21,7 @@ case class ResultExtractor[T](cursorFactory: CursorFactory, manifest: Manifest[T
 }
 
 object Delegate {
-  def apply[T](produce: Produce[T], connection: Connection): backend.Delegate[T] = connection match {
+  def apply[T](produce: Produce[T], connection: BackendConnection): backend.Delegate[T] = connection match {
     case c: BlockingConnection => apply(produce, c)
     case c: AsyncConnection => apply(produce, c)
   }

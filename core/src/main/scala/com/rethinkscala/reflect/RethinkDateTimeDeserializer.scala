@@ -10,11 +10,11 @@ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer
 import com.fasterxml.jackson.core.JsonToken._
 
 /**
- * Created by IntelliJ IDEA.
- * User: Keyston
- * Date: 12/23/13
- * Time: 11:09 AM 
- */
+  * Created by IntelliJ IDEA.
+  * User: Keyston
+  * Date: 12/23/13
+  * Time: 11:09 AM
+  */
 
 
 object RethinkDateTimeDeserializer {
@@ -62,7 +62,7 @@ class RethinkDateTimeDeserializer(cls: Class[_ <: ReadableInstant]) extends Date
 
 
 
-    throw ctxt.mappingException(getValueClass)
+    throw ctxt.mappingException(handledType)
   }
 }
 

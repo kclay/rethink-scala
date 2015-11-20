@@ -29,8 +29,8 @@ SBT Users
 ```scala
 val main = Project(....).settings(resolvers ++= Seq("RethinkScala Repository" at "http://kclay.github.io/releases"))
 
-val rethinkscala = "com.rethinkscala" %% "core" % "0.4.7",
-val rethinkscala = "com.rethinkscala" %% "core" % "0.4.8-SNAPSHOT"
+val rethinkscala = "com.rethinkscala" %% "core" % "0.5.0",
+val rethinkscala = "com.rethinkscala" %% "core" % "0.5.1-SNAPSHOT"
 ```
 To get started
 ```scala
@@ -112,14 +112,18 @@ sbt compile
 
 Version
 -
-###0.5.0 - 11/08/15
-- Update to Scala 2.11.7, SBT 0.13.8, and target JVM 1.8
+###0.5.0 - 11/19/15
+- Update to Scala 2.11.7, SBT 0.13.8, and target JVM 1.8 (thanks @crockpotveggies)
+- Added  scalaz-stream support
+- Refactored connections to have `Backends`, this will allow switching connection/stream implementations
+- Updated to support rethink API 2.0
+
 
 ###0.4.6 - 05/12/15
 - Polymorphism support #23
 - No need to extend `Document` anymore #19
 - Breaking Change - table.getAll(indes:String,attr:Any*) is now table.getAll(attr:Any*).withIndex(index:String)
-- Breaking Change - Updated table.indexCreate defination
+- Breaking Change - Updated table.indexCreate definition
 - Support for Continuing a stream
 - Added functional blocking delegate which uses `Try`
 - Updated Netty.io to 4.0.27.Final
