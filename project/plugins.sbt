@@ -1,15 +1,9 @@
 resolvers += "Sonatype snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
-resolvers += "gseitz@github" at "http://gseitz.github.com/maven/"
-
-resolvers += Resolver.url(
-  "sbt-plugin-releases",
-  new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/")
-)(Resolver.ivyStylePatterns)
 
 resolvers += "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases/"
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.8.4")
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.0")
 
 //addSbtPlugin("com.github.sbt" %% "sbt-scalabuff" % "0.2")
 

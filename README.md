@@ -112,7 +112,7 @@ sbt compile
 
 Version
 -
-###0.5.0 - 11/19/15
+###0.4.9 - 12/07/15
 - Update to Scala 2.11.7, SBT 0.13.8, and target JVM 1.8 (thanks @crockpotveggies)
 - Added  scalaz-stream support
 - Refactored connections to have `Backends`, this will allow switching connection/stream implementations
